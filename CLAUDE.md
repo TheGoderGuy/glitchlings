@@ -10,6 +10,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 ## Projektstruktur
 | Pfad | Inhalt |
 |---|---|
+| `game/` | **Godot-4-Projekt (Steam-Version)**, siehe `game/README.md`. Tests: `godot --headless --path game --script res://tests/test_battle.gd` |
 | `prototype/index.html` | Spielbarer Browser-Prototyp (eine Datei: HTML, CSS, JS, Sprite-Daten). Im Browser öffnen oder `node tools/devserver.js` → http://localhost:8123 |
 | `vault/` | Obsidian-Vault mit dem kompletten Game Design (Start: `vault/00 Übersicht/🏠 Start hier.md`) |
 | `docs/Glitchlings_Konzept_Komplett.md` | Gesamtkonzept als ein Dokument |
@@ -47,8 +48,9 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 
 ## Offene nächste Schritte
 **Steam/Godot (Plan: `vault/05 Produktion/Roadmap.md`), Struktur: Station als Hub + Runs durch 5 Element-Zonen**
-- [ ] Godot 4 installieren, Git-Repo anlegen
-- [ ] Phase 1: Kampf-Kern in Godot (3×3, Chips, Controller, Spielgefühl) – besser als der Browser-Prototyp?
+- [x] Godot 4.7 installiert (winget), Repo https://github.com/TheGoderGuy/glitchlings
+- [x] Phase 1a (28.09.2026): Kampf-Kern portiert – Pixmiez, 15 Chips, 3 Gegner + Boss, Chipwahl, Pause/Deck, Ergebnis, Controller, 23 Tests
+- [ ] Phase 1b: Spielgefühl (Pixel-Font, Sounds, Angriffsanimationen, Titelbildschirm, Optionen) – besser als der Browser-Prototyp?
 - [ ] Phase 2: ein kompletter Run mit Zonenkarte · Phase 3: Station/Meta · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
@@ -87,7 +89,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - Nutzungsrechte von PixelLab für kommerzielle Nutzung vor dem Launch prüfen lassen.
 
 ## Qualitätsregeln für Änderungen am Prototyp
-- Nach jeder Änderung `cd tests && npm test` ausführen.
+- Godot (`game/`): nach jeder Änderung Godot-Tests ausführen und bei Grafikänderungen per `--shot` einen Screenshot rendern und ansehen. Godot-Exe: `~/AppData/Local/Microsoft/WinGet/Packages/GodotEngine*/Godot_*_console.exe`.
+- Browser-Prototyp: nach jeder Änderung `cd tests && npm test` ausführen.
 - Bei Grafikänderungen ein Bild rendern (die Tests zeigen, wie: jsdom + canvas) und es selbst ansehen, bevor du fertig meldest.
 - Änderungen im Vault dokumentieren (Playtest-Log bzw. passende Notiz).
 - Ehrlich bleiben: Wenn etwas nicht gut aussieht oder nicht getestet ist, sag es.

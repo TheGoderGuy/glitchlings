@@ -7,11 +7,12 @@ tags: [produktion, roadmap]
 
 ## Phase 1: Kampf-Kern in Godot
 **Frage: Fühlt sich der Kampf mit Controller besser an als im Browser-Prototyp?**
-- [ ] Godot-Projekt, 640×360, Pixel-perfekte Skalierung
-- [ ] 3×3-Raster, Bewegung, Chips mit Ladezeit, 1 Monster (Pixmiez), 1 Gegner
-- [ ] Controller + Tastatur
+- [x] Godot-Projekt, 640×360, Pixel-perfekte Skalierung (28.09.2026)
+- [x] 3×3-Raster, Bewegung, Chips mit Ladezeit, 1 Monster (Pixmiez), 1 Gegner
+- [x] Controller + Tastatur
 - [ ] Spielgefühl: Treffer-Feedback, Screenshake, Hitstop, Sounds (Platzhalter)
-- [ ] Alle 15 Chips, 3 Gegner, Boss aus dem Prototyp übernehmen
+- [x] Alle 15 Chips, 3 Gegner, Boss aus dem Prototyp übernehmen
+- [ ] Pixel-Schrift (z. B. Silkscreen, OFL) statt Godot-Standardschrift
 
 ## Phase 2: Ein kompletter Run
 **Frage: Will man direkt noch einen Run starten?**
