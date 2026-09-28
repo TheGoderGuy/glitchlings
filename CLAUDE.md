@@ -50,7 +50,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 **Steam/Godot (Plan: `vault/05 Produktion/Roadmap.md`), Struktur: Station als Hub + Runs durch 5 Element-Zonen**
 - [x] Godot 4.7 installiert (winget), Repo https://github.com/TheGoderGuy/glitchlings
 - [x] Phase 1a (28.09.2026): Kampf-Kern portiert – Pixmiez, 15 Chips, 3 Gegner + Boss, Chipwahl, Pause/Deck, Ergebnis, Controller, 23 Tests
-- [ ] Phase 1b: Spielgefühl (Pixel-Font, Sounds, Angriffsanimationen, Titelbildschirm, Optionen) – besser als der Browser-Prototyp?
+- [x] Phase 1b (28.09.2026): Pixel-Schrift Silkscreen (OFL), synthetisierte Platzhalter-Sounds (`Sfx.play`), Titelbildschirm, Optionen (Vollbild, Lautstärke, Bildschirmwackeln), Pause-Menü, 26 Tests
+- [ ] Phase 1c: Angriffs-/Idle-Animationen, Musik, Balancing nach erstem Anspielen – besser als der Browser-Prototyp?
 - [ ] Phase 2: ein kompletter Run mit Zonenkarte · Phase 3: Station/Meta · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**

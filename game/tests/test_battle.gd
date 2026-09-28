@@ -4,6 +4,7 @@ extends SceneTree
 
 var count := 0
 var fails := 0
+var seen_events := {}
 
 
 func _init() -> void:
@@ -18,6 +19,7 @@ func _init() -> void:
 	test_pop_close()
 	test_choices()
 	test_simulated_runs()
+	test_sounds()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	quit(1 if fails > 0 else 0)
 
@@ -169,6 +171,9 @@ func test_simulated_runs() -> void:
 			while not st.over and t < 180.0:
 				bot.act(st)
 				st.update(1.0 / 30.0)
+				for ev in st.events:
+					seen_events[ev] = true
+				st.events.clear()
 				t += 1.0 / 30.0
 			total_time += t
 			if not st.over:
@@ -187,3 +192,15 @@ func test_simulated_runs() -> void:
 			wins += 1
 	check(stuck == 0, "Kein Kampf hängt (180 s Limit)")
 	print("  info    Autopilot (0,25 s Reaktion): %d/%d Runs gewonnen, Ø %.0f s Kampfzeit pro Run" % [wins, runs, total_time / runs])
+
+
+## Jedes Ereignis aus der Kampflogik braucht einen Sound; alle Sounds müssen hörbar lang sein.
+func test_sounds() -> void:
+	var sfx: Node = load("res://scripts/audio/sfx.gd").new()
+	sfx._ready()
+	var missing: Array = seen_events.keys().filter(func(k): return not sfx.streams.has(k))
+	check(missing.is_empty(), "Alle Kampf-Ereignisse haben einen Sound (fehlend: %s)" % [missing])
+	check(seen_events.size() >= 8, "Simulation erzeugt verschiedene Ereignisse (%d)" % seen_events.size())
+	var empty: Array = sfx.streams.keys().filter(func(k): return sfx.streams[k].data.size() < 400)
+	check(empty.is_empty(), "Alle Sounds enthalten Daten")
+	sfx.free()

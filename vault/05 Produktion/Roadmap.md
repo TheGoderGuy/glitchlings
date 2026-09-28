@@ -10,9 +10,11 @@ tags: [produktion, roadmap]
 - [x] Godot-Projekt, 640×360, Pixel-perfekte Skalierung (28.09.2026)
 - [x] 3×3-Raster, Bewegung, Chips mit Ladezeit, 1 Monster (Pixmiez), 1 Gegner
 - [x] Controller + Tastatur
-- [ ] Spielgefühl: Treffer-Feedback, Screenshake, Hitstop, Sounds (Platzhalter)
+- [x] Spielgefühl: Treffer-Feedback, Screenshake, Hitstop, Sounds (Platzhalter, synthetisiert)
+- [x] Titelbildschirm, Optionen (Vollbild, Lautstärke, Bildschirmwackeln), Pause-Menü
+- [ ] Angriffs- und Idle-Animationen, Musik
 - [x] Alle 15 Chips, 3 Gegner, Boss aus dem Prototyp übernehmen
-- [ ] Pixel-Schrift (z. B. Silkscreen, OFL) statt Godot-Standardschrift
+- [x] Pixel-Schrift Silkscreen (SIL OFL, kommerziell frei; Lizenz in `game/assets/fonts/OFL.txt`)
 
 ## Phase 2: Ein kompletter Run
 **Frage: Will man direkt noch einen Run starten?**

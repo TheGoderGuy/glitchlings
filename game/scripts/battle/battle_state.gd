@@ -27,6 +27,7 @@ var bots: Array = []
 var marks: Array = []
 var fx: Array = []     # schwebende Texte {x, y, text, color, t, max}
 var parts: Array = []  # Partikel / Ringe / Feld-Blitze
+var events: Array = [] # Sound-/Ereignisnamen für die Ansicht (wird dort geleert)
 
 var shield := 0.0
 var bubble := 0
@@ -106,10 +107,12 @@ func move_player(dc: int, dr: int) -> void:
 	p.c = c
 	p.r = r
 	p.cd = mon.move
+	events.append("move")
 	for i in range(pops.size() - 1, -1, -1):
 		var q: Dictionary = pops[i]
 		if q.c == c and q.r == r:
 			pops.remove_at(i)
+			events.append("pop_close")
 			burst(c + 0.5, r + 0.5, GameData.COL.mint, 10)
 			float_at(c, r, "Zu!", GameData.COL.mint)
 
@@ -140,6 +143,7 @@ func use_special() -> void:
 	if over or sp < 100:
 		return
 	sp = 0.0
+	events.append("special")
 	banner = {"text": mon.special + "!", "color": GameData.EL[mon.special_el], "t": 1.1, "max": 1.1}
 	shake = maxf(shake, 9.0)
 	jump_t = SPECIAL_JUMP
@@ -160,6 +164,7 @@ func _special_hit(d: int, el: String) -> void:
 func _apply_chip(id: String) -> void:
 	var ch: Dictionary = GameData.CHIPS[id]
 	var el: String = ch.el
+	events.append(_chip_sound(id))
 	match id:
 		"Pixelstrahl", "Wasserstrahl", "Virusspritzer":
 			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 11.0, "el": el, "dmg": ch.dmg, "id": id})
@@ -210,6 +215,19 @@ func _apply_chip(id: String) -> void:
 			float_at(p.c, p.r, "Defrag!", GameData.EL.Neutral)
 
 
+func _chip_sound(id: String) -> String:
+	match id:
+		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Glutball":
+			return "shoot"
+		"Byteschlag":
+			return "slash"
+		"Firewall", "Blubberschild":
+			return "shield"
+		"Heilpatch":
+			return "heal"
+	return "chip"
+
+
 func _miss() -> void:
 	float_at(3 + e.c, e.r, "verfehlt", GameData.COL.muted)
 
@@ -258,6 +276,7 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 	e.flash = 0.09
 	if not dot and not in_special:
 		sp = minf(100.0, sp + d * 1.2)
+	events.append("tick" if dot else ("hit_big" if d >= 30 or m > 1 else "hit"))
 	var col: Color = GameData.COL.sun if m > 1 else (GameData.EL[el] if dot else GameData.COL.ink)
 	float_at(3 + e.c, e.r, ("Effektiv! " if m > 1 else "") + str(d), col)
 	if not dot:
@@ -275,11 +294,13 @@ func hurt_player(d: int) -> void:
 		return
 	if reflex > 0:
 		reflex -= 1
+		events.append("dodge")
 		float_at(p.c, p.r, "Katzenreflex!", GameData.COL.mint)
 		burst(p.c + 0.5, p.r + 0.5, Color("#C9B8FF"), 14)
 		return
 	if shield > 0:
 		shield = 0.0
+		events.append("block")
 		float_at(p.c, p.r, "Geblockt", GameData.EL.Code)
 		return
 	if bubble > 0 and bubble_t > 0:
@@ -291,6 +312,7 @@ func hurt_player(d: int) -> void:
 		if d <= 0:
 			return
 	run.hp = maxi(0, run.hp - d)
+	events.append("hurt")
 	since_hit = 0.0
 	sp = minf(100.0, sp + d * 1.5)
 	p.flash = 0.12
@@ -307,6 +329,7 @@ func _win() -> void:
 		return
 	over = true
 	outcome = "won"
+	events.append("win")
 	run.frag += def.loot
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 24)
 
@@ -316,6 +339,7 @@ func _lose() -> void:
 		return
 	over = true
 	outcome = "lost"
+	events.append("lose")
 
 
 # ---------- Effekte ----------
@@ -562,6 +586,7 @@ func _enemy_attack() -> void:
 				cells.append(Vector2i(p.c, r))
 		_:
 			cells.append(Vector2i(p.c, p.r))
+	events.append("warn")
 	warns.append({"cells": cells, "t": WARN_TIME, "max": WARN_TIME, "dmg": def.dmg})
 
 
@@ -577,4 +602,5 @@ func _spawn_pop() -> void:
 	if free.is_empty():
 		return
 	var cell: Vector2i = free[rng.randi_range(0, free.size() - 1)]
+	events.append("pop")
 	pops.append({"c": cell.x, "r": cell.y, "t": 3.0, "max": 3.0})

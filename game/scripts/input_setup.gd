@@ -2,8 +2,19 @@ extends Node
 ## Legt alle Eingabe-Aktionen im Code an (Tastatur + Controller).
 ## Später kann ein Optionsmenü die InputMap zur Laufzeit umbelegen.
 
+## true, wenn zuletzt ein Controller benutzt wurde (für Tastensymbole)
+var pad := false
+
+
 func _ready() -> void:
 	setup()
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventJoypadButton or (event is InputEventJoypadMotion and absf(event.axis_value) > 0.5):
+		pad = true
+	elif event is InputEventKey or event is InputEventMouseButton:
+		pad = false
 
 
 static func setup() -> void:
@@ -18,6 +29,7 @@ static func setup() -> void:
 	_add("special", [KEY_SPACE], [JOY_BUTTON_A], [[JOY_AXIS_TRIGGER_RIGHT, 1.0]])
 	_add("confirm", [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE, KEY_J], [JOY_BUTTON_A], [])
 	_add("pause", [KEY_ESCAPE, KEY_TAB], [JOY_BUTTON_START, JOY_BUTTON_BACK], [])
+	_add("back", [KEY_ESCAPE, KEY_BACKSPACE], [JOY_BUTTON_B], [])
 
 
 static func _add(action: String, keys: Array, buttons: Array, axes: Array) -> void:
