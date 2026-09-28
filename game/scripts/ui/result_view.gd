@@ -34,13 +34,15 @@ func _draw() -> void:
 	var r := Rect2(120, 30, 400, 300)
 	_box(r, GameData.COL.panel, GameData.COL.sun if won else GameData.COL.coral)
 	_text(r.position + Vector2(0, 32), "Zone gesäubert!" if won else "Run verloren", 16, GameData.COL.sun if won else GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-	var sub := "Der Pop-Up-Tyrann ist defragmentiert. Die %s atmen auf." % run.map.zone_name if won else "%s braucht eine Pause. Beim nächsten Mal klappt es!" % run.species
+	var sub := "Der Pop-Up-Tyrann ist defragmentiert. Die %s atmen auf." % run.map.zone_name if won else "%s braucht eine Pause. Beim nächsten Mal klappt es!" % run.form
 	_text(r.position + Vector2(0, 50), sub, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	_text(r.position + Vector2(0, 68), "Etage %d/%d · Kämpfe %d · Chips %d · Fragmente %d" % [maxi(0, run.floor_idx + 1), run.map.floors.size(), run.fights_won, run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	_text(r.position + Vector2(24, 96), "Prägung in diesem Run", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	var total := 0
 	for k in run.praeg:
 		total += run.praeg[k]
+	if run.form != run.species:
+		_text(r.position + Vector2(24, 96), "Entwickelt: %s → %s" % [run.species, run.form], 8, GameData.EL[run.form_el()], HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 48)
 	var y := r.position.y + 110
 	for el in GameData.EL:
 		var n: int = run.praeg.get(el, 0)
@@ -49,6 +51,6 @@ func _draw() -> void:
 		_text(Vector2(r.position.x + 340, y + 8), str(n), 8)
 		y += 16
 	var bob := 1 if sin(anim_t * 4.0) > 0 else 0
-	_draw_sprite("pixi", r.get_center().x, r.end.y - 44, false, {"bob": bob if won else 0, "blink": fmod(anim_t, 3.0) < 0.13})
+	_draw_sprite(run.form, r.get_center().x, r.end.y - 44, false, {"bob": bob if won else 0, "blink": fmod(anim_t, 3.0) < 0.13})
 	var pad: bool = InputSetup.pad
 	_text(Vector2(r.position.x, r.end.y - 22), "%s Neuer Run    %s Titel" % ["A" if pad else "Enter", "B" if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)

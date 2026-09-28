@@ -96,7 +96,7 @@ func _draw() -> void:
 	var bob := 1 if sin(anim_t * 4.0) > 0 else 0
 	var blink := fmod(anim_t, 3.4) < 0.13
 	_shadow(W / 2.0, 238, 40)
-	_draw_sprite("pixi", W / 2.0, 238, false, {"scale": 3, "bob": bob, "blink": blink})
+	_draw_sprite("Pixmiez", W / 2.0, 238, false, {"scale": 3, "bob": bob, "blink": blink})
 	_draw_sprite("bug", 110, 250, true, {"bob": 1 - bob, "mod": Color(1, 1, 1, 0.55)})
 	_draw_sprite("moth", 530, 250, true, {"bob": bob, "mod": Color(1, 1, 1, 0.55)})
 

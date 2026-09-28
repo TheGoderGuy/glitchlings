@@ -4,8 +4,11 @@ extends RefCounted
 
 const ELITE_WEIGHT := {"Gewöhnlich": 2, "Selten": 4, "Episch": 2}
 
-var species: String
-var mon: Dictionary
+var species: String      # Linie (Baby-Name)
+var mon: Dictionary       # Baby-Werte der Linie
+var form: String          # aktuelle Form (nach Evolution z. B. Blazebit)
+var stage := 1            # 1 Baby, 2 Rookie, 3 Champion
+var eis := 0              # gespielte Eisfeld-Chips (Tröpfel → Frostbyte)
 var max_hp: int
 var hp: int
 var deck: Array = []
@@ -25,6 +28,7 @@ var rng := RandomNumberGenerator.new()
 func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
 	species = sp
 	mon = GameData.MONS[sp]
+	form = sp
 	max_hp = mon.hp
 	hp = max_hp
 	deck = mon.deck.duplicate()
@@ -33,6 +37,63 @@ func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
 	else:
 		rng.randomize()
 	map = ZoneMap.generate(rng)
+
+
+# ---------- Form & Evolution ----------
+
+func special() -> Dictionary:
+	return GameData.SPECIALS[form]
+
+
+func form_el() -> String:
+	return GameData.FORMS[form].el
+
+
+## Ziel der nächsten Evolution nach aktueller Prägung (leer = noch keine Richtung).
+func evo_target() -> String:
+	if stage == 1:
+		if mon.has("ice") and eis >= 4:
+			return mon.ice
+		var non_neutral := 0
+		var kinds := 0
+		var top := 0
+		for el in praeg:
+			if el != "Neutral":
+				non_neutral += praeg[el]
+				kinds += 1
+				top = maxi(top, praeg[el])
+		# Geheim-Evolution: bunt gemischt, kein Element über 30 %
+		if mon.has("secret") and non_neutral >= 12 and kinds >= 4 and top <= non_neutral * 0.3:
+			return mon.secret
+		var best := ""
+		for el in mon.evo:
+			if praeg.get(el, 0) > 0 and (best == "" or praeg[el] > praeg[best]):
+				best = el
+		return mon.evo[best] if best != "" else ""
+	return GameData.FORMS[form].up
+
+
+## Prägung, die für die nächste Stufe nötig ist (0 = Endstufe).
+func evo_need() -> int:
+	if stage == 1 or (stage == 2 and GameData.FORMS[form].up != ""):
+		return GameData.EVO_AT[stage + 1]
+	return 0
+
+
+## Entwickelt sich, wenn genug Prägung da ist. Gibt {from, to} zurück oder {}.
+func try_evolve() -> Dictionary:
+	var need := evo_need()
+	if need == 0 or chips_used < need:
+		return {}
+	var target := evo_target()
+	if target == "":
+		return {}
+	var old := form
+	form = target
+	stage += 1
+	max_hp += 10
+	hp += 10
+	return {"from": old, "to": target}
 
 
 # ---------- Karte ----------

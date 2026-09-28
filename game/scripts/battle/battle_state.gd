@@ -41,6 +41,10 @@ var since_hit := 0.0
 var reflex := 0
 var in_special := false
 var jump_t := 0.0
+var special_anim := ""
+var special_t := 0.0
+var combo := 0
+var regen_t := 1.0
 var banner := {}
 var status := ""
 var over := false
@@ -61,7 +65,7 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	for i in 3:
 		hand.append({"chip": _draw_one(), "rem": 0.0, "max": 1.0, "queued": false})
 	if mon.passive == "Katzenreflex":
-		reflex = 1
+		reflex = 2 if run.stage >= 3 else 1
 	if run.sp_bonus:
 		run.sp_bonus = false
 		sp = 50.0
@@ -137,32 +141,82 @@ func use_slot(i: int) -> void:
 	var ch: Dictionary = GameData.CHIPS[id]
 	run.praeg[ch.el] = run.praeg.get(ch.el, 0) + 1
 	run.chips_used += 1
+	if id == "Eisfeld":
+		run.eis += 1
 	disc.append(id)
 	var nx := _draw_one()
 	s.chip = nx
 	s.max = GameData.CHIPS[nx].cd if nx != "" else 1.0
 	s.rem = s.max
 	_apply_chip(id)
+	# Übermut: jeder 3. Chip halbiert die Ladezeit der anderen
+	if mon.passive == "Übermut":
+		combo += 1
+		if combo % 3 == 0:
+			for j in hand.size():
+				if j != i and hand[j].chip != "":
+					hand[j].rem *= 0.5
+			float_at(p.c, p.r, "Übermut!", GameData.EL.Feuer)
 
 
 func use_special() -> void:
 	if over or sp < 100:
 		return
+	var S: Dictionary = run.special()
 	sp = 0.0
 	events.append("special")
-	banner = {"text": mon.special + "!", "color": GameData.EL[mon.special_el], "t": 1.1, "max": 1.1}
+	banner = {"text": S.name + "!", "color": GameData.EL[S.el], "t": 1.1, "max": 1.1}
 	shake = maxf(shake, 9.0)
-	jump_t = SPECIAL_JUMP
-	burst(p.c + 0.5, p.r + 0.5, Color("#C9B8FF"), 16)
-	# Der Kratzer landet auf dem Höhepunkt des Sprungs
-	delayed.append({"t": SPECIAL_JUMP * 0.5, "fn": _special_hit.bind(40, mon.special_el), "mark": false})
+	special_anim = S.anim
+	special_t = SPECIAL_JUMP
+	if S.anim == "jump":
+		jump_t = SPECIAL_JUMP
+	burst(p.c + 0.5, p.r + 0.5, GameData.EL[S.el].lightened(0.3), 16)
+	# Selbst-Effekte sofort
+	if S.has("recharge"):
+		for s in hand:
+			if s.chip != "":
+				s.rem = 0.0
+	if S.has("oc"):
+		oc = maxf(oc, S.oc)
+	if S.has("shield"):
+		shield = maxf(shield, S.shield)
+	if S.has("bubble"):
+		bubble = maxi(bubble, S.bubble)
+		bubble_t = maxf(bubble_t, S.bubble_t)
+	if S.has("heal"):
+		var h := run.heal(S.heal)
+		float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
+	# Treffer: beim Sprung auf dem Höhepunkt, sonst sofort, mehrere im Abstand von 0,15 s
+	var t0 := SPECIAL_JUMP * 0.5 if S.anim == "jump" else 0.05
+	for k in S.hits.size():
+		delayed.append({"t": t0 + k * 0.15, "fn": _special_hit.bind(S, k == S.hits.size() - 1, S.hits[k]), "mark": false})
 
 
-func _special_hit(d: int, el: String) -> void:
-	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[el], 18)
+func _special_hit(S: Dictionary, last: bool, d: int) -> void:
+	match S.anim:
+		"row":
+			for c in 3:
+				fx_cell(3 + c, e.r, GameData.EL[S.el], 0.35)
+		"field":
+			for c in 3:
+				for r in 3:
+					fx_cell(3 + c, r, GameData.EL[S.el], 0.35)
+	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[S.el], 18)
 	in_special = true
-	hit_enemy(d, el)
+	hit_enemy(d, S.el)
 	in_special = false
+	if over or not last:
+		return
+	if S.has("burn"):
+		e.burn = maxi(e.burn, S.burn)
+	if S.has("poison"):
+		e.poison = maxi(e.poison, S.poison)
+	if S.has("stun"):
+		e.frozen = maxf(e.frozen, S.stun)
+		float_at(3 + e.c, e.r, "Betäubt", GameData.EL[S.el])
+	if S.has("knock") and e.c < 2:
+		e.c += 1
 
 
 # ---------- Chips ----------
@@ -394,6 +448,12 @@ func _update_logic(dt: float) -> void:
 	if oc > 0:
 		oc -= dt
 	since_hit += dt
+	if mon.passive == "Regeneration" and since_hit >= 3.0 and run.hp < run.max_hp:
+		regen_t -= dt
+		if regen_t <= 0:
+			regen_t = 1.0
+			var h := run.heal(2 if run.stage >= 3 else 1)
+			float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
 
 	var rate: float = mon.rech * (2.0 if oc > 0 else 1.0)
 	for s in hand:
@@ -537,6 +597,7 @@ func _update_fx(dt: float) -> void:
 	e.flash = maxf(0.0, e.flash - dt)
 	shake = maxf(0.0, shake - dt * 30.0)
 	jump_t = maxf(0.0, jump_t - dt)
+	special_t = maxf(0.0, special_t - dt)
 	if not banner.is_empty():
 		banner.t -= dt
 		if banner.t <= 0:

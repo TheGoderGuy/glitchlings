@@ -2,9 +2,10 @@ extends Node
 ## Ablauf des Spiels: Titel → Karte → Knoten (Kampf/Raum) → Karte … → Boss → Ergebnis.
 ##
 ## Screenshot-Modus (Argumente nach „--“):
-##   --shot=<pfad.png> --mode=title|options|map|event|rest|shop|fight|pick|pause|result [--floor=N] [--sim=S] [--pad]
+##   --shot=<pfad.png> --mode=title|options|starter|map|event|rest|shop|fight|pick|pause|result [--floor=N] [--sim=S] [--mon=Art] [--form=Form] [--t=S] [--pad]
 
 const TitleScreen := preload("res://scripts/ui/title.gd")
+const StarterScreen := preload("res://scripts/ui/starter_view.gd")
 const MapScreen := preload("res://scripts/ui/map_view.gd")
 const RoomScreen := preload("res://scripts/ui/room_view.gd")
 const ResultScreen := preload("res://scripts/ui/result_view.gd")
@@ -31,12 +32,19 @@ func _swap(node: Node) -> void:
 
 func show_title() -> void:
 	var t := TitleScreen.new()
-	t.start_run.connect(start_run)
+	t.start_run.connect(show_starters)
 	_swap(t)
 
 
-func start_run(seed_value := -1) -> void:
-	run = RunState.new("Pixmiez", seed_value)
+func show_starters() -> void:
+	var s := StarterScreen.new()
+	s.chosen.connect(start_run)
+	s.back.connect(show_title)
+	_swap(s)
+
+
+func start_run(species := "Pixmiez", seed_value := -1) -> void:
+	run = RunState.new(species, seed_value)
 	show_map()
 
 
@@ -75,7 +83,7 @@ func _battle_finished(won: bool) -> void:
 func show_result(won: bool) -> void:
 	var r := ResultScreen.new()
 	r.setup(run, won)
-	r.new_run.connect(start_run)
+	r.new_run.connect(show_starters)
 	r.to_title.connect(show_title)
 	_swap(r)
 
@@ -86,24 +94,29 @@ func _screenshot(shot: Dictionary) -> void:
 	InputSetup.pad = shot.get("pad", false)
 	seed(7)
 	var mode: String = shot.get("mode", "title")
-	run = RunState.new("Pixmiez", 7)
+	run = RunState.new(shot.get("mon", "Pixmiez"), 7)
 	# auf der Karte bis zur gewünschten Etage vorlaufen (immer erster Weg)
 	var floors: int = shot.get("floor", 0)
 	for f in floors:
 		run.enter(run.next_choices()[0])
 	run.frag = 55
+	if shot.has("form"):
+		run.form = shot.form
+		run.stage = GameData.FORMS[run.form].stage
 	match mode:
 		"title", "options":
 			show_title()
 			if mode == "options":
 				current.page = TitleScreen.Page.OPTIONS
+		"starter":
+			show_starters()
 		"map":
 			show_map()
 		"event", "rest", "shop":
 			run.enter(run.next_choices()[0])
 			run.current_node().type = mode
 			_enter_node()
-		"fight", "pick", "pause":
+		"fight", "pick", "pause", "evolve":
 			run.enter(run.next_choices()[0])
 			if floors >= run.map.boss_floor() - 1:
 				run.current_node().type = "boss"
@@ -115,6 +128,8 @@ func _screenshot(shot: Dictionary) -> void:
 				current.show_pick_for_screenshot()
 			elif mode == "pause":
 				current.show_pause_for_screenshot()
+			elif mode == "evolve":
+				current.show_evolve_for_screenshot(shot.get("t", 2.6))
 		"result":
 			run.praeg = {"Neutral": 14, "Code": 3, "Licht": 4}
 			show_result(false)

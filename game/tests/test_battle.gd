@@ -18,6 +18,9 @@ func _init() -> void:
 	test_special()
 	test_pop_close()
 	test_choices()
+	test_evolution()
+	test_all_specials()
+	test_passives()
 	test_map()
 	test_rooms()
 	test_elite_scaling()
@@ -156,6 +159,89 @@ func test_choices() -> void:
 	check(ch.size() == 3 and ch[0] != ch[1] and ch[1] != ch[2] and ch[0] != ch[2], "Chipwahl: 3 verschiedene Chips")
 
 
+func test_evolution() -> void:
+	var run := RunState.new("Pixmiez", 1)
+	run.chips_used = GameData.EVO_AT[2] - 1
+	run.praeg = {"Neutral": 20, "Feuer": 4}
+	check(run.try_evolve().is_empty(), "Unter der Schwelle keine Evolution")
+	run.chips_used = GameData.EVO_AT[2]
+	var ev := run.try_evolve()
+	check(ev.get("to", "") == "Blazebit" and run.stage == 2 and run.max_hp == 110, "Feuer-Prägung: Pixmiez → Blazebit, +10 max. HP")
+	run.chips_used = GameData.EVO_AT[3]
+	check(run.try_evolve().get("to", "") == "Glutluchs" and run.stage == 3, "Champion-Schwelle: Blazebit → Glutluchs")
+	check(run.try_evolve().is_empty(), "Champion ohne weitere Stufe bleibt")
+	var run2 := RunState.new("Pixmiez", 1)
+	run2.chips_used = 30
+	run2.praeg = {"Neutral": 30}
+	check(run2.try_evolve().is_empty(), "Nur neutrale Chips: noch keine Richtung, keine Evolution")
+	var run3 := RunState.new("Pixmiez", 1)
+	run3.chips_used = 30
+	run3.praeg = {"Feuer": 3, "Code": 3, "Wasser": 3, "Virus": 3}
+	check(run3.try_evolve().get("to", "") == "Prismiez", "Bunt gemischt (je ≤ 30 %): geheime Evolution Prismiez")
+	var run4 := RunState.new("Tröpfel", 1)
+	run4.chips_used = GameData.EVO_AT[2]
+	run4.praeg = {"Wasser": 10}
+	run4.eis = 4
+	check(run4.try_evolve().get("to", "") == "Frostbyte", "Tröpfel mit 4× Eisfeld → Frostbyte")
+	var run5 := RunState.new("Funkling", 1)
+	run5.chips_used = GameData.EVO_AT[2]
+	run5.praeg = {"Feuer": 5, "Code": 9}
+	check(run5.try_evolve().get("to", "") == "Overclocko", "Funkling mit mehr Code als Feuer → Overclocko")
+	var ok := true
+	for f in GameData.FORMS:
+		if not GameData.SPECIALS.has(f) or not ResourceLoader.exists("res://assets/sprites/%s.png" % GameData.FORMS[f].spr):
+			ok = false
+			printerr("    fehlt: ", f)
+	check(ok, "Jede Form hat Sprite und Signatur-Attacke (%d Formen)" % GameData.FORMS.size())
+
+
+func test_all_specials() -> void:
+	var ok := true
+	for f in GameData.SPECIALS:
+		var run := RunState.new("Pixmiez", 1)
+		run.form = f
+		var st := BattleState.new(run, GameData.FOES[3])  # Boss: genug HP, um alle Treffer zu zählen
+		st.e.frozen = 999.0
+		st.sp = 100.0
+		st.use_special()
+		step(st, 1.2)
+		var S: Dictionary = GameData.SPECIALS[f]
+		var expected := 0
+		for d in S.hits:
+			expected += roundi(d * GameData.mult(S.el, "Virus"))
+		var dealt: int = 320 - st.e.hp
+		# Brand/Gift ticken in 1,2 s höchstens einmal mit
+		if dealt < expected or dealt > expected + 9:
+			ok = false
+			printerr("    %s: erwartet %d, verursacht %d" % [f, expected, dealt])
+	check(ok, "Alle %d Signatur-Attacken treffen mit ihrem vollen Schaden" % GameData.SPECIALS.size())
+
+
+func test_passives() -> void:
+	var run := RunState.new("Tröpfel", 1)
+	var st := BattleState.new(run, GameData.FOES[0])
+	st.e.frozen = 999.0
+	run.hp = 100
+	step(st, 5.2)
+	check(run.hp == 102 or run.hp == 103, "Regeneration: nach 3 s ohne Treffer ~1 HP/s (100 → %d)" % run.hp)
+	var run2 := RunState.new("Funkling", 1)
+	var st2 := BattleState.new(run2, GameData.FOES[0])
+	st2.e.frozen = 999.0
+	st2.hand[0].chip = "Firewall"
+	st2.hand[1].chip = "Firewall"
+	st2.hand[2].chip = "Firewall"
+	st2.use_slot(0)
+	st2.use_slot(1)
+	var before: float = st2.hand[0].rem
+	st2.use_slot(2)
+	check(absf(st2.hand[0].rem - before * 0.5) < 0.01, "Übermut: 3. Chip halbiert die Ladezeit der anderen")
+	var run3 := RunState.new("Pixmiez", 1)
+	run3.form = "Glutluchs"
+	run3.stage = 3
+	var st3 := BattleState.new(run3, GameData.FOES[0])
+	check(st3.reflex == 2, "Katzenreflex ab Champion: zwei Ausweicher")
+
+
 func test_map() -> void:
 	var ok_reach := true
 	var ok_edges := true
@@ -245,10 +331,13 @@ func test_simulated_runs() -> void:
 	var stuck := 0
 	var total_time := 0.0
 	var fights := 0
-	var runs := 40
+	var runs := 45
+	var stages := {}
+	var chips_total := 0
+	var forms := {}
 	for seed_value in runs:
 		seed(seed_value)
-		var run := RunState.new("Pixmiez", seed_value)
+		var run := RunState.new(["Pixmiez", "Funkling", "Tröpfel"][seed_value % 3], seed_value)
 		var bot := BattleBot.new(0.25)
 		var won := false
 		while true:
@@ -276,14 +365,19 @@ func test_simulated_runs() -> void:
 				if node.type == "boss":
 					won = true
 					break
+				run.try_evolve()
 				run.heal(10)
 				run.deck.append(run.roll_choices()[0])
 			else:
 				_auto_room(run, node)
 		if won:
 			wins += 1
+		stages[run.stage] = stages.get(run.stage, 0) + 1
+		chips_total += run.chips_used
+		forms[run.form] = true
 	check(stuck == 0, "Kein Kampf hängt (180 s Limit)")
 	print("  info    Autopilot (0,25 s Reaktion): %d/%d Runs gewonnen, Ø %.1f Kämpfe und %.0f s Kampfzeit pro Run" % [wins, runs, float(fights) / runs, total_time / runs])
+	print("  info    Endstufen: %s · Ø %.0f Chips pro Run · Formen: %s" % [stages, float(chips_total) / runs, forms.keys()])
 
 
 ## Autopilot für Räume: erste freigeschaltete Option, beim Entfernen den ersten Chip.

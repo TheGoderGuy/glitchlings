@@ -167,7 +167,7 @@ func _draw() -> void:
 	var bob := 1 if sin(anim_t * 4.0) > 0 else 0
 	var blink := fmod(anim_t, 3.4) < 0.13
 	draw_rect(Rect2(40, 262, 80, 4), Color(0.05, 0.02, 0.12, 0.35))
-	_draw_sprite("pixi", 80, 264, false, {"bob": bob, "blink": blink})
+	_draw_sprite(run.form, 80, 264, false, {"bob": bob, "blink": blink})
 	_text(Vector2(8, 290), "HP %d/%d" % [run.hp, run.max_hp], 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, 144)
 	_text(Vector2(8, 304), "Fragmente %d" % run.frag, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, 144)
 	_text(Vector2(8, 318), "Deck %d Chips" % run.deck.size(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 144)

@@ -16,8 +16,11 @@ const CARD_H := 46
 const HAND_Y := 306
 const HAND_X := 57
 const HEAL_AFTER_FIGHT := 10
+const BABY_SCALE := 1     # Babys (32 px) im Kampf in Originalgröße, damit die Evolution sichtbar wächst
 
-enum Mode { FIGHT, PAUSE, PICK }
+enum Mode { FIGHT, PAUSE, EVOLVE, PICK }
+
+const EVO_REVEAL := 1.8   # Sekunden bis zur Enthüllung der neuen Form
 
 const PAUSE_ITEMS := ["Weiter", "Aufgeben"]
 
@@ -31,6 +34,7 @@ var pick_idx := 1
 var pause_idx := 0
 var heal_info := 0
 var mode_t := 0.0     # Zeit im aktuellen Modus (Eingabesperre gegen versehentliches Durchdrücken)
+var evo := {}
 
 
 func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
@@ -47,6 +51,12 @@ func _fight_over() -> void:
 		finished.emit(st.outcome == "won")
 		set_process(false)
 		return
+	if mode != Mode.EVOLVE:
+		evo = run.try_evolve()
+		if not evo.is_empty():
+			_set_mode(Mode.EVOLVE)
+			Sfx.play("charge", 0.0)
+			return
 	heal_info = run.heal(HEAL_AFTER_FIGHT)
 	choices = run.roll_choices(RunState.ELITE_WEIGHT if node_type == "elite" else GameData.RARITY_WEIGHT)
 	pick_idx = 1
@@ -70,6 +80,14 @@ func _set_mode(m: Mode) -> void:
 func _process(delta: float) -> void:
 	anim_t += delta
 	mode_t += delta
+	if mode == Mode.EVOLVE:
+		if mode_t - delta < EVO_REVEAL and mode_t >= EVO_REVEAL:
+			Sfx.play("evolve", 0.0)
+		if mode_t > EVO_REVEAL + 0.6 and Input.is_action_just_pressed("confirm"):
+			Sfx.play("confirm")
+			_fight_over()
+		queue_redraw()
+		return
 	if mode == Mode.PICK and mode_t < 0.5:
 		queue_redraw()
 		return
@@ -168,6 +186,9 @@ func _draw() -> void:
 	_draw_background(st != null and st.def.boss)
 	if st == null:
 		return
+	if mode == Mode.EVOLVE:
+		_draw_evolve()
+		return
 	if st.shake > 0 and Settings.screen_shake:
 		var s := st.shake * 0.5
 		off = Vector2(roundi(randf_range(-s, s)), roundi(randf_range(-s, s)))
@@ -240,7 +261,7 @@ func _shadow(cx: float, y: float, w: int) -> void:
 func _draw_actors() -> void:
 	var p: Dictionary = st.p
 	var e: Dictionary = st.e
-	var mkey: String = st.mon.spr
+	var mkey: String = run.form
 	var bob_p := 1 if sin(anim_t * 4.0) > 0 else 0
 	var bob_e := 1 if sin(anim_t * 4.0 + 1.6) > 0 else 0
 	var blink_p := fmod(anim_t + 0.3, 3.2) < 0.13
@@ -255,7 +276,7 @@ func _draw_actors() -> void:
 		pcx = lerpf(pcx, gx(3 + e.c) + CW / 2.0 - 30, u)
 		pfy = lerpf(pfy, feet_y(e.r), u) - u * 26.0
 	_shadow(gx(p.c) + CW / 2.0, feet_y(p.r), 30)
-	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p})
+	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1})
 	var body := Vector2(gx(p.c) + CW / 2.0, feet_y(p.r) - 24)
 	if st.shield > 0:
 		for i in 12:
@@ -360,8 +381,8 @@ func _draw_hud() -> void:
 	# Spieler links
 	var P := Rect2(8, 8, 200, 34)
 	_box(P, Color(GameData.COL.panel, 0.9), GameData.COL.line)
-	_text(P.position + Vector2(6, 12), run.species, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	_text(P.position + Vector2(6, 12), "%s · %s" % [st.mon.stage, st.mon.el], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
+	_text(P.position + Vector2(6, 12), run.form, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	_text(P.position + Vector2(6, 12), "%s · %s" % [GameData.STAGE_NAMES[run.stage], run.form_el()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
 	_bar(Rect2(P.position + Vector2(6, 18), Vector2(128, 9)), float(run.hp) / run.max_hp, GameData.COL.mint)
 	_text(P.position + Vector2(6, 26), "%d/%d" % [run.hp, run.max_hp], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
 	if st.reflex > 0:
@@ -425,7 +446,8 @@ func _draw_hand() -> void:
 	# Signatur-Attacke
 	var R := Rect2(HAND_X + 3 * (CARD_W + 6), HAND_Y, 100, CARD_H)
 	var full := st.sp >= 100
-	var sel: Color = GameData.EL[st.mon.special_el]
+	var S: Dictionary = run.special()
+	var sel: Color = GameData.EL[S.el]
 	var pulse := full and sin(anim_t * 8.0) > 0
 	_box(R, GameData.COL.panel if full else GameData.COL.bg2, GameData.COL.sun if pulse else GameData.COL.line)
 	var glyph := "A" if InputSetup.pad else "Leer"
@@ -433,7 +455,7 @@ func _draw_hand() -> void:
 	_box(g2, GameData.COL.dark, GameData.COL.sun if full else GameData.COL.line)
 	_text(g2.position + Vector2(1, 11), glyph, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g2.size.x, false, true)
 	_text(R.position + Vector2(g2.size.x + 10, 16), "Signatur", 8, GameData.COL.sun if full else GameData.COL.muted)
-	_text(R.position + Vector2(6, 33), st.mon.special, 8, GameData.COL.ink if full else GameData.COL.muted)
+	_text(R.position + Vector2(6, 33), S.name, 8, GameData.COL.ink if full else GameData.COL.muted)
 	_bar(Rect2(R.position + Vector2(6, R.size.y - 8), Vector2(R.size.x - 12, 5)), st.sp / 100.0, GameData.COL.sun if full else sel.darkened(0.2))
 
 
@@ -474,9 +496,49 @@ func _draw_pick() -> void:
 		var stats: String = ch.cat + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %.1fs" % ch.cd
 		_text(c.position + Vector2(0, 52), stats, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		draw_multiline_string(font(), c.position + Vector2(8, 74), ch.desc, HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, 8, 5, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
-	_text(Vector2(r.position.x, r.end.y - 36), "Deck: %d Chips · Fragmente: %d" % [run.deck.size(), run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	var need := run.evo_need()
+	var evo_line := ""
+	if need > 0:
+		var tgt := run.evo_target()
+		evo_line = " · Prägung %d/%d%s" % [run.chips_used, need, (" · Richtung " + GameData.FORMS[tgt].el) if tgt != "" else ""]
+	_text(Vector2(r.position.x, r.end.y - 36), "Deck: %d Chips · Fragmente: %d%s" % [run.deck.size(), run.frag, evo_line], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	var pad: bool = InputSetup.pad
 	_text(Vector2(r.position.x, r.end.y - 16), "< > wählen   %s nehmen   %s überspringen" % ["A" if pad else "Enter", "B" if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+
+
+func _draw_evolve() -> void:
+	var t := mode_t
+	var c := Vector2(W / 2.0, 220)
+	var from: String = evo.from
+	var to: String = evo.to
+	var el: Color = GameData.EL[GameData.FORMS[to].el]
+	# Lichtsäule
+	var glow := clampf(t / EVO_REVEAL, 0.0, 1.0)
+	draw_rect(Rect2(c.x - 40 * glow, 0, 80 * glow, H), Color(el, 0.12 * glow))
+	for i in 12:
+		var a := i * TAU / 12.0 + t * 2.0
+		var rad := 70.0 - fmod(t * 40.0 + i * 13.0, 60.0)
+		draw_rect(Rect2(c + Vector2(cos(a), sin(a) * 0.5) * rad - Vector2(1, 60), Vector2(2, 2)), el.lightened(0.4))
+	if t < EVO_REVEAL:
+		# Wechsel zwischen alter und neuer Silhouette, immer schneller
+		var freq := 2.0 + t * t * 6.0
+		var show_new := fmod(t * freq, 1.0) > 0.5
+		var key := to if show_new else from
+		_draw_sprite(key, c.x, c.y, false, {"flash": true, "scale": 2 if GameData.FORMS[key].stage == 1 else 1})
+		_text(Vector2(0, 60), "%s entwickelt sich …" % from, 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	else:
+		var k := t - EVO_REVEAL
+		if k < 0.25:
+			draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 1.0 - k / 0.25))
+		var bob := 1 if sin(anim_t * 4.0) > 0 else 0
+		_draw_sprite(to, c.x, c.y, false, {"bob": bob})
+		_text(Vector2(0, 60), "%s ist jetzt %s!" % [from, to], 16, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		var S: Dictionary = GameData.SPECIALS[to]
+		_text(Vector2(0, 80), "%s · %s · +10 max. HP" % [GameData.STAGE_NAMES[run.stage], GameData.FORMS[to].el], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+		_text(Vector2(0, 256), "Neue Signatur: " + S.name, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 270), S.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
+		if k > 0.6:
+			_text(Vector2(0, 300), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 ## Für Screenshots/Tests: den Kampf mit Autopilot vorspulen.
@@ -496,6 +558,15 @@ func show_pick_for_screenshot() -> void:
 	st.over = true
 	st.outcome = "won"
 	_fight_over()
+
+
+func show_evolve_for_screenshot(t: float) -> void:
+	st.over = true
+	st.outcome = "won"
+	run.chips_used = maxi(run.chips_used, GameData.EVO_AT[2])
+	run.praeg["Feuer"] = run.praeg.get("Feuer", 0) + 9
+	_fight_over()
+	mode_t = t
 
 
 func show_pause_for_screenshot() -> void:

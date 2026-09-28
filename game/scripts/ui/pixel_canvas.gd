@@ -86,7 +86,8 @@ func _menu(items: Array, sel: int, center_x: float, y: float, width := 200.0) ->
 
 # ---------- Sprites ----------
 
-const SPRITE_FILES := {"pixi": "pixi_32", "bug": "bug_64", "moth": "moth_64", "spam": "spam_64", "boss": "boss_96"}
+## Gegner-Sprites; Monster-Formen stehen in GameData.FORMS
+const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "spam": "spam_64", "boss": "boss_96"}
 static var _sprites := {}
 
 
@@ -94,7 +95,7 @@ static var _sprites := {}
 static func sprite(key: String) -> Dictionary:
 	if _sprites.has(key):
 		return _sprites[key]
-	var file: String = SPRITE_FILES[key]
+	var file: String = SPRITE_FILES[key] if SPRITE_FILES.has(key) else GameData.FORMS[key].spr
 	var tex: Texture2D = load("res://assets/sprites/%s.png" % file)
 	var blink_path := "res://assets/sprites/%s_blink.png" % file
 	var blink: Texture2D = load(blink_path) if ResourceLoader.exists(blink_path) else tex

@@ -131,10 +131,9 @@ func _draw() -> void:
 			var ic := Color(col, 0.35 if past else (1.0 if (visited or selectable or n.type == "boss") else 0.6))
 			_icon(ICONS[n.type], r.get_center(), 2 if n.type == "boss" else 1, ic)
 			if here:
-				_draw_sprite("pixi", p.x + 24, p.y + 10, false, {"scale": 1, "bob": 1 if sin(anim_t * 4.0) > 0 else 0})
+				_marker(p + Vector2(0, -size / 2.0 - 5))
 	if run.floor_idx < 0:
-		var start := Vector2(node_pos(0, ch[sel]).x, H - 6)
-		_draw_sprite("pixi", start.x, start.y, false, {"scale": 1, "bob": 1 if sin(anim_t * 4.0) > 0 else 0})
+		_marker(Vector2(node_pos(0, ch[sel]).x, H - 16))
 
 	_draw_side_panels(target)
 	if paused:
@@ -148,29 +147,38 @@ func _draw() -> void:
 
 
 func _draw_side_panels(target: Vector2i) -> void:
-	# Links: Run-Status
-	var L := Rect2(8, 44, 150, 118)
+	# Links: Monster + Run-Status
+	var L := Rect2(8, 44, 150, 290)
 	_box(L, Color(GameData.COL.panel, 0.92), GameData.COL.line)
-	_text(L.position + Vector2(8, 14), run.species, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	_bar(Rect2(L.position + Vector2(8, 20), Vector2(L.size.x - 16, 9)), float(run.hp) / run.max_hp, GameData.COL.mint)
-	_text(L.position + Vector2(8, 42), "HP", 8, GameData.COL.muted)
-	_text(L.position + Vector2(8, 42), "%d/%d" % [run.hp, run.max_hp], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
-	_text(L.position + Vector2(8, 58), "Fragmente", 8, GameData.COL.muted)
-	_text(L.position + Vector2(8, 58), str(run.frag), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
-	_text(L.position + Vector2(8, 74), "Deck", 8, GameData.COL.muted)
-	_text(L.position + Vector2(8, 74), "%d Chips" % run.deck.size(), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
-	_text(L.position + Vector2(8, 90), "Etage", 8, GameData.COL.muted)
-	_text(L.position + Vector2(8, 90), "%d/%d" % [maxi(0, run.floor_idx + 1), run.map.floors.size()], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
+	var bob := 1 if sin(anim_t * 4.0) > 0 else 0
+	draw_rect(Rect2(L.position.x + 45, L.position.y + 96, 60, 3), Color(0.05, 0.02, 0.12, 0.35))
+	_draw_sprite(run.form, L.get_center().x, L.position.y + 98, false, {"bob": bob, "blink": fmod(anim_t, 3.3) < 0.13})
+	var y := L.position.y + 116
+	_text(Vector2(L.position.x + 8, y), run.form, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	_text(Vector2(L.position.x + 8, y), GameData.STAGE_NAMES[run.stage], 8, GameData.EL[run.form_el()], HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
+	_bar(Rect2(L.position.x + 8, y + 6, L.size.x - 16, 9), float(run.hp) / run.max_hp, GameData.COL.mint)
+	var rows := [["HP", "%d/%d" % [run.hp, run.max_hp], GameData.COL.ink], ["Fragmente", str(run.frag), GameData.COL.sun],
+		["Deck", "%d Chips" % run.deck.size(), GameData.COL.ink], ["Etage", "%d/%d" % [maxi(0, run.floor_idx + 1), run.map.floors.size()], GameData.COL.ink]]
+	y += 30
+	for row in rows:
+		_text(Vector2(L.position.x + 8, y), row[0], 8, GameData.COL.muted)
+		_text(Vector2(L.position.x + 8, y), row[1], 8, row[2], HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
+		y += 15
+	# Evolution
+	y += 6
+	var need := run.evo_need()
+	if need > 0:
+		var tgt := run.evo_target()
+		_text(Vector2(L.position.x + 8, y), "Prägung", 8, GameData.COL.muted)
+		_text(Vector2(L.position.x + 8, y), "%d/%d" % [mini(run.chips_used, need), need], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
+		var ec: Color = GameData.EL[GameData.FORMS[tgt].el] if tgt != "" else GameData.COL.muted
+		_bar(Rect2(L.position.x + 8, y + 5, L.size.x - 16, 7), float(run.chips_used) / need, ec)
+		var dir: String = ("Richtung " + GameData.FORMS[tgt].el) if tgt != "" else "Richtung offen"
+		_text(Vector2(L.position.x + 8, y + 26), dir, 8, ec)
+	else:
+		_text(Vector2(L.position.x + 8, y), "Höchste Stufe im Run", 8, GameData.COL.muted)
 	if run.sp_bonus:
-		_text(L.position + Vector2(8, 106), "Signatur-Bonus!", 8, GameData.COL.sun)
-	# Legende
-	var G := Rect2(8, 170, 150, 118)
-	_box(G, Color(GameData.COL.bg2, 0.9), GameData.COL.line)
-	var y := G.position.y + 16
-	for t in ["fight", "elite", "event", "rest", "shop", "boss"]:
-		_icon(ICONS[t], Vector2(G.position.x + 16, y - 3), 1, ICON_COL[t])
-		_text(Vector2(G.position.x + 30, y), ZoneMap.TYPE_NAMES[t], 8, GameData.COL.muted)
-		y += 18
+		_text(Vector2(L.position.x + 8, L.end.y - 8), "Signatur-Bonus!", 8, GameData.COL.sun)
 	# Rechts: Auswahl
 	var R := Rect2(W - 158, 44, 150, 150)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
@@ -182,6 +190,22 @@ func _draw_side_panels(target: Vector2i) -> void:
 	var pad: bool = InputSetup.pad
 	var hint := "< > Weg wählen\n%s betreten\n%s Pause + Deck" % ["A" if pad else "Enter", "Start" if pad else "Esc"]
 	draw_multiline_string(font(), Vector2(W - 150, 214), hint, HORIZONTAL_ALIGNMENT_LEFT, 140, 8, 4, GameData.COL.muted)
+	# Legende zweispaltig
+	var G := Rect2(W - 158, 268, 150, 66)
+	_box(G, Color(GameData.COL.bg2, 0.9), GameData.COL.line)
+	var types := ["fight", "elite", "event", "rest", "shop", "boss"]
+	for i in types.size():
+		var gx := G.position.x + 12 + (i % 2) * 72
+		var gy := G.position.y + 16 + (i / 2) * 19
+		_icon(ICONS[types[i]], Vector2(gx, gy - 3), 1, ICON_COL[types[i]])
+		_text(Vector2(gx + 10, gy), ZoneMap.TYPE_NAMES[types[i]].substr(0, 8), 8, GameData.COL.muted)
+
+
+## Positionsmarker: kleiner hüpfender Pfeil in Mint
+func _marker(p: Vector2) -> void:
+	var b := 1 if sin(anim_t * 5.0) > 0 else 0
+	for i in 4:
+		draw_rect(Rect2(p.x - 4 + i, p.y - 6 + i + b, 9 - i * 2, 1), GameData.COL.mint)
 
 
 func _icon(rows: Array, center: Vector2, scale: int, col: Color) -> void:

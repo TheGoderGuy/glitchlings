@@ -14,6 +14,12 @@ static func args() -> Dictionary:
 			shot.floor = int(a.substr(8))
 		elif a.begins_with("--sim="):
 			shot.sim = float(a.substr(6))
+		elif a.begins_with("--mon="):
+			shot.mon = a.substr(6)
+		elif a.begins_with("--form="):
+			shot.form = a.substr(7)
+		elif a.begins_with("--t="):
+			shot.t = float(a.substr(4))
 		elif a == "--pad":
 			shot.pad = true
 	return shot if shot.has("path") else {}
