@@ -11,18 +11,6 @@ var glitch_t := 0.0
 var glitch_off := Vector2i.ZERO
 
 
-func _ready() -> void:
-	var shot := Shot.args()
-	if not shot.is_empty():
-		set_process(false)
-		InputSetup.pad = shot.get("pad", false)
-		anim_t = 1.3
-		if shot.get("mode", "") == "options":
-			page = Page.OPTIONS
-		queue_redraw()
-		await Shot.save(self, shot.path)
-
-
 func _main_items() -> Array:
 	return ["Run starten", "Optionen", "Beenden"]
 

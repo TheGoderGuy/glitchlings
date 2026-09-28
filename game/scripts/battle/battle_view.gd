@@ -1,10 +1,9 @@
 extends PixelCanvas
-## Kampfbildschirm: Ablauf eines Runs (Kampf → Chipwahl → … → Boss → Ergebnis), Eingabe und Zeichnen.
-##
-## Screenshot-Modus (für Tests/Review), Argumente nach „--“:
-##   --shot=<pfad.png> [--mode=fight|pick|pause|result] [--room=0..3] [--sim=<sekunden>] [--pad]
+## Kampfbildschirm eines Karten-Knotens: Kampf → (bei Sieg) Chipwahl → zurück zur Karte.
+## Wird von main.gd mit setup() vorbereitet und meldet sich über Signale zurück.
 
-signal quit_to_title
+signal finished(won: bool)
+signal gave_up
 
 const CW := 80          # Feldbreite
 const CH := 44          # Feldhöhe
@@ -16,65 +15,49 @@ const CARD_W := 136
 const CARD_H := 46
 const HAND_Y := 306
 const HAND_X := 57
+const HEAL_AFTER_FIGHT := 10
 
-enum Mode { FIGHT, PAUSE, PICK, RESULT }
+enum Mode { FIGHT, PAUSE, PICK }
 
 const PAUSE_ITEMS := ["Weiter", "Aufgeben"]
 
 var run: RunState
 var st: BattleState
+var node_type := "fight"
 var mode := Mode.FIGHT
 var end_timer := -1.0
 var choices: Array = []
 var pick_idx := 1
 var pause_idx := 0
 var heal_info := 0
-var won_run := false
-var shot := {}
 var mode_t := 0.0     # Zeit im aktuellen Modus (Eingabesperre gegen versehentliches Durchdrücken)
 
 
-func _ready() -> void:
-	_parse_args()
-	if shot.is_empty():
-		new_run()
-	else:
-		_take_screenshot()
+func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
+	run = run_state
+	node_type = type
+	st = BattleState.new(run, foe)
+	_set_mode(Mode.FIGHT)
 
 
 # ---------- Ablauf ----------
 
-func new_run(seed_value := -1) -> void:
-	run = RunState.new("Pixmiez", seed_value)
-	won_run = false
-	_start_fight()
-
-
-func _start_fight() -> void:
-	st = BattleState.new(run, run.room)
-	_set_mode(Mode.FIGHT)
-	end_timer = -1.0
-
-
 func _fight_over() -> void:
-	if st.outcome == "lost":
-		won_run = false
-		_set_mode(Mode.RESULT)
-	elif run.is_last_room():
-		won_run = true
-		_set_mode(Mode.RESULT)
-	else:
-		heal_info = mini(15, run.max_hp - run.hp)
-		run.hp += heal_info
-		choices = run.roll_choices()
-		pick_idx = 1
-		_set_mode(Mode.PICK)
+	if st.outcome == "lost" or node_type == "boss":
+		finished.emit(st.outcome == "won")
+		set_process(false)
+		return
+	heal_info = run.heal(HEAL_AFTER_FIGHT)
+	choices = run.roll_choices(RunState.ELITE_WEIGHT if node_type == "elite" else GameData.RARITY_WEIGHT)
+	pick_idx = 1
+	_set_mode(Mode.PICK)
 
 
-func _take_pick() -> void:
-	run.deck.append(choices[pick_idx])
-	run.room += 1
-	_start_fight()
+func _take_pick(skip := false) -> void:
+	if not skip:
+		run.deck.append(choices[pick_idx])
+	set_process(false)
+	finished.emit(true)
 
 
 # ---------- Eingabe ----------
@@ -87,7 +70,7 @@ func _set_mode(m: Mode) -> void:
 func _process(delta: float) -> void:
 	anim_t += delta
 	mode_t += delta
-	if (mode == Mode.PICK or mode == Mode.RESULT) and mode_t < 0.5:
+	if mode == Mode.PICK and mode_t < 0.5:
 		queue_redraw()
 		return
 	match mode:
@@ -105,7 +88,8 @@ func _process(delta: float) -> void:
 				if pause_idx == 0:
 					_set_mode(Mode.FIGHT)
 				else:
-					quit_to_title.emit()
+					set_process(false)
+					gave_up.emit()
 		Mode.PICK:
 			if Input.is_action_just_pressed("move_left"):
 				pick_idx = (pick_idx + 2) % 3
@@ -116,13 +100,9 @@ func _process(delta: float) -> void:
 			if Input.is_action_just_pressed("confirm"):
 				Sfx.play("confirm")
 				_take_pick()
-		Mode.RESULT:
-			if Input.is_action_just_pressed("confirm"):
-				Sfx.play("confirm")
-				new_run()
-			elif Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
+			elif Input.is_action_just_pressed("back"):
 				Sfx.play("back")
-				quit_to_title.emit()
+				_take_pick(true)
 	queue_redraw()
 
 
@@ -212,8 +192,6 @@ func _draw() -> void:
 			_draw_pause()
 		Mode.PICK:
 			_draw_pick()
-		Mode.RESULT:
-			_draw_result()
 
 
 func _draw_arena() -> void:
@@ -235,7 +213,7 @@ func _draw_arena() -> void:
 			draw_rect(cell_rect(3 + m.col, r), Color(m.color, 0.35 + 0.3 * sin(anim_t * 30.0)))
 	for w in st.warns:
 		var k: float = 1.0 - w.t / w.max
-		var a := 0.3 + 0.5 * k * (0.6 + 0.4 * sin(anim_t * 28.0))
+		var a := 0.5 + 0.4 * k * (0.6 + 0.4 * sin(anim_t * 28.0))
 		for cell in w.cells:
 			var rect := cell_rect(cell.x, cell.y)
 			draw_rect(rect, Color(GameData.COL.coral, a))
@@ -300,6 +278,8 @@ func _draw_actors() -> void:
 		var tint := Color.WHITE
 		if st.boss_phase() == 3 and sin(anim_t * 14.0) > 0.4:
 			tint = Color("#FF9DB3")
+		elif st.def.get("elite", false):
+			tint = Color(1.0, 0.78, 0.72)
 		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0, "blink": blink_e, "bob": bob_e, "mod": tint})
 		if e.frozen > 0:
 			var rect := cell_rect(3 + e.c, e.r)
@@ -408,7 +388,8 @@ func _draw_hud() -> void:
 		_text(Vector2(tx, 55), tg[0], 8, tg[1], HORIZONTAL_ALIGNMENT_CENTER, w, false)
 		tx -= 3
 	# Raum + Hinweis
-	_text(Vector2(0, 20), "Kampf %d/%d" % [run.room + 1, GameData.FOES.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	var kind: String = ZoneMap.TYPE_NAMES[node_type]
+	_text(Vector2(0, 20), "%s · Etage %d · %s" % [run.map.zone_name, run.floor_idx + 1, kind], 8, GameData.COL.sun if node_type != "fight" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if st.status != "" and st.t < 6.0:
 		_text(Vector2(0, 76), st.status, 8, Color(GameData.COL.sun, clampf(6.0 - st.t, 0.0, 1.0)), HORIZONTAL_ALIGNMENT_CENTER, W)
 
@@ -466,16 +447,7 @@ func _draw_pause() -> void:
 	_panel(r)
 	_text(r.position + Vector2(0, 28), "Pause", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	_text(r.position + Vector2(0, 46), "Dein Deck", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-	var counts := {}
-	for k in run.deck:
-		counts[k] = counts.get(k, 0) + 1
-	var y := r.position.y + 66
-	for k in counts:
-		var el: Color = GameData.EL[GameData.CHIPS[k].el]
-		draw_rect(Rect2(r.position.x + 24, y - 7, 7, 7), el)
-		_text(Vector2(r.position.x + 38, y), "%d× %s" % [counts[k], k], 8)
-		_text(Vector2(r.position.x + 38, y), GameData.CHIPS[k].cat, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 62)
-		y += 14
+	_draw_deck_list(run.deck, r.position.x + 24, r.position.y + 66, r.size.x - 48, 10)
 	_text(Vector2(r.position.x, r.end.y - 62), "Ziehstapel %d · Abwurf %d" % [st.draw_pile.size(), st.disc.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	_menu(PAUSE_ITEMS, pause_idx, r.get_center().x, r.end.y - 50, 160)
 
@@ -502,68 +474,29 @@ func _draw_pick() -> void:
 		var stats: String = ch.cat + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %.1fs" % ch.cd
 		_text(c.position + Vector2(0, 52), stats, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		draw_multiline_string(font(), c.position + Vector2(8, 74), ch.desc, HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, 8, 5, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
-	var nf: Dictionary = GameData.FOES[run.room + 1]
-	_text(Vector2(r.position.x, r.end.y - 36), "Nächster Gegner: %s (%s) · Deck: %d Chips" % [nf.name, nf.el, run.deck.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-	_text(Vector2(r.position.x, r.end.y - 16), "< > wählen   %s nehmen" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-
-
-func _draw_result() -> void:
-	var r := Rect2(120, 36, 400, 288)
-	_panel(r)
-	_text(r.position + Vector2(0, 32), "Run geschafft!" if won_run else "Run verloren", 16, GameData.COL.sun if won_run else GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-	var fights := run.room + (1 if won_run else 0)
-	_text(r.position + Vector2(0, 52), "Kämpfe %d/%d · Chips %d · Fragmente %d" % [fights, GameData.FOES.size(), run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-	_text(r.position + Vector2(24, 80), "Prägung in diesem Run", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	var total := 0
-	for k in run.praeg:
-		total += run.praeg[k]
-	var y := r.position.y + 94
-	for el in GameData.EL:
-		var n: int = run.praeg.get(el, 0)
-		_text(Vector2(r.position.x + 24, y + 8), el, 8, GameData.EL[el])
-		_bar(Rect2(r.position.x + 96, y, 236, 9), float(n) / maxi(1, total), GameData.EL[el])
-		_text(Vector2(r.position.x + 340, y + 8), str(n), 8)
-		y += 16
+	_text(Vector2(r.position.x, r.end.y - 36), "Deck: %d Chips · Fragmente: %d" % [run.deck.size(), run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	var pad: bool = InputSetup.pad
-	_text(Vector2(r.position.x, r.end.y - 30), "%s  Neuer Run" % ("A" if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-	_text(Vector2(r.position.x, r.end.y - 14), "%s  Titelbildschirm" % ("B" if pad else "Esc"), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	_text(Vector2(r.position.x, r.end.y - 16), "< > wählen   %s nehmen   %s überspringen" % ["A" if pad else "Enter", "B" if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 
 
-# ---------- Screenshot-Modus ----------
-
-func _parse_args() -> void:
-	shot = Shot.args()
-	if shot.get("mode", "") in ["title", "options"]:
-		shot = {}
-
-
-func _take_screenshot() -> void:
-	set_process(false)
-	InputSetup.pad = shot.get("pad", false)
-	seed(7)
-	run = RunState.new("Pixmiez", 7)
-	run.room = shot.get("room", 0)
-	_start_fight()
+## Für Screenshots/Tests: den Kampf mit Autopilot vorspulen.
+func simulate(seconds: float) -> void:
 	var bot := BattleBot.new(0.15)
 	var dt := 1.0 / 60.0
-	var sim: float = shot.get("sim", 2.0)
 	var steps := 0
-	while steps * dt < sim and not st.over:
+	while steps * dt < seconds and not st.over:
 		bot.act(st)
 		st.update(dt)
 		anim_t += dt
 		steps += 1
 	st.events.clear()
-	match shot.get("mode", "fight"):
-		"pick":
-			st.over = true
-			st.outcome = "won"
-			_fight_over()
-		"pause":
-			_set_mode(Mode.PAUSE)
-		"result":
-			run.room = 2
-			won_run = false
-			_set_mode(Mode.RESULT)
-	queue_redraw()
-	await Shot.save(self, shot.path)
+
+
+func show_pick_for_screenshot() -> void:
+	st.over = true
+	st.outcome = "won"
+	_fight_over()
+
+
+func show_pause_for_screenshot() -> void:
+	_set_mode(Mode.PAUSE)

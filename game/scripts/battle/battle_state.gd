@@ -48,11 +48,12 @@ var outcome := ""      # "won" / "lost"
 var pend_move = null   # vorgemerkter Schritt (Vector2i), wenn noch Bewegungs-Cooldown läuft
 
 
-func _init(run_state: RunState, foe_index: int) -> void:
+## foe: Gegnerwerte wie in GameData.FOES (für Karten-Knoten per RunState.foe_for skaliert).
+func _init(run_state: RunState, foe: Dictionary) -> void:
 	run = run_state
 	mon = run.mon
 	rng = run.rng
-	def = GameData.FOES[foe_index]
+	def = foe
 	p = {"c": 1, "r": 1, "cd": 0.0, "flash": 0.0}
 	e = {"c": 1, "r": 1, "hp": def.hp, "max": def.hp, "move_t": def.move, "atk_t": def.atk * 0.8,
 		"pi": 0, "frozen": 0.0, "flash": 0.0, "burn": 0, "poison": 0, "dot_t": 1.0, "pop_t": 1.5}
@@ -61,9 +62,14 @@ func _init(run_state: RunState, foe_index: int) -> void:
 		hand.append({"chip": _draw_one(), "rem": 0.0, "max": 1.0, "queued": false})
 	if mon.passive == "Katzenreflex":
 		reflex = 1
+	if run.sp_bonus:
+		run.sp_bonus = false
+		sp = 50.0
 	if def.boss:
 		status = "Boss! Ab der Hälfte seiner HP tauchen Pop-ups auf. Tritt drauf, um sie zu schließen."
-	elif foe_index == 0:
+	elif def.get("elite", false):
+		status = "Elite-Gegner: mehr HP, trifft härter."
+	elif run.fights_won == 0:
 		status = "Rote Felder warnen vor Angriffen. Weiche aus!"
 
 
@@ -331,6 +337,7 @@ func _win() -> void:
 	outcome = "won"
 	events.append("win")
 	run.frag += def.loot
+	run.fights_won += 1
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 24)
 
 

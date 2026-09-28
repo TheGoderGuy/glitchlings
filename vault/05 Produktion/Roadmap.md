@@ -18,7 +18,7 @@ tags: [produktion, roadmap]
 
 ## Phase 2: Ein kompletter Run
 **Frage: Will man direkt noch einen Run starten?**
-- [ ] Zonenkarte mit Verzweigungen (Kampf, Elite, Event, Rast, Boss)
+- [x] Zonenkarte mit Verzweigungen (Kampf, Elite, Ereignis, Rast, Datenhändler, Boss) – 28.09.2026, Details: [[Zonenkarte]]
 - [ ] Chipwahl, Deck-Ansicht, Prägung & Evolution während des Runs
 - [ ] Zone 1 komplett mit Hintergrund und Musik
 

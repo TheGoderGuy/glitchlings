@@ -138,3 +138,21 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 		draw_set_transform(off + Vector2(left, top), 0, Vector2(sc, sc))
 	draw_texture(tex, Vector2.ZERO, mod)
 	draw_set_transform(off)
+
+
+## Deckliste, gruppiert: „3× Pixelstrahl … Angriff“
+func _draw_deck_list(deck: Array, x: float, y: float, w: float, max_rows := 14) -> void:
+	var counts := {}
+	for k in deck:
+		counts[k] = counts.get(k, 0) + 1
+	var row := 0
+	for k in counts:
+		if row >= max_rows:
+			_text(Vector2(x + 14, y), "…", 8, GameData.COL.muted)
+			return
+		var el: Color = GameData.EL[GameData.CHIPS[k].el]
+		draw_rect(Rect2(x, y - 7, 7, 7), el)
+		_text(Vector2(x + 14, y), "%d× %s" % [counts[k], k], 8)
+		_text(Vector2(x + 14, y), GameData.CHIPS[k].cat, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, w - 14)
+		y += 14
+		row += 1

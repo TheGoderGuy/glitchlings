@@ -10,8 +10,8 @@ static func args() -> Dictionary:
 			shot.path = a.substr(7)
 		elif a.begins_with("--mode="):
 			shot.mode = a.substr(7)
-		elif a.begins_with("--room="):
-			shot.room = int(a.substr(7))
+		elif a.begins_with("--floor="):
+			shot.floor = int(a.substr(8))
 		elif a.begins_with("--sim="):
 			shot.sim = float(a.substr(6))
 		elif a == "--pad":
