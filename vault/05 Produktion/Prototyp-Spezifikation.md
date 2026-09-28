@@ -193,3 +193,8 @@ Die Code-Richtungen bekommen Mecha-Champions (80 px, ab 250 Prägung): Firewallo
 Bindung (0–5 Herzen, faire Boni, sinkt nie), Pflege-Ansicht (streicheln, Datenkekse füttern) und Expeditionen (5 Element-Zonen, Echtzeit, Heimvorteil, Prägung als Belohnung). Details: [[Station-Leben]].
 **Beobachten:** Wird die Station jetzt öfter besucht? Fühlt sich Streicheln belohnend an? Sind Expeditionen zu stark?
 **Neu fürs Testen:** `node tools/devserver.js` startet den Prototyp unter http://localhost:8123.
+
+### Playtest 5 (intern, Produzent, 28.09.2026) – Godot-Version
+**Stand:** Kampf-Kern in Godot (Pixmiez, 15 Chips, 3 Gegner + Boss), Pixel-Schrift, synthetisierte Platzhalter-Sounds, Titel, Optionen, Pause.
+**Beobachtung:** Kampfgefühl und Sounds fühlen sich gut an. Damit ist die Frage von Phase 1 beantwortet: **Ja**, die Godot-Version trägt.
+**Offen:** Schwierigkeit (Autopilot gewinnt 40/40), Animationen, Musik. Weiter mit Phase 2 (kompletter Run mit Zonenkarte), siehe [[Roadmap]].
