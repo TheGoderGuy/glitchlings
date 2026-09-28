@@ -1,0 +1,21 @@
+{
+  "nodes": [
+    {"id":"a","type":"text","text":"## 🥚 Ei schlüpft\nNeues Glitchling","x":0,"y":0,"width":240,"height":100,"color":"5"},
+    {"id":"b","type":"text","text":"## ⚔️ Run\n5 Räume + Boss\n3–4 Minuten","x":360,"y":0,"width":240,"height":100,"color":"1"},
+    {"id":"c","type":"text","text":"## 🃏 Chip-Wahl\n1 aus 3 nach jedem Raum","x":360,"y":-180,"width":240,"height":100,"color":"2"},
+    {"id":"d","type":"text","text":"## 💎 Beute\nFragmente · Chips · Prägung · Eier","x":720,"y":0,"width":240,"height":100,"color":"3"},
+    {"id":"e","type":"text","text":"## ✨ Evolution\nPrägung bestimmt Form","x":720,"y":200,"width":240,"height":100,"color":"6"},
+    {"id":"f","type":"text","text":"## 🧬 Fusion & Brüten\nStation ausbauen","x":360,"y":200,"width":240,"height":100,"color":"4"},
+    {"id":"g","type":"text","text":"## 📖 Monsterdex\nSilhouetten füllen","x":0,"y":200,"width":240,"height":100,"color":"5"}
+  ],
+  "edges": [
+    {"id":"e1","fromNode":"a","fromSide":"right","toNode":"b","toSide":"left"},
+    {"id":"e2","fromNode":"b","fromSide":"top","toNode":"c","toSide":"bottom","label":"im Run"},
+    {"id":"e3","fromNode":"c","fromSide":"right","toNode":"b","toSide":"right"},
+    {"id":"e4","fromNode":"b","fromSide":"right","toNode":"d","toSide":"left"},
+    {"id":"e5","fromNode":"d","fromSide":"bottom","toNode":"e","toSide":"top"},
+    {"id":"e6","fromNode":"e","fromSide":"left","toNode":"f","toSide":"right"},
+    {"id":"e7","fromNode":"f","fromSide":"left","toNode":"g","toSide":"right"},
+    {"id":"e8","fromNode":"g","fromSide":"top","toNode":"a","toSide":"bottom","label":"neue Eier"}
+  ]
+}

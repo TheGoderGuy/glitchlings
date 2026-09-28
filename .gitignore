@@ -1,0 +1,11 @@
+node_modules/
+__pycache__/
+*.pyc
+.DS_Store
+tests/ultra_fight.png
+.claude/settings.local.json
+
+# Godot
+game/.godot/
+game/export/
+*.tmp

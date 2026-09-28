@@ -1,0 +1,6 @@
+{
+  "name": "glitchlings-sprite-tools",
+  "private": true,
+  "description": "PNG -> SPR-Konverter für den Prototyp (siehe png2spr.js)",
+  "dependencies": { "pngjs": "^7.0.0" }
+}

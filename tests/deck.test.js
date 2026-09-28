@@ -1,0 +1,10 @@
+const {JSDOM}=require('jsdom');const fs=require('fs');
+const html=fs.readFileSync(require('path').join(__dirname,'../prototype/index.html'),'utf8');
+const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true,beforeParse(w){w.matchMedia=()=>({matches:false,addEventListener(){}});}});
+const w=dom.window;const errs=[];w.addEventListener('error',e=>errs.push(e.message));
+setTimeout(async()=>{const T=w.__G;T.startRun('Pixmiez');for(let i=0;i<5;i++)T.update(1/60);await new Promise(r=>setTimeout(r,120));
+ console.log('next:',w.document.querySelector('#nextChip').textContent);
+ w.document.querySelector('#deckBtn').click();console.log('screen',T.G.screen, w.document.querySelectorAll('.dl').length,'Zeilen');
+ const t0=T.G.F.t; w.document.querySelector('#resume').click();console.log('screen',T.G.screen);
+ T.showPick();console.log(w.document.querySelector('#cpick').textContent.slice(0,260));
+ console.log('errs',errs);process.exit(0)},300);

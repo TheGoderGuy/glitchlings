@@ -1,0 +1,11 @@
+{
+  "name": "glitchlings-tests",
+  "private": true,
+  "scripts": {
+    "test": "node station.test.js && node stufen.test.js && node deck.test.js && node evodeck.test.js && node abil.test.js && node life.test.js"
+  },
+  "dependencies": {
+    "canvas": "^3.0.0",
+    "jsdom": "^24.0.0"
+  }
+}
