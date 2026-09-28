@@ -122,7 +122,7 @@ func current_node() -> Dictionary:
 func foe_for(node: Dictionary) -> Dictionary:
 	if node.type == "boss":
 		return GameData.FOES[3].duplicate()
-	var pool: Array = [0, 1] if floor_idx < 2 else [0, 1, 2]
+	var pool: Array = GameData.POOL_ELITE if node.type == "elite" else (GameData.POOL_EARLY if floor_idx < 2 else GameData.POOL_LATE)
 	var base: Dictionary = GameData.FOES[pool[rng.randi_range(0, pool.size() - 1)]]
 	var d := base.duplicate()
 	d.hp = roundi(base.hp * (1.0 + 0.07 * floor_idx))

@@ -13,6 +13,7 @@ const BattleScene := preload("res://scenes/battle.tscn")
 
 var current: Node
 var run: RunState
+var foe_override := -1   # nur für Screenshots
 
 
 func _ready() -> void:
@@ -60,7 +61,8 @@ func _enter_node() -> void:
 	var node := run.current_node()
 	if node.type in ["fight", "elite", "boss"]:
 		var b := BattleScene.instantiate()
-		b.setup(run, run.foe_for(node), node.type)
+		var foe: Dictionary = run.foe_for(node) if foe_override < 0 else GameData.FOES[foe_override].duplicate()
+		b.setup(run, foe, node.type)
 		b.finished.connect(_battle_finished)
 		b.gave_up.connect(show_result.bind(false))
 		_swap(b)
@@ -100,6 +102,7 @@ func _screenshot(shot: Dictionary) -> void:
 	for f in floors:
 		run.enter(run.next_choices()[0])
 	run.frag = 55
+	foe_override = shot.get("foe", -1)
 	if shot.has("form"):
 		run.form = shot.form
 		run.stage = GameData.FORMS[run.form].stage

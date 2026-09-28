@@ -50,7 +50,16 @@ const FOES := [
 	{"name": "Glitchmotte", "el": "Licht", "hp": 60, "move": 1.0, "atk": 2.0, "dmg": 14, "pat": ["cell"], "spr": "moth", "loot": 10, "boss": false, "tele": true},
 	{"name": "Spamlet", "el": "Virus", "hp": 90, "move": 1.6, "atk": 2.6, "dmg": 12, "pat": ["row", "col"], "spr": "spam", "loot": 10, "boss": false, "tele": false},
 	{"name": "Pop-Up-Tyrann", "el": "Virus", "hp": 320, "move": 1.8, "atk": 2.2, "dmg": 16, "pat": ["row"], "spr": "boss", "loot": 30, "boss": true, "tele": false},
+	# --- Cache-Wiesen-Erweiterung 28.09.2026 (Index 4–6) ---
+	{"name": "Captchakäfer", "el": "Code", "hp": 80, "move": 1.5, "atk": 2.5, "dmg": 12, "pat": ["cross"], "spr": "captcha", "loot": 10, "boss": false, "tele": false},
+	{"name": "Spamwespe", "el": "Virus", "hp": 50, "move": 0.8, "atk": 1.7, "dmg": 8, "pat": ["cell", "row", "cell"], "spr": "wespe", "loot": 10, "boss": false, "tele": false},
+	{"name": "Ladebalkenraupe", "el": "Feuer", "hp": 115, "move": 2.2, "atk": 3.2, "dmg": 16, "pat": ["wall"], "spr": "raupe", "loot": 12, "boss": false, "tele": false},
 ]
+
+## Gegner-Pools je Etage (Indizes in FOES)
+const POOL_EARLY := [0, 1, 5]            # Etage 1–2: Bugsy, Glitchmotte, Spamwespe
+const POOL_LATE := [0, 1, 2, 4, 5, 6]    # ab Etage 3 alle normalen Gegner
+const POOL_ELITE := [2, 4, 6]            # Elite: die zäheren Gegner
 
 ## Spielbare Linien (Baby-Werte). evo: Element der meistgespielten Chips → Rookie.
 const MONS := {

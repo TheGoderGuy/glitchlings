@@ -20,6 +20,8 @@ static func args() -> Dictionary:
 			shot.form = a.substr(7)
 		elif a.begins_with("--t="):
 			shot.t = float(a.substr(4))
+		elif a.begins_with("--foe="):
+			shot.foe = int(a.substr(6))
 		elif a == "--pad":
 			shot.pad = true
 	return shot if shot.has("path") else {}

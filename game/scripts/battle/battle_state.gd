@@ -737,6 +737,7 @@ func _enemy_attack() -> void:
 	var kind: String = def.pat[e.pi % def.pat.size()]
 	e.pi += 1
 	var cells: Array = []
+	var warn := WARN_TIME
 	match kind:
 		"row":
 			for c in 3:
@@ -744,10 +745,25 @@ func _enemy_attack() -> void:
 		"col":
 			for r in 3:
 				cells.append(Vector2i(p.c, r))
+		"cross":
+			# Plus-Form um den Spieler
+			for d in [Vector2i(0, 0), Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+				var n := Vector2i(p.c + d.x, p.r + d.y)
+				if n.x >= 0 and n.x < 3 and n.y >= 0 and n.y < 3:
+					cells.append(n)
+		"wall":
+			# Zwei Reihen, eine bleibt frei – nie die, in der der Spieler steht
+			var safe_rows: Array = [0, 1, 2].filter(func(r): return r != p.r)
+			var safe: int = safe_rows[rng.randi_range(0, safe_rows.size() - 1)]
+			for r in 3:
+				if r != safe:
+					for c in 3:
+						cells.append(Vector2i(c, r))
+			warn = 1.0
 		_:
 			cells.append(Vector2i(p.c, p.r))
 	events.append("warn")
-	warns.append({"cells": cells, "t": WARN_TIME, "max": WARN_TIME, "dmg": def.dmg})
+	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg})
 
 
 func _spawn_pop() -> void:

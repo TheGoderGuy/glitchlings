@@ -21,6 +21,7 @@ func _init() -> void:
 	test_new_chips()
 	test_all_chips_run()
 	test_new_events()
+	test_new_foes()
 	test_evolution()
 	test_all_specials()
 	test_passives()
@@ -276,6 +277,51 @@ func test_new_events() -> void:
 			if o.label == "" or o.desc == "":
 				all_ok = false
 	check(all_ok and Rooms.EVENTS.size() == 8, "8 Ereignisse, alle Optionen beschriftet")
+
+
+func test_new_foes() -> void:
+	# Kreuz-Muster
+	var run := RunState.new("Pixmiez", 4)
+	var st := BattleState.new(run, GameData.FOES[4])
+	st.p.c = 0
+	st.p.r = 0
+	st.e.move_t = 99.0
+	st.e.atk_t = 0.01
+	step(st, 0.05)
+	var cells: Array = st.warns[0].cells
+	check(cells.size() == 3 and cells.has(Vector2i(0, 0)) and cells.has(Vector2i(1, 0)) and cells.has(Vector2i(0, 1)), "Captchakäfer: Kreuz um den Spieler (in der Ecke 3 Felder)")
+	# Wand-Muster: nie die Reihe des Spielers frei
+	var ok := true
+	for i in 30:
+		var st2 := BattleState.new(RunState.new("Pixmiez", i), GameData.FOES[6])
+		st2.p.r = i % 3
+		st2.e.move_t = 99.0
+		st2.e.atk_t = 0.01
+		step(st2, 0.05)
+		var c2: Array = st2.warns[0].cells
+		if c2.size() != 6 or not c2.has(Vector2i(0, st2.p.r)):
+			ok = false
+	check(ok, "Ladebalkenraupe: Wand über zwei Reihen, die Spielerreihe ist nie sicher")
+	var sprites_ok := true
+	for f in GameData.FOES:
+		if not ResourceLoader.exists("res://assets/sprites/%s.png" % PixelCanvas.SPRITE_FILES[f.spr]):
+			sprites_ok = false
+	check(sprites_ok and GameData.FOES.size() == 7, "Alle 7 Gegner haben ein Sprite")
+	# Jeder Gegner lässt sich mit dem Autopilot besiegen
+	var all_end := true
+	for i in GameData.FOES.size():
+		seed(i)
+		var r := RunState.new("Pixmiez", i)
+		var s := BattleState.new(r, GameData.FOES[i])
+		var bot := BattleBot.new(0.25)
+		var t := 0.0
+		while not s.over and t < 180.0:
+			bot.act(s)
+			s.update(1.0 / 30.0)
+			t += 1.0 / 30.0
+		if not s.over:
+			all_end = false
+	check(all_end, "Jeder Gegner-Kampf endet")
 
 
 func test_evolution() -> void:

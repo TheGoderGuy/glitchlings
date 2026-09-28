@@ -55,7 +55,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Phase 2a (28.09.2026): Zonenkarte Cache-Wiesen (7 Etagen + Boss; Kampf, Elite, Ereignis, Rast, Händler), Ergebnisbildschirm, 42 Tests – `vault/05 Produktion/Zonenkarte.md`
 - [x] Phase 2b (28.09.2026): Starterwahl (Pixmiez/Funkling/Tröpfel), Evolution im Run (15/35 Prägung, 18 Formen, 18 Signaturen), Evolutions-Szene, 55 Tests – `vault/05 Produktion/Evolution im Run.md`
 - [x] Phase 2c-1 (28.09.2026): 12 neue Chips (jetzt 27, je Element 4–5), 4 neue Ereignisse (jetzt 8), 76 Tests
-- [ ] Phase 2c-2: neue Gegner + echte Elites (PixelLab), Zonen-Hintergrund, Musik · Phase 3: Station/Meta · Phase 4: Steam-Seite + Demo
+- [x] Phase 2c-2 (28.09.2026): 3 neue Gegner (Captchakäfer, Spamwespe, Ladebalkenraupe) mit Kreuz-/Wand-Mustern, Gegner-Pools je Etage, 80 Tests
+- [ ] Phase 2d: Zonen-Hintergrund, Musik, Blinzel-Frames neue Gegner, Schwierigkeit nach Playtest · Phase 3: Station/Meta · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)
@@ -93,7 +94,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - Nutzungsrechte von PixelLab für kommerzielle Nutzung vor dem Launch prüfen lassen.
 
 ## Qualitätsregeln für Änderungen am Prototyp
-- Godot (`game/`): nach jeder Änderung Godot-Tests ausführen und bei Grafikänderungen per `--shot` einen Screenshot rendern und ansehen. Godot-Exe: `~/AppData/Local/Microsoft/WinGet/Packages/GodotEngine*/Godot_*_console.exe`.
+- Godot (`game/`): nach jeder Änderung **zuerst `--headless --import` auf SCRIPT ERROR prüfen** (ein Parse-Fehler in main.gd lässt das Spiel leer hängen!), dann Godot-Tests, bei Grafikänderungen per `--shot` einen Screenshot rendern – immer mit `timeout 60 … --quit-after 900`, damit nichts hängen bleibt. Godot-Exe: `~/AppData/Local/Microsoft/WinGet/Packages/GodotEngine*/Godot_*_console.exe`.
 - Browser-Prototyp: nach jeder Änderung `cd tests && npm test` ausführen.
 - Bei Grafikänderungen ein Bild rendern (die Tests zeigen, wie: jsdom + canvas) und es selbst ansehen, bevor du fertig meldest.
 - Änderungen im Vault dokumentieren (Playtest-Log bzw. passende Notiz).
