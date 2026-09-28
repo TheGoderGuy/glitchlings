@@ -762,6 +762,7 @@ func _enemy_attack() -> void:
 			warn = 1.0
 		_:
 			cells.append(Vector2i(p.c, p.r))
+	warn += def.get("warn_bonus", 0.0)
 	events.append("warn")
 	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg})
 

@@ -1,13 +1,14 @@
-extends SceneTree
+extends Node
 ## Kampflogik-Tests ohne Grafik.
-## Aufruf: godot --headless --path game --script res://tests/test_battle.gd
+## Aufruf: godot --headless --path game res://tests/test_battle.tscn  (als Szene, damit die Autoloads da sind)
 
 var count := 0
 var fails := 0
 var seen_events := {}
 
 
-func _init() -> void:
+func _ready() -> void:
+	test_scripts_compile()
 	test_data()
 	test_hand()
 	test_projectile()
@@ -22,6 +23,7 @@ func _init() -> void:
 	test_all_chips_run()
 	test_new_events()
 	test_new_foes()
+	test_difficulty()
 	test_evolution()
 	test_all_specials()
 	test_passives()
@@ -31,7 +33,26 @@ func _init() -> void:
 	test_simulated_runs()
 	test_sounds()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
-	quit(1 if fails > 0 else 0)
+	get_tree().quit(1 if fails > 0 else 0)
+
+
+## Jedes Skript muss fehlerfrei kompilieren (ein Fehler in main.gd lässt das Spiel leer hängen)
+func test_scripts_compile() -> void:
+	var bad: Array = []
+	var dirs := ["res://scripts"]
+	var files: Array = []
+	while not dirs.is_empty():
+		var d: String = dirs.pop_back()
+		for sub in DirAccess.get_directories_at(d):
+			dirs.append(d + "/" + sub)
+		for f in DirAccess.get_files_at(d):
+			if f.ends_with(".gd"):
+				files.append(d + "/" + f)
+	for f in files:
+		var sc: Script = load(f)
+		if sc == null or not sc.can_instantiate():
+			bad.append(f)
+	check(bad.is_empty() and files.size() >= 15, "Alle %d Skripte kompilieren %s" % [files.size(), bad])
 
 
 func check(cond: bool, what: String) -> void:
@@ -277,6 +298,27 @@ func test_new_events() -> void:
 			if o.label == "" or o.desc == "":
 				all_ok = false
 	check(all_ok and Rooms.EVENTS.size() == 8, "8 Ereignisse, alle Optionen beschriftet")
+
+
+func test_difficulty() -> void:
+	var node := {"type": "boss"}
+	var hp := []
+	var dmg := []
+	for d in 3:
+		var run := RunState.new("Pixmiez", 1)
+		run.difficulty = d
+		var f := run.foe_for(node)
+		hp.append(f.hp)
+		dmg.append(f.dmg)
+	check(hp[0] < hp[1] and hp[1] < hp[2] and hp[1] == 320, "Schwierigkeit skaliert Boss-HP %s" % [hp])
+	check(dmg[0] < dmg[1] and dmg[1] < dmg[2], "Schwierigkeit skaliert Schaden %s" % [dmg])
+	var run2 := RunState.new("Pixmiez", 1)
+	run2.difficulty = 0
+	var st := BattleState.new(run2, run2.foe_for({"type": "fight"}))
+	st.e.move_t = 99.0
+	st.e.atk_t = 0.01
+	step(st, 0.02)
+	check(st.warns[0].max > BattleState.WARN_TIME, "Entspannt: längere Vorwarnung (%.2f s)" % st.warns[0].max)
 
 
 func test_new_foes() -> void:

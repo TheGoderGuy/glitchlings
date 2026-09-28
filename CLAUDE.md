@@ -10,7 +10,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 ## Projektstruktur
 | Pfad | Inhalt |
 |---|---|
-| `game/` | **Godot-4-Projekt (Steam-Version)**, siehe `game/README.md`. Tests: `godot --headless --path game --script res://tests/test_battle.gd` |
+| `game/` | **Godot-4-Projekt (Steam-Version)**, siehe `game/README.md`. Tests: `godot --headless --path game res://tests/test_battle.tscn` (als Szene, damit Autoloads da sind) |
 | `prototype/index.html` | Spielbarer Browser-Prototyp (eine Datei: HTML, CSS, JS, Sprite-Daten). Im Browser öffnen oder `node tools/devserver.js` → http://localhost:8123 |
 | `vault/` | Obsidian-Vault mit dem kompletten Game Design (Start: `vault/00 Übersicht/🏠 Start hier.md`) |
 | `docs/Glitchlings_Konzept_Komplett.md` | Gesamtkonzept als ein Dokument |
@@ -56,7 +56,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Phase 2b (28.09.2026): Starterwahl (Pixmiez/Funkling/Tröpfel), Evolution im Run (15/35 Prägung, 18 Formen, 18 Signaturen), Evolutions-Szene, 55 Tests – `vault/05 Produktion/Evolution im Run.md`
 - [x] Phase 2c-1 (28.09.2026): 12 neue Chips (jetzt 27, je Element 4–5), 4 neue Ereignisse (jetzt 8), 76 Tests
 - [x] Phase 2c-2 (28.09.2026): 3 neue Gegner (Captchakäfer, Spamwespe, Ladebalkenraupe) mit Kreuz-/Wand-Mustern, Gegner-Pools je Etage, 80 Tests
-- [ ] Phase 2d: Zonen-Hintergrund, Musik, Blinzel-Frames neue Gegner, Schwierigkeit nach Playtest · Phase 3: Station/Meta · Phase 4: Steam-Seite + Demo
+- [x] Phase 2d (28.09.2026): 4 Chiptune-Platzhalterstücke (Titel/Karte/Kampf/Boss, selbst synthetisiert), Zonen-Hintergrund Cache-Wiesen, Schwierigkeit Entspannt/Normal/Knackig, Musik-Lautstärke, Blinzel-Frames, 84 Tests
+- [ ] Nächstes: Playtest-Feedback einarbeiten · Phase 3 Station/Meta (dauerhafte Evolution, Eier nach Runs) · Zone 2 · Phase 3: Station/Meta · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)

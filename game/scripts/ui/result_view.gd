@@ -12,6 +12,7 @@ var t_in := 0.0
 func setup(run_state: RunState, run_won: bool) -> void:
 	run = run_state
 	won = run_won
+	Music.play("title" if run_won else "map")
 
 
 func _process(delta: float) -> void:

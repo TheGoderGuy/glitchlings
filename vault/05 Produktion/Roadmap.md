@@ -12,7 +12,8 @@ tags: [produktion, roadmap]
 - [x] Controller + Tastatur
 - [x] Spielgefühl: Treffer-Feedback, Screenshake, Hitstop, Sounds (Platzhalter, synthetisiert)
 - [x] Titelbildschirm, Optionen (Vollbild, Lautstärke, Bildschirmwackeln), Pause-Menü
-- [ ] Angriffs- und Idle-Animationen, Musik
+- [x] Musik (4 Platzhalter-Stücke)
+- [ ] Angriffs- und Idle-Animationen
 - [x] Alle 15 Chips, 3 Gegner, Boss aus dem Prototyp übernehmen
 - [x] Pixel-Schrift Silkscreen (SIL OFL, kommerziell frei; Lizenz in `game/assets/fonts/OFL.txt`)
 
@@ -20,7 +21,7 @@ tags: [produktion, roadmap]
 **Frage: Will man direkt noch einen Run starten?**
 - [x] Zonenkarte mit Verzweigungen (Kampf, Elite, Ereignis, Rast, Datenhändler, Boss) – 28.09.2026, Details: [[Zonenkarte]]
 - [x] Chipwahl, Deck-Ansicht, Prägung & Evolution während des Runs – [[Evolution im Run]]
-- [ ] Zone 1 komplett mit Hintergrund und Musik
+- [x] Zone 1 komplett mit Hintergrund und Musik (Platzhalter-Chiptune, 28.09.2026)
 
 ## Phase 3: Hub & Meta (Vertical Slice)
 **Frage: Zieht die Station den Spieler zurück in den nächsten Run?**

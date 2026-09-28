@@ -23,6 +23,11 @@ var floor_idx := -1       # -1 = noch vor der ersten Etage
 var pos := -1
 var path: Array = []      # besuchte Knoten als Vector2i(etage, index)
 var rng := RandomNumberGenerator.new()
+var difficulty := 1       # 0 Entspannt, 1 Normal, 2 Knackig (aus den Optionen)
+
+const DIFF_HP := [0.8, 1.0, 1.25]
+const DIFF_DMG := [0.7, 1.0, 1.25]
+const DIFF_WARN := [0.25, 0.0, -0.1]   # Sekunden mehr/weniger Vorwarnung
 
 
 func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
@@ -120,6 +125,17 @@ func current_node() -> Dictionary:
 
 ## Gegnerwerte für einen Kampfknoten; wird mit jeder Etage etwas zäher.
 func foe_for(node: Dictionary) -> Dictionary:
+	return _apply_difficulty(_base_foe(node))
+
+
+func _apply_difficulty(d: Dictionary) -> Dictionary:
+	d.hp = roundi(d.hp * DIFF_HP[difficulty])
+	d.dmg = maxi(1, roundi(d.dmg * DIFF_DMG[difficulty]))
+	d.warn_bonus = DIFF_WARN[difficulty]
+	return d
+
+
+func _base_foe(node: Dictionary) -> Dictionary:
 	if node.type == "boss":
 		return GameData.FOES[3].duplicate()
 	var pool: Array = GameData.POOL_ELITE if node.type == "elite" else (GameData.POOL_EARLY if floor_idx < 2 else GameData.POOL_LATE)

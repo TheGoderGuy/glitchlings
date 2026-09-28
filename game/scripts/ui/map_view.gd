@@ -31,6 +31,7 @@ var pause_idx := 0
 
 func setup(run_state: RunState) -> void:
 	run = run_state
+	Music.play("map")
 	var ch := run.next_choices()
 	# Standardauswahl: der Knoten, der am nächsten an der aktuellen Position liegt
 	sel = 0
@@ -88,7 +89,8 @@ func node_pos(f: int, i: int) -> Vector2:
 
 
 func _draw() -> void:
-	_draw_background()
+	_draw_zone("wiesen")
+	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.35))
 	var m := run.map
 	var ch := run.next_choices()
 	var target := Vector2i(run.floor_idx + 1, ch[sel]) if not ch.is_empty() else Vector2i(-9, -9)

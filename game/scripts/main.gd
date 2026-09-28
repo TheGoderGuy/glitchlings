@@ -46,6 +46,7 @@ func show_starters() -> void:
 
 func start_run(species := "Pixmiez", seed_value := -1) -> void:
 	run = RunState.new(species, seed_value)
+	run.difficulty = Settings.difficulty
 	show_map()
 
 

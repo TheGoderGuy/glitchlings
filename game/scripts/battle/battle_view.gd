@@ -41,6 +41,7 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 	run = run_state
 	node_type = type
 	st = BattleState.new(run, foe)
+	Music.play("boss" if type == "boss" else "battle")
 	_set_mode(Mode.FIGHT)
 
 
@@ -183,7 +184,10 @@ func _glyph_chip(i: int) -> String:
 func _draw() -> void:
 	off = Vector2.ZERO
 	draw_set_transform(off)
-	_draw_background(st != null and st.def.boss)
+	if st == null:
+		_draw_background()
+		return
+	_draw_zone("wiesen_boss" if st.def.boss else "wiesen")
 	if st == null:
 		return
 	if mode == Mode.EVOLVE:

@@ -16,15 +16,25 @@ func _main_items() -> Array:
 
 
 func _option_items() -> Array:
-	var vol := ""
-	for i in 10:
-		vol += "|" if i < Settings.volume else "."
 	return [
 		"Vollbild: " + ("An" if Settings.fullscreen else "Aus"),
-		"Lautstärke: " + vol,
+		"Lautstärke: " + _bar_text(Settings.volume),
+		"Musik: " + _bar_text(Settings.music),
+		"Schwierigkeit: " + ["Entspannt", "Normal", "Knackig"][Settings.difficulty],
 		"Bildschirmwackeln: " + ("An" if Settings.screen_shake else "Aus"),
 		"Zurück",
 	]
+
+
+func _bar_text(v: int) -> String:
+	var s := ""
+	for i in 10:
+		s += "|" if i < v else "."
+	return s
+
+
+func _ready() -> void:
+	Music.play("title")
 
 
 func _process(delta: float) -> void:
@@ -58,18 +68,22 @@ func _process(delta: float) -> void:
 			dir = -1
 		elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("confirm"):
 			dir = 1
-		if Input.is_action_just_pressed("back") or (sel == 3 and Input.is_action_just_pressed("confirm")):
+		if Input.is_action_just_pressed("back") or (sel == 5 and Input.is_action_just_pressed("confirm")):
 			Sfx.play("back")
 			page = Page.MAIN
 			sel = 1
 			Settings.save_settings()
-		elif dir != 0 and sel < 3:
+		elif dir != 0 and sel < 5:
 			match sel:
 				0:
 					Settings.fullscreen = not Settings.fullscreen
 				1:
 					Settings.volume = clampi(Settings.volume + dir, 0, 10)
 				2:
+					Settings.music = clampi(Settings.music + dir, 0, 10)
+				3:
+					Settings.difficulty = (Settings.difficulty + dir + 3) % 3
+				4:
 					Settings.screen_shake = not Settings.screen_shake
 			Settings.apply()
 			Sfx.play("select")
@@ -104,10 +118,13 @@ func _draw() -> void:
 		_menu(_main_items(), sel, W / 2.0, 258, 180)
 	else:
 		_dim()
-		var r := Rect2(170, 110, 300, 150)
+		var r := Rect2(160, 96, 320, 200)
 		_box(r, GameData.COL.panel, GameData.COL.line)
 		_text(r.position + Vector2(0, 26), "Optionen", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-		_menu(_option_items(), sel, r.get_center().x, r.position.y + 40, 250)
+		_menu(_option_items(), sel, r.get_center().x, r.position.y + 40, 280)
+		if sel == 3:
+			var dd: String = ["Mehr Zeit zum Ausweichen, Gegner treffen schwächer.", "So wie gedacht.", "Zähere Gegner, härtere Treffer, kürzere Warnungen."][Settings.difficulty]
+			_text(Vector2(0, r.end.y + 14), dd, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 	var pad: bool = InputSetup.pad
 	var hint := ("Steuerkreuz wählen · A bestätigen · B zurück" if pad else "Pfeile wählen · Enter bestätigen · Esc zurück")
 	_text(Vector2(0, H - 10), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)

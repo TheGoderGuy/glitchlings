@@ -158,3 +158,81 @@ func _draw_deck_list(deck: Array, x: float, y: float, w: float, max_rows := 14) 
 		_text(Vector2(x + 14, y), GameData.CHIPS[k].cat, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, w - 14)
 		y += 14
 		row += 1
+
+
+# ---------- Zonen-Hintergrund ----------
+
+static var _zone_bg := {}
+
+const ZONE_PAL := {
+	"wiesen": {"sky0": "#161230", "sky1": "#243152", "far": "#1C3444", "near": "#1F4A47", "edge": "#2F6E5D",
+		"ground": "#193B38", "grass": "#2C6A55", "flower": ["#6EE7C5", "#FFD84D", "#C9B8FF"]},
+	"wiesen_boss": {"sky0": "#1A0C24", "sky1": "#3A1636", "far": "#2A1733", "near": "#3A1E3B", "edge": "#6B2C55",
+		"ground": "#2A1430", "grass": "#5A2A4E", "flower": ["#FF5470", "#FF9DB3", "#C77DFF"]},
+}
+
+
+## Einmal gerenderter Zonen-Hintergrund (Himmel, zwei Hügelketten, Wiese mit Daten-Blumen).
+static func zone_texture(zone: String) -> ImageTexture:
+	if _zone_bg.has(zone):
+		return _zone_bg[zone]
+	var P: Dictionary = ZONE_PAL[zone]
+	var img := Image.create(W, H, false, Image.FORMAT_RGBA8)
+	var s0 := Color(P.sky0)
+	var s1 := Color(P.sky1)
+	# Himmel in 8 Bändern, an den Übergängen geordnet gedithert
+	var bands := 8
+	var sky_h := 230
+	for y in sky_h:
+		var k := float(y) / sky_h * bands
+		var band := floori(k)
+		var frac := k - band
+		for x in W:
+			var b := band + (1 if frac > 0.75 and (x + y) % 2 == 0 else 0)
+			img.set_pixel(x, y, s0.lerp(s1, clampf(float(b) / bands, 0.0, 1.0)))
+	# Bits am Himmel
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7
+	for i in 60:
+		img.set_pixel(rng.randi_range(0, W - 1), rng.randi_range(0, 150), Color(1, 1, 1, rng.randf_range(0.15, 0.5)).blend(s0))
+	# Hügel
+	for x in W:
+		var yf := roundi(172 + 12 * sin(x * 0.013) + 7 * sin(x * 0.031 + 1.0))
+		img.fill_rect(Rect2i(x, yf, 1, H - yf), Color(P.far))
+	for x in W:
+		var yn := roundi(214 + 10 * sin(x * 0.02 + 2.0) + 6 * sin(x * 0.047))
+		img.fill_rect(Rect2i(x, yn, 1, H - yn), Color(P.near))
+		img.set_pixel(x, yn, Color(P.edge))
+	# Wiese unten mit Grasbüscheln
+	img.fill_rect(Rect2i(0, 286, W, H - 286), Color(P.ground))
+	for i in 140:
+		var gx := rng.randi_range(0, W - 1)
+		var gy := rng.randi_range(240, H - 4)
+		var h := rng.randi_range(2, 4)
+		for j in h:
+			img.set_pixel(gx, gy - j, Color(P.grass))
+		if rng.randf() < 0.5:
+			img.set_pixel(gx + 1, gy - 1, Color(P.grass))
+	# Daten-Blumen auf den Hügeln
+	for i in 26:
+		var fx := rng.randi_range(4, W - 5)
+		var fy := roundi(214 + 10 * sin(fx * 0.02 + 2.0) + 6 * sin(fx * 0.047)) + rng.randi_range(4, 60)
+		var col := Color(P.flower[i % P.flower.size()])
+		img.set_pixel(fx, fy + 1, Color(P.grass))
+		img.set_pixel(fx, fy + 2, Color(P.grass))
+		for d in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+			img.set_pixel(fx + d.x, fy + d.y - 1, col.darkened(0.25))
+		img.set_pixel(fx, fy - 1, col.lightened(0.5))
+	var tex := ImageTexture.create_from_image(img)
+	_zone_bg[zone] = tex
+	return tex
+
+
+## Zonen-Hintergrund plus aufsteigende Datenpartikel
+func _draw_zone(zone: String) -> void:
+	draw_texture(zone_texture(zone), Vector2.ZERO)
+	var dust := Color("#FF5470", 0.5) if zone.ends_with("boss") else Color("#B8FFE9", 0.45)
+	for i in 22:
+		var x := fmod(i * 97.3 + 13.0 + sin(anim_t * 0.7 + i) * 6.0, W)
+		var y := H - fmod(anim_t * (10.0 + i % 5 * 3.0) + i * 53.0, H)
+		draw_rect(Rect2(roundi(x), roundi(y), 1 if i % 3 else 2, 1 if i % 3 else 2), dust)

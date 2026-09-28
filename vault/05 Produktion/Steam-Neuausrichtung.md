@@ -38,11 +38,18 @@ Switch ist vorerst gestrichen. Team: Produzent + Claude. Engine: **Godot 4**. Ke
 - Bewegungseingaben während des Bewegungs-Cooldowns werden gepuffert statt verworfen.
 - Chip-Tasten: Controller X/Y/B, Signatur A; Tastatur J/K/L, Leertaste.
 
+## Schwierigkeit (Optionen)
+| Stufe | Gegner-HP | Gegnerschaden | Vorwarnung |
+|---|---|---|---|
+| Entspannt | 80 % | 70 % | +0,25 s |
+| Normal | 100 % | 100 % | ±0 |
+| Knackig | 125 % | 125 % | −0,1 s |
+
 ## Technische Eckpunkte
 Siehe [[Tech Stack]]. Basisauflösung **640×360**, ganzzahlige Skalierung (1080p ×3, 1440p ×4, 4K ×6, Steam Deck ×2).
 
 ## Offene Punkte
 - [ ] Nutzungsrechte PixelLab für kommerzielle Nutzung klären + Steam-KI-Offenlegung vorbereiten
 - [ ] Markenrecherche „Glitchlings“ (DPMA/EUIPO, Steam-Suche)
-- [ ] Musik & Sound: Wer macht das? (Auftrag, Asset-Pakete, lizenzfreie Musik)
+- [ ] Musik & Sound: Wer macht das? (Auftrag, Asset-Pakete, lizenzfreie Musik) – bis dahin 4 selbst synthetisierte Chiptune-Platzhalter (`game/scripts/audio/music_synth.gd`), jederzeit durch WAV/OGG gleichen Namens in `game/assets/music/` ersetzbar
 - [ ] Gewerbe anmelden, bevor die Steam-Seite live geht (Steamworks braucht Steuer-/Bankdaten)
