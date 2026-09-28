@@ -14,6 +14,7 @@ var sel := 0
 var message := ""
 var done_after_message := false
 var remove_list: Array = []
+var choose_mode := "remove"   # remove | copy
 var state_t := 0.0
 
 
@@ -97,8 +98,12 @@ func _process(delta: float) -> void:
 			if Input.is_action_just_pressed("confirm"):
 				Sfx.play("confirm")
 				var chip: String = remove_list[sel]
-				run.remove_chip(chip)
-				_show_message("%s wurde aus deinem Deck entfernt." % chip, type != "shop")
+				if choose_mode == "copy":
+					run.deck.append(chip)
+					_show_message("Kopie erstellt: %s ist jetzt noch einmal in deinem Deck." % chip, true)
+				else:
+					run.remove_chip(chip)
+					_show_message("%s wurde aus deinem Deck entfernt." % chip, type != "shop")
 		State.MESSAGE:
 			if Input.is_action_just_pressed("confirm"):
 				Sfx.play("confirm")
@@ -140,7 +145,8 @@ func _choose(id: String) -> void:
 			result = Rooms.shop_apply(run, node, id)
 		_:
 			result = Rooms.rest_apply(run, id)
-	if result == "remove":
+	if result == "remove" or result == "copy":
+		choose_mode = result
 		var seen := {}
 		remove_list = []
 		for c in run.deck:
@@ -186,7 +192,7 @@ func _draw() -> void:
 			if sel < o.size():
 				draw_multiline_string(font(), Vector2(r.position.x + 24, r.end.y - 40), o[sel].desc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, 8, 3, GameData.COL.muted, wrap)
 		State.REMOVE:
-			_text(r.position + Vector2(0, 54), "Welchen Chip entfernen?", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+			_text(r.position + Vector2(0, 54), "Welchen Chip kopieren?" if choose_mode == "copy" else "Welchen Chip entfernen?", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 			# bis 10 Einträge einspaltig, sonst zweispaltig
 			var cols := 1 if remove_list.size() <= 10 else 2
 			var cw := 280.0 if cols == 1 else 200.0

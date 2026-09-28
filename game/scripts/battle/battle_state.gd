@@ -33,6 +33,9 @@ var shield := 0.0
 var bubble := 0
 var bubble_t := 0.0
 var oc := 0.0
+var heat := 0.0        # Hitzeschild
+var mist := 0.0        # Nebel: 50 % Ausweichen
+var scan := 0          # Portscan: nächste Treffer +50 %
 var shake := 0.0
 var freeze := 0.0      # Hitstop, wird von der Ansicht abgebaut
 var hurt := 0.0
@@ -60,7 +63,7 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	def = foe
 	p = {"c": 1, "r": 1, "cd": 0.0, "flash": 0.0}
 	e = {"c": 1, "r": 1, "hp": def.hp, "max": def.hp, "move_t": def.move, "atk_t": def.atk * 0.8,
-		"pi": 0, "frozen": 0.0, "flash": 0.0, "burn": 0, "poison": 0, "dot_t": 1.0, "pop_t": 1.5}
+		"pi": 0, "frozen": 0.0, "slow": 0.0, "flash": 0.0, "burn": 0, "poison": 0, "dot_t": 1.0, "pop_t": 1.5}
 	draw_pile = _shuffle(run.deck)
 	for i in 3:
 		hand.append({"chip": _draw_one(), "rem": 0.0, "max": 1.0, "queued": false})
@@ -226,8 +229,64 @@ func _apply_chip(id: String) -> void:
 	var el: String = ch.el
 	events.append(_chip_sound(id))
 	match id:
-		"Pixelstrahl", "Wasserstrahl", "Virusspritzer":
+		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Datenfresser":
 			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 11.0, "el": el, "dmg": ch.dmg, "id": id})
+		"Doppelklick":
+			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": el, "dmg": ch.dmg, "id": id})
+			delayed.append({"t": 0.15, "fn": _second_click, "mark": false})
+		"Neustart":
+			var h2 := run.heal(15)
+			float_at(p.c, p.r, "Neustart! +%d" % h2, GameData.COL.mint)
+			for s in hand:
+				if s.chip != "":
+					disc.append(s.chip)
+				s.chip = _draw_one()
+				s.max = GameData.CHIPS[s.chip].cd if s.chip != "" else 1.0
+				s.rem = 0.0
+				s.queued = false
+		"Funkenregen":
+			for i in 3:
+				var fc := rng.randi_range(0, 2)
+				var fr := rng.randi_range(0, 2)
+				delayed.append({"t": 0.1 * i, "fn": fx_cell.bind(3 + fc, fr, GameData.EL.Feuer, 0.3), "mark": false})
+			delayed.append({"t": 0.3, "fn": _funkenregen, "mark": false})
+		"Hitzeschild":
+			heat = 4.0
+			float_at(p.c, p.r, "Hitzeschild", GameData.EL.Feuer)
+		"Laserschuss":
+			for c in 3:
+				fx_cell(3 + c, p.r, GameData.EL.Code, 0.2)
+			if e.r == p.r:
+				hit_enemy(ch.dmg, el)
+			else:
+				_miss()
+		"Portscan":
+			scan = 2
+			float_at(p.c, p.r, "Scan aktiv", GameData.EL.Code)
+		"Strudel":
+			e.slow = 3.0
+			fx_cell(3 + e.c, e.r, GameData.EL.Wasser, 0.4)
+			float_at(3 + e.c, e.r, "Langsam", GameData.EL.Wasser)
+		"Nebel":
+			mist = 3.0
+			float_at(p.c, p.r, "Nebel", GameData.EL.Wasser)
+		"Lichtlanze":
+			for r in 3:
+				fx_cell(3 + p.c, r, GameData.EL.Licht, 0.3)
+			if e.c == p.c:
+				hit_enemy(ch.dmg, el)
+			else:
+				_miss()
+		"Blendgranate":
+			warns.clear()
+			e.atk_t = def.atk
+			burst(3 + e.c + 0.5, e.r + 0.5, Color.WHITE, 16)
+			float_at(3 + e.c, e.r, "Geblendet", GameData.EL.Licht)
+		"Wurmloch":
+			fx_cell(3 + e.c, e.r, GameData.EL.Virus, 0.3)
+			e.r = p.r
+			fx_cell(3 + e.c, e.r, GameData.EL.Virus, 0.4)
+			hit_enemy(ch.dmg, el)
 		"Byteschlag":
 			for c in [0, 1]:
 				fx_cell(3 + c, p.r, GameData.EL.Neutral, 0.25)
@@ -277,15 +336,27 @@ func _apply_chip(id: String) -> void:
 
 func _chip_sound(id: String) -> String:
 	match id:
-		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Glutball":
+		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Glutball", "Datenfresser", "Doppelklick", "Laserschuss":
 			return "shoot"
 		"Byteschlag":
 			return "slash"
-		"Firewall", "Blubberschild":
+		"Firewall", "Blubberschild", "Hitzeschild", "Nebel":
 			return "shield"
-		"Heilpatch":
+		"Heilpatch", "Neustart":
 			return "heal"
 	return "chip"
+
+
+func _second_click() -> void:
+	proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": "Neutral", "dmg": 12, "id": "Doppelklick"})
+
+
+func _funkenregen() -> void:
+	fx_cell(3 + e.c, e.r, GameData.EL.Feuer, 0.4)
+	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Feuer, 12)
+	hit_enemy(25, "Feuer")
+	if not over:
+		e.burn = maxi(e.burn, 3)
 
 
 func _miss() -> void:
@@ -332,6 +403,9 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 		return
 	var m := 1.0 if dot else GameData.mult(el, def.el)
 	d = roundi(d * m)
+	if not dot and scan > 0:
+		scan -= 1
+		d = roundi(d * 1.5)
 	e.hp = maxi(0, e.hp - d)
 	e.flash = 0.09
 	if not dot and not in_special:
@@ -357,6 +431,16 @@ func hurt_player(d: int) -> void:
 		events.append("dodge")
 		float_at(p.c, p.r, "Katzenreflex!", GameData.COL.mint)
 		burst(p.c + 0.5, p.r + 0.5, Color("#C9B8FF"), 14)
+		return
+	if mist > 0 and rng.randf() < 0.5:
+		events.append("dodge")
+		float_at(p.c, p.r, "Verfehlt!", GameData.EL.Wasser)
+		return
+	if heat > 0:
+		heat = 0.0
+		events.append("block")
+		e.burn = maxi(e.burn, 3)
+		float_at(p.c, p.r, "Hitzeschild!", GameData.EL.Feuer)
 		return
 	if shield > 0:
 		shield = 0.0
@@ -447,6 +531,10 @@ func _update_logic(dt: float) -> void:
 			bubble = 0
 	if oc > 0:
 		oc -= dt
+	if heat > 0:
+		heat -= dt
+	if mist > 0:
+		mist -= dt
 	since_hit += dt
 	if mon.passive == "Regeneration" and since_hit >= 3.0 and run.hp < run.max_hp:
 		regen_t -= dt
@@ -496,7 +584,7 @@ func _update_logic(dt: float) -> void:
 		pr.x += pr.v * dt
 		if e.r == pr.row and absf(pr.x - (3 + e.c + 0.5)) < 0.4:
 			proj.remove_at(i)
-			hit_enemy(pr.dmg, pr.el)
+			hit_enemy(pr.dmg * (2 if pr.id == "Datenfresser" and e.poison > 0 else 1), pr.el)
 			if over:
 				return
 			if pr.id == "Wasserstrahl" and e.c < 2:
@@ -547,16 +635,20 @@ func _update_logic(dt: float) -> void:
 		if mn.t <= 0:
 			mines.remove_at(i)
 
-	# Gegner-KI
+	# Gegner-KI (Strudel: halbe Geschwindigkeit)
 	var phase := boss_phase()
+	var edt := dt
+	if e.slow > 0:
+		e.slow -= dt
+		edt = dt * 0.5
 	if e.frozen > 0:
 		e.frozen -= dt
 	else:
-		e.move_t -= dt
+		e.move_t -= edt
 		if e.move_t <= 0:
 			e.move_t = def.move * (0.8 if phase == 3 else 1.0)
 			_move_enemy()
-		e.atk_t -= dt
+		e.atk_t -= edt
 		if e.atk_t <= 0:
 			e.atk_t = 1.5 if phase == 3 else def.atk
 			_enemy_attack()

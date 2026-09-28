@@ -27,6 +27,22 @@ const EVENTS := {
 		"title": "Wilder Glitchling",
 		"text": "Ein kleiner wilder Glitchling beobachtet dich schüchtern hinter einem Datenhalm.",
 	},
+	"update": {
+		"title": "Update verfügbar",
+		"text": "Ein freundliches Fenster (wirklich kein Spam!) bietet ein Update für einen deiner Chips an.",
+	},
+	"cookies": {
+		"title": "Cookie-Spur",
+		"text": "Eine Spur aus Browser-Cookies führt quer über die Wiese. Sie riechen nach Vanille.",
+	},
+	"backup": {
+		"title": "Backup-Station",
+		"text": "Eine alte Backup-Station summt vor sich hin. Auf dem Display blinkt: KOPIEREN?",
+	},
+	"minibot": {
+		"title": "Verirrter Mini-Bot",
+		"text": "Ein kleiner Bot piept verzweifelt. Er hat seinen Heimweg verloren und ein Rad klemmt.",
+	},
 }
 
 
@@ -83,6 +99,27 @@ static func event_options(run: RunState, key: String) -> Array:
 				{"id": "feed", "label": "Füttern (10)", "desc": "+5 max. HP und 10 HP heilen.", "enabled": run.frag >= 10},
 				{"id": "wave", "label": "Winken", "desc": "Deine Signatur-Leiste startet im nächsten Kampf halb voll.", "enabled": true},
 			]
+		"update":
+			var commons: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
+			return [
+				{"id": "install", "label": "Installieren", "desc": "Ein zufälliger gewöhnlicher Chip wird zu einem seltenen.", "enabled": not commons.is_empty()},
+				{"id": "later", "label": "Später erinnern", "desc": "+10 Fragmente fürs Warten.", "enabled": true},
+			]
+		"cookies":
+			return [
+				{"id": "collect", "label": "Aufsammeln", "desc": "+25 Fragmente.", "enabled": true},
+				{"id": "snack", "label": "Naschen", "desc": "+15 HP.", "enabled": run.hp < run.max_hp},
+			]
+		"backup":
+			return [
+				{"id": "copy", "label": "Chip kopieren", "desc": "Ein Chip deiner Wahl kommt ein zweites Mal ins Deck.", "enabled": true},
+				{"id": "leave", "label": "Nicht anfassen", "desc": "Nichts passiert.", "enabled": true},
+			]
+		"minibot":
+			return [
+				{"id": "home", "label": "Heimbringen", "desc": "Der Bot schließt sich dir an: Mini-Bot ins Deck.", "enabled": true},
+				{"id": "repair", "label": "Rad reparieren (10)", "desc": "Er bedankt sich mit einem zufälligen seltenen Chip.", "enabled": run.frag >= 10},
+			]
 	return []
 
 
@@ -115,6 +152,31 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 		["glitchling", "wave"]:
 			run.sp_bonus = true
 			return "Der Glitchling winkt zurück. Du fühlst dich motiviert!"
+		["update", "install"]:
+			var commons: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
+			var old: String = commons[run.rng.randi_range(0, commons.size() - 1)]
+			var neu := run.random_chip("Selten")
+			run.deck.erase(old)
+			run.deck.append(neu)
+			return "Update installiert: %s wurde zu %s." % [old, neu]
+		["update", "later"]:
+			run.frag += 10
+			return "Das Fenster schließt sich höflich. Für deine Geduld gibt es 10 Fragmente."
+		["cookies", "collect"]:
+			run.frag += 25
+			return "Du sammelst die Cookies ein und tauschst sie gegen 25 Fragmente."
+		["cookies", "snack"]:
+			return "Mmh, Vanille! +%d HP." % run.heal(15)
+		["backup", "copy"]:
+			return "copy"
+		["minibot", "home"]:
+			run.deck.append("Mini-Bot")
+			return "Der Mini-Bot piept glücklich und rollt in dein Deck."
+		["minibot", "repair"]:
+			run.frag -= 10
+			var c := run.random_chip("Selten")
+			run.deck.append(c)
+			return "Das Rad läuft wieder! Zum Dank schenkt er dir %s." % c
 	return "Du gehst weiter."
 
 

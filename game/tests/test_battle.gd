@@ -18,6 +18,9 @@ func _init() -> void:
 	test_special()
 	test_pop_close()
 	test_choices()
+	test_new_chips()
+	test_all_chips_run()
+	test_new_events()
 	test_evolution()
 	test_all_specials()
 	test_passives()
@@ -157,6 +160,122 @@ func test_choices() -> void:
 	var run := RunState.new("Pixmiez", 3)
 	var ch := run.roll_choices()
 	check(ch.size() == 3 and ch[0] != ch[1] and ch[1] != ch[2] and ch[0] != ch[2], "Chipwahl: 3 verschiedene Chips")
+
+
+## Chip auf Slot 0 legen und spielen
+func play(st: BattleState, chip: String) -> void:
+	st.hand[0].chip = chip
+	st.hand[0].rem = 0.0
+	st.use_slot(0)
+
+
+func test_new_chips() -> void:
+	var st := fresh()
+	play(st, "Doppelklick")
+	step(st, 0.8)
+	check(st.e.hp == 70 - 24, "Doppelklick: zwei Treffer à 12 (HP %d)" % st.e.hp)
+	st = fresh()
+	st.e.r = 0
+	play(st, "Wurmloch")
+	check(st.e.r == st.p.r and st.e.hp == 60, "Wurmloch zieht den Gegner in deine Reihe, 10 Schaden")
+	st = fresh()
+	st.e.r = 0
+	play(st, "Laserschuss")
+	check(st.e.hp == 70, "Laserschuss verfehlt andere Reihe")
+	st.e.r = st.p.r
+	play(st, "Laserschuss")
+	check(st.e.hp == 45, "Laserschuss trifft sofort in deiner Reihe (70 → %d)" % st.e.hp)
+	st = fresh()
+	st.e.c = 0
+	st.p.c = 2
+	play(st, "Lichtlanze")
+	check(st.e.hp == 70, "Lichtlanze verfehlt, wenn die Spalten nicht passen")
+	st.p.c = 0
+	play(st, "Lichtlanze")
+	check(st.e.hp == 70 - 45, "Lichtlanze trifft passende Spalte, Licht schlägt Virus (70 → %d)" % st.e.hp)
+	st = fresh()
+	play(st, "Portscan")
+	play(st, "Laserschuss")
+	check(st.e.hp == 70 - 38, "Portscan: +50 %% auf den nächsten Treffer (70 → %d)" % st.e.hp)
+	st = fresh()
+	st.e.poison = 5
+	play(st, "Datenfresser")
+	step(st, 0.4)
+	check(st.e.hp <= 70 - 30, "Datenfresser doppelt gegen Gift (70 → %d)" % st.e.hp)
+	st = fresh()
+	st.reflex = 0
+	play(st, "Hitzeschild")
+	st.hurt_player(10)
+	check(st.run.hp == 100 and st.e.burn == 3, "Hitzeschild blockt und setzt den Angreifer in Brand")
+	st = fresh()
+	st.e.frozen = 0.0
+	st.e.move_t = 99.0
+	st.e.atk_t = 0.01
+	step(st, 0.05)
+	play(st, "Blendgranate")
+	check(st.warns.is_empty() and st.e.atk_t > 1.0, "Blendgranate bricht den laufenden Angriff ab")
+	st = fresh()
+	st.e.frozen = 0.0
+	st.e.atk_t = 1.0
+	play(st, "Strudel")
+	step(st, 1.0)
+	check(absf(st.e.atk_t - 0.5) < 0.05, "Strudel: Gegner halb so schnell (Timer %.2f)" % st.e.atk_t)
+	st = fresh()
+	st.reflex = 0
+	play(st, "Nebel")
+	var dodged := 0
+	for i in 40:
+		st.mist = 3.0
+		var hp0: int = st.run.hp
+		st.hurt_player(1)
+		if st.run.hp == hp0:
+			dodged += 1
+	check(dodged > 8 and dodged < 32, "Nebel: etwa die Hälfte der Treffer verfehlt (%d/40)" % dodged)
+	st = fresh()
+	st.run.hp = 50
+	play(st, "Neustart")
+	check(st.run.hp == 65 and st.hand.all(func(h): return h.rem == 0.0), "Neustart: +15 HP und eine sofort bereite Hand")
+	st = fresh()
+	play(st, "Funkenregen")
+	step(st, 0.5)
+	check(st.e.hp == 45 and st.e.burn >= 2, "Funkenregen: 25 + Brand (70 → %d)" % st.e.hp)
+
+
+## Jeder Chip lässt sich in jeder Lage spielen, ohne dass etwas abstürzt
+func test_all_chips_run() -> void:
+	var n := 0
+	for chip in GameData.CHIPS:
+		var st := fresh()
+		st.e.frozen = 0.0
+		play(st, chip)
+		step(st, 2.0)
+		n += 1
+	check(n == GameData.CHIPS.size() and n >= 27, "Alle %d Chips laufen fehlerfrei" % n)
+	var per_el := {}
+	for chip in GameData.CHIPS:
+		per_el[GameData.CHIPS[chip].el] = per_el.get(GameData.CHIPS[chip].el, 0) + 1
+	check(per_el.values().all(func(v): return v >= 4), "Jedes Element hat mindestens 4 Chips %s" % [per_el])
+
+
+func test_new_events() -> void:
+	var run := RunState.new("Pixmiez", 3)
+	var before := run.deck.size()
+	check(Rooms.event_apply(run, "backup", "copy") == "copy", "Backup-Station lässt einen Chip kopieren")
+	Rooms.event_apply(run, "minibot", "home")
+	check(run.deck.size() == before + 1 and run.deck.has("Mini-Bot"), "Verirrter Mini-Bot kommt ins Deck")
+	var commons := run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich").size()
+	Rooms.event_apply(run, "update", "install")
+	var commons2 := run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich").size()
+	check(commons2 == commons - 1, "Update macht einen gewöhnlichen Chip selten")
+	var f0 := run.frag
+	Rooms.event_apply(run, "cookies", "collect")
+	check(run.frag == f0 + 25, "Cookie-Spur: +25 Fragmente")
+	var all_ok := true
+	for key in Rooms.EVENTS:
+		for o in Rooms.event_options(run, key):
+			if o.label == "" or o.desc == "":
+				all_ok = false
+	check(all_ok and Rooms.EVENTS.size() == 8, "8 Ereignisse, alle Optionen beschriftet")
 
 
 func test_evolution() -> void:

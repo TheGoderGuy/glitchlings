@@ -30,3 +30,23 @@ SORT kategorie ASC
 ```
 
 Siehe auch: [[Kampfsystem]], [[Prototyp-Spezifikation]]
+
+## Erweiterung Steam-Version (28.09.2026) – 12 neue Chips
+Jetzt 27 Chips, jedes Element hat 4–5 Chips (eigene Evolutionsrichtung spielbar). Umsetzung: `game/scripts/data/game_data.gd`.
+
+| Chip | Element | Kategorie | Seltenheit | Wirkung |
+|---|---|---|---|---|
+| Doppelklick | Neutral | Angriff | Gewöhnlich | 2 Projektile über deine Reihe, je 12 |
+| Neustart | Neutral | Buff | Episch | +15 HP, komplett neue, sofort bereite Hand |
+| Funkenregen | Feuer | Angriff | Selten | Trifft immer: 25 + Brand |
+| Hitzeschild | Feuer | Schild | Gewöhnlich | Blockt nächsten Treffer (4 s), Angreifer brennt |
+| Laserschuss | Code | Angriff | Gewöhnlich | Sofortiger Treffer in deiner Reihe: 25 |
+| Portscan | Code | Buff | Selten | Nächste 2 Treffer +50 % |
+| Strudel | Wasser | Feldeffekt | Gewöhnlich | Gegner 3 s halb so schnell |
+| Nebel | Wasser | Schild | Selten | 3 s: Angriffe verfehlen mit 50 % |
+| Lichtlanze | Licht | Angriff | Gewöhnlich | Trifft die Gegnerspalte = deine Spalte: 30 |
+| Blendgranate | Licht | Feldeffekt | Selten | Bricht den laufenden Gegnerangriff ab |
+| Wurmloch | Virus | Falle | Selten | Zieht Gegner in deine Reihe, 10 |
+| Datenfresser | Virus | Angriff | Gewöhnlich | Projektil 15, doppelt gegen Gift |
+
+**Designidee:** Mehr Positionsspiel – Wurmloch + Laserschuss/Pixelstrahl, Lichtlanze belohnt die richtige Spalte, Blendgranate als Konter statt Ausweichen.

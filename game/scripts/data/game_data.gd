@@ -30,6 +30,19 @@ const CHIPS := {
 	"Mini-Bot": {"cat": "Beschwörung", "el": "Code", "dmg": 0, "cd": 6.0, "rar": "Selten", "desc": "Helfer: 6 s lang 5 Schaden pro Sekunde."},
 	"Virusspritzer": {"cat": "Angriff", "el": "Virus", "dmg": 10, "cd": 2.5, "rar": "Gewöhnlich", "desc": "Projektil. Vergiftet 4 s lang."},
 	"Defrag": {"cat": "Buff", "el": "Neutral", "dmg": 0, "cd": 8.0, "rar": "Episch", "desc": "Lädt alle anderen Chips in der Hand sofort."},
+	# --- Erweiterung 28.09.2026 ---
+	"Doppelklick": {"cat": "Angriff", "el": "Neutral", "dmg": 12, "cd": 1.8, "rar": "Gewöhnlich", "desc": "Zwei schnelle Projektile über deine Reihe, je 12."},
+	"Neustart": {"cat": "Buff", "el": "Neutral", "dmg": 0, "cd": 7.0, "rar": "Episch", "desc": "Heilt 15 HP und zieht eine komplett neue, sofort bereite Hand."},
+	"Funkenregen": {"cat": "Angriff", "el": "Feuer", "dmg": 25, "cd": 3.0, "rar": "Selten", "desc": "Funken regnen aufs Gegnerfeld, einer trifft immer: 25 + Brand."},
+	"Hitzeschild": {"cat": "Schild", "el": "Feuer", "dmg": 0, "cd": 5.0, "rar": "Gewöhnlich", "desc": "Blockt den nächsten Treffer (4 s) und setzt den Angreifer in Brand."},
+	"Laserschuss": {"cat": "Angriff", "el": "Code", "dmg": 25, "cd": 2.5, "rar": "Gewöhnlich", "desc": "Sofortiger Laser über deine Reihe: 25."},
+	"Portscan": {"cat": "Buff", "el": "Code", "dmg": 0, "cd": 4.0, "rar": "Selten", "desc": "Deine nächsten 2 Treffer machen +50 % Schaden."},
+	"Strudel": {"cat": "Feldeffekt", "el": "Wasser", "dmg": 0, "cd": 4.0, "rar": "Gewöhnlich", "desc": "Der Gegner wird 3 s lang halb so schnell."},
+	"Nebel": {"cat": "Schild", "el": "Wasser", "dmg": 0, "cd": 5.0, "rar": "Selten", "desc": "3 s lang verfehlen dich Angriffe mit 50 % Chance."},
+	"Lichtlanze": {"cat": "Angriff", "el": "Licht", "dmg": 30, "cd": 2.5, "rar": "Gewöhnlich", "desc": "Trifft die Gegnerspalte, die deiner Spalte entspricht: 30."},
+	"Blendgranate": {"cat": "Feldeffekt", "el": "Licht", "dmg": 0, "cd": 5.0, "rar": "Selten", "desc": "Blendet den Gegner: sein laufender Angriff wird abgebrochen."},
+	"Wurmloch": {"cat": "Falle", "el": "Virus", "dmg": 10, "cd": 3.0, "rar": "Selten", "desc": "Zieht den Gegner in deine Reihe: 10 Schaden."},
+	"Datenfresser": {"cat": "Angriff", "el": "Virus", "dmg": 15, "cd": 2.0, "rar": "Gewöhnlich", "desc": "Projektil: 15, doppelt gegen vergiftete Gegner."},
 }
 
 const FOES := [

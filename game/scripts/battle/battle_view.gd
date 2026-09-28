@@ -282,6 +282,12 @@ func _draw_actors() -> void:
 		for i in 12:
 			var a0 := i * TAU / 12.0 + anim_t * 2.0
 			draw_arc(body, 30, a0, a0 + TAU / 24.0, 3, GameData.EL.Code, 2)
+	if st.heat > 0:
+		for i in 12:
+			var a1 := i * TAU / 12.0 - anim_t * 3.0
+			draw_arc(body, 28, a1, a1 + TAU / 24.0, 3, GameData.EL.Feuer, 2)
+	if st.mist > 0:
+		draw_circle(body, 32, Color(0.85, 0.9, 1.0, 0.18 + 0.05 * sin(anim_t * 6.0)))
 	if st.bubble > 0 and st.bubble_t > 0:
 		draw_circle(body, 30, Color(GameData.EL.Wasser, 0.2))
 		draw_arc(body, 30, 0, TAU, 32, Color(GameData.EL.Wasser, 0.8), 1)
@@ -385,8 +391,21 @@ func _draw_hud() -> void:
 	_text(P.position + Vector2(6, 12), "%s · %s" % [GameData.STAGE_NAMES[run.stage], run.form_el()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
 	_bar(Rect2(P.position + Vector2(6, 18), Vector2(128, 9)), float(run.hp) / run.max_hp, GameData.COL.mint)
 	_text(P.position + Vector2(6, 26), "%d/%d" % [run.hp, run.max_hp], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
+	var buffs: Array = []
 	if st.reflex > 0:
-		_text(Vector2(8, 55), "Katzenreflex bereit", 8, GameData.COL.mint)
+		buffs.append(["Katzenreflex", GameData.COL.mint])
+	if st.oc > 0:
+		buffs.append(["Übertaktet", GameData.EL.Feuer])
+	if st.scan > 0:
+		buffs.append(["Scan x%d" % st.scan, GameData.EL.Code])
+	if st.mist > 0:
+		buffs.append(["Nebel", GameData.EL.Wasser])
+	var bx := 8.0
+	for bf in buffs:
+		var bw := text_width(bf[0]) + 8
+		_box(Rect2(bx, 45, bw, 13), GameData.COL.dark, bf[1])
+		_text(Vector2(bx, 55), bf[0], 8, bf[1], HORIZONTAL_ALIGNMENT_CENTER, bw, false)
+		bx += bw + 3
 	# Gegner rechts
 	var E := Rect2(W - 208, 8, 200, 34)
 	_box(E, Color(GameData.COL.panel, 0.9), GameData.EL[st.def.el].darkened(0.3))
@@ -401,6 +420,8 @@ func _draw_hud() -> void:
 		tags.append(["Gift", GameData.EL.Virus])
 	if st.e.frozen > 0:
 		tags.append(["Eis", GameData.EL.Wasser])
+	if st.e.slow > 0:
+		tags.append(["Langsam", GameData.EL.Wasser])
 	var tx := W - 8.0
 	for tg in tags:
 		var w := text_width(tg[0]) + 8
