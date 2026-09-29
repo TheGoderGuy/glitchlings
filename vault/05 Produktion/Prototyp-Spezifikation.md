@@ -198,3 +198,8 @@ Bindung (0–5 Herzen, faire Boni, sinkt nie), Pflege-Ansicht (streicheln, Daten
 **Stand:** Kampf-Kern in Godot (Pixmiez, 15 Chips, 3 Gegner + Boss), Pixel-Schrift, synthetisierte Platzhalter-Sounds, Titel, Optionen, Pause.
 **Beobachtung:** Kampfgefühl und Sounds fühlen sich gut an. Damit ist die Frage von Phase 1 beantwortet: **Ja**, die Godot-Version trägt.
 **Offen:** Schwierigkeit (Autopilot gewinnt 40/40), Animationen, Musik. Weiter mit Phase 2 (kompletter Run mit Zonenkarte), siehe [[Roadmap]].
+
+### Playtest 6 (intern, Produzent, 29.09.2026) – Station, Labor, Firewall-Vulkan
+**Stand:** Station mit Spielstand, 9 Linien + 4 Fusionen (44 Formen), Labor, Zone 2 mit Lava-Mechanik, Musik im GBA/DS-Stil.
+**Beobachtung:** „Spielt sich sehr gut.“ Vulkan per Testfunktion angespielt.
+**Offen:** Schwierigkeit bleibt zu beobachten (Autopilot gewinnt alles), externe Tester fehlen noch.
