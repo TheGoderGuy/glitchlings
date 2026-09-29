@@ -50,7 +50,7 @@ const FOES := [
 	{"name": "Bugsy", "el": "Virus", "hp": 70, "move": 1.4, "atk": 2.4, "dmg": 10, "pat": ["row"], "spr": "bug", "loot": 10, "boss": false, "tele": false},
 	{"name": "Glitchmotte", "el": "Elektro", "hp": 60, "move": 1.0, "atk": 2.0, "dmg": 14, "pat": ["cell"], "spr": "moth", "loot": 10, "boss": false, "tele": true},
 	{"name": "Bytewurm", "el": "Virus", "hp": 90, "move": 1.6, "atk": 2.6, "dmg": 12, "pat": ["row", "col"], "spr": "wurm", "loot": 10, "boss": false, "tele": false},
-	{"name": "Kernelmantis", "el": "Virus", "hp": 320, "move": 1.8, "atk": 2.2, "dmg": 16, "pat": ["row"], "spr": "mantis", "loot": 30, "boss": true, "tele": false},
+	{"name": "Kernelmantis", "el": "Virus", "hp": 320, "move": 1.8, "atk": 2.2, "dmg": 16, "pat": ["row"], "spr": "mantis", "title": "Wächter des System-Kernels", "loot": 30, "boss": true, "tele": false},
 	# --- Cache-Wiesen-Erweiterung 28.09.2026 (Index 4–6) ---
 	{"name": "Chiffrekäfer", "el": "Code", "hp": 80, "move": 1.5, "atk": 2.5, "dmg": 12, "pat": ["cross"], "spr": "kaefer", "loot": 10, "boss": false, "tele": false},
 	{"name": "Datenwespe", "el": "Virus", "hp": 50, "move": 0.8, "atk": 1.7, "dmg": 8, "pat": ["cell", "row", "cell"], "spr": "wespe", "loot": 10, "boss": false, "tele": false},
@@ -59,12 +59,12 @@ const FOES := [
 	{"name": "Glutmilbe", "el": "Feuer", "hp": 60, "move": 0.7, "atk": 1.6, "dmg": 9, "pat": ["cell", "cell", "row"], "spr": "milbe", "loot": 11, "boss": false, "tele": false},
 	{"name": "Brandmauerassel", "el": "Code", "hp": 130, "move": 2.0, "atk": 3.0, "dmg": 15, "pat": ["col2"], "spr": "assel", "loot": 13, "boss": false, "tele": false},
 	{"name": "Aschefalter", "el": "Feuer", "hp": 75, "move": 1.1, "atk": 2.4, "dmg": 10, "pat": ["lava", "cell"], "spr": "falter", "loot": 12, "boss": false, "tele": true},
-	{"name": "Glutkernskarabäus", "el": "Feuer", "hp": 420, "move": 1.8, "atk": 2.1, "dmg": 17, "pat": ["row", "lava", "col"], "spr": "skarab", "loot": 40, "boss": true, "tele": false, "minion": "lava"},
+	{"name": "Glutkernskarabäus", "el": "Feuer", "hp": 420, "move": 1.8, "atk": 2.1, "dmg": 17, "pat": ["row", "lava", "col"], "spr": "skarab", "title": "Glühendes Herz des Vulkans", "loot": 40, "boss": true, "tele": false, "minion": "lava"},
 	# --- Viren-Sümpfe (Index 11–14) ---
 	{"name": "Saugmücke", "el": "Virus", "hp": 65, "move": 0.8, "atk": 1.8, "dmg": 10, "pat": ["cell", "row"], "spr": "muecke", "loot": 13, "boss": false, "tele": false, "drain": true},
 	{"name": "Panzerschnecke", "el": "Code", "hp": 140, "move": 2.6, "atk": 2.8, "dmg": 14, "pat": ["slime", "row"], "spr": "schnecke", "loot": 14, "boss": false, "tele": false},
 	{"name": "Glitchblüte", "el": "Virus", "hp": 110, "move": 99.0, "atk": 2.2, "dmg": 13, "pat": ["cross", "pop", "cross"], "spr": "bluete", "loot": 14, "boss": false, "tele": false, "stationary": true},
-	{"name": "Schwarmkönigin", "el": "Virus", "hp": 520, "move": 1.9, "atk": 2.0, "dmg": 18, "pat": ["row", "slime", "col", "pop"], "spr": "koenigin", "loot": 50, "boss": true, "tele": false, "minion": "mix", "drain": true},
+	{"name": "Schwarmkönigin", "el": "Virus", "hp": 520, "move": 1.9, "atk": 2.0, "dmg": 18, "pat": ["row", "slime", "col", "pop"], "spr": "koenigin", "title": "Herrscherin der Viren-Sümpfe", "loot": 50, "boss": true, "tele": false, "minion": "mix", "drain": true},
 ]
 
 ## Zonen: Gegner-Pools (Indizes in FOES), Boss, Zähigkeit, Hintergrund. Zone 2 wird nach dem Boss von Zone 1 frei.

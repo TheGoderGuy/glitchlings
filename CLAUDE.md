@@ -76,6 +76,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Toxmolch blinzelt, Ereignis-Bildschirm mit Zonenlandschaft + animierter Szene je Ereignis, Lagerfeuer am Rastplatz (29.09.2026)
 - [x] Opening-Szene (29.09.2026): 5 Bilder (Boot → Absturz → Flucht → Ei auf dem Desktop → Operator), eigene Intro-Musik, überspringbar, „Intro ansehen“ in den Optionen, 171 Tests – `vault/05 Produktion/Opening-Szene.md`
 - [x] Keine Internet-/Werbe-Anspielungen (29.09.2026): Zone 3 → Viren-Sümpfe, 6 neue Gegner-Sprites (Bytewurm, Kernelmantis als Boss Zone 1, Datenwespe, Panzerschnecke, Glitchblüte, Schwarmkönigin), Pop-ups → Bitmilben/Glitch-Sporen, Ereignisse Bit-Beeren/Wartungsdrohne/Datenleitung
+- [x] Boss-Intros (29.09.2026): Warnstreifen, Silhouette, Enthüllung mit Blitz + Bossmusik, Name/Titel mit Glitch-Effekt, überspringbar, 177 Tests – `vault/05 Produktion/Boss-Intros.md`
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo
 

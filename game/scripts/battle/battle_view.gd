@@ -18,7 +18,11 @@ const HAND_X := 42
 const HEAL_AFTER_FIGHT := 10
 const BABY_SCALE := 1     # Babys (32 px) im Kampf in Originalgröße, damit die Evolution sichtbar wächst
 
-enum Mode { FIGHT, PAUSE, EVOLVE, PICK }
+enum Mode { FIGHT, PAUSE, EVOLVE, PICK, INTRO }
+## Boss-Intro: Zeitpunkte in Sekunden
+const INTRO_REVEAL := 1.7    # Silhouette wird farbig, Musik setzt ein
+const INTRO_END := 4.2       # danach beginnt der Kampf
+const INTRO_FADE := 0.5
 
 const EVO_REVEAL := 1.8   # Sekunden bis zur Enthüllung der neuen Form
 
@@ -58,8 +62,13 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 	if run.tutorial and run.fights_won == 0 and type == "fight":
 		tut = Tutorial.new()
 		st.status = ""
-	Music.play("boss" if type == "boss" else Music.zone_key("battle", run.map.zone))
-	_set_mode(Mode.FIGHT)
+	if type == "boss":
+		# Boss-Intro: erst Stille und Warnung, die Bossmusik setzt mit der Enthüllung ein
+		Music.stop()
+		_set_mode(Mode.INTRO)
+	else:
+		Music.play(Music.zone_key("battle", run.map.zone))
+		_set_mode(Mode.FIGHT)
 
 
 # ---------- Ablauf ----------
@@ -145,6 +154,10 @@ func _process(delta: float) -> void:
 		queue_redraw()
 		return
 	if mode == Mode.PICK and mode_t < 0.5:
+		queue_redraw()
+		return
+	if mode == Mode.INTRO:
+		_process_intro(delta)
 		queue_redraw()
 		return
 	match mode:
@@ -264,6 +277,9 @@ func _draw() -> void:
 	if mode == Mode.EVOLVE:
 		_draw_evolve()
 		return
+	if mode == Mode.INTRO and mode_t < INTRO_END - INTRO_FADE:
+		_draw_boss_intro()
+		return
 	if st.shake > 0 and Settings.screen_shake:
 		var s := st.shake * 0.5
 		off = Vector2(roundi(randf_range(-s, s)), roundi(randf_range(-s, s)))
@@ -291,6 +307,10 @@ func _draw() -> void:
 			_draw_pause()
 		Mode.PICK:
 			_draw_pick()
+		Mode.INTRO:
+			# Übergang: das Intro blendet in den Kampf über
+			var k := clampf((INTRO_END - mode_t) / INTRO_FADE, 0.0, 1.0)
+			draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, k))
 
 
 func _draw_arena() -> void:
@@ -773,6 +793,8 @@ func _draw_tutorial() -> void:
 
 ## Für Screenshots/Tests: den Kampf mit Autopilot vorspulen.
 func simulate(seconds: float) -> void:
+	if mode == Mode.INTRO:
+		_start_boss_fight()
 	var bot := BattleBot.new(0.15)
 	var dt := 1.0 / 60.0
 	var steps := 0
@@ -839,6 +861,110 @@ func _draw_minion(q: Dictionary) -> void:
 	# Zündschnur
 	draw_rect(Rect2(cx - 12, fy + 4, 24, 2), GameData.COL.dark)
 	draw_rect(Rect2(cx - 12, fy + 4, 24.0 * q.t / q.max, 2), Color("#FF5470"))
+
+
+# ---------- Boss-Intro ----------
+
+func _process_intro(_delta: float) -> void:
+	var t := mode_t
+	var cues := [[0.05, "warn"], [0.45, "warn"], [0.85, "warn"], [1.0, "charge"], [INTRO_REVEAL, "hit_big"]]
+	for c in cues:
+		if t - _delta < c[0] and t >= c[0]:
+			Sfx.play(c[1], 0.0)
+			if c[1] == "hit_big":
+				st.shake = 10.0
+				Music.play("boss")
+	if st.shake > 0:
+		st.shake = maxf(0.0, st.shake - _delta * 20.0)
+	# überspringen (kurze Sperre, damit der Tastendruck von der Karte nicht durchrutscht)
+	if t > 0.35 and (Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("pause")):
+		Sfx.play("confirm")
+		_start_boss_fight()
+		return
+	if t >= INTRO_END:
+		_start_boss_fight()
+
+
+func _start_boss_fight() -> void:
+	if Music.current != "boss":
+		Music.play("boss")
+	st.shake = 0.0
+	_set_mode(Mode.FIGHT)
+
+
+func _draw_boss_intro() -> void:
+	var t := mode_t
+	var def: Dictionary = st.def
+	var el: Color = GameData.EL[def.el]
+	# Abgedunkelter Boss-Hintergrund
+	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.55))
+	var shake := Vector2.ZERO
+	if st.shake > 0 and Settings.screen_shake:
+		shake = Vector2(roundi(randf_range(-st.shake, st.shake) * 0.5), roundi(randf_range(-st.shake, st.shake) * 0.5))
+	# Lichtkegel hinter dem Boss nach der Enthüllung
+	var cx := W / 2.0 + 140.0
+	if t > INTRO_REVEAL:
+		var g := clampf((t - INTRO_REVEAL) / 0.4, 0.0, 1.0)
+		for i in 12:
+			var a := i * TAU / 12.0 + anim_t * 0.3
+			var d := Vector2(cos(a), sin(a))
+			var nn := Vector2(-d.y, d.x)
+			var c0 := Vector2(cx, 170)
+			draw_colored_polygon(PackedVector2Array([c0, c0 + d * 420.0 + nn * 36.0, c0 + d * 420.0 - nn * 36.0]), Color(el, 0.06 * g))
+	# Boss: gleitet als Silhouette herein, wird bei der Enthüllung farbig (doppelte Größe, ganzzahlig)
+	var slide := clampf((t - 0.5) / 1.1, 0.0, 1.0)
+	slide = 1.0 - pow(1.0 - slide, 3.0)
+	var bx := lerpf(W + 120.0, cx, slide) + shake.x
+	var feet := 268.0 + shake.y
+	if t > 0.5:
+		off = Vector2.ZERO
+		if t < INTRO_REVEAL:
+			_draw_sprite(def.spr, bx, feet, true, {"scale": 2, "flash": true, "mod": Color(0.02, 0.01, 0.06, 1.0)})
+			# glühende Augen-Andeutung in der Silhouette: roter Schimmer am Boden
+			draw_rect(Rect2(bx - 90, feet - 2, 180, 3), Color(el, 0.25))
+		else:
+			_draw_sprite(def.spr, bx, feet, true, {"scale": 2, "blink": fmod(anim_t, 3.0) < 0.12})
+	# Warnstreifen oben und unten
+	var bars := clampf(t / 0.35, 0.0, 1.0)
+	var bh := 26.0
+	for top in [true, false]:
+		var y := (-bh + bh * bars) if top else (H - bh * bars)
+		draw_rect(Rect2(0, y, W, bh), Color("#1A0610"))
+		var sh := fmod(anim_t * 60.0, 24.0) * (1.0 if top else -1.0)
+		for i in range(-2, 30):
+			var x0 := i * 24.0 + sh
+			draw_colored_polygon(PackedVector2Array([Vector2(x0, y + 4), Vector2(x0 + 12, y + 4), Vector2(x0 + 4, y + bh - 4), Vector2(x0 - 8, y + bh - 4)]), Color("#FF5470", 0.85))
+		var txt := "  WARNUNG  ·  BOSS  ·  WARNUNG  ·  BOSS  ·  WARNUNG  ·  BOSS  ·  WARNUNG  ·  BOSS"
+		var tx := -fmod(anim_t * 80.0, 200.0) if top else -200.0 + fmod(anim_t * 80.0, 200.0)
+		_text(Vector2(tx, y + bh / 2.0 + 4), txt, 8, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	# Weißer Blitz bei der Enthüllung
+	if t > INTRO_REVEAL and t < INTRO_REVEAL + 0.35:
+		draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 1.0 - (t - INTRO_REVEAL) / 0.35))
+	# Name mit Glitch-Versatz, darunter der Titel
+	if t > INTRO_REVEAL + 0.15:
+		var k := clampf((t - INTRO_REVEAL - 0.15) / 0.3, 0.0, 1.0)
+		var nx := lerpf(-260.0, 36.0, 1.0 - pow(1.0 - k, 3.0))
+		var name_s: String = def.name.to_upper()
+		var jit := Vector2(randi_range(-2, 2), 0) if fmod(anim_t, 1.3) < 0.08 else Vector2.ZERO
+		var f := font(true)
+		var fs := 24 if text_width(name_s, 24, true) <= 290 else 16
+		draw_rect(Rect2(nx - 12, 96, 300, 3), el)
+		draw_string(f, Vector2(nx - 1, 136) + jit, name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color("#4CC3F0", 0.8))
+		draw_string(f, Vector2(nx + 1, 136) - jit, name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color("#FF5470", 0.8))
+		draw_string_outline(f, Vector2(nx, 136), name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, 4, GameData.COL.dark)
+		draw_string(f, Vector2(nx, 136), name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color.WHITE)
+		if t > INTRO_REVEAL + 0.45:
+			var tk := clampf((t - INTRO_REVEAL - 0.45) / 0.3, 0.0, 1.0)
+			_text(Vector2(nx, 156), def.get("title", "Herrscher dieser Zone"), 8, Color(el.lightened(0.3), tk), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+			_text(Vector2(nx, 172), "%s · %d HP" % [def.el, def.hp], 8, Color(GameData.COL.muted, tk))
+	_text(Vector2(0, H - 34), "%s überspringen" % ("A" if InputSetup.pad else "Enter"), 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 12)
+
+
+func show_intro_for_screenshot(t: float) -> void:
+	_set_mode(Mode.INTRO)
+	mode_t = t
+	anim_t = t
+	st.shake = 0.0
 
 
 func show_evolve_for_screenshot(t: float) -> void:

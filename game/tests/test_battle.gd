@@ -40,6 +40,7 @@ func _ready() -> void:
 	test_sounds()
 	await test_music()
 	await test_opening()
+	await test_boss_intro()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -1181,4 +1182,45 @@ func test_opening() -> void:
 	await get_tree().process_frame
 	check(ended2[0] and o2.idx == 0, "Opening lässt sich sofort überspringen")
 	o2.queue_free()
+	Music.stop()
+
+
+## Boss-Intro: läuft vor jedem Bosskampf, pausiert den Kampf, startet ihn danach (auch per Überspringen)
+func test_boss_intro() -> void:
+	var ok_titles := true
+	for i in GameData.FOES.size():
+		var f: Dictionary = GameData.FOES[i]
+		if f.boss and f.get("title", "") == "":
+			ok_titles = false
+	check(ok_titles, "Jeder Boss hat einen Titel fürs Intro")
+	var run := RunState.new("Pixmiez", 3)
+	var bv = load("res://scenes/battle.tscn").instantiate()
+	add_child(bv)
+	bv.setup(run, run.foe_for({"type": "boss"}), "boss")
+	check(bv.mode == bv.Mode.INTRO, "Bosskampf beginnt mit dem Intro")
+	var hp0: int = run.hp
+	await get_tree().create_timer(1.0).timeout
+	check(bv.mode == bv.Mode.INTRO and run.hp == hp0 and bv.st.warns.is_empty(), "Während des Intros greift der Boss nicht an")
+	await get_tree().create_timer(bv.INTRO_END).timeout
+	check(bv.mode == bv.Mode.FIGHT and Music.current == "boss", "Nach dem Intro startet der Kampf mit Bossmusik")
+	bv.queue_free()
+	# Überspringen
+	var bv2 = load("res://scenes/battle.tscn").instantiate()
+	add_child(bv2)
+	bv2.setup(RunState.new("Pixmiez", 4), run.foe_for({"type": "boss"}), "boss")
+	await get_tree().create_timer(0.5).timeout
+	await get_tree().process_frame   # Tastendruck zu Frame-Beginn, sonst verpasst _process ihn
+	Input.action_press("confirm")
+	await get_tree().process_frame
+	Input.action_release("confirm")
+	await get_tree().process_frame
+	check(bv2.mode == bv2.Mode.FIGHT, "Boss-Intro lässt sich überspringen")
+	bv2.queue_free()
+	# normale Kämpfe haben kein Intro
+	var bv3 = load("res://scenes/battle.tscn").instantiate()
+	add_child(bv3)
+	var r3 := RunState.new("Pixmiez", 5)
+	bv3.setup(r3, r3.foe_for({"type": "fight"}), "fight")
+	check(bv3.mode == bv3.Mode.FIGHT, "Normale Kämpfe starten ohne Intro")
+	bv3.queue_free()
 	Music.stop()

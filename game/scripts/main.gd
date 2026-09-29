@@ -221,7 +221,7 @@ func _screenshot(shot: Dictionary) -> void:
 			if shot.has("event"):
 				run.current_node().event = shot.event
 			_enter_node()
-		"fight", "pick", "pause", "evolve", "tutorial":
+		"fight", "pick", "pause", "evolve", "tutorial", "bossintro":
 			run.tutorial = mode == "tutorial"
 			run.enter(run.next_choices()[0])
 			if floors >= run.map.boss_floor() - 1:
@@ -229,6 +229,12 @@ func _screenshot(shot: Dictionary) -> void:
 			elif run.current_node().type != "elite":
 				run.current_node().type = "fight"
 			_enter_node()
+			if mode == "bossintro":
+				current.show_intro_for_screenshot(shot.get("t", 3.0))
+				current.set_process(false)
+				current.queue_redraw()
+				await Shot.save(self, shot.path)
+				return
 			current.simulate(shot.get("sim", 2.0))
 			if shot.has("pops"):
 				var pk: String = "spore" if run.map.zone == "sumpf" else "milbe"
