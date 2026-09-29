@@ -146,6 +146,8 @@ func _demo_save() -> void:
 	SaveGame.add_egg("Gewöhnlich", rng)
 	SaveGame.add_egg("Selten", rng)
 	SaveGame.data.stats = {"runs": 6, "wins": 1}
+	SaveGame.data.frag = 85
+	SaveGame.data.hints = [2]
 
 
 func _screenshot(shot: Dictionary) -> void:
@@ -171,11 +173,17 @@ func _screenshot(shot: Dictionary) -> void:
 				current.page = TitleScreen.Page.OPTIONS
 		"starter":
 			show_starters()
-		"station", "nest", "dex", "hatch":
+		"station", "nest", "dex", "hatch", "lab", "fusion":
 			if mode == "hatch":
 				SaveGame.data.nest[0].runs_left = 0
 			show_station()
-			current.tab = {"station": 0, "nest": 1, "dex": 2, "hatch": 0}[mode]
+			current.tab = {"station": 0, "nest": 1, "lab": 2, "dex": 3, "hatch": 0, "fusion": 2}[mode]
+			if mode == "lab":
+				current.fuse_sel = [int(SaveGame.team()[1].id), int(SaveGame.team()[2].id)]
+				current.sel = SaveGame.team().size()
+			if mode == "fusion":
+				SaveGame.data.frag = 150
+				current.fusion = SaveGame.try_fuse(int(SaveGame.team()[1].id), int(SaveGame.team()[2].id), RandomNumberGenerator.new())
 			current.hatch_t = shot.get("t", 0.0)
 			if mode == "dex":
 				current.sel = int(shot.get("t", 0.0))

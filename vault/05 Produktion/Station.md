@@ -33,3 +33,16 @@ Sprites mit Umlaut im Namen liegen im Spiel als `Huepfbyte_64.png` / `Baertron_6
 
 ## Offen
 - Labor/Fusion, Bindung/Pflege, dauerhafte Währung.
+
+## Labor / Fusion (29.09.2026)
+- **Fragmente werden gerettet:** Was am Run-Ende übrig ist, landet auf der Station (Entscheidung Händler: ausgeben oder sparen).
+- Fusion kostet **100 Fragmente, nur bei Erfolg**. Beide Eltern gehen in der Fusion auf. Fehlversuche kosten nichts und geben ein **Gerücht** im Rezeptbuch.
+- Rezepte (Linie, egal welche Stufe): Funkling + Tröpfel = **Dampfbyte**, Tröpfel + Kekso = **Wolkerich**, Lumi + Kekso = **Glyphel**, Quakli + **Virulina** = **Spukatz** (früher „nur nachts“ – ersetzt, weil Echtzeit-Sperren gestrichen sind).
+- Fusionen kämpfen auf Champion-Niveau (+20 HP), entwickeln sich nicht weiter. Neu entworfen (offener Punkt aus dem Prototyp):
+
+| Fusion | Passiv | Signatur |
+|---|---|---|
+| Dampfbyte | Dampfhülle: Angreifer fängt Feuer | Dampfexplosion: ganzes Feld 30 + Brand, betäubt 1 s |
+| Wolkerich | Wolkendecke: startet mit Schutzblase (30) | Datenwolke: Blase 60, heilt 20, Feld 15 |
+| Glyphel | Urwissen: Chips laden 10 % schneller, Defrag im Deck | Urcode: lädt alle Chips, 25, nächste 3 Treffer +50 % |
+| Spukatz | Spuk: 20 % Ausweichen | Spukschlag: Sprung 45 + Gift, Abbild fängt 1 Treffer |

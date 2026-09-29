@@ -50,6 +50,8 @@ func _draw() -> void:
 		lines.append(["Entwicklung gespeichert: %s → %s" % [run.start_form, run.form], GameData.EL[run.form_el()]])
 	for f in summary.get("new_dex", []):
 		lines.append(["Neu im Monsterdex: %s" % f, GameData.COL.sun])
+	if int(summary.get("frag_banked", 0)) > 0:
+		lines.append(["+%d Fragmente auf die Station gerettet" % int(summary.frag_banked), GameData.COL.sun])
 	var egg: Dictionary = summary.get("egg", {})
 	if not egg.is_empty():
 		lines.append(["Neues Ei: %s (schlüpft nach %d Run%s)" % [egg.rarity, int(egg.runs_left), "" if int(egg.runs_left) == 1 else "s"], GameData.COL.sun])

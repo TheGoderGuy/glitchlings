@@ -4,14 +4,15 @@ extends PixelCanvas
 signal start_run(monster_id: int)
 signal to_title
 
-enum Tab { TEAM, NEST, DEX }
-const TAB_NAMES := ["Team", "Brutnest", "Monsterdex"]
+enum Tab { TEAM, NEST, LAB, DEX }
+const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex"]
 const DEX_ORDER := ["Pixmiez", "Blazebit", "Firewallo", "Virulina", "Prismiez", "Glutluchs", "Bollwerkatz",
 	"Funkling", "Glutbyte", "Overclocko", "Magmawulf", "Turbowulf",
 	"Tröpfel", "Kaskadi", "Pufferling", "Frostbyte", "Tsunamander", "Panzerpuff",
 	"Kekso", "Tracko", "Cachy", "Lumi", "Blinki", "Screenshina", "Holohas",
 	"Quakli", "Virulurch", "Hüpfbyte", "Mechaquak", "Molchi", "Toxmolch", "Magmolch",
-	"Brummbit", "Sonnbrumm", "Bärtron", "Titanbrumm", "Kauzbit", "Optikauz", "Raketauz", "Radarkauz"]
+	"Brummbit", "Sonnbrumm", "Bärtron", "Titanbrumm", "Kauzbit", "Optikauz", "Raketauz", "Radarkauz",
+	"Dampfbyte", "Wolkerich", "Glyphel", "Spukatz"]
 const HATCH_REVEAL := 2.2
 ## Vorladen! Texturen, die erst in _draw() zum ersten Mal geladen werden, erscheinen weiß.
 const EGG_TEX := {"egg_g": preload("res://assets/sprites/egg_g.png"), "egg_s": preload("res://assets/sprites/egg_s.png"), "egg_e": preload("res://assets/sprites/egg_e.png")}
@@ -22,6 +23,9 @@ var t_in := 0.0
 var hatch := {}          # laufende Schlüpf-Szene
 var hatch_t := 0.0
 var hatch_egg := {}
+var fuse_sel: Array = []     # IDs der gewählten Labor-Monster (max. 2)
+var fuse_msg := ""
+var fusion := {}             # laufende Fusions-Szene
 
 
 func _ready() -> void:
@@ -43,6 +47,15 @@ func _check_hatch() -> void:
 func _process(delta: float) -> void:
 	anim_t += delta
 	t_in += delta
+	if not fusion.is_empty():
+		hatch_t += delta
+		if hatch_t - delta < HATCH_REVEAL and hatch_t >= HATCH_REVEAL:
+			Sfx.play("evolve", 0.0)
+		if hatch_t > HATCH_REVEAL + 0.6 and Input.is_action_just_pressed("confirm"):
+			Sfx.play("confirm")
+			fusion = {}
+		queue_redraw()
+		return
 	if not hatch.is_empty():
 		hatch_t += delta
 		if hatch_t - delta < HATCH_REVEAL and hatch_t >= HATCH_REVEAL:
@@ -59,11 +72,11 @@ func _process(delta: float) -> void:
 		queue_redraw()
 		return
 	if Input.is_action_just_pressed("tab_next"):
-		tab = ((tab + 1) % 3) as Tab
+		tab = ((tab + 1) % 4) as Tab
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("tab_prev"):
-		tab = ((tab + 2) % 3) as Tab
+		tab = ((tab + 3) % 4) as Tab
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
@@ -79,6 +92,35 @@ func _process(delta: float) -> void:
 					Sfx.play("confirm")
 					set_process(false)
 					start_run.emit(int(SaveGame.team()[sel].id))
+			Tab.LAB:
+				var n := SaveGame.team().size() + 1   # letzte Zeile: „Fusionieren“
+				_nav_v(n)
+				if Input.is_action_just_pressed("confirm"):
+					if sel < SaveGame.team().size():
+						var id := int(SaveGame.team()[sel].id)
+						if fuse_sel.has(id):
+							fuse_sel.erase(id)
+						elif fuse_sel.size() < 2:
+							fuse_sel.append(id)
+						fuse_msg = ""
+						Sfx.play("select")
+					elif fuse_sel.size() == 2:
+						var rng := RandomNumberGenerator.new()
+						rng.randomize()
+						var res := SaveGame.try_fuse(fuse_sel[0], fuse_sel[1], rng)
+						if res.ok:
+							fusion = res
+							hatch_t = 0.0
+							fuse_sel = []
+							fuse_msg = ""
+							sel = 0
+							Sfx.play("charge", 0.0)
+						else:
+							fuse_msg = res.msg
+							Sfx.play("back")
+					else:
+						fuse_msg = "Wähle zuerst zwei Monster aus."
+						Sfx.play("back")
 			Tab.DEX:
 				var n := DEX_ORDER.size()
 				if Input.is_action_just_pressed("move_right"):
@@ -118,6 +160,8 @@ func _draw() -> void:
 			_draw_team()
 		Tab.NEST:
 			_draw_nest()
+		Tab.LAB:
+			_draw_lab()
 		Tab.DEX:
 			_draw_dex()
 	var pad: bool = InputSetup.pad
@@ -125,12 +169,14 @@ func _draw() -> void:
 	_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if not hatch.is_empty():
 		_draw_hatch()
+	if not fusion.is_empty():
+		_draw_fusion()
 
 
 func _draw_tabs() -> void:
 	_text(Vector2(12, 22), "STATION", 16, GameData.COL.mint, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	var x := 150.0
-	for i in 3:
+	for i in TAB_NAMES.size():
 		var w := text_width(TAB_NAMES[i], 8, true) + 20
 		var r := Rect2(x, 8, w, 18)
 		var active := i == tab
@@ -138,7 +184,7 @@ func _draw_tabs() -> void:
 		_text(Vector2(r.position.x, r.position.y + 13), TAB_NAMES[i], 8, GameData.COL.ink if active else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, w, true, active)
 		x += w + 4
 	var st: Dictionary = SaveGame.data.get("stats", {})
-	_text(Vector2(0, 21), "Runs %d · Siege %d · Dex %d/%d " % [int(st.get("runs", 0)), int(st.get("wins", 0)), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
+	_text(Vector2(0, 21), "Fragmente %d · Dex %d/%d " % [SaveGame.frag(), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
 
 
 func _draw_team() -> void:
@@ -255,6 +301,99 @@ func _draw_dex() -> void:
 		else:
 			_draw_sprite(f, cell.get_center().x, feet, false, {"scale": 1, "flash": true, "mod": Color(0.2, 0.17, 0.34, 0.95)})
 		_text(Vector2(cell.position.x, cell.end.y - 6), f if known else "???", 8, GameData.EL[F.el] if known else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cell.size.x)
+
+
+func _draw_lab() -> void:
+	var team := SaveGame.team()
+	var L := Rect2(8, 34, 190, 306)
+	_box(L, Color(GameData.COL.panel, 0.92), GameData.COL.line)
+	var rows := team.size() + 1
+	var first := clampi(sel - 12, 0, maxi(0, rows - 14))
+	for i in range(first, mini(rows, first + 14)):
+		var r := Rect2(L.position.x + 4, L.position.y + 4 + (i - first) * 21, L.size.x - 8, 19)
+		var active := i == sel
+		if i == team.size():
+			var can := fuse_sel.size() == 2
+			_box(r, GameData.COL.panel.lightened(0.1) if active else GameData.COL.bg2, GameData.COL.sun if active else (GameData.COL.mint if can else GameData.COL.line))
+			_text(Vector2(r.position.x, r.position.y + 13), "Fusionieren (%d)" % GameData.FUSION_COST, 8, GameData.COL.mint if can else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+			continue
+		var m: Dictionary = team[i]
+		var chosen := fuse_sel.has(int(m.id))
+		var el: Color = GameData.EL[GameData.FORMS[m.form].el]
+		_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else (GameData.COL.mint if chosen else GameData.COL.line))
+		draw_rect(Rect2(r.position + Vector2(5, 6), Vector2(7, 7)), el)
+		_text(Vector2(r.position.x + 17, r.position.y + 13), m.form, 8, GameData.COL.ink if active or chosen else GameData.COL.muted, HORIZONTAL_ALIGNMENT_LEFT, -1, true, active)
+		if chosen:
+			_text(Vector2(r.position.x, r.position.y + 13), "X", 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 6, true, true)
+	# Fusionskammer
+	var R := Rect2(206, 34, 426, 150)
+	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
+	_text(Vector2(R.position.x, R.position.y + 18), "Fusionskammer", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	for k in 2:
+		var cx := R.position.x + 90 + k * 246
+		var slot := Rect2(cx - 50, R.position.y + 26, 100, 94)
+		_box(slot, GameData.COL.bg2, GameData.COL.mint if k < fuse_sel.size() else GameData.COL.line)
+		if k < fuse_sel.size():
+			var m := SaveGame.monster(fuse_sel[k])
+			_draw_sprite(m.form, cx, slot.end.y - 18, false, {"scale": 2 if int(m.stage) == 1 else 1, "bob": 1 if sin(anim_t * 4.0 + k) > 0 else 0})
+			_text(Vector2(slot.position.x, slot.end.y - 5), m.form, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, slot.size.x)
+		else:
+			_text(Vector2(slot.position.x, slot.get_center().y + 3), "?", 16, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, slot.size.x, true, true)
+	_text(Vector2(R.position.x, R.position.y + 84), "+", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	var info := fuse_msg if fuse_msg != "" else "Kostet %d Fragmente, nur bei Erfolg. Beide verschmelzen." % GameData.FUSION_COST
+	draw_multiline_string(font(), Vector2(R.position.x + 12, R.end.y - 10), info, HORIZONTAL_ALIGNMENT_CENTER, R.size.x - 24, 8, 2, GameData.COL.sun if fuse_msg != "" else GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	# Rezeptbuch
+	var B := Rect2(206, 190, 426, 150)
+	_box(B, Color(GameData.COL.panel, 0.92), GameData.COL.line)
+	_text(Vector2(B.position.x + 12, B.position.y + 16), "Rezeptbuch", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	var y := B.position.y + 34
+	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
+	for i in GameData.RECIPES.size():
+		var R2: Dictionary = GameData.RECIPES[i]
+		var line := ""
+		var col: Color = GameData.COL.muted
+		if SaveGame.data.get("recipes", []).has(R2.r):
+			line = "%s + %s = %s" % [R2.a, R2.b, R2.r]
+			col = GameData.EL[GameData.FORMS[R2.r].el]
+		elif SaveGame.data.get("hints", []).has(float(i)) or SaveGame.data.get("hints", []).has(i):
+			line = "Gerücht: " + R2.hint
+			col = GameData.COL.ink
+		else:
+			line = "???"
+		draw_multiline_string(font(), Vector2(B.position.x + 12, y), line, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 24, 8, 2, col, wrap)
+		y += 28
+
+
+func _draw_fusion() -> void:
+	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.9))
+	var c := Vector2(W / 2.0, 220)
+	var t := hatch_t
+	if t < HATCH_REVEAL:
+		# Zwei Silhouetten kreisen aufeinander zu
+		var k := t / HATCH_REVEAL
+		var rad := 110.0 * (1.0 - k * k)
+		for j in 2:
+			var a := t * (3.0 + t * 4.0) + j * PI
+			var p := c + Vector2(cos(a) * rad, sin(a) * rad * 0.35)
+			var f: String = fusion.a if j == 0 else fusion.b
+			_draw_sprite(f, p.x, p.y, false, {"scale": 2 if GameData.FORMS[f].stage == 1 else 1, "flash": true, "mod": Color(0.7, 1.0, 0.9, 0.8)})
+		draw_circle(c + Vector2(0, -30), 6.0 + 30.0 * k, Color(1, 1, 1, 0.15 + 0.4 * k))
+		_text(Vector2(0, 70), "%s und %s verschmelzen …" % [fusion.a, fusion.b], 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	else:
+		var k2 := t - HATCH_REVEAL
+		if k2 < 0.25:
+			draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 1.0 - k2 / 0.25))
+		var f: String = fusion.result
+		draw_rect(Rect2(c.x - 50, c.y - 2, 100, 6), Color(0.05, 0.02, 0.12, 0.4))
+		_draw_sprite(f, c.x, c.y, false, {"bob": 1 if sin(anim_t * 4.0) > 0 else 0, "blink": fmod(anim_t, 3.0) < 0.13})
+		_text(Vector2(0, 70), "Es ist %s!" % f, 16, GameData.EL[GameData.FORMS[f].el], HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		if fusion.new_in_dex:
+			_text(Vector2(0, 88), "Neu im Monsterdex – Rezept notiert!", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		var S: Dictionary = GameData.SPECIALS[f]
+		_text(Vector2(0, 246), "Signatur: %s – %s" % [S.name, S.desc], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
+		_text(Vector2(0, 262), "Passiv: %s" % GameData.MONS[f].passive_desc, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
+		if k2 > 0.6:
+			_text(Vector2(0, 296), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_egg(rarity: String, feet: Vector2, scale: int) -> void:

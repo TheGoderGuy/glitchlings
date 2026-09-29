@@ -31,6 +31,14 @@ func load_game() -> void:
 	var parsed = JSON.parse_string(f.get_as_text())
 	if parsed is Dictionary and parsed.get("version", 0) == VERSION:
 		data = parsed
+		_upgrade()
+
+
+## Ältere Spielstände um neue Felder ergänzen
+func _upgrade() -> void:
+	for k in ["frag", "recipes", "hints"]:
+		if not data.has(k):
+			data[k] = 0 if k == "frag" else []
 
 
 func save_game() -> void:
@@ -48,7 +56,7 @@ func reset() -> void:
 
 ## Neues Spiel mit dem gewählten Starter
 func new_game(starter: String) -> Dictionary:
-	data = {"version": VERSION, "team": [], "nest": [], "dex": {}, "next_id": 1, "stats": {"runs": 0, "wins": 0}}
+	data = {"version": VERSION, "team": [], "nest": [], "dex": {}, "next_id": 1, "stats": {"runs": 0, "wins": 0}, "frag": 0, "recipes": [], "hints": []}
 	var m := add_monster(starter)
 	save_game()
 	return m
@@ -68,7 +76,8 @@ func monster(id: int) -> Dictionary:
 
 
 func add_monster(species: String) -> Dictionary:
-	var m := {"id": int(data.next_id), "species": species, "form": species, "stage": 1, "praeg": {}, "chips": 0, "runs": 0, "wins": 0}
+	var stage: int = GameData.FORMS[species].stage
+	var m := {"id": int(data.next_id), "species": species, "form": species, "stage": stage, "praeg": {}, "chips": 0, "runs": 0, "wins": 0}
 	data.next_id = int(data.next_id) + 1
 	data.team.append(m)
 	see(species)
@@ -164,5 +173,60 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 		else:
 			sum.egg = egg
 	sum.hatch_ready = ready_eggs().size()
+	# Übrige Fragmente werden auf die Station gerettet (für das Labor)
+	sum.frag_banked = run.frag
+	data.frag = int(data.get("frag", 0)) + run.frag
 	save_game()
 	return sum
+
+
+# ---------- Labor ----------
+
+func frag() -> int:
+	return int(data.get("frag", 0))
+
+
+## Rezept für zwei Team-Monster (unabhängig von der Reihenfolge) oder -1
+func find_recipe(a: Dictionary, b: Dictionary) -> int:
+	for i in GameData.RECIPES.size():
+		var r: Dictionary = GameData.RECIPES[i]
+		if (a.species == r.a and b.species == r.b) or (a.species == r.b and b.species == r.a):
+			return i
+	return -1
+
+
+## Versucht eine Fusion. Fehlversuche kosten nichts und geben ein Gerücht fürs Rezeptbuch.
+## Ergebnis: {"ok": bool, "msg": String, "result": Form, "new_in_dex": bool, "id": int}
+func try_fuse(id_a: int, id_b: int, rng: RandomNumberGenerator) -> Dictionary:
+	var a := monster(id_a)
+	var b := monster(id_b)
+	if a.is_empty() or b.is_empty() or id_a == id_b:
+		return {"ok": false, "msg": "Wähle zwei verschiedene Monster."}
+	var i := find_recipe(a, b)
+	if i < 0:
+		var hidden: Array = []
+		for k in GameData.RECIPES.size():
+			if not data.recipes.has(GameData.RECIPES[k].r) and not data.hints.has(k):
+				hidden.append(k)
+		var msg := "Die Daten stoßen sich ab. Nichts passiert, und es kostet dich nichts."
+		if not hidden.is_empty():
+			data.hints.append(hidden[rng.randi_range(0, hidden.size() - 1)])
+			msg += " Dafür steht ein neues Gerücht im Rezeptbuch."
+		save_game()
+		return {"ok": false, "msg": msg}
+	var R: Dictionary = GameData.RECIPES[i]
+	if R.has("need_form") and a.form != R.need_form and b.form != R.need_form:
+		if not data.hints.has(i):
+			data.hints.append(i)
+		save_game()
+		return {"ok": false, "msg": "Die Daten flackern kurz … aber etwas fehlt noch. Das Rezeptbuch hat einen Hinweis."}
+	if frag() < GameData.FUSION_COST:
+		return {"ok": false, "msg": "Das passt zusammen! Dir fehlen aber noch %d Fragmente." % (GameData.FUSION_COST - frag())}
+	data.frag = frag() - GameData.FUSION_COST
+	data.team = team().filter(func(m): return int(m.id) != id_a and int(m.id) != id_b)
+	var is_new: bool = not data.dex.has(R.r)
+	var m := add_monster(R.r)
+	if not data.recipes.has(R.r):
+		data.recipes.append(R.r)
+	save_game()
+	return {"ok": true, "msg": "", "result": R.r, "new_in_dex": is_new, "id": m.id, "a": a.form, "b": b.form}

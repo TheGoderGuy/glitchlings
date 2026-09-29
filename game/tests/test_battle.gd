@@ -26,6 +26,7 @@ func _ready() -> void:
 	test_difficulty()
 	test_evolution()
 	test_meta()
+	test_fusion()
 	test_all_specials()
 	test_passives()
 	test_new_lines()
@@ -419,6 +420,66 @@ func test_meta() -> void:
 	SaveGame.data = real_data
 
 
+func test_fusion() -> void:
+	var real_path := SaveGame.path
+	var real_data := SaveGame.data.duplicate(true)
+	SaveGame.persist = false
+	SaveGame.new_game("Funkling")
+	var a: Dictionary = SaveGame.team()[0]
+	var b := SaveGame.add_monster("Tröpfel")
+	var c := SaveGame.add_monster("Lumi")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	# Fehlversuch: kostet nichts, gibt ein Gerücht
+	SaveGame.data.frag = 50
+	var r1 := SaveGame.try_fuse(int(a.id), int(c.id), rng)
+	check(not r1.ok and SaveGame.frag() == 50 and SaveGame.data.hints.size() == 1, "Fehlversuch kostet nichts und gibt ein Gerücht")
+	# Rezept passt, aber zu wenig Fragmente
+	var r2 := SaveGame.try_fuse(int(a.id), int(b.id), rng)
+	check(not r2.ok and SaveGame.team().size() == 3, "Richtiges Rezept, aber zu wenig Fragmente: nichts passiert")
+	# Erfolg
+	SaveGame.data.frag = 130
+	var r3 := SaveGame.try_fuse(int(b.id), int(a.id), rng)
+	var team_forms: Array = SaveGame.team().map(func(m): return m.form)
+	check(r3.ok and r3.result == "Dampfbyte" and SaveGame.frag() == 30 and team_forms == ["Lumi", "Dampfbyte"], "Funkling + Tröpfel = Dampfbyte (100 Fragmente, beide Eltern gehen auf)")
+	check(SaveGame.data.recipes.has("Dampfbyte") and SaveGame.data.dex.has("Dampfbyte"), "Rezept und Dex-Eintrag gespeichert")
+	var fused := SaveGame.monster(int(r3.id))
+	var run := RunState.from_monster(fused, 1)
+	check(run.stage == 3 and run.max_hp == 115 and run.evo_need() == 0, "Fusion kämpft auf Champion-Niveau (115 HP), keine weitere Evolution")
+	# Spukatz braucht eine Virus-Katze
+	var q := SaveGame.add_monster("Quakli")
+	var px := SaveGame.add_monster("Pixmiez")
+	SaveGame.data.frag = 200
+	var r4 := SaveGame.try_fuse(int(q.id), int(px.id), rng)
+	check(not r4.ok and SaveGame.frag() == 200, "Spukatz klappt nicht mit einer normalen Pixmiez")
+	px.form = "Virulina"
+	px.stage = 2
+	var r5 := SaveGame.try_fuse(int(q.id), int(px.id), rng)
+	check(r5.ok and r5.result == "Spukatz", "Quakli + Virulina = Spukatz")
+	# Passive der Fusionen
+	var st := BattleState.new(RunState.new("Wolkerich", 1), GameData.FOES[0])
+	check(st.bubble == 30, "Wolkendecke: Kampf beginnt mit Schutzblase")
+	var st2 := BattleState.new(RunState.new("Dampfbyte", 1), GameData.FOES[0])
+	st2.hurt_player(5)
+	check(st2.e.burn == 3, "Dampfhülle: Angreifer brennt")
+	var dodges := 0
+	for i in 200:
+		var st3 := BattleState.new(RunState.new("Spukatz", i), GameData.FOES[0])
+		st3.hurt_player(5)
+		if st3.run.hp == st3.run.max_hp:
+			dodges += 1
+	check(dodges > 20 and dodges < 60, "Spuk: etwa 20 %% Ausweichen (%d/200)" % dodges)
+	# Fragmente werden am Run-Ende gerettet
+	var before := SaveGame.frag()
+	var run6 := RunState.new("Pixmiez", 6)
+	run6.frag = 42
+	SaveGame.record_run(run6, false)
+	check(SaveGame.frag() == before + 42, "Übrige Fragmente landen auf der Station")
+	SaveGame.path = real_path
+	SaveGame.data = real_data
+	SaveGame.persist = true
+
+
 func test_evolution() -> void:
 	var run := RunState.new("Pixmiez", 1)
 	run.chips_used = GameData.EVO_AT[2] - 1
@@ -490,7 +551,8 @@ func test_new_lines() -> void:
 			if not GameData.FORMS.has(M.evo[el]) or GameData.FORMS[M.evo[el]].el != el:
 				ok = false
 				printerr("    Richtung passt nicht: %s %s → %s" % [sp, el, M.evo[el]])
-	check(ok and GameData.MONS.size() == 9, "9 Linien, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
+	var lines: int = GameData.MONS.keys().filter(func(k): return not GameData.MONS[k].get("fusion", false)).size()
+	check(ok and lines == 9, "9 Linien + 4 Fusionen, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
 	# Passive
 	var st := BattleState.new(RunState.new("Brummbit", 1), GameData.FOES[0])
 	st.reflex = 0

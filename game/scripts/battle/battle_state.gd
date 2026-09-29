@@ -72,6 +72,9 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 		hand.append({"chip": _draw_one(), "rem": 0.0, "max": 1.0, "queued": false})
 	if mon.passive == "Katzenreflex":
 		reflex = 2 if run.stage >= 3 else 1
+	if mon.passive == "Wolkendecke":
+		bubble = 30
+		bubble_t = 6.0
 	if run.sp_bonus:
 		run.sp_bonus = false
 		sp = 50.0
@@ -467,6 +470,10 @@ func hurt_player(d: int) -> void:
 		float_at(p.c, p.r, "Katzenreflex!", GameData.COL.mint)
 		burst(p.c + 0.5, p.r + 0.5, Color("#C9B8FF"), 14)
 		return
+	if mon.passive == "Spuk" and rng.randf() < 0.2:
+		events.append("dodge")
+		float_at(p.c, p.r, "Spuk!", GameData.EL.Virus)
+		return
 	if decoy > 0 and decoy_t > 0:
 		decoy -= 1
 		events.append("block")
@@ -501,6 +508,9 @@ func hurt_player(d: int) -> void:
 	if mon.passive == "Giftbaut":
 		e.poison = maxi(e.poison, 3)
 		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
+	if mon.passive == "Dampfhülle":
+		e.burn = maxi(e.burn, 3)
+		float_at(3 + e.c, e.r, "Dampfhülle", GameData.EL.Feuer)
 	run.hp = maxi(0, run.hp - d)
 	events.append("hurt")
 	since_hit = 0.0

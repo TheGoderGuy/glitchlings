@@ -127,7 +127,41 @@ const MONS := {
 		"trait": "Robo-Eule mit Adleraugen.",
 		"evo": {"Code": "Optikauz", "Feuer": "Raketauz"},
 	},
+	# --- Fusionen (Labor): Endstufe auf Champion-Niveau (+20 HP über die Stufe), keine weitere Evolution ---
+	"Dampfbyte": {
+		"hp": 95, "move": 0.14, "rech": 1.0, "el": "Feuer", "animal": "Welpe × Axolotl", "fusion": true,
+		"deck": ["Glutball", "Glutball", "Wasserstrahl", "Wasserstrahl", "Flammenwelle", "Blubberschild", "Übertakten", "Eisfeld"],
+		"passive": "Dampfhülle", "passive_desc": "Wer Dampfbyte trifft, fängt Feuer.",
+		"trait": "Fusion aus Feuer und Wasser.", "evo": {},
+	},
+	"Wolkerich": {
+		"hp": 115, "move": 0.18, "rech": 1.0, "el": "Wasser", "animal": "Axolotl × Hamster", "fusion": true,
+		"deck": ["Blubberschild", "Blubberschild", "Wasserstrahl", "Wasserstrahl", "Mini-Bot", "Eisfeld", "Heilpatch", "Firewall"],
+		"passive": "Wolkendecke", "passive_desc": "Startet jeden Kampf in einer Schutzblase (30 Schaden, 6 s).",
+		"trait": "Fusion. Sehr zäh und gut geschützt.", "evo": {},
+	},
+	"Glyphel": {
+		"hp": 90, "move": 0.12, "rech": 1.1, "el": "Licht", "animal": "Hase × Hamster", "fusion": true,
+		"deck": ["Blitzcursor", "Blitzcursor", "Mini-Bot", "Mini-Bot", "Defrag", "Heilpatch", "Firewall", "Pixelstrahl"],
+		"passive": "Urwissen", "passive_desc": "Chips laden 10 % schneller, Defrag liegt schon im Deck.",
+		"trait": "Fusion aus Licht und Erinnerung.", "evo": {},
+	},
+	"Spukatz": {
+		"hp": 70, "move": 0.1, "rech": 1.0, "el": "Virus", "animal": "Katze × Frosch", "fusion": true,
+		"deck": ["Virusspritzer", "Virusspritzer", "Bug-Mine", "Bug-Mine", "Blitzcursor", "Pixelstrahl", "Byteschlag", "Blubberschild"],
+		"passive": "Spuk", "passive_desc": "Weicht 20 % aller Treffer aus.",
+		"trait": "Fusion. Halb Geist, halb Katze.", "evo": {},
+	},
 }
+
+## Fusionsrezepte (Linien, egal welche Stufe). need_form: eine bestimmte Form muss dabei sein.
+const RECIPES := [
+	{"a": "Funkling", "b": "Tröpfel", "r": "Dampfbyte", "hint": "Feuer und Wasser ergeben … Dampf?"},
+	{"a": "Tröpfel", "b": "Kekso", "r": "Wolkerich", "hint": "Ein Tropfen und ein Keks, der sich alles merkt, werden zu einer Wolke voller Daten."},
+	{"a": "Lumi", "b": "Kekso", "r": "Glyphel", "hint": "Licht und Erinnerung schreiben uralten Code."},
+	{"a": "Quakli", "b": "Pixmiez", "r": "Spukatz", "need_form": "Virulina", "hint": "Ein Giftfrosch und ein Kätzchen … aber nur, wenn die Katze selbst Gift im Blut hat."},
+]
+const FUSION_COST := 100
 
 ## Alle Formen: Sprite-Datei, Stufe (1 Baby, 2 Rookie, 3 Champion), Element, nächste Stufe
 const FORMS := {
@@ -171,6 +205,10 @@ const FORMS := {
 	"Optikauz": {"spr": "Optikauz_64", "stage": 2, "el": "Code", "up": "Radarkauz"},
 	"Raketauz": {"spr": "Raketauz_64", "stage": 2, "el": "Feuer", "up": ""},
 	"Radarkauz": {"spr": "Radarkauz_80", "stage": 3, "el": "Code", "up": ""},
+	"Dampfbyte": {"spr": "Dampfbyte_80", "stage": 3, "el": "Feuer", "up": ""},
+	"Wolkerich": {"spr": "Wolkerich_80", "stage": 3, "el": "Wasser", "up": ""},
+	"Glyphel": {"spr": "Glyphel_80", "stage": 3, "el": "Licht", "up": ""},
+	"Spukatz": {"spr": "Spukatz_80", "stage": 3, "el": "Virus", "up": ""},
 }
 
 const STAGE_NAMES := ["", "Baby", "Rookie", "Champion", "Ultra"]
@@ -222,6 +260,10 @@ const SPECIALS := {
 	"Optikauz": {"name": "Laserblick", "el": "Code", "anim": "row", "hits": [50], "desc": "Laser aus den Linsenaugen: 50 Schaden."},
 	"Raketauz": {"name": "Düsenangriff", "el": "Feuer", "anim": "field", "hits": [20, 20, 20], "burn": 4, "desc": "Drei Zielraketen à 20 + Brand."},
 	"Radarkauz": {"name": "Zielerfassung", "el": "Code", "anim": "self", "hits": [30], "scan": 5, "desc": "30 Schaden, deine nächsten 5 Treffer machen +50 %."},
+	"Dampfbyte": {"name": "Dampfexplosion", "el": "Wasser", "anim": "field", "hits": [30], "burn": 3, "stun": 1.0, "desc": "Heißer Dampf übers ganze Gegnerfeld: 30 + Brand, betäubt 1 s."},
+	"Wolkerich": {"name": "Datenwolke", "el": "Wasser", "anim": "field", "hits": [15], "bubble": 60, "bubble_t": 6.0, "heal": 20, "desc": "Schutzblase (60, 6 s), heilt 20 HP und trifft das ganze Feld mit 15."},
+	"Glyphel": {"name": "Urcode", "el": "Licht", "anim": "self", "hits": [25], "recharge": true, "scan": 3, "desc": "Lädt alle Chips, 25 Schaden, die nächsten 3 Treffer +50 %."},
+	"Spukatz": {"name": "Spukschlag", "el": "Virus", "anim": "jump", "hits": [45], "poison": 6, "decoy": 1, "decoy_t": 6.0, "desc": "Geisterhafter Sprung: 45 + Gift, ein Abbild fängt den nächsten Treffer ab."},
 }
 
 const BEATS := {"Feuer": "Code", "Code": "Wasser", "Wasser": "Feuer"}
