@@ -477,7 +477,7 @@ func test_fusion() -> void:
 	SaveGame.persist = false
 	SaveGame.new_game("Brummbit")
 	var a: Dictionary = SaveGame.team()[0]
-	var b := SaveGame.add_monster("Tröpfel")
+	var b := SaveGame.add_monster("Kekso")
 	var c := SaveGame.add_monster("Lumi")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 5
@@ -492,11 +492,11 @@ func test_fusion() -> void:
 	SaveGame.data.frag = 130
 	var r3 := SaveGame.try_fuse(int(b.id), int(a.id), rng)
 	var team_forms: Array = SaveGame.team().map(func(m): return m.form)
-	check(r3.ok and r3.result == "Bärtierling" and SaveGame.frag() == 30 and team_forms == ["Lumi", "Bärtierling"], "Tröpfel + Brummbit = Bärtierling (100 Fragmente, beide Eltern gehen auf)")
-	check(SaveGame.data.recipes.has("Bärtierling") and SaveGame.data.dex.has("Bärtierling"), "Rezept und Dex-Eintrag gespeichert")
+	check(r3.ok and r3.result == "Schlummerbit" and SaveGame.frag() == 30 and team_forms == ["Lumi", "Schlummerbit"], "Kekso + Brummbit = Schlummerbit (100 Fragmente, beide Eltern gehen auf)")
+	check(SaveGame.data.recipes.has("Schlummerbit") and SaveGame.data.dex.has("Schlummerbit"), "Rezept und Dex-Eintrag gespeichert")
 	var fused := SaveGame.monster(int(r3.id))
 	var run := RunState.from_monster(fused, 1)
-	check(run.stage == 3 and run.max_hp == GameData.MONS["Bärtierling"].hp + 20 and run.evo_need() == 0, "Fusion kämpft auf Champion-Niveau (%d HP), keine weitere Evolution" % run.max_hp)
+	check(run.stage == 3 and run.max_hp == GameData.MONS["Schlummerbit"].hp + 20 and run.evo_need() == 0, "Fusion kämpft auf Champion-Niveau (%d HP), keine weitere Evolution" % run.max_hp)
 	# Spukatz braucht eine Virus-Katze
 	var q := SaveGame.add_monster("Quakli")
 	var px := SaveGame.add_monster("Pixmiez")
@@ -510,11 +510,18 @@ func test_fusion() -> void:
 	# Passive der Fusionen
 	var st := BattleState.new(RunState.new("Wolkerich", 1), GameData.FOES[0])
 	check(st.bubble == 30, "Wolkendecke: Kampf beginnt mit Schutzblase")
-	var st2 := BattleState.new(RunState.new("Bärtierling", 1), GameData.FOES[0])
-	st2.hurt_player(9999)
-	var survived: bool = not st2.over and st2.run.hp == 1
-	st2.hurt_player(9999)
-	check(survived and st2.over, "Unzerstörbar: einmal pro Kampf mit 1 HP stehen bleiben")
+	var st2 := BattleState.new(RunState.new("Schlummerbit", 1), GameData.FOES[0])
+	var hp_s: int = st2.run.hp
+	st2.hurt_player(20)
+	check(hp_s - st2.run.hp == 15, "Winterschlaf: dickes Fell, 25 % weniger Schaden")
+	var st2b := BattleState.new(RunState.new("Pustebacke", 1), GameData.FOES[0])
+	var dodged := 0
+	for i in 200:
+		st2b.run.hp = 90
+		var got := st2b.hurt_player(5)
+		if got == 0:
+			dodged += 1
+	check(dodged > 10 and dodged < 60 and st2b.e.poison > 0, "Schwebegas: weicht etwa 15 %% aus (%d/200) und vergiftet Angreifer" % dodged)
 	var stw := BattleState.new(RunState.new("Wolperling", 1), GameData.FOES[0])
 	stw.move_player(1, 0)
 	check(is_equal_approx(stw.p.cd, GameData.MONS.Wolperling.move * 0.5), "Mischwesen: Wolperling bewegt sich doppelt so schnell")
@@ -855,7 +862,7 @@ func test_new_lines() -> void:
 				ok = false
 				printerr("    Richtung passt nicht: %s %s → %s" % [sp, el, M.evo[el]])
 	var lines: int = GameData.MONS.keys().filter(func(k): return not GameData.MONS[k].get("fusion", false)).size()
-	check(ok and lines == 9, "9 Linien + 4 Fusionen, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
+	check(ok and lines == 9, "9 Linien + Fusionen, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
 	# Passive
 	var st := BattleState.new(RunState.new("Brummbit", 1), GameData.FOES[0])
 	st.reflex = 0
@@ -1578,10 +1585,10 @@ func test_form_migration() -> void:
 		"dex": {"Pyrolynx": true, "Lumi": true}, "recipes": ["Glyphel"]}
 	SaveGame._upgrade()
 	var t: Array = SaveGame.data.team
-	var ok: bool = t[0].form == "Prismalynx" and t[1].form == "Myzelgrizz" and t[2].species == "Bärtierling" and t[2].form == "Bärtierling"
+	var ok: bool = t[0].form == "Prismalynx" and t[1].form == "Myzelgrizz" and t[2].species == "Schlummerbit" and t[2].form == "Schlummerbit"
 	ok = ok and SaveGame.data.dex.has("Aurorlynx") and not SaveGame.data.dex.has("Pyrolynx") and SaveGame.data.recipes == ["Wolperling"]
 	for m in t:
 		if not GameData.FORMS.has(m.form) or not GameData.MONS.has(m.species):
 			ok = false
-	check(ok, "Alte Spielstände: gestrichene Formen werden übertragen (Glutluchs → Prismalynx, Dampfbyte → Bärtierling)")
+	check(ok, "Alte Spielstände: gestrichene Formen werden übertragen (Glutluchs → Prismalynx, Dampfbyte → Schlummerbit)")
 	SaveGame.data = saved

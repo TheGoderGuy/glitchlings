@@ -39,7 +39,7 @@ func load_game() -> void:
 const FORM_MIGRATION := {"Blazebit": "Prismiez", "Glutluchs": "Prismalynx", "Pyrolynx": "Aurorlynx",
 	"Sonnbrumm": "Pilzbrumm", "Sonnenpranke": "Sporenpranke", "Supernovabär": "Myzelgrizz",
 	"Screenshina": "Perlhopp", "Holohas": "Gischthase", "Quantenhas": "Lunaflut",
-	"Dampfbyte": "Bärtierling", "Glyphel": "Wolperling"}
+	"Dampfbyte": "Schlummerbit", "Glyphel": "Wolperling", "Bärtierling": "Schlummerbit"}
 
 
 func _upgrade() -> void:

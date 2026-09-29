@@ -192,11 +192,17 @@ const MONS := {
 		"passive": "Mischwesen", "passive_desc": "Hase und Eule: bewegt sich doppelt so schnell und sieht Angriffe 0,3 s früher.",
 		"trait": "Fusion. Ein Wolpertinger: flink und wachsam.", "evo": {},
 	},
-	"Bärtierling": {
-		"hp": 150, "move": 0.2, "rech": 1.0, "el": "Wasser", "animal": "Axolotl × Bär", "fusion": true,
-		"deck": ["Blubberschild", "Blubberschild", "Wasserstrahl", "Flutwelle", "Byteschlag", "Byteschlag", "Heilpatch", "Konter"],
-		"passive": "Unzerstörbar", "passive_desc": "Einmal pro Kampf lässt ein tödlicher Treffer Bärtierling mit 1 HP stehen.",
-		"trait": "Fusion. Das zäheste Wesen im NEST.", "evo": {},
+	"Schlummerbit": {
+		"hp": 130, "move": 0.18, "rech": 1.0, "el": "Elektro", "animal": "Bär × Hamster", "fusion": true,
+		"deck": ["Byteschlag", "Byteschlag", "Blitzcursor", "Kettenblitz", "Blendgranate", "Heilpatch", "Firewall", "Bug-Mine"],
+		"passive": "Winterschlaf", "passive_desc": "Dickes Fell und volle Backen: nimmt 25 % weniger Schaden, 25 % Chance, einen Chip zu hamstern.",
+		"trait": "Fusion. Schwebt schlafend durch seine Träume.", "evo": {},
+	},
+	"Pustebacke": {
+		"hp": 90, "move": 0.1, "rech": 1.0, "el": "Virus", "animal": "Hamster × Frosch", "fusion": true,
+		"deck": ["Virusspritzer", "Virusspritzer", "Sporenfalle", "Seuche", "Bug-Mine", "Pixelstrahl", "Heilpatch", "Sprungantrieb"],
+		"passive": "Schwebegas", "passive_desc": "Schwebt: weicht 15 % der Treffer aus. Wer trifft, wird vergiftet.",
+		"trait": "Fusion. Kugelrund, voller Giftgas und völlig chaotisch.", "evo": {},
 	},
 	"Spukatz": {
 		"hp": 70, "move": 0.1, "rech": 1.0, "el": "Virus", "animal": "Katze × Frosch", "fusion": true,
@@ -208,9 +214,10 @@ const MONS := {
 
 ## Fusionsrezepte (Linien, egal welche Stufe). need_form: eine bestimmte Form muss dabei sein.
 const RECIPES := [
-	{"a": "Tröpfel", "b": "Brummbit", "r": "Bärtierling", "hint": "Etwas Winziges aus dem Wasser und etwas Riesiges mit dickem Fell … zusammen fast unzerstörbar."},
+	{"a": "Kekso", "b": "Brummbit", "r": "Schlummerbit", "hint": "Zwei Winterschläfer, die gemeinsam träumen … vielleicht sogar von den Sternen."},
 	{"a": "Tröpfel", "b": "Kekso", "r": "Wolkerich", "hint": "Ein Tropfen und ein Keks, der sich alles merkt, werden zu einer Wolke voller Daten."},
 	{"a": "Lumi", "b": "Kauzbit", "r": "Wolperling", "hint": "Ein Hase, der fliegen will, und eine Eule, die hüpfen will. Aus alten Sagen bekannt."},
+	{"a": "Kekso", "b": "Quakli", "r": "Pustebacke", "hint": "Volle Backen und eine Schallblase. Was passiert, wenn beide gleichzeitig aufpusten?"},
 	{"a": "Quakli", "b": "Pixmiez", "r": "Spukatz", "need_form": "Virulina", "hint": "Ein Giftfrosch und ein Kätzchen … aber nur, wenn die Katze selbst Gift im Blut hat."},
 ]
 const FUSION_COST := 100
@@ -255,7 +262,8 @@ const FORMS := {
 	"Wolkerich": {"spr": "Wolkerich_80", "stage": 3, "el": "Wasser", "up": ""},
 	"Spukatz": {"spr": "Spukatz_80", "stage": 3, "el": "Virus", "up": ""},
 	"Wolperling": {"spr": "Wolperling_80", "stage": 3, "el": "Elektro", "up": ""},
-	"Bärtierling": {"spr": "Baertierling_80", "stage": 3, "el": "Wasser", "up": ""},
+	"Schlummerbit": {"spr": "Schlummerbit_80", "stage": 3, "el": "Elektro", "up": ""},
+	"Pustebacke": {"spr": "Pustebacke_80", "stage": 3, "el": "Virus", "up": ""},
 	# --- Neue Linien 29.09.2026: Brummbit Gift, Lumi Wasser ---
 	"Pilzbrumm": {"spr": "Pilzbrumm_64", "stage": 2, "el": "Virus", "up": "Sporenpranke"},
 	"Sporenpranke": {"spr": "Sporenpranke_80", "stage": 3, "el": "Virus", "up": "Myzelgrizz"},
@@ -371,7 +379,8 @@ const SPECIALS := {
 	"Infernokauz": {"name": "Infernosturz", "el": "Feuer", "anim": "jump", "hits": [85], "burn": 8, "desc": "Flammender Sturzflug: 85 Schaden + langer Brand."},
 	"Orbitkauz": {"name": "Orbitalschlag", "el": "Code", "anim": "self", "hits": [40], "scan": 8, "desc": "40 Schaden, deine nächsten 8 Treffer machen +50 %."},
 	"Wolperling": {"name": "Geweihblitz", "el": "Elektro", "anim": "jump", "hits": [30, 30], "stun": 1.0, "desc": "Flatternder Geweihstoß: 2 × 30, betäubt 1 s."},
-	"Bärtierling": {"name": "Urzeitpanzer", "el": "Wasser", "anim": "self", "hits": [30], "bubble": 80, "bubble_t": 8.0, "heal": 20, "desc": "Unzerstörbare Hülle: Blase (80, 8 s), heilt 20 HP, 30 Schaden."},
+	"Schlummerbit": {"name": "Schlaflied", "el": "Elektro", "anim": "field", "hits": [20], "stun": 3.0, "heal": 30, "desc": "Ein Schlaflied übers ganze Feld: 20 Schaden, der Gegner schläft 3 s, du heilst 30 HP."},
+	"Pustebacke": {"name": "Gasexplosion", "el": "Virus", "anim": "field", "hits": [15, 15], "poison": 10, "desc": "Platzt fast vor Gas: Giftwolke übers ganze Feld, 2 × 15 + langes Gift."},
 	"Pilzbrumm": {"name": "Sporenwolke", "el": "Virus", "anim": "field", "hits": [20], "poison": 6, "desc": "Giftige Sporenwolke übers ganze Feld: 20 + Gift."},
 	"Sporenpranke": {"name": "Giftpranke", "el": "Virus", "anim": "jump", "hits": [50], "poison": 8, "knock": true, "desc": "Pilzbesetzter Prankenhieb: 50 + langes Gift, stößt zurück."},
 	"Myzelgrizz": {"name": "Myzelnetz", "el": "Virus", "anim": "field", "hits": [45], "poison": 12, "heal": 40, "desc": "Pilzgeflecht überzieht das Feld: 45 + sehr langes Gift, heilt 40 HP."},

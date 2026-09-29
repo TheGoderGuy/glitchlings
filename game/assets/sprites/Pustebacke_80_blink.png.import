@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dw6mhvirvbn00"
-path="res://.godot/imported/Baertierling_80_blink.png-ba4e3b7ca0e7e37f6ce9dcc00e000cd6.ctex"
+uid="uid://bwyrdeess4ldj"
+path="res://.godot/imported/Pustebacke_80_blink.png-5c2aa2bf4fb9881808d5927b9ef81a84.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/Baertierling_80_blink.png"
-dest_files=["res://.godot/imported/Baertierling_80_blink.png-ba4e3b7ca0e7e37f6ce9dcc00e000cd6.ctex"]
+source_file="res://assets/sprites/Pustebacke_80_blink.png"
+dest_files=["res://.godot/imported/Pustebacke_80_blink.png-5c2aa2bf4fb9881808d5927b9ef81a84.ctex"]
 
 [params]
 

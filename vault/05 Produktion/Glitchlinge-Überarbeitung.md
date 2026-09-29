@@ -15,10 +15,10 @@ Nach ausgiebigem Anspielen hat der Produzent die Linien durchgesehen. Umsetzung:
 | **Tracko** | Neu als kleine Vorstufe von Schattnager (dunkles Fell, Hexagon-Leuchtmuster, Leuchtschwanz). |
 | **Gigaquak** | Redesign: schlanker Mecha-Frosch mit Visier-Augen, Hydraulik-Beinen und Düsen statt aufgeblähter Kugel. |
 | **Molchi** | Beide Linien („Wahnsinn“) unverändert. |
-| **Fusionen** | Dampfbyte und Glyphel gestrichen. Neu: **Wolperling** = Lumi + Kauzbit (Wolpertinger: Hase mit Eulenflügeln und Geweih; Elektro; Passiv *Mischwesen* = doppelt so schnell + sieht Angriffe früher; *Geweihblitz*). **Bärtierling** = Tröpfel + Brummbit (digitales Bärtierchen; Wasser; 150 HP; Passiv *Unzerstörbar* = einmal pro Kampf mit 1 HP stehen bleiben; *Urzeitpanzer*). Spukatz und Wolkerich bleiben. |
+| **Fusionen** | Dampfbyte und Glyphel gestrichen. Neu: **Wolperling** = Lumi + Kauzbit (Wolpertinger: Hase mit Eulenflügeln und Geweih; Elektro; Passiv *Mischwesen* = doppelt so schnell + sieht Angriffe früher; *Geweihblitz*). **Schlummerbit** = Kekso + Brummbit (ersetzt den kurzlebigen Bärtierling; zwei Winterschläfer träumen gemeinsam: schwebt schlafend, Sternenfell, Backen voller Sterne; Elektro; Passiv *Winterschlaf* = 25 % weniger Schaden + Hamstern; *Schlaflied* betäubt 3 s und heilt). **Pustebacke** = Kekso + Quakli (Backentaschen + Schallblase = aufgeblasener Giftgas-Ballon; Virus; Passiv *Schwebegas* = 15 % Ausweichen + Angreifer vergiftet; *Gasexplosion*). Spukatz und Wolkerich bleiben. |
 
 **Monsterdex**: 73 Formen. **Alte Spielstände** werden beim Laden übertragen (`SaveGame.FORM_MIGRATION`): gestrichene Formen → Ersatz auf gleicher Stufe (Pixmiez-Feuer → Elektro-Formen, Sonnbrumm-Linie → Pilzbrumm-Linie, Screenshina-Linie → Perlhopp-Linie, Dampfbyte → Bärtierling, Glyphel → Wolperling), Dex-Einträge und Rezepte ebenso.
 
 Alle neuen Sprites: PixelLab Pro Flash, 32 Farben, Blinzel-Frames (Boxen in `tools/sprites/blink_boxes.json`), Namen per `tools/namecheck` geprüft.
 
-**Offen**: Das Baby **Brummbit** ist noch goldgelb (Überbleibsel der Licht-Linie) – ggf. neutraler/bärenbrauner zeichnen.
+**Nachträge**: Baby **Brummbit** in Bärenbraun statt Gelb. **Gigaquak** zweites Redesign: Titan-Kröte mit Schulterkanonen (aus 3 Varianten gewählt). Fusionen jetzt: Wolkerich, Spukatz, Wolperling, Schlummerbit, Pustebacke – 74 Formen im Dex.

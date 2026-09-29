@@ -67,7 +67,6 @@ var leech := 0         # Saugbit: gesammelter Schaden
 var counter := 0       # Konter/Kopierschutz: Schaden, der beim Blocken zurückgeht
 var counter_el := "Neutral"
 var dodge_t := 0.0     # Sprungantrieb: nächster Treffer wird ausgewichen
-var tardi_used := false  # Bärtierling „Unzerstörbar“ schon verbraucht?
 
 
 ## foe: Gegnerwerte wie in GameData.FOES (für Karten-Knoten per RunState.foe_for skaliert).
@@ -186,7 +185,7 @@ func use_slot(i: int) -> void:
 	if id == "Eisfeld":
 		run.eis += 1
 	# Hamstern (Kekso-Linie): Chip kommt gleich wieder statt auf den Ablagestapel
-	if mon.passive == "Hamstern" and rng.randf() < 0.25:
+	if mon.passive in ["Hamstern", "Winterschlaf"] and rng.randf() < 0.25:
 		draw_pile.append(id)
 		float_at(p.c, p.r, "Gehamstert!", GameData.EL.Neutral)
 	else:
@@ -603,7 +602,7 @@ func hurt_player(d: int) -> int:
 		float_at(p.c, p.r, "Katzenreflex!", GameData.COL.mint)
 		burst(p.c + 0.5, p.r + 0.5, Color("#C9B8FF"), 14)
 		return 0
-	if mon.passive == "Spuk" and rng.randf() < 0.2:
+	if (mon.passive == "Spuk" and rng.randf() < 0.2) or (mon.passive == "Schwebegas" and rng.randf() < 0.15):
 		events.append("dodge")
 		float_at(p.c, p.r, "Spuk!", GameData.EL.Virus)
 		return 0
@@ -646,20 +645,14 @@ func hurt_player(d: int) -> int:
 			float_at(p.c, p.r, "Blase platzt", GameData.EL.Wasser)
 		if d <= 0:
 			return 0
-	if mon.passive == "Dickes Fell":
+	if mon.passive in ["Dickes Fell", "Winterschlaf"]:
 		d = maxi(1, roundi(d * 0.75))
 	if run.has_mod("panzerplatte"):
 		d = maxi(1, d - 2)
-	if mon.passive == "Giftbaut":
+	if mon.passive in ["Giftbaut", "Schwebegas"]:
 		e.poison = maxi(e.poison, 3)
 		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
 	run.hp = maxi(min_p_hp, run.hp - d)
-	# Unzerstörbar (Bärtierling): einmal pro Kampf mit 1 HP stehen bleiben
-	if run.hp <= 0 and mon.passive == "Unzerstörbar" and not tardi_used:
-		tardi_used = true
-		run.hp = 1
-		float_at(p.c, p.r - 0.4, "Unzerstörbar!", GameData.EL.Wasser)
-		burst(p.c + 0.5, p.r + 0.5, GameData.EL.Wasser, 20)
 	# Backup-Kern: einmal pro Run weiterkämpfen statt verlieren
 	if run.hp <= 0 and run.has_mod("backupkern") and not run.backup_used:
 		run.backup_used = true
