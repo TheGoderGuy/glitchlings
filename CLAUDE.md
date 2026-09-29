@@ -64,7 +64,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Zone 2 Firewall-Vulkan (29.09.2026): 3 Gegner + Boss (PixelLab), Lava-Mechanik, Zwei-Spalten-Angriff, Zonen-Freischaltung + Auswahl, 133 Tests – `vault/05 Produktion/Zone Firewall-Vulkan.md`
 - [x] Spieltest-Paket (29.09.2026): Windows-.exe (`Spieltest_bauen.bat` → `build/Glitchlings_Spieltest.zip`), Tutorial im ersten Kampf, lokales Spieltest-Log, LIESMICH – `vault/05 Produktion/Externer Spieltest.md`
 - [x] B Kampf-Juice (29.09.2026): Vorschnellen, Mündungsblitz, Rückstoß, Ausholen/Zuschlagen, Staub, Niederlage-Animation
-- [ ] C: fehlende Champions (PixelLab) · Zone-2-Musik/-Ereignisse · Phase 4: Steam-Seite + Demo
+- [x] C Champions (29.09.2026): 11 neue Champions per PixelLab (Rookie als Referenz), jeder Rookie hat jetzt eine Endstufe – 55 Formen
+- [ ] Ultras (96) · Blinzel-Frames neue Sprites · Zone-2-Musik/-Ereignisse · Zone 3 · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)
@@ -82,9 +83,9 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Neue Linien Molchi, Brummbit, Kauzbit (Baby + Rookies, Passive, Signaturen)
 - [x] Signatur-Fähigkeiten der 4 Fusionen (Godot, 29.09.2026)
 - [x] 7 Mecha-Champions der Code-Richtungen (Bollwerkatz, Turbowulf, Panzerpuff, Mechaquak, Holohas, Titanbrumm, Radarkauz)
-- [ ] Champions für die übrigen Nicht-Code-Rookies + Ultras
+- [x] Champions für die übrigen Nicht-Code-Rookies (Godot, 29.09.2026) · [ ] Ultras
 - [x] Station-Leben: Bindung/Pflege + Expeditionen (`vault/05 Produktion/Station-Leben.md`)
-- [ ] Champions/Ultras der übrigen Linien
+- [x] Champions der übrigen Linien · [ ] Ultras
 - [ ] Angriffsanimationen / Idle-Animationen
 - [ ] Prototyp mit 5–10 externen Testern spielen lassen, Ergebnisse ins Playtest-Log (`vault/05 Produktion/Prototyp-Spezifikation.md`)
 

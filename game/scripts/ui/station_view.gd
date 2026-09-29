@@ -12,7 +12,9 @@ const DEX_ORDER := ["Pixmiez", "Blazebit", "Firewallo", "Virulina", "Prismiez", 
 	"Kekso", "Tracko", "Cachy", "Lumi", "Blinki", "Screenshina", "Holohas",
 	"Quakli", "Virulurch", "Hüpfbyte", "Mechaquak", "Molchi", "Toxmolch", "Magmolch",
 	"Brummbit", "Sonnbrumm", "Bärtron", "Titanbrumm", "Kauzbit", "Optikauz", "Raketauz", "Radarkauz",
-	"Dampfbyte", "Wolkerich", "Glyphel", "Spukatz"]
+	"Dampfbyte", "Wolkerich", "Glyphel", "Spukatz",
+	"Toxipanth", "Prismalynx", "Glaziolotl", "Schattnager", "Glanzbacke", "Strahlhase",
+	"Toxikröt", "Sumpfdrak", "Lavadrak", "Sonnenpranke", "Phönixkauz"]
 const HATCH_REVEAL := 2.2
 ## Vorladen! Texturen, die erst in _draw() zum ersten Mal geladen werden, erscheinen weiß.
 const EGG_TEX := {"egg_g": preload("res://assets/sprites/egg_g.png"), "egg_s": preload("res://assets/sprites/egg_s.png"), "egg_e": preload("res://assets/sprites/egg_e.png")}

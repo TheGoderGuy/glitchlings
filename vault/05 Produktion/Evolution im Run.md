@@ -31,3 +31,22 @@ Babys werden im Kampf in **Originalgröße (32 px)** gezeichnet, Rookie 64, Cham
 ## Offen
 - Evolution ist pro Run (setzt sich zurück). Mit der Station (Phase 3) soll sie dauerhaft werden.
 - Virulina, Prismiez, Frostbyte haben noch keinen Champion; Ultras fehlen.
+
+## Neue Champions (29.09.2026, PixelLab mit Rookie als Referenz)
+Jeder Rookie hat jetzt einen Champion (Ausnahme: keine). Namen geprüft (Blitzhas/Toxidrak verworfen: zu nah an Blitza/Toxiquak).
+
+| Rookie | Champion | Element | Signatur |
+|---|---|---|---|
+| Virulina | Toxipanth | Virus | Giftsprung: 50 + starkes Gift |
+| Prismiez | Prismalynx | Licht | Prismastrahl: Feld 45, heilt 30 |
+| Frostbyte | Glaziolotl | Wasser | Gletscherwelle: Feld 45, friert 3 s ein |
+| Tracko | Schattnager | Virus | Schattenfalle: Backentasche, 3 Minen, 20 |
+| Cachy | Glanzbacke | Licht | Sonnenkeks: Backentasche, heilt 45, 20 |
+| Blinki | Strahlhase | Licht | Lichtgewitter: 4 × 20 |
+| Virulurch | Toxikröt | Virus | Seuchenwolke: Feld 30 + sehr langes Gift |
+| Toxmolch | Sumpfdrak | Virus | Sumpfatem: Reihe 45 + Gift |
+| Magmolch | Lavadrak | Feuer | Lavaflut: Feld 40 + langer Brand |
+| Sonnbrumm | Sonnenpranke | Licht | Sonnenschlag: 55, heilt 40 |
+| Raketauz | Phönixkauz | Feuer | Phönixsturz: 60 + Brand |
+
+Offen: Blinzel-Frames der neuen Champions, Ultras (96 px).
