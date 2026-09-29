@@ -15,7 +15,7 @@ func _init() -> void:
 			continue
 		var t0 := Time.get_ticks_msec()
 		var wav := MusicSynth.render(key)
-		var path := "res://assets/music/%s.wav" % OUT[key]
+		var path := "res://assets/music/%s.wav" % OUT.get(key, key)
 		wav.save_to_wav(ProjectSettings.globalize_path(path))
 		print("%s: %.1f s (Intro %.1f s) in %d ms" % [path, wav.data.size() / 4.0 / MusicSynth.RATE,
 			MusicSynth.intro_frames(key) / float(MusicSynth.RATE), Time.get_ticks_msec() - t0])

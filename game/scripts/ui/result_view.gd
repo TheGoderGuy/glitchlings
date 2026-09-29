@@ -13,7 +13,7 @@ func setup(run_state: RunState, run_won: bool, sum: Dictionary) -> void:
 	run = run_state
 	won = run_won
 	summary = sum
-	Music.play("title" if run_won else "map")
+	Music.play("title" if run_won else Music.zone_key("map", run.map.zone))
 
 
 func _process(delta: float) -> void:

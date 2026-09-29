@@ -20,7 +20,7 @@ var state_t := 0.0
 
 func setup(run_state: RunState) -> void:
 	run = run_state
-	Music.play("map")
+	Music.play(Music.zone_key("map", run.map.zone))
 	node = run.current_node()
 	type = node.type
 	if type == "event":

@@ -1060,7 +1060,7 @@ func test_sounds() -> void:
 
 func test_music() -> void:
 	var ok := true
-	for key in ["title", "map", "battle", "boss", "victory"]:
+	for key in ["title", "map", "battle", "boss", "victory", "map_vulkan", "battle_vulkan", "map_sumpf", "battle_sumpf"]:
 		var path := "res://assets/music/%s.wav" % key
 		if not ResourceLoader.exists(path):
 			ok = false
@@ -1070,7 +1070,15 @@ func test_music() -> void:
 		var lb := MusicSynth.intro_frames(key) if st.stereo else 0
 		if st.get_length() < 8.0 or lb >= frames:
 			ok = false
-	check(ok, "Alle 5 Musikstücke vorhanden, Schleifenpunkte gültig")
+	check(ok, "Alle 9 Musikstücke vorhanden (inkl. Vulkan/Sumpf), Schleifenpunkte gültig")
+	check(Music.zone_key("map", "vulkan") == "map_vulkan" and Music.zone_key("battle", "sumpf") == "battle_sumpf" and Music.zone_key("map", "wiesen") == "map" and Music.zone_key("battle", "wiesen") == "battle", "Zonen 2 und 3 haben eigene Karten- und Kampfmusik, Wiesen behalten die alte")
+	# Blinzel-Frames: jede Form außer den bekannten Ausnahmen
+	var no_blink: Array = []
+	for f in GameData.FORMS:
+		var spr: String = GameData.FORMS[f].spr
+		if not ResourceLoader.exists("res://assets/sprites/%s_blink.png" % spr):
+			no_blink.append(f)
+	check(no_blink == ["Toxmolch"], "Alle Formen blinzeln (ohne Blinzel-Frame: %s)" % ", ".join(no_blink))
 	# Karte spielt nach einem Kampf weiter statt neu zu beginnen
 	Music.play("map")
 	await get_tree().create_timer(0.6).timeout

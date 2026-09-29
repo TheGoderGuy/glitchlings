@@ -20,5 +20,7 @@ Pools: früh Glutmilbe, Aschefalter, Spamwespe · später + Brandmauerassel, Cap
 
 ## Offen
 - Blinzel-Frames für die vier neuen Gegner.
-- Eigene Musik für Zone 2 (derzeit Karte/Kampf/Boss wie Zone 1).
+- [x] Eigene Musik für Zone 2 (siehe unten).
+
+**Musik (29.09.2026):** eigene Stücke je Zone, selbst synthetisiert (`MusicSynth.TRACKS`, Rendern: `godot --headless --path game --script res://tools/render_music.gd -- <stück>`). Firewall-Vulkan: Karte `map_vulkan` (e-Moll, 108 BPM, Blech + Pauken), Kampf `battle_vulkan` (c-Moll, 172 BPM). Spam-Sümpfe: Karte `map_sumpf` (d-Moll, 96 BPM, Flöte, gezupfte Offbeats, Shuffle), Kampf `battle_sumpf` (g-Moll, 160 BPM, Offbeat-Bläser). Cache-Wiesen behalten die alte „epische“ Kampfmusik, der Boss hat überall die „mega“-Bossmusik. `Music.zone_key("map", zone)` wählt das Stück, Karten setzen je Zone an ihrer Stelle fort.
 - Zonen-Ereignisse mit Vulkan-Flair.

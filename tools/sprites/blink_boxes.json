@@ -1,0 +1,144 @@
+{
+ "Glanzbacke_80": {
+  "crop": "46,18,63,35",
+  "blink": "53,25,57,30"
+ },
+ "Glaziolotl_80": {
+  "crop": "60,24,77,41",
+  "blink": "67,30,70,34"
+ },
+ "Phoenixkauz_80": {
+  "crop": "50,18,67,35",
+  "blink": "56,23,61,29"
+ },
+ "Lavadrak_80": {
+  "crop": "60,24,77,41",
+  "blink": "70,30,72,33",
+  "dim": true
+ },
+ "Prismalynx_80": {
+  "crop": "52,16,71,35",
+  "blink": "60,23,64,28"
+ },
+ "Schattnager_80": {
+  "crop": "52,34,71,53",
+  "blink": "60,41,64,46"
+ },
+ "Sonnenpranke_80": {
+  "crop": "50,10,69,29",
+  "blink": "57,17,61,21,54,16"
+ },
+ "Strahlhase_80": {
+  "crop": "52,30,71,49",
+  "blink": "60,37,64,42"
+ },
+ "Sumpfdrak_80": {
+  "crop": "58,26,75,41",
+  "blink": "65,30,68,32",
+  "dim": true
+ },
+ "Titanbrumm_80": {
+  "crop": "54,18,71,33",
+  "blink": "61,25,65,27",
+  "dim": true
+ },
+ "Toxikroet_80": {
+  "crop": "42,16,61,33",
+  "blink": "48,21,54,28,58,28"
+ },
+ "Toxipanth_80": {
+  "crop": "60,18,79,37",
+  "blink": "66,26,70,30"
+ },
+ "Baertron_64": {
+  "crop": "32,14,49,31",
+  "blink": "39,21,44,23",
+  "dim": true
+ },
+ "Aurorlynx_96": {
+  "crop": "70,20,87,37",
+  "blink": "76,26,80,30"
+ },
+ "Bastionkatz_96": {
+  "crop": "66,16,83,33",
+  "blink": "74,22,78,27"
+ },
+ "Gigaquak_96": {
+  "crop": "72,14,89,31",
+  "blink": "80,18,84,23"
+ },
+ "Glutfenrir_96": {
+  "crop": "66,18,83,35",
+  "blink": "73,25,77,29"
+ },
+ "Hydradrak_96": {
+  "crop": "46,12,69,41",
+  "blink": "63,16,66,20;49,34,52,38",
+  "dim": true
+ },
+ "Hyperwulf_96": {
+  "crop": "74,26,91,43",
+  "blink": "79,31,83,35"
+ },
+ "Infernokauz_96": {
+  "crop": "58,22,75,39",
+  "blink": "63,29,68,34"
+ },
+ "Kolossbrumm_96": {
+  "crop": "62,20,79,37",
+  "blink": "69,26,75,31",
+  "dim": true
+ },
+ "Kolosspuff_96": {
+  "crop": "74,36,91,53",
+  "blink": "79,43,84,48"
+ },
+ "Kryolotl_96": {
+  "crop": "70,28,87,45",
+  "blink": "75,34,79,38"
+ },
+ "Leviamander_96": {
+  "crop": "66,30,83,47",
+  "blink": "73,35,78,39"
+ },
+ "Miasmakroet_96": {
+  "crop": "66,16,85,35",
+  "blink": "72,21,77,26,80,31"
+ },
+ "Orbitkauz_96": {
+  "crop": "62,24,79,41",
+  "blink": "66,29,75,35",
+  "dim": true
+ },
+ "Phantomnager_96": {
+  "crop": "70,40,87,57",
+  "blink": "78,48,81,51",
+  "dim": true
+ },
+ "Plasmahase_96": {
+  "crop": "72,32,89,49",
+  "blink": "79,39,83,42"
+ },
+ "Quantenhas_96": {
+  "crop": "64,32,81,49",
+  "blink": "71,38,75,42"
+ },
+ "Stellarbacke_96": {
+  "crop": "54,22,71,39",
+  "blink": "61,28,66,33"
+ },
+ "Supernovabaer_96": {
+  "crop": "64,16,81,33",
+  "blink": "71,23,75,27"
+ },
+ "Venomynx_96": {
+  "crop": "72,30,89,47",
+  "blink": "79,36,83,40",
+  "dim": true
+ },
+ "Vulkandrak_96": {
+  "crop": "74,28,91,45",
+  "blink": "81,35,85,38",
+  "dim": true
+ }
+}

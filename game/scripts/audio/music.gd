@@ -30,6 +30,17 @@ func _ready() -> void:
 	Settings.apply()  # Musik-Bus existiert erst jetzt
 
 
+## Stück der Zone, falls vorhanden („map_vulkan“), sonst das allgemeine („map“)
+func zone_key(kind: String, zone: String) -> String:
+	var k := "%s_%s" % [kind, zone]
+	return k if ResourceLoader.exists("res://assets/music/%s.wav" % k) else kind
+
+
+## Karten und Titel (auch die Zonen-Fassungen) spielen dort weiter, wo sie aufgehört haben
+func _resumes(key: String) -> bool:
+	return RESUME.has(key.get_slice("_", 0))
+
+
 func play(key: String) -> void:
 	if key == current:
 		return
@@ -37,7 +48,7 @@ func play(key: String) -> void:
 	if not ResourceLoader.exists(path):
 		return
 	var old := players[active]
-	if current != "" and old.playing and RESUME.has(current):
+	if current != "" and old.playing and _resumes(current):
 		positions[current] = old.get_playback_position()
 	current = key
 	active = 1 - active
@@ -48,12 +59,12 @@ func play(key: String) -> void:
 	stream.loop_end = roundi(stream.get_length() * stream.mix_rate)
 	stream.loop_begin = MusicSynth.intro_frames(key) if stream.stereo and MusicSynth.TRACKS.has(key) else 0
 	neu.stream = stream
-	var fade_in: float = FADE_IN.get(key, 0.6)
+	var fade_in: float = FADE_IN.get(key.get_slice("_", 0), 0.6)
 	# Laufende Blenden des vorigen Wechsels abbrechen – sonst stoppt ihr verspäteter
 	# Stopp-Befehl genau den Abspieler, der gerade das neue Stück spielt (Musik bleibt stumm).
 	_kill_tween()
 	neu.volume_db = -30.0 if fade_in > 0.1 else 0.0
-	neu.play(positions.get(key, 0.0) if RESUME.has(key) else 0.0)
+	neu.play(positions.get(key, 0.0) if _resumes(key) else 0.0)
 	tween = create_tween().set_parallel(true)
 	if fade_in > 0.1:
 		tween.tween_property(neu, "volume_db", 0.0, fade_in).set_trans(Tween.TRANS_SINE)
@@ -63,7 +74,7 @@ func play(key: String) -> void:
 
 func stop() -> void:
 	var old := players[active]
-	if current != "" and old.playing and RESUME.has(current):
+	if current != "" and old.playing and _resumes(current):
 		positions[current] = old.get_playback_position()
 	current = ""
 	_kill_tween()

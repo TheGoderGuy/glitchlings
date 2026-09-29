@@ -127,6 +127,106 @@ const TRACKS := {
 				"C#6 - - - E6 - - - A6 - - - . . . ."]},
 		],
 	},
+	# ---------- Zone 2: Firewall-Vulkan ----------
+	"map_vulkan": {
+		"bpm": 108, "loud": 0.18, "lead": "brass", "bass": "half", "arp": "arp8", "stabs": "", "drums": "vulkan_map", "counter": "strings",
+		"sections": [
+			{"name": "A", "chords": ["Em", "C", "D", "Bm", "Em", "C", "Am", "B"], "melody": [
+				"E5 - - - G5 - - - B5 - - - A5 - G5 -",
+				"E5 - - - - - - - C5 - D5 - E5 - G5 -",
+				"F#5 - - - A5 - - - D6 - - - C6 - A5 -",
+				"B5 - - - - - - - F#5 - - - D5 - - -",
+				"E5 - G5 - B5 - - - E6 - - - D6 - B5 -",
+				"C6 - - - B5 - G5 - E5 - - - G5 - C6 -",
+				"A5 - - - C6 - B5 - A5 - - - E5 - - -",
+				"D#5 - - - F#5 - - - B5 - - - . . . ."]},
+			{"name": "B", "chords": ["C", "D", "Em", "Em", "Am", "B", "Em", "Em"], "melody": [
+				"G5 - - - E5 - - - C5 - - - E5 - G5 -",
+				"A5 - - - F#5 - - - D5 - - - F#5 - A5 -",
+				"B5 - - - - - - - G5 - - - E5 - - -",
+				"B4 - - - E5 - G5 - B5 - - - - - - -",
+				"C6 - - - B5 - A5 - E5 - - - A5 - - -",
+				"B5 - - - A5 - F#5 - D#5 - - - F#5 - - -",
+				"E5 - - - - - - - - - - - . . . .",
+				". . . . . . . . B4 - D5 - E5 - F#5 -"]},
+		],
+	},
+	"battle_vulkan": {
+		"bpm": 172, "loud": 0.21, "lead": "lead_sq", "bass": "octave8", "arp": "arp16", "stabs": "x..x..x...x.x...", "drums": "vulkan", "counter": "brass",
+		"sections": [
+			{"name": "intro", "chords": ["Cm", "G"], "melody": [
+				"C5 . C5 . Eb5 . C5 . G5 . C5 . Ab5 . G5 .",
+				"G5 - - . G5 - - . B4 - C5 - D5 - F5 -"]},
+			{"name": "A", "chords": ["Cm", "Ab", "Bb", "G", "Cm", "Ab", "Fm", "G"], "melody": [
+				"G5 - - - C6 - - - Bb5 - G5 - Eb5 - F5 -",
+				"Ab5 - - - Eb5 - - - C5 - Eb5 - Ab5 - C6 -",
+				"Bb5 - - - F5 - - - D5 - F5 - Bb5 - D6 -",
+				"B5 - - - - - - - G5 - - - D5 - - -",
+				"C6 - - - Eb6 - D6 - C6 - - - G5 - - -",
+				"Ab5 - - - C6 - Eb6 - - - C6 - Ab5 - - -",
+				"F5 - Ab5 - C6 - - - F6 - - - Eb6 - C6 -",
+				"D6 - - - - - - - B5 - - - G5 - - -"]},
+			{"name": "B", "chords": ["Ab", "Bb", "Eb", "Cm", "Fm", "G", "Ab", "G"], "melody": [
+				"C6 - - - Ab5 - - - Eb5 - Ab5 - C6 - - -",
+				"D6 - - - Bb5 - - - F5 - Bb5 - D6 - - -",
+				"Eb6 - - - - - - - G5 - Bb5 - Eb6 - G6 -",
+				"G6 - - - F6 - Eb6 - C6 - - - G5 - - -",
+				"F6 - - - Eb6 - C6 - Ab5 - - - C6 - F6 -",
+				"G6 - - - - - - - D6 - - - B5 - D6 -",
+				"Eb6 - - - C6 - Ab5 - Eb6 - - - Ab6 - - -",
+				"G6 - - - - - - - B5 - D6 - F6 - - -"]},
+		],
+	},
+	# ---------- Zone 3: Spam-Sümpfe ----------
+	"map_sumpf": {
+		"bpm": 96, "loud": 0.17, "lead": "lead_soft", "bass": "bounce", "arp": "offbeat", "stabs": "", "drums": "sumpf_map", "counter": "strings",
+		"sections": [
+			{"name": "A", "chords": ["Dm", "Dm", "Bb", "A", "Dm", "F", "Gm", "A"], "melody": [
+				"D5 - - . F5 - A5 - G5 - F5 - E5 - F5 -",
+				"D5 - - - - - - - A4 - - - D5 - E5 -",
+				"F5 - - . D5 - Bb4 - D5 - F5 - Bb5 - A5 -",
+				"A5 - - - G5 - E5 - C#5 - - - A4 - - -",
+				"D5 - - . F5 - A5 - D6 - - - C6 - A5 -",
+				"C6 - - - A5 - F5 - C5 - - - F5 - A5 -",
+				"Bb5 - - - A5 - G5 - D5 - - - G5 - Bb5 -",
+				"A5 - - - - - - - E5 - - - C#5 - - -"]},
+			{"name": "B", "chords": ["Gm", "C", "F", "Dm", "Bb", "Gm", "A", "A"], "melody": [
+				"G5 - - - Bb5 - - - D6 - - - Bb5 - G5 -",
+				"E5 - - - G5 - - - C6 - - - Bb5 - G5 -",
+				"A5 - - - F5 - - - C5 - - - F5 - A5 -",
+				"D6 - - - - - A5 - F5 - - - D5 - - -",
+				"D5 - F5 - Bb5 - - - A5 - G5 - F5 - D5 -",
+				"G5 - - - Bb5 - D6 - - - Bb5 - G5 - - -",
+				"A5 - - - C#6 - - - E6 - - - C#6 - - -",
+				"A5 - - - - - - - . . . . A4 - C#5 -"]},
+		],
+	},
+	"battle_sumpf": {
+		"bpm": 160, "loud": 0.21, "lead": "lead_sq", "bass": "octave8", "arp": "arp16", "stabs": "..x...x...x...x.", "drums": "sumpf", "counter": "brass",
+		"sections": [
+			{"name": "intro", "chords": ["Gm", "D"], "melody": [
+				"G4 . Bb4 . D5 . G5 . F#5 . D5 . A4 . F#4 .",
+				"G4 - - - Bb4 - - - A4 - - - D5 - - -"]},
+			{"name": "A", "chords": ["Gm", "Eb", "F", "D", "Gm", "Eb", "Cm", "D"], "melody": [
+				"D5 - G5 - Bb5 - - - A5 - G5 - F#5 - G5 -",
+				"G5 - - - Eb5 - - - Bb4 - Eb5 - G5 - Bb5 -",
+				"A5 - - - F5 - - - C5 - F5 - A5 - C6 -",
+				"A5 - - - - - - - F#5 - - - D5 - - -",
+				"G5 . G5 . Bb5 . G5 . D6 - - - C6 - Bb5 -",
+				"Bb5 - - - G5 - Eb5 - G5 - - - Bb5 - Eb6 -",
+				"D6 - - - C6 - - - G5 - C6 - Eb6 - - -",
+				"D6 - - - - - - - F#5 - - - A5 - - -"]},
+			{"name": "B", "chords": ["Eb", "F", "Dm", "Gm", "Cm", "D", "Eb", "D"], "melody": [
+				"G5 - - - Bb5 - Eb6 - - - Bb5 - G5 - - -",
+				"A5 - - - C6 - F6 - - - C6 - A5 - - -",
+				"F5 - - - A5 - D6 - - - A5 - F5 - D5 -",
+				"G5 - - - - - - - Bb5 - - - D6 - - -",
+				"Eb6 - - - D6 - C6 - G5 - - - C6 - Eb6 -",
+				"D6 - - - C6 - A5 - F#5 - - - A5 - D6 -",
+				"Eb6 - - - - - Bb5 - G5 - - - Bb5 - Eb6 -",
+				"D6 - - - - - - - A5 - C6 - F#6 - - -"]},
+		],
+	},
 }
 
 ## Schlagzeug-Spuren (16 Schritte): k Kick, s Snare, h Hi-Hat, t Pauke
@@ -135,6 +235,11 @@ const DRUMS := {
 	"map": {"k": "x.......x.......", "s": "....x.......x...", "h": "..x...x...x...x.", "vol": 0.55},
 	"title": {"k": "x.......x.x.....", "s": "....x.......x...", "h": "x.x.x.x.x.x.x.x.", "vol": 0.7},
 	"boss": {"k": "x..x..x.x..x..x.", "s": "....x.......x...", "h": "xxxxxxxxxxxxxxxx", "t": "x.......x.......", "vol": 1.0},
+	# Vulkan: schwere Pauken · Sumpf: hüpfender Shuffle
+	"vulkan_map": {"k": "x.......x.......", "s": "............x...", "h": "..x...x...x...x.", "t": "x.....x...x.....", "vol": 0.6},
+	"vulkan": {"k": "x.x...x.x.x...x.", "s": "....x.......x...", "h": "x.xxx.xxx.xxx.xx", "t": "......x.......x.", "vol": 1.0},
+	"sumpf_map": {"k": "x.....x...x.....", "s": "....x.......x..x", "h": "x..x..x.x..x..x.", "vol": 0.5},
+	"sumpf": {"k": "x..x....x..x....", "s": "....x.......x...", "h": "x.xxx.xxx.xxx.xx", "vol": 0.95},
 }
 
 var L := PackedFloat32Array()
@@ -492,6 +597,11 @@ func _arp_bar(style: String, chord: String, t: float, step: float) -> void:
 			var order := [0, 2, 1, 2]
 			for s in range(0, 16, 2):
 				_glock(t + s * step, step * 2, v[order[(s / 2) % 4]], 0.42, 0.4)
+		"offbeat":
+			# gezupfte Akkorde auf den Offbeats (Sumpf: blubbert)
+			for s in [2, 6, 10, 14]:
+				for i in v.size():
+					_pluck(t + s * step, step * 1.5, v[i], 0.3, -0.3 + 0.3 * i)
 
 
 func _stabs(pattern: String, chord: String, t: float, step: float) -> void:

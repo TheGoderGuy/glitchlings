@@ -58,7 +58,7 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 	if run.tutorial and run.fights_won == 0 and type == "fight":
 		tut = Tutorial.new()
 		st.status = ""
-	Music.play("boss" if type == "boss" else "battle")
+	Music.play("boss" if type == "boss" else Music.zone_key("battle", run.map.zone))
 	_set_mode(Mode.FIGHT)
 
 

@@ -31,7 +31,7 @@ var pause_idx := 0
 
 func setup(run_state: RunState) -> void:
 	run = run_state
-	Music.play("map")
+	Music.play(Music.zone_key("map", run.map.zone))
 	var ch := run.next_choices()
 	# Standardauswahl: der Knoten, der am nächsten an der aktuellen Position liegt
 	sel = 0

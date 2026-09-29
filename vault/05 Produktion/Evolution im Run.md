@@ -93,4 +93,6 @@ Jeder der 21 Champions hat jetzt ein Ultra (PixelLab Pro Flash, Stilreferenz Pyr
 
 Zwei Entwürfe wurden neu generiert: **Bastionkatz** hatte einen Burgturm auf dem Rücken (verstößt gegen „keine Gegenstände als Körper“), **Phantomnager** sah wie eine Katze aus (jetzt klar Ratte). Der Monsterdex ist jetzt nach Linien sortiert (Baby → Rookies → Champions → Ultras, Fusionen am Ende) und hat 76 Einträge; 96er-Sprites werden oben an der Kachel abgeschnitten.
 
-Offen: Blinzel-Frames der Champions und Ultras, Balancing der Ultra-Signaturen nach dem Anspielen (80 Element-Chips ≈ 3–4 Runs mit einem Monster).
+**Blinzel-Frames (29.09.2026):** alle Champions und Ultras (+ Bärtron) blinzeln. Augenboxen in `tools/sprites/blink_boxes.json`, von Hand am vergrößerten Kopf gesucht; Tier-Augen per `png2spr.js --blink` (Lid), leuchtende Mech-/Drachenaugen per `dim_blink.js` (kurz abgedunkelt). Toxmolch hat noch keinen, sein Auge ist nicht eindeutig.
+
+Offen: Balancing der Ultra-Signaturen nach dem Anspielen (80 Element-Chips ≈ 3–4 Runs mit einem Monster).
