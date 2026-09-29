@@ -111,7 +111,8 @@ const FORMS := {
 const STAGE_NAMES := ["", "Baby", "Rookie", "Champion", "Ultra"]
 
 ## Prägung (gespielte Chips im Run), ab der die nächste Stufe erreicht wird
-const EVO_AT := {2: 15, 3: 35}
+## Lebenszeit-Prägung (gespielte Chips über alle Runs): Rookie meist im ersten Run, Champion im zweiten/dritten
+const EVO_AT := {2: 15, 3: 60}
 
 ## Signatur-Attacken je Form. Treffer (hits) landen im Abstand von 0,15 s und treffen immer.
 ## anim: jump (Sprung zum Gegner), row (Welle über die Gegnerreihe), field (ganzes Gegnerfeld), self (auf sich selbst)

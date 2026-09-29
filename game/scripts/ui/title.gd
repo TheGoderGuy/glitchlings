@@ -9,10 +9,11 @@ var page := Page.MAIN
 var sel := 0
 var glitch_t := 0.0
 var glitch_off := Vector2i.ZERO
+var reset_armed := false
 
 
 func _main_items() -> Array:
-	return ["Run starten", "Optionen", "Beenden"]
+	return ["Spielen" if SaveGame.has_save() else "Neues Spiel", "Optionen", "Beenden"]
 
 
 func _option_items() -> Array:
@@ -22,6 +23,7 @@ func _option_items() -> Array:
 		"Musik: " + _bar_text(Settings.music),
 		"Schwierigkeit: " + ["Entspannt", "Normal", "Knackig"][Settings.difficulty],
 		"Bildschirmwackeln: " + ("An" if Settings.screen_shake else "Aus"),
+		("Wirklich löschen? Nochmal drücken" if reset_armed else "Spielstand löschen") if SaveGame.has_save() else "Spielstand: keiner",
 		"Zurück",
 	]
 
@@ -45,6 +47,8 @@ func _process(delta: float) -> void:
 		glitch_t = randf_range(1.2, 3.0)
 		glitch_off = Vector2i(randi_range(-2, 2), 0)
 	var items := _main_items() if page == Page.MAIN else _option_items()
+	if Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down"):
+		reset_armed = false
 	if Input.is_action_just_pressed("move_up"):
 		sel = (sel + items.size() - 1) % items.size()
 		Sfx.play("select")
@@ -68,11 +72,21 @@ func _process(delta: float) -> void:
 			dir = -1
 		elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("confirm"):
 			dir = 1
-		if Input.is_action_just_pressed("back") or (sel == 5 and Input.is_action_just_pressed("confirm")):
+		if Input.is_action_just_pressed("back") or (sel == 6 and Input.is_action_just_pressed("confirm")):
 			Sfx.play("back")
 			page = Page.MAIN
 			sel = 1
 			Settings.save_settings()
+			reset_armed = false
+		elif sel == 5 and Input.is_action_just_pressed("confirm") and SaveGame.has_save():
+			# zweimal bestätigen, damit nichts aus Versehen verloren geht
+			if reset_armed:
+				SaveGame.reset()
+				reset_armed = false
+				Sfx.play("back")
+			else:
+				reset_armed = true
+				Sfx.play("warn")
 		elif dir != 0 and sel < 5:
 			match sel:
 				0:
@@ -118,7 +132,7 @@ func _draw() -> void:
 		_menu(_main_items(), sel, W / 2.0, 258, 180)
 	else:
 		_dim()
-		var r := Rect2(160, 96, 320, 200)
+		var r := Rect2(150, 84, 340, 222)
 		_box(r, GameData.COL.panel, GameData.COL.line)
 		_text(r.position + Vector2(0, 26), "Optionen", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		_menu(_option_items(), sel, r.get_center().x, r.position.y + 40, 280)

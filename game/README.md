@@ -33,6 +33,8 @@ Godot 4.7, GDScript, Renderer „Compatibility“, Basisauflösung 640×360 (gan
 | `scripts/audio/sfx.gd` | Platzhalter-Sounds, zur Laufzeit synthetisiert: `Sfx.play("hit")` (Autoload) |
 | `scripts/ui/pixel_canvas.gd` | Basis aller Bildschirme: Schrift, Kästen, Balken, Sprites |
 | `scripts/ui/title.gd` | Titelbildschirm + Optionen |
+| `scripts/meta/save_game.gd` | Spielstand (Autoload `SaveGame`): Team, Brutnest, Dex – `user://savegame.json` |
+| `scripts/ui/station_view.gd` | Station: Team, Brutnest, Monsterdex, Schlüpf-Szene |
 | `scripts/main.gd` | Ablauf: Titel → Karte → Knoten → … → Boss → Ergebnis |
 
 ## Tests & Screenshots
@@ -42,7 +44,7 @@ godot --headless --path game res://tests/test_battle.tscn
 godot --headless --path game --script res://tools/render_music.gd   # Musik neu rendern
 timeout 60 godot --path game --quit-after 900 -- --shot=C:/tmp/karte.png --mode=map --floor=3
 ```
-`--foe=N` Gegner, `--form=Name` Monsterform, `--mon=Starter`. `--mode` = title | options | starter | map | event | rest | shop | fight | pick | pause | result, `--floor=N` Etage, `--pad` zeigt Controller-Tasten.
+`--foe=N` Gegner, `--form=Name` Monsterform, `--mon=Starter`. `--mode` = title | options | starter | station | nest | dex | hatch | map | event | rest | shop | fight | pick | pause | result, `--floor=N` Etage, `--pad` zeigt Controller-Tasten.
 
 ## Lizenzen
 - Schrift **Silkscreen** – SIL Open Font License 1.1 (`assets/fonts/OFL.txt`), kommerziell frei, muss in den Credits genannt werden.

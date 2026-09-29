@@ -172,9 +172,9 @@ func _draw_side_panels(target: Vector2i) -> void:
 	if need > 0:
 		var tgt := run.evo_target()
 		_text(Vector2(L.position.x + 8, y), "Prägung", 8, GameData.COL.muted)
-		_text(Vector2(L.position.x + 8, y), "%d/%d" % [mini(run.chips_used, need), need], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
+		_text(Vector2(L.position.x + 8, y), "%d/%d" % [mini(run.total_chips(), need), need], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
 		var ec: Color = GameData.EL[GameData.FORMS[tgt].el] if tgt != "" else GameData.COL.muted
-		_bar(Rect2(L.position.x + 8, y + 5, L.size.x - 16, 7), float(run.chips_used) / need, ec)
+		_bar(Rect2(L.position.x + 8, y + 5, L.size.x - 16, 7), float(run.total_chips()) / need, ec)
 		var dir: String = ("Richtung " + GameData.FORMS[tgt].el) if tgt != "" else "Richtung offen"
 		_text(Vector2(L.position.x + 8, y + 26), dir, 8, ec)
 	else:

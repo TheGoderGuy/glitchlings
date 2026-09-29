@@ -9,6 +9,7 @@ const StarterScreen := preload("res://scripts/ui/starter_view.gd")
 const MapScreen := preload("res://scripts/ui/map_view.gd")
 const RoomScreen := preload("res://scripts/ui/room_view.gd")
 const ResultScreen := preload("res://scripts/ui/result_view.gd")
+const StationScreen := preload("res://scripts/ui/station_view.gd")
 const BattleScene := preload("res://scenes/battle.tscn")
 
 var current: Node
@@ -17,6 +18,7 @@ var foe_override := -1   # nur für Screenshots
 
 
 func _ready() -> void:
+	PixelCanvas.preload_all()
 	var shot := Shot.args()
 	if shot.is_empty():
 		show_title()
@@ -33,19 +35,39 @@ func _swap(node: Node) -> void:
 
 func show_title() -> void:
 	var t := TitleScreen.new()
-	t.start_run.connect(show_starters)
+	t.start_run.connect(_from_title)
 	_swap(t)
+
+
+## Erster Start: Starter wählen; sonst direkt in die Station
+func _from_title() -> void:
+	if SaveGame.has_save():
+		show_station()
+	else:
+		show_starters()
 
 
 func show_starters() -> void:
 	var s := StarterScreen.new()
-	s.chosen.connect(start_run)
+	s.chosen.connect(_first_monster)
 	s.back.connect(show_title)
 	_swap(s)
 
 
-func start_run(species := "Pixmiez", seed_value := -1) -> void:
-	run = RunState.new(species, seed_value)
+func _first_monster(species: String) -> void:
+	SaveGame.new_game(species)
+	show_station()
+
+
+func show_station() -> void:
+	var s := StationScreen.new()
+	s.start_run.connect(start_run)
+	s.to_title.connect(show_title)
+	_swap(s)
+
+
+func start_run(monster_id: int, seed_value := -1) -> void:
+	run = RunState.from_monster(SaveGame.monster(monster_id), seed_value)
 	run.difficulty = Settings.difficulty
 	show_map()
 
@@ -84,18 +106,53 @@ func _battle_finished(won: bool) -> void:
 
 
 func show_result(won: bool) -> void:
+	var sum := SaveGame.record_run(run, won)
 	var r := ResultScreen.new()
-	r.setup(run, won)
-	r.new_run.connect(show_starters)
-	r.to_title.connect(show_title)
+	r.setup(run, won, sum)
+	r.to_station.connect(show_station)
 	_swap(r)
 
 
 # ---------- Screenshots ----------
 
+## Beispiel-Spielstand nur im Speicher (für Screenshots)
+func _demo_save() -> void:
+	SaveGame.new_game("Pixmiez")
+	var a := SaveGame.add_monster("Funkling")
+	a.form = "Glutbyte"
+	a.stage = 2
+	a.chips = 31
+	a.praeg = {"Feuer": 17, "Neutral": 10, "Code": 4}
+	SaveGame.see("Glutbyte")
+	var b := SaveGame.add_monster("Tröpfel")
+	b.chips = 9
+	b.praeg = {"Wasser": 6, "Neutral": 3}
+	var c := SaveGame.add_monster("Funkling")
+	c.form = "Overclocko"
+	c.stage = 2
+	c.chips = 44
+	c.praeg = {"Code": 20, "Feuer": 8, "Neutral": 16}
+	SaveGame.see("Overclocko")
+	var p: Dictionary = SaveGame.team()[0]
+	p.form = "Blazebit"
+	p.stage = 2
+	p.chips = 38
+	p.praeg = {"Feuer": 15, "Neutral": 19, "Code": 4}
+	p.runs = 3
+	p.wins = 1
+	SaveGame.see("Blazebit")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 3
+	SaveGame.add_egg("Gewöhnlich", rng)
+	SaveGame.add_egg("Selten", rng)
+	SaveGame.data.stats = {"runs": 6, "wins": 1}
+
+
 func _screenshot(shot: Dictionary) -> void:
 	InputSetup.pad = shot.get("pad", false)
 	seed(7)
+	SaveGame.persist = false
+	_demo_save()
 	var mode: String = shot.get("mode", "title")
 	run = RunState.new(shot.get("mon", "Pixmiez"), 7)
 	# auf der Karte bis zur gewünschten Etage vorlaufen (immer erster Weg)
@@ -114,6 +171,13 @@ func _screenshot(shot: Dictionary) -> void:
 				current.page = TitleScreen.Page.OPTIONS
 		"starter":
 			show_starters()
+		"station", "nest", "dex", "hatch":
+			if mode == "hatch":
+				SaveGame.data.nest[0].runs_left = 0
+			show_station()
+			current.tab = {"station": 0, "nest": 1, "dex": 2, "hatch": 0}[mode]
+			current.hatch_t = shot.get("t", 0.0)
+			current.t_in = 1.0
 		"map":
 			show_map()
 		"event", "rest", "shop":
@@ -135,7 +199,12 @@ func _screenshot(shot: Dictionary) -> void:
 			elif mode == "evolve":
 				current.show_evolve_for_screenshot(shot.get("t", 2.6))
 		"result":
-			run.praeg = {"Neutral": 14, "Code": 3, "Licht": 4}
+			run.praeg = {"Neutral": 14, "Feuer": 9, "Licht": 4}
+			run.chips_used = 27
+			run.fights_won = 3
+			run.form = "Blazebit"
+			run.stage = 2
+			run.monster_id = 1
 			show_result(false)
 	current.set_process(false)
 	current.queue_redraw()

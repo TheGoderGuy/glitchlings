@@ -13,7 +13,12 @@ var max_hp: int
 var hp: int
 var deck: Array = []
 var frag := 0
-var praeg := {}
+var praeg := {}           # Prägung in diesem Run
+var monster_id := -1      # Team-Monster aus dem Spielstand (-1 = ohne Spielstand)
+var start_form := ""
+var base_chips := 0       # Lebenszeit-Prägung des Monsters vor diesem Run
+var base_praeg := {}
+var forms_seen: Array = []
 var chips_used := 0
 var fights_won := 0
 var sp_bonus := false     # Signatur-Leiste startet im nächsten Kampf halb voll
@@ -34,6 +39,8 @@ func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
 	species = sp
 	mon = GameData.MONS[sp]
 	form = sp
+	start_form = sp
+	forms_seen = [sp]
 	max_hp = mon.hp
 	hp = max_hp
 	deck = mon.deck.duplicate()
@@ -55,7 +62,36 @@ func form_el() -> String:
 
 
 ## Ziel der nächsten Evolution nach aktueller Prägung (leer = noch keine Richtung).
+## Run mit einem Team-Monster aus dem Spielstand starten (Form, Stufe und Lebenszeit-Prägung übernehmen)
+static func from_monster(m: Dictionary, seed_value: int = -1) -> RunState:
+	var r := RunState.new(m.species, seed_value)
+	r.monster_id = int(m.id)
+	r.form = m.form
+	r.start_form = m.form
+	r.stage = int(m.stage)
+	r.base_chips = int(m.chips)
+	for el in m.praeg:
+		r.base_praeg[el] = int(m.praeg[el])
+	r.max_hp += 10 * (r.stage - 1)
+	r.hp = r.max_hp
+	r.forms_seen = [m.form]
+	return r
+
+
+## Gesamte Prägung (Lebenszeit + dieser Run)
+func total_chips() -> int:
+	return base_chips + chips_used
+
+
+func total_praeg() -> Dictionary:
+	var t := base_praeg.duplicate()
+	for el in praeg:
+		t[el] = t.get(el, 0) + praeg[el]
+	return t
+
+
 func evo_target() -> String:
+	var praeg := total_praeg()
 	if stage == 1:
 		if mon.has("ice") and eis >= 4:
 			return mon.ice
@@ -88,7 +124,7 @@ func evo_need() -> int:
 ## Entwickelt sich, wenn genug Prägung da ist. Gibt {from, to} zurück oder {}.
 func try_evolve() -> Dictionary:
 	var need := evo_need()
-	if need == 0 or chips_used < need:
+	if need == 0 or total_chips() < need:
 		return {}
 	var target := evo_target()
 	if target == "":
@@ -98,6 +134,8 @@ func try_evolve() -> Dictionary:
 	stage += 1
 	max_hp += 10
 	hp += 10
+	if not forms_seen.has(target):
+		forms_seen.append(target)
 	return {"from": old, "to": target}
 
 

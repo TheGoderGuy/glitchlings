@@ -531,7 +531,7 @@ func _draw_pick() -> void:
 	var evo_line := ""
 	if need > 0:
 		var tgt := run.evo_target()
-		evo_line = " · Prägung %d/%d%s" % [run.chips_used, need, (" · Richtung " + GameData.FORMS[tgt].el) if tgt != "" else ""]
+		evo_line = " · Prägung %d/%d%s" % [run.total_chips(), need, (" · Richtung " + GameData.FORMS[tgt].el) if tgt != "" else ""]
 	_text(Vector2(r.position.x, r.end.y - 36), "Deck: %d Chips · Fragmente: %d%s" % [run.deck.size(), run.frag, evo_line], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	var pad: bool = InputSetup.pad
 	_text(Vector2(r.position.x, r.end.y - 16), "< > wählen   %s nehmen   %s überspringen" % ["A" if pad else "Enter", "B" if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)

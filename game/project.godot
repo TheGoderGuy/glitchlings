@@ -15,6 +15,7 @@ InputSetup="*res://scripts/input_setup.gd"
 Settings="*res://scripts/settings.gd"
 Sfx="*res://scripts/audio/sfx.gd"
 Music="*res://scripts/audio/music.gd"
+SaveGame="*res://scripts/meta/save_game.gd"
 
 [display]
 

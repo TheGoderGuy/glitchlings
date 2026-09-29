@@ -25,6 +25,7 @@ func _ready() -> void:
 	test_new_foes()
 	test_difficulty()
 	test_evolution()
+	test_meta()
 	test_all_specials()
 	test_passives()
 	test_map()
@@ -365,6 +366,56 @@ func test_new_foes() -> void:
 		if not s.over:
 			all_end = false
 	check(all_end, "Jeder Gegner-Kampf endet")
+
+
+func test_meta() -> void:
+	var real_path := SaveGame.path
+	var real_data := SaveGame.data.duplicate(true)
+	SaveGame.path = "user://test_savegame.json"
+	SaveGame.persist = true
+	var m := SaveGame.new_game("Funkling")
+	check(SaveGame.has_save() and SaveGame.team().size() == 1 and SaveGame.data.dex.has("Funkling"), "Neues Spiel: Starter im Team und im Dex")
+	# Run 1: Feuer-Prägung, 3 Siege, Rookie erreicht
+	var run := RunState.from_monster(m, 1)
+	run.chips_used = GameData.EVO_AT[2]
+	run.praeg = {"Feuer": 10, "Neutral": 5}
+	run.try_evolve()
+	run.fights_won = 3
+	var sum := SaveGame.record_run(run, false)
+	var m2 := SaveGame.monster(int(m.id))
+	check(m2.form == "Glutbyte" and int(m2.stage) == 2 and int(m2.chips) == GameData.EVO_AT[2], "Evolution bleibt nach dem Run erhalten (auch bei Niederlage)")
+	check(not sum.egg.is_empty() and SaveGame.nest().size() == 1, "Ei nach Run mit mindestens 2 Siegen")
+	check(sum.new_dex.has("Glutbyte"), "Neue Form landet im Monsterdex")
+	# Laden/Speichern
+	SaveGame.load_game()
+	check(SaveGame.monster(int(m.id)).form == "Glutbyte" and SaveGame.nest().size() == 1, "Spielstand übersteht Speichern und Laden")
+	# Run 2: startet als Rookie mit Lebenszeit-Prägung, Champion-Schwelle zählt gesamt
+	var run2 := RunState.from_monster(SaveGame.monster(int(m.id)), 2)
+	check(run2.stage == 2 and run2.form == "Glutbyte" and run2.max_hp == 90, "Nächster Run startet als Rookie mit +10 HP")
+	run2.chips_used = GameData.EVO_AT[3] - GameData.EVO_AT[2]
+	run2.praeg = {"Feuer": 30}
+	check(run2.try_evolve().get("to", "") == "Magmawulf", "Champion-Schwelle zählt Lebenszeit-Prägung")
+	# Eier reifen: gewöhnliches Ei schlüpft nach 1 Run
+	SaveGame.data.nest = [{"rarity": "Gewöhnlich", "species": "Tröpfel", "runs_left": 1}, {"rarity": "Episch", "species": "Pixmiez", "runs_left": 3}]
+	run2.fights_won = 0
+	SaveGame.record_run(run2, false)
+	check(SaveGame.ready_eggs().size() == 1 and int(SaveGame.nest()[1].runs_left) == 2, "Eier reifen pro Run (gewöhnlich 1, episch 3)")
+	var h := SaveGame.hatch_next()
+	check(h.get("species", "") == "Tröpfel" and SaveGame.team().size() == 2 and h.new_in_dex, "Ei schlüpft: neues Monster im Team und im Dex")
+	var ok_rar := true
+	for r in SaveGame.EGG_RUNS:
+		if SaveGame.egg_pool(r).is_empty():
+			ok_rar = false
+	check(ok_rar and SaveGame.EGG_RUNS.Legendär == 5 and SaveGame.EGG_RUNS.Gewöhnlich == 1, "Ei-Seltenheiten: Gewöhnlich 1 … Legendär 5 Runs")
+	var full_egg := {"rarity": "Episch", "species": "Pixmiez", "runs_left": 3}
+	SaveGame.data.nest = [full_egg.duplicate(), full_egg.duplicate(), full_egg.duplicate()]
+	var run3 := RunState.new("Pixmiez", 3)
+	run3.fights_won = 4
+	check(SaveGame.record_run(run3, true).nest_full, "Volles Brutnest: kein weiteres Ei")
+	SaveGame.reset()
+	check(not FileAccess.file_exists("user://test_savegame.json"), "Spielstand löschen entfernt die Datei")
+	SaveGame.path = real_path
+	SaveGame.data = real_data
 
 
 func test_evolution() -> void:

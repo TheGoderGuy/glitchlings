@@ -92,6 +92,14 @@ const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "spam": "spam_64", "b
 static var _sprites := {}
 
 
+## Alle Sprites beim Spielstart laden: Texturen, die erst in _draw() zum ersten Mal geladen werden, bleiben in dem Bild weiß.
+static func preload_all() -> void:
+	for k in SPRITE_FILES:
+		sprite(k)
+	for f in GameData.FORMS:
+		sprite(f)
+
+
 ## Lädt ein Sprite samt Blinzel-Frame und weißer Treffer-Silhouette (einmalig, dann aus dem Cache).
 static func sprite(key: String) -> Dictionary:
 	if _sprites.has(key):

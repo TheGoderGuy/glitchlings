@@ -30,6 +30,8 @@ static func setup() -> void:
 	_add("confirm", [KEY_ENTER, KEY_KP_ENTER, KEY_SPACE, KEY_J], [JOY_BUTTON_A], [])
 	_add("pause", [KEY_ESCAPE, KEY_TAB], [JOY_BUTTON_START, JOY_BUTTON_BACK], [])
 	_add("back", [KEY_ESCAPE, KEY_BACKSPACE], [JOY_BUTTON_B], [])
+	_add("tab_prev", [KEY_Q], [JOY_BUTTON_LEFT_SHOULDER], [])
+	_add("tab_next", [KEY_E], [JOY_BUTTON_RIGHT_SHOULDER], [])
 
 
 static func _add(action: String, keys: Array, buttons: Array, axes: Array) -> void:
