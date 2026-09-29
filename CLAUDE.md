@@ -121,6 +121,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 ## Qualitätsregeln für Änderungen am Prototyp
 - Godot: Texturen **nie erst in `_draw()` laden** (bleiben im ersten Bild weiß) – `preload` oder `PixelCanvas.sprite()` (alles wird in `main._ready` vorgeladen).
 - Godot (`game/`): nach jeder Änderung **zuerst `--headless --import` auf SCRIPT ERROR prüfen** (ein Parse-Fehler in main.gd lässt das Spiel leer hängen!), dann Godot-Tests, bei Grafikänderungen per `--shot` einen Screenshot rendern – immer mit `timeout 60 … --quit-after 900`, damit nichts hängen bleibt. Godot-Exe: `~/AppData/Local/Microsoft/WinGet/Packages/GodotEngine*/Godot_*_console.exe`.
+- Godot-Tests dürfen **nie** den echten Spielstand oder das echte Spieltest-Log schreiben: `test_battle.gd` leitet in `_ready` `SaveGame.path` und `SaveGame.log_path` auf `user://test_*`-Dateien um (29.09.2026 hatte ein Test den echten Stand verändert). Diese Umleitung nie entfernen; neue Testfunktionen, die speichern, brauchen sonst nichts Zusätzliches.
 - Browser-Prototyp: nach jeder Änderung `cd tests && npm test` ausführen.
 - Bei Grafikänderungen ein Bild rendern (die Tests zeigen, wie: jsdom + canvas) und es selbst ansehen, bevor du fertig meldest.
 - Änderungen im Vault dokumentieren (Playtest-Log bzw. passende Notiz).
