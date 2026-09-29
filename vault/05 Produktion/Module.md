@@ -15,6 +15,14 @@ Passive Gegenstände, die **nur für den laufenden Run** gelten – wie Relikte 
 
 | Modul | Seltenheit | Wirkung |
 |---|---|---|
+| Verstärker | Gewöhnlich | Chip-Treffer machen +3 Schaden. |
+| Schnelllader | Gewöhnlich | Chips laden 15 % schneller. |
+| Startsignal | Gewöhnlich | Die Signatur-Leiste startet jeden Kampf zu einem Viertel gefüllt. |
+| Panzerplatte | Gewöhnlich | Jeder Treffer gegen dich macht 2 Schaden weniger. |
+| Sammler | Gewöhnlich | +30 % Fragmente aus Kämpfen. |
+| Lebensbit | Gewöhnlich | Nach jedem Sieg heilst du 8 HP zusätzlich. |
+| Schleimschuhe | Gewöhnlich | Schleim bremst dich nicht, Lava schadet dir nur halb so viel. |
+| Rabattchip | Gewöhnlich | Beim Datenhändler ist alles 25 % billiger. |
 | Überhitzer | Selten | Brand verursacht doppelten Schaden. |
 | Giftkapsel | Selten | Gift verursacht 50 % mehr Schaden. |
 | Kältekern | Selten | Einfrieren und Betäuben halten 50 % länger. |
