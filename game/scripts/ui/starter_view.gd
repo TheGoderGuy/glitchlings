@@ -8,6 +8,7 @@ const STARTERS := ["Pixmiez", "Funkling", "Tröpfel"]
 
 var sel := 0
 var t_in := 0.0
+var from_white := false   # nach der Opening-Szene aus dem Weiß einblenden
 
 
 func _process(delta: float) -> void:
@@ -59,3 +60,5 @@ func _draw() -> void:
 		_text(Vector2(r.position.x + 10, r.position.y + 248), "Wird: " + " / ".join(dirs), 8, GameData.COL.muted)
 	var pad: bool = InputSetup.pad
 	_text(Vector2(0, H - 12), "< > wählen    %s los geht's    %s zurück" % ["A" if pad else "Enter", "B" if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	if from_white and t_in < 0.8:
+		draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 1.0 - t_in / 0.8))

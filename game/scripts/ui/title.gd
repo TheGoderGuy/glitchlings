@@ -2,6 +2,7 @@ extends PixelCanvas
 ## Titelbildschirm mit Hauptmenü und Optionen.
 
 signal start_run
+signal show_intro
 
 enum Page { MAIN, OPTIONS }
 
@@ -25,6 +26,7 @@ func _option_items() -> Array:
 		"Bildschirmwackeln: " + ("An" if Settings.screen_shake else "Aus"),
 		("Wirklich löschen? Nochmal drücken" if reset_armed else "Spielstand löschen") if SaveGame.has_save() else "Spielstand: keiner",
 		("Test: Alle Zonen frei (erledigt)" if SaveGame.unlocked_zones().size() == GameData.ZONE_ORDER.size() else "Test: Alle Zonen freischalten") if SaveGame.has_save() else "Test: erst Spiel starten",
+		"Intro ansehen",
 		"Spieltest-Log öffnen",
 		"Zurück",
 	]
@@ -74,13 +76,17 @@ func _process(delta: float) -> void:
 			dir = -1
 		elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("confirm"):
 			dir = 1
-		if Input.is_action_just_pressed("back") or (sel == 8 and Input.is_action_just_pressed("confirm")):
+		if Input.is_action_just_pressed("back") or (sel == 9 and Input.is_action_just_pressed("confirm")):
 			Sfx.play("back")
 			page = Page.MAIN
 			sel = 1
 			Settings.save_settings()
 			reset_armed = false
 		elif sel == 7 and Input.is_action_just_pressed("confirm"):
+			Sfx.play("confirm")
+			Settings.save_settings()
+			show_intro.emit()
+		elif sel == 8 and Input.is_action_just_pressed("confirm"):
 			# Ordner mit spieltest_log.csv öffnen (für Tester)
 			OS.shell_open(SaveGame.log_folder())
 			Sfx.play("confirm")

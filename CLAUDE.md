@@ -74,6 +74,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Zonenmusik (29.09.2026): `map_vulkan`/`battle_vulkan`, `map_sumpf`/`battle_sumpf`, 158 Tests
 - [x] Zonen-Ereignisse + Gegner-Blinzeln (29.09.2026): je 4 eigene Ereignisse für Vulkan und Sümpfe (16 insgesamt, 3 nur Wiesen), Element-Prägung aus Ereignissen, „Gegner geschwächt“, 167 Tests
 - [x] Toxmolch blinzelt, Ereignis-Bildschirm mit Zonenlandschaft + animierter Szene je Ereignis, Lagerfeuer am Rastplatz (29.09.2026)
+- [x] Opening-Szene (29.09.2026): 5 Bilder (Boot → Absturz → Flucht → Ei auf dem Desktop → Operator), eigene Intro-Musik, überspringbar, „Intro ansehen“ in den Optionen, 171 Tests – `vault/05 Produktion/Opening-Szene.md`
 - [ ] Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**

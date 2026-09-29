@@ -4,7 +4,7 @@ tags: [vision, lore]
 # Welt & Lore
 
 ## Prämisse
-Ein alter, vergessener Server namens **NEST** ist abgestürzt. Seine Bewohner, die **Glitchlings**, sind in die Geräte der Menschen geflohen. Eines Tages erscheint ein Ei auf deinem Homescreen.
+Ein alter, vergessener Server namens **NEST** ist abgestürzt. Seine Bewohner, die **Glitchlings**, sind in die Geräte der Menschen geflohen. Eines Tages erscheint ein Ei auf deinem Homescreen (Steam-Fassung: auf deinem **Desktop**, siehe [[Opening-Szene]]).
 
 Du wirst zum **Operator**: Du ziehst Glitchlings auf, trainierst sie und reparierst Stück für Stück den NEST, dessen Zonen von verwilderten, korrumpierten Glitchlings bevölkert sind.
 

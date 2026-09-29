@@ -6,6 +6,7 @@ extends Node
 
 const TitleScreen := preload("res://scripts/ui/title.gd")
 const StarterScreen := preload("res://scripts/ui/starter_view.gd")
+const OpeningScreen := preload("res://scripts/ui/opening_view.gd")
 const MapScreen := preload("res://scripts/ui/map_view.gd")
 const RoomScreen := preload("res://scripts/ui/room_view.gd")
 const ResultScreen := preload("res://scripts/ui/result_view.gd")
@@ -36,15 +37,25 @@ func _swap(node: Node) -> void:
 func show_title() -> void:
 	var t := TitleScreen.new()
 	t.start_run.connect(_from_title)
+	t.show_intro.connect(show_opening.bind(show_title))
 	_swap(t)
 
 
-## Erster Start: Starter wählen; sonst direkt in die Station
+## Erster Start: Opening-Szene, dann Starter wählen; sonst direkt in die Station
 func _from_title() -> void:
 	if SaveGame.has_save():
 		show_station()
 	else:
-		show_starters()
+		show_opening(func():
+			show_starters()
+			current.from_white = true
+		)
+
+
+func show_opening(then: Callable) -> void:
+	var o := OpeningScreen.new()
+	o.finished.connect(then)
+	_swap(o)
 
 
 func show_starters() -> void:
@@ -179,6 +190,9 @@ func _screenshot(shot: Dictionary) -> void:
 				current.page = TitleScreen.Page.OPTIONS
 		"starter":
 			show_starters()
+		"opening":
+			show_opening(show_title)
+			current.seek(shot.get("t", 0.0))
 		"station", "nest", "dex", "hatch", "lab", "fusion":
 			if mode == "hatch":
 				SaveGame.data.nest[0].runs_left = 0

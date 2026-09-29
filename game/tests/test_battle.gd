@@ -39,6 +39,7 @@ func _ready() -> void:
 	test_simulated_runs()
 	test_sounds()
 	await test_music()
+	await test_opening()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -1096,7 +1097,7 @@ func test_sounds() -> void:
 
 func test_music() -> void:
 	var ok := true
-	for key in ["title", "map", "battle", "boss", "victory", "map_vulkan", "battle_vulkan", "map_sumpf", "battle_sumpf"]:
+	for key in ["title", "map", "battle", "boss", "victory", "map_vulkan", "battle_vulkan", "map_sumpf", "battle_sumpf", "intro"]:
 		var path := "res://assets/music/%s.wav" % key
 		if not ResourceLoader.exists(path):
 			ok = false
@@ -1106,7 +1107,7 @@ func test_music() -> void:
 		var lb := MusicSynth.intro_frames(key) if st.stereo else 0
 		if st.get_length() < 8.0 or lb >= frames:
 			ok = false
-	check(ok, "Alle 9 Musikstücke vorhanden (inkl. Vulkan/Sumpf), Schleifenpunkte gültig")
+	check(ok, "Alle 10 Musikstücke vorhanden (inkl. Vulkan/Sumpf/Intro), Schleifenpunkte gültig")
 	check(Music.zone_key("map", "vulkan") == "map_vulkan" and Music.zone_key("battle", "sumpf") == "battle_sumpf" and Music.zone_key("map", "wiesen") == "map" and Music.zone_key("battle", "wiesen") == "battle", "Zonen 2 und 3 haben eigene Karten- und Kampfmusik, Wiesen behalten die alte")
 	# Blinzel-Frames: jede Form außer den bekannten Ausnahmen
 	var no_blink: Array = []
@@ -1148,3 +1149,36 @@ func test_music() -> void:
 	Music.stop()
 	var old: AudioStreamWAV = load("res://assets/music/battle.wav")
 	check(not old.stereo and old.mix_rate == 22050, "Kampfmusik ist die alte, epische Fassung (bleibt unverändert)")
+
+
+## Opening-Szene: läuft durch, lässt sich überspringen, Starterwahl danach
+func test_opening() -> void:
+	var Op: GDScript = load("res://scripts/ui/opening_view.gd")
+	var o = Op.new()
+	var total := 0.0
+	for p in o.PANELS:
+		total += p.dur
+	check(o.PANELS.size() == 5 and total >= 25.0 and total <= 45.0, "Opening: 5 Bilder, %.0f s lang" % total)
+	var ended := [false]
+	o.finished.connect(func(): ended[0] = true)
+	add_child(o)
+	o.seek(total - 0.5)
+	check(o.idx == o.PANELS.size() - 1, "Opening: seek springt ins letzte Bild")
+	for i in 40:
+		await get_tree().process_frame
+	await get_tree().create_timer(0.6).timeout
+	check(ended[0], "Opening endet von selbst und meldet sich fertig")
+	o.queue_free()
+	# Überspringen per Esc
+	var o2 = Op.new()
+	var ended2 := [false]
+	o2.finished.connect(func(): ended2[0] = true)
+	add_child(o2)
+	await get_tree().process_frame
+	Input.action_press("pause")
+	await get_tree().process_frame
+	Input.action_release("pause")
+	await get_tree().process_frame
+	check(ended2[0] and o2.idx == 0, "Opening lässt sich sofort überspringen")
+	o2.queue_free()
+	Music.stop()

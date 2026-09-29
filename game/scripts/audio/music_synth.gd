@@ -127,6 +127,30 @@ const TRACKS := {
 				"C#6 - - - E6 - - - A6 - - - . . . ."]},
 		],
 	},
+	# ---------- Opening ----------
+	"intro": {
+		"bpm": 80, "loud": 0.16, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings",
+		"sections": [
+			{"name": "A", "chords": ["Dm", "Bb", "F", "C", "Dm", "Bb", "Gm", "A"], "melody": [
+				"A4 - - - D5 - - - F5 - - - E5 - D5 -",
+				"D5 - - - - - - - Bb4 - - - C5 - D5 -",
+				"C5 - - - F5 - - - A5 - - - G5 - F5 -",
+				"E5 - - - - - - - C5 - - - . . . .",
+				"A4 - - - D5 - - - F5 - - - A5 - G5 -",
+				"F5 - - - D5 - - - Bb4 - - - D5 - F5 -",
+				"G5 - - - F5 - - - D5 - - - Bb4 - - -",
+				"C#5 - - - - - - - E5 - - - . . . ."]},
+			{"name": "B", "chords": ["Bb", "C", "F", "Dm", "Bb", "C", "F", "F"], "melody": [
+				"D5 - - - F5 - - - Bb5 - - - A5 - G5 -",
+				"E5 - - - G5 - - - C6 - - - Bb5 - A5 -",
+				"A5 - - - - - - - F5 - - - C5 - F5 -",
+				"D5 - - - - - - - . . . . A4 - D5 -",
+				"F5 - - - Bb5 - - - D6 - - - C6 - Bb5 -",
+				"A5 - - - G5 - - - E5 - - - G5 - - -",
+				"F5 - - - - - - - - - - - . . . .",
+				". . . . . . . . C5 - D5 - E5 - - -"]},
+		],
+	},
 	# ---------- Zone 2: Firewall-Vulkan ----------
 	"map_vulkan": {
 		"bpm": 108, "loud": 0.18, "lead": "brass", "bass": "half", "arp": "arp8", "stabs": "", "drums": "vulkan_map", "counter": "strings",
@@ -235,6 +259,7 @@ const DRUMS := {
 	"map": {"k": "x.......x.......", "s": "....x.......x...", "h": "..x...x...x...x.", "vol": 0.55},
 	"title": {"k": "x.......x.x.....", "s": "....x.......x...", "h": "x.x.x.x.x.x.x.x.", "vol": 0.7},
 	"boss": {"k": "x..x..x.x..x..x.", "s": "....x.......x...", "h": "xxxxxxxxxxxxxxxx", "t": "x.......x.......", "vol": 1.0},
+	"none": {"k": "................", "s": "................", "h": "................", "vol": 0.0},
 	# Vulkan: schwere Pauken · Sumpf: hüpfender Shuffle
 	"vulkan_map": {"k": "x.......x.......", "s": "............x...", "h": "..x...x...x...x.", "t": "x.....x...x.....", "vol": 0.6},
 	"vulkan": {"k": "x.x...x.x.x...x.", "s": "....x.......x...", "h": "x.xxx.xxx.xxx.xx", "t": "......x.......x.", "vol": 1.0},
