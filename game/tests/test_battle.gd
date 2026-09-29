@@ -32,6 +32,7 @@ func _ready() -> void:
 	test_elite_scaling()
 	test_simulated_runs()
 	test_sounds()
+	test_music()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -625,3 +626,20 @@ func test_sounds() -> void:
 	var empty: Array = sfx.streams.keys().filter(func(k): return sfx.streams[k].data.size() < 400)
 	check(empty.is_empty(), "Alle Sounds enthalten Daten")
 	sfx.free()
+
+
+func test_music() -> void:
+	var ok := true
+	for key in ["title", "map", "battle", "boss"]:
+		var path := "res://assets/music/%s.wav" % key
+		if not ResourceLoader.exists(path):
+			ok = false
+			continue
+		var st: AudioStreamWAV = load(path)
+		var frames := roundi(st.get_length() * st.mix_rate)
+		var lb := MusicSynth.intro_frames(key) if st.stereo else 0
+		if st.get_length() < 15.0 or lb >= frames:
+			ok = false
+	check(ok, "Alle 4 Musikstücke vorhanden, Schleifenpunkte gültig")
+	var old: AudioStreamWAV = load("res://assets/music/battle.wav")
+	check(not old.stereo and old.mix_rate == 22050, "Kampfmusik ist die alte, epische Fassung (bleibt unverändert)")

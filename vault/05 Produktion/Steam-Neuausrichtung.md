@@ -53,3 +53,10 @@ Siehe [[Tech Stack]]. Basisauflösung **640×360**, ganzzahlige Skalierung (1080
 - [ ] Markenrecherche „Glitchlings“ (DPMA/EUIPO, Steam-Suche)
 - [ ] Musik & Sound: Wer macht das? (Auftrag, Asset-Pakete, lizenzfreie Musik) – bis dahin 4 selbst synthetisierte Chiptune-Platzhalter (`game/scripts/audio/music_synth.gd`), jederzeit durch WAV/OGG gleichen Namens in `game/assets/music/` ersetzbar
 - [ ] Gewerbe anmelden, bevor die Steam-Seite live geht (Steamworks braucht Steuer-/Bankdaten)
+
+## Musik (Stand 29.09.2026)
+Feedback Produzent: Die erste Chiptune-Fassung klang zu sehr nach NES; gewünscht ist der Stil von **Pokémon Gen 3–6**. Die **Kampfmusik der ersten Fassung ist „episch“** und bleibt unverändert (`battle.wav`).
+Neuer Synthesizer (`game/scripts/audio/music_synth.gd`): Streicher-Flächen, Blech mit Filter-Anschlag, Glockenspiel, gezupfter Bass mit treibenden Achtel-Oktaven, Pauke, Schlagzeug mit Wirbeln und Becken, Gegenstimme im B-Teil, Stereo-Ping-Pong-Echo, 32 kHz Stereo. Aufbau Intro → A → B, Schleife nur über A+B.
+- Neu: Titel (Fanfare, C-Dur), Karte (beschwingt, G-Dur), Boss (d-Moll, Aufhellung nach D-Dur im B-Teil)
+- Zum Vergleich: `battle_neu.wav` (neue Kampf-Fassung, wird im Spiel nicht benutzt)
+- Eigene Melodien, nur der Stil ist angelehnt – keine Pokémon-Melodien übernehmen (Urheberrecht).

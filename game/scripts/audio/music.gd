@@ -34,8 +34,10 @@ func play(key: String) -> void:
 	active = 1 - active
 	var neu := players[active]
 	var stream: AudioStreamWAV = load(path)
+	# Schleife in Frames; neue Stereo-Stücke spielen das Intro nur einmal, danach A+B in Schleife
 	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
-	stream.loop_end = stream.data.size() / 2
+	stream.loop_end = roundi(stream.get_length() * stream.mix_rate)
+	stream.loop_begin = MusicSynth.intro_frames(key) if stream.stereo and MusicSynth.TRACKS.has(key) else 0
 	neu.stream = stream
 	neu.volume_db = -40.0
 	neu.play()
