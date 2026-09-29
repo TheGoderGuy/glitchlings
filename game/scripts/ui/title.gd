@@ -24,6 +24,7 @@ func _option_items() -> Array:
 		"Schwierigkeit: " + ["Entspannt", "Normal", "Knackig"][Settings.difficulty],
 		"Bildschirmwackeln: " + ("An" if Settings.screen_shake else "Aus"),
 		("Wirklich löschen? Nochmal drücken" if reset_armed else "Spielstand löschen") if SaveGame.has_save() else "Spielstand: keiner",
+		("Test: Alle Zonen frei (erledigt)" if SaveGame.unlocked_zones().size() == GameData.ZONE_ORDER.size() else "Test: Alle Zonen freischalten") if SaveGame.has_save() else "Test: erst Spiel starten",
 		"Zurück",
 	]
 
@@ -72,12 +73,19 @@ func _process(delta: float) -> void:
 			dir = -1
 		elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("confirm"):
 			dir = 1
-		if Input.is_action_just_pressed("back") or (sel == 6 and Input.is_action_just_pressed("confirm")):
+		if Input.is_action_just_pressed("back") or (sel == 7 and Input.is_action_just_pressed("confirm")):
 			Sfx.play("back")
 			page = Page.MAIN
 			sel = 1
 			Settings.save_settings()
 			reset_armed = false
+		elif sel == 6 and Input.is_action_just_pressed("confirm"):
+			# Testfunktion für den Produzenten: alle Zonen sofort spielbar
+			if SaveGame.has_save():
+				SaveGame.unlock_all_zones()
+				Sfx.play("confirm")
+			else:
+				Sfx.play("back")
 		elif sel == 5 and Input.is_action_just_pressed("confirm") and SaveGame.has_save():
 			# zweimal bestätigen, damit nichts aus Versehen verloren geht
 			if reset_armed:
@@ -132,7 +140,7 @@ func _draw() -> void:
 		_menu(_main_items(), sel, W / 2.0, 258, 180)
 	else:
 		_dim()
-		var r := Rect2(150, 84, 340, 222)
+		var r := Rect2(150, 76, 340, 244)
 		_box(r, GameData.COL.panel, GameData.COL.line)
 		_text(r.position + Vector2(0, 26), "Optionen", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		_menu(_option_items(), sel, r.get_center().x, r.position.y + 40, 280)

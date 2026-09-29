@@ -195,6 +195,14 @@ func unlocked_zones() -> Array:
 	return GameData.ZONE_ORDER.filter(func(z): return zone_unlocked(z))
 
 
+## Testfunktion: alle Zonen freischalten (Titel → Optionen)
+func unlock_all_zones() -> void:
+	for z in GameData.ZONE_ORDER:
+		if not data.cleared.has(z):
+			data.cleared.append(z)
+	save_game()
+
+
 func _newly_unlocked(cleared_zone: String) -> String:
 	for z in GameData.ZONE_ORDER:
 		if GameData.ZONES[z].unlock == cleared_zone:

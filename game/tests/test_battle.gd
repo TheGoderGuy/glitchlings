@@ -489,6 +489,9 @@ func test_zone2() -> void:
 	var run := RunState.from_monster(SaveGame.team()[0], 1)
 	var sum := SaveGame.record_run(run, true)
 	check(sum.get("unlocked", "") == "vulkan" and SaveGame.unlocked_zones() == ["wiesen", "vulkan"], "Boss der Cache-Wiesen besiegt: Firewall-Vulkan frei")
+	SaveGame.data.cleared = []
+	SaveGame.unlock_all_zones()
+	check(SaveGame.unlocked_zones() == GameData.ZONE_ORDER, "Testfunktion schaltet alle Zonen frei")
 	var r2 := RunState.from_monster(SaveGame.team()[0], 2, "vulkan")
 	check(r2.map.zone == "vulkan" and r2.map.zone_name == "Firewall-Vulkan", "Run im Firewall-Vulkan")
 	var boss := r2.foe_for({"type": "boss"})

@@ -3,7 +3,7 @@ tags: [produktion, zone, gegner, steam]
 ---
 # Zone 2: Firewall-Vulkan (29.09.2026)
 
-Wird frei, sobald der Pop-Up-Tyrann (Cache-Wiesen) besiegt ist. In der Station per links/rechts wählbar.
+Wird frei, sobald der Pop-Up-Tyrann (Cache-Wiesen) besiegt ist. **Zum Testen:** Titel → Optionen → „Test: Alle Zonen freischalten“ (vor dem Launch ausblenden). In der Station per links/rechts wählbar.
 Gegner 25 % zäher als in den Cache-Wiesen, viel Feuer → **Wasser-Monster haben einen Vorteil**.
 Daten: `GameData.ZONES`, Gegner-Indizes 7–10. Sprites per PixelLab (Stilreferenz Captchakäfer), 32 Farben, Namen geprüft.
 
