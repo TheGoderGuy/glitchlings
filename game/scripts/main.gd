@@ -215,8 +215,9 @@ func _screenshot(shot: Dictionary) -> void:
 			_enter_node()
 			current.simulate(shot.get("sim", 2.0))
 			if shot.has("lava"):
-				current.st.hazards.append({"c": 0, "r": 0, "t": 2.5, "tick": 0.3})
-				current.st.hazards.append({"c": 2, "r": 2, "t": 2.0, "tick": 0.3})
+				var hk: String = "slime" if run.map.zone == "sumpf" else "lava"
+				current.st.hazards.append({"c": 0, "r": 0, "t": 2.5, "tick": 0.3, "kind": hk})
+				current.st.hazards.append({"c": 2, "r": 2, "t": 2.0, "tick": 0.3, "kind": hk})
 				current.st.warns.append({"cells": [Vector2i(1, 0)], "t": 0.4, "max": 0.8, "dmg": 0, "lava": true})
 			if mode == "pick":
 				current.show_pick_for_screenshot()

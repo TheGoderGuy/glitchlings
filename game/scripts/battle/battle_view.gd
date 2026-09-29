@@ -359,6 +359,14 @@ func _draw_arena_overlays() -> void:
 	for hz in st.hazards:
 		var rect := cell_rect(hz.c, hz.r)
 		var fade := minf(1.0, hz.t / 0.5)
+		if hz.get("kind", "lava") == "slime":
+			draw_rect(rect, Color("#2E5A24", 0.85 * fade))
+			for k in 4:
+				var bx2 := rect.position.x + 8 + (k * 19) % int(rect.size.x - 16)
+				var by2 := rect.position.y + 10 + (k * 11) % int(rect.size.y - 18) + sin(anim_t * 3.0 + k) * 2.0
+				draw_circle(Vector2(bx2, by2), 3.0 + (k % 2), Color("#7BD35A", 0.7 * fade))
+			draw_rect(Rect2(rect.position, Vector2(rect.size.x, 2)), Color("#A8F07A", fade))
+			continue
 		draw_rect(rect, Color("#7A1F0E", 0.85 * fade))
 		for k in 5:
 			var bx := rect.position.x + 6 + fmod(k * 17.0 + anim_t * 9.0 * (1 + k % 2), rect.size.x - 12)
@@ -367,9 +375,10 @@ func _draw_arena_overlays() -> void:
 		draw_rect(Rect2(rect.position, Vector2(rect.size.x, 2)), Color("#FF8A4C", fade))
 	for w in st.warns:
 		if w.get("lava", false):
+			var wc := Color("#7BD35A") if w.get("kind", "lava") == "slime" else Color("#FF8A4C")
 			for cell in w.cells:
 				var rr := cell_rect(cell.x, cell.y)
-				draw_rect(rr.grow(-2), Color("#FF8A4C", 0.25 + 0.25 * sin(anim_t * 20.0)))
+				draw_rect(rr.grow(-2), Color(wc, 0.25 + 0.25 * sin(anim_t * 20.0)))
 	for q in st.parts:
 		if q.has("cell"):
 			draw_rect(cell_rect(q.c, q.r), Color(q.color, q.t / q.max * 0.8))
@@ -559,7 +568,7 @@ func _draw_hud() -> void:
 	var P := Rect2(8, 8, 200, 34)
 	_box(P, Color(GameData.COL.panel, 0.9), GameData.COL.line)
 	_text(P.position + Vector2(6, 12), run.form, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	_text(P.position + Vector2(6, 12), "%s · %s" % [GameData.STAGE_NAMES[run.stage], run.form_el()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
+	_text(P.position + Vector2(6, 12), _hud_sub(run.form, "%s · %s" % [GameData.STAGE_NAMES[run.stage], run.form_el()], GameData.STAGE_NAMES[run.stage], P.size.x - 12), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
 	_bar(Rect2(P.position + Vector2(6, 18), Vector2(128, 9)), float(run.hp) / run.max_hp, GameData.COL.mint)
 	_text(P.position + Vector2(6, 26), "%d/%d" % [run.hp, run.max_hp], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
 	var buffs: Array = []
@@ -605,6 +614,11 @@ func _draw_hud() -> void:
 	_text(Vector2(0, 20), "%s · Etage %d · %s" % [run.map.zone_name, run.floor_idx + 1, kind], 8, GameData.COL.sun if node_type != "fight" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if st.status != "" and st.t < 6.0:
 		_text(Vector2(0, 76), st.status, 8, Color(GameData.COL.sun, clampf(6.0 - st.t, 0.0, 1.0)), HORIZONTAL_ALIGNMENT_CENTER, W)
+
+
+## Untertitel im HUD kürzen, wenn er mit einem langen Namen kollidieren würde
+func _hud_sub(name: String, full: String, short: String, w: float) -> String:
+	return full if text_width(name, 8, true) + text_width(full) + 10 <= w else short
 
 
 func _draw_hand() -> void:

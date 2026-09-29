@@ -84,6 +84,8 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	if def.boss:
 		if def.get("minion", "pop") == "lava":
 			status = "Boss! Ab der Hälfte seiner HP setzt er Felder in Brand. Runter von der Lava!"
+		elif def.get("minion", "pop") == "mix":
+			status = "Boss! Sie verschleimt Felder und schickt Pop-ups. Und jeder Treffer heilt sie!"
 		else:
 			status = "Boss! Ab der Hälfte seiner HP tauchen Pop-ups auf. Tritt drauf, um sie zu schließen."
 	elif def.get("elite", false):
@@ -132,6 +134,9 @@ func move_player(dc: int, dr: int) -> void:
 	p.c = c
 	p.r = r
 	p.cd = mon.move * (0.5 if mon.passive == "Hasenhaken" else 1.0)
+	if on_slime(p.c, p.r) or on_slime(p.c - dc, p.r - dr):
+		p.cd *= 3.0
+		float_at(p.c, p.r, "Klebrig!", Color("#7BD35A"))
 	events.append("move")
 	for i in range(pops.size() - 1, -1, -1):
 		var q: Dictionary = pops[i]
@@ -467,40 +472,40 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 		_win()
 
 
-func hurt_player(d: int) -> void:
+func hurt_player(d: int) -> int:
 	if over:
-		return
+		return 0
 	if reflex > 0:
 		reflex -= 1
 		events.append("dodge")
 		float_at(p.c, p.r, "Katzenreflex!", GameData.COL.mint)
 		burst(p.c + 0.5, p.r + 0.5, Color("#C9B8FF"), 14)
-		return
+		return 0
 	if mon.passive == "Spuk" and rng.randf() < 0.2:
 		events.append("dodge")
 		float_at(p.c, p.r, "Spuk!", GameData.EL.Virus)
-		return
+		return 0
 	if decoy > 0 and decoy_t > 0:
 		decoy -= 1
 		events.append("block")
 		float_at(p.c, p.r, "Abbild fängt ab!", GameData.EL.Code)
 		burst(p.c + 0.3, p.r + 0.5, GameData.EL.Code, 10)
-		return
+		return 0
 	if mist > 0 and rng.randf() < 0.5:
 		events.append("dodge")
 		float_at(p.c, p.r, "Verfehlt!", GameData.EL.Wasser)
-		return
+		return 0
 	if heat > 0:
 		heat = 0.0
 		events.append("block")
 		e.burn = maxi(e.burn, 3)
 		float_at(p.c, p.r, "Hitzeschild!", GameData.EL.Feuer)
-		return
+		return 0
 	if shield > 0:
 		shield = 0.0
 		events.append("block")
 		float_at(p.c, p.r, "Geblockt", GameData.EL.Code)
-		return
+		return 0
 	if bubble > 0 and bubble_t > 0:
 		var a := mini(bubble, d)
 		bubble -= a
@@ -508,7 +513,7 @@ func hurt_player(d: int) -> void:
 		if bubble <= 0:
 			float_at(p.c, p.r, "Blase platzt", GameData.EL.Wasser)
 		if d <= 0:
-			return
+			return 0
 	if mon.passive == "Dickes Fell":
 		d = maxi(1, roundi(d * 0.75))
 	if mon.passive == "Giftbaut":
@@ -528,6 +533,7 @@ func hurt_player(d: int) -> void:
 	float_at(p.c, p.r, "-%d" % d, GameData.COL.coral)
 	if run.hp <= 0:
 		_lose()
+	return d
 
 
 func _win() -> void:
@@ -565,6 +571,10 @@ func burst(x: float, y: float, color: Color, n: int) -> void:
 		var a := randf() * TAU
 		var s := 1.2 + randf() * 2.5
 		parts.append({"x": x, "y": y, "vx": cos(a) * s, "vy": sin(a) * s, "color": color, "t": 0.45, "max": 0.45})
+
+
+func on_slime(c: int, r: int) -> bool:
+	return hazards.any(func(hz): return hz.c == c and hz.r == r and hz.get("kind", "lava") == "slime")
 
 
 func boss_phase() -> int:
@@ -725,7 +735,14 @@ func _update_logic(dt: float) -> void:
 			e.pop_t -= dt
 			if e.pop_t <= 0:
 				e.pop_t = 4.0
-				if def.get("minion", "pop") == "lava":
+				var minion: String = def.get("minion", "pop")
+				if minion == "mix":
+					minion = "slime" if rng.randf() < 0.5 else "pop"
+				if minion == "slime":
+					var sc: Array = [Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2)), Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2))]
+					events.append("warn")
+					warns.append({"cells": sc, "t": 0.9, "max": 0.9, "dmg": 0, "lava": true, "kind": "slime"})
+				elif minion == "lava":
 					var cells: Array = []
 					for k in 2:
 						cells.append(Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2)))
@@ -741,9 +758,10 @@ func _update_logic(dt: float) -> void:
 			warns.remove_at(i)
 			events.append("strike")
 			if w.get("lava", false):
+				var slime: bool = w.get("kind", "lava") == "slime"
 				for cell in w.cells:
-					hazards.append({"c": cell.x, "r": cell.y, "t": 3.0, "tick": 0.0})
-					fx_cell(cell.x, cell.y, GameData.EL.Feuer, 0.3)
+					hazards.append({"c": cell.x, "r": cell.y, "t": 4.0 if slime else 3.0, "tick": 0.0, "kind": "slime" if slime else "lava"})
+					fx_cell(cell.x, cell.y, Color("#7BD35A") if slime else GameData.EL.Feuer, 0.3)
 				events.append("hit")
 				continue
 			var hit := false
@@ -752,13 +770,19 @@ func _update_logic(dt: float) -> void:
 				if cell.x == p.c and cell.y == p.r:
 					hit = true
 			if hit:
-				hurt_player(w.dmg)
+				var dealt := hurt_player(w.dmg)
 				if over:
 					return
+				# Lebensraub (Spammücke, Spamkönigin)
+				if dealt > 0 and def.get("drain", false):
+					var heal_e := mini(roundi(dealt * 0.6), e.max - e.hp)
+					if heal_e > 0:
+						e.hp += heal_e
+						float_at(3 + e.c, e.r, "+%d" % heal_e, Color("#7BD35A"))
 	for i in range(hazards.size() - 1, -1, -1):
 		var hz: Dictionary = hazards[i]
 		hz.t -= dt
-		if hz.c == p.c and hz.r == p.r:
+		if hz.c == p.c and hz.r == p.r and hz.get("kind", "lava") == "lava":
 			hz.tick -= dt
 			if hz.tick <= 0:
 				hz.tick = 0.6
@@ -806,6 +830,8 @@ func _update_fx(dt: float) -> void:
 
 
 func _move_enemy() -> void:
+	if def.get("stationary", false):
+		return
 	if def.tele:
 		var c: int = e.c
 		var r: int = e.r
@@ -852,6 +878,16 @@ func _enemy_attack() -> void:
 			for c in [p.c, other]:
 				for r in 3:
 					cells.append(Vector2i(c, r))
+		"slime", "pop":
+			# Schleim: Feld des Spielers + Nachbar werden klebrig (langsamer) · Pop-up: sofort ein Fenster
+			if kind == "pop":
+				_spawn_pop()
+				return
+			cells.append(Vector2i(p.c, p.r))
+			var nb := Vector2i(clampi(p.c + (1 if rng.randf() < 0.5 else -1), 0, 2), p.r)
+			if nb != Vector2i(p.c, p.r):
+				cells.append(nb)
+			warn = 0.8
 		"lava":
 			# Feld des Spielers + ein weiteres wird zu Lava
 			cells.append(Vector2i(p.c, p.r))
@@ -874,7 +910,7 @@ func _enemy_attack() -> void:
 	if mon.passive == "Eulenblick":
 		warn += 0.3
 	events.append("warn")
-	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg, "lava": kind == "lava"})
+	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg, "lava": kind == "lava" or kind == "slime", "kind": "slime" if kind == "slime" else "lava"})
 
 
 func _spawn_pop() -> void:

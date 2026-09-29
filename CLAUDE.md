@@ -67,6 +67,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] B Kampf-Juice (29.09.2026): Vorschnellen, Mündungsblitz, Rückstoß, Ausholen/Zuschlagen, Staub, Niederlage-Animation
 - [x] C Champions (29.09.2026): 11 neue Champions per PixelLab (Rookie als Referenz), jeder Rookie hat jetzt eine Endstufe – 55 Formen
 - [x] Evolution überarbeitet (29.09.2026): Licht → **Elektro**, Heilpatch neutral, Pixmiez Elektro→Prismiez, nur Element-Chips zählen (Rookie 12, Champion 35), 2 Chips Vorsprung nötig, faire Startdecks, Richtungsanzeige überall – Details `vault/05 Produktion/Evolution im Run.md`
+- [x] Zone 3 Spam-Sümpfe (29.09.2026): Spammücke (Lebensraub), Bannerschnecke (Schleim verlangsamt), Popupblüte (stationär, Pop-ups), Boss Spamkönigin, 154 Tests – `vault/05 Produktion/Zone Spam-Sümpfe.md`
 - [ ] Ultras (96) · Blinzel-Frames neue Sprites · Zone-2-Musik/-Ereignisse · Zone 3 · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**

@@ -28,6 +28,7 @@ func _ready() -> void:
 	test_meta()
 	test_fusion()
 	test_zone2()
+	test_zone3()
 	test_tutorial()
 	test_all_specials()
 	test_passives()
@@ -354,7 +355,7 @@ func test_new_foes() -> void:
 	for f in GameData.FOES:
 		if not ResourceLoader.exists("res://assets/sprites/%s.png" % PixelCanvas.SPRITE_FILES[f.spr]):
 			sprites_ok = false
-	check(sprites_ok and GameData.FOES.size() == 11, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
+	check(sprites_ok and GameData.FOES.size() == 15, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
 	# Jeder Gegner lässt sich mit dem Autopilot besiegen
 	var all_end := true
 	for i in GameData.FOES.size():
@@ -573,6 +574,83 @@ func test_zone2() -> void:
 				run3.heal(10)
 	check(stuck == 0, "Vulkan-Runs: kein Kampf hängt")
 	print("  info    Vulkan-Autopilot: %d/12 Runs gewonnen" % wins)
+
+
+func test_zone3() -> void:
+	# Freischaltung nach dem Vulkan
+	var real_data := SaveGame.data.duplicate(true)
+	SaveGame.persist = false
+	SaveGame.new_game("Lumi")
+	SaveGame.data.cleared = ["wiesen"]
+	check(not SaveGame.zone_unlocked("sumpf"), "Spam-Sümpfe erst nach dem Vulkan")
+	var rv := RunState.from_monster(SaveGame.team()[0], 1, "vulkan")
+	var sum := SaveGame.record_run(rv, true)
+	check(sum.get("unlocked", "") == "sumpf" and SaveGame.zone_unlocked("sumpf"), "Vulkan-Boss besiegt: Spam-Sümpfe frei")
+	var rs := RunState.from_monster(SaveGame.team()[0], 2, "sumpf")
+	check(rs.foe_for({"type": "boss"}).name == "Spamkönigin", "Boss der Sümpfe: Spamkönigin")
+	SaveGame.data = real_data
+	SaveGame.persist = true
+	# Schleim macht langsam, schadet aber nicht
+	var st := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[12])
+	st.reflex = 0
+	st.e.frozen = 99.0
+	st.hazards.append({"c": st.p.c, "r": st.p.r, "t": 4.0, "tick": 0.0, "kind": "slime"})
+	var hp0: int = st.run.hp
+	step(st, 1.0)
+	check(st.run.hp == hp0, "Schleim macht keinen Schaden")
+	st.move_player(0, -1 if st.p.r > 0 else 1)
+	check(st.p.cd > st.mon.move * 2.5, "Schleim: Bewegung dreimal so langsam (%.2f s)" % st.p.cd)
+	# Lebensraub
+	var st2 := BattleState.new(RunState.new("Pixmiez", 2), GameData.FOES[11])
+	st2.reflex = 0
+	st2.e.hp = 30
+	st2.e.move_t = 99.0
+	st2.e.atk_t = 0.01
+	step(st2, 0.05)
+	step(st2, 0.8)
+	check(st2.run.hp < 100 and st2.e.hp > 30, "Spammücke heilt sich bei Treffern (HP %d)" % st2.e.hp)
+	# Popupblüte bewegt sich nicht und schickt Pop-ups
+	var st3 := BattleState.new(RunState.new("Pixmiez", 3), GameData.FOES[13])
+	var pos := Vector2i(st3.e.c, st3.e.r)
+	var got_pop := false
+	for i in 400:
+		st3.update(1.0 / 60.0)
+		if not st3.pops.is_empty():
+			got_pop = true
+		if st3.over:
+			break
+	check(Vector2i(st3.e.c, st3.e.r) == pos and got_pop, "Popupblüte bleibt stehen und schickt Pop-ups")
+	# Komplette Sumpf-Runs laufen durch
+	var stuck := 0
+	var wins := 0
+	for sv in 9:
+		seed(sv)
+		var run3 := RunState.new(["Lumi", "Pixmiez", "Brummbit"][sv % 3], sv)
+		run3.map = ZoneMap.generate(run3.rng, "sumpf")
+		var bot := BattleBot.new(0.25)
+		while true:
+			var ch := run3.next_choices()
+			if ch.is_empty():
+				break
+			var node := run3.enter(ch[0])
+			if node.type in ["fight", "elite", "boss"]:
+				var s := BattleState.new(run3, run3.foe_for(node))
+				var t := 0.0
+				while not s.over and t < 180.0:
+					bot.act(s)
+					s.update(1.0 / 30.0)
+					t += 1.0 / 30.0
+				if not s.over:
+					stuck += 1
+					break
+				if s.outcome == "lost":
+					break
+				if node.type == "boss":
+					wins += 1
+					break
+				run3.heal(10)
+	check(stuck == 0, "Sumpf-Runs: kein Kampf hängt")
+	print("  info    Sumpf-Autopilot: %d/9 Runs gewonnen" % wins)
 
 
 func test_tutorial() -> void:

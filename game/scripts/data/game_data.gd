@@ -60,6 +60,11 @@ const FOES := [
 	{"name": "Brandmauerassel", "el": "Code", "hp": 130, "move": 2.0, "atk": 3.0, "dmg": 15, "pat": ["col2"], "spr": "assel", "loot": 13, "boss": false, "tele": false},
 	{"name": "Aschefalter", "el": "Feuer", "hp": 75, "move": 1.1, "atk": 2.4, "dmg": 10, "pat": ["lava", "cell"], "spr": "falter", "loot": 12, "boss": false, "tele": true},
 	{"name": "Glutkernskarabäus", "el": "Feuer", "hp": 420, "move": 1.8, "atk": 2.1, "dmg": 17, "pat": ["row", "lava", "col"], "spr": "skarab", "loot": 40, "boss": true, "tele": false, "minion": "lava"},
+	# --- Spam-Sümpfe (Index 11–14) ---
+	{"name": "Spammücke", "el": "Virus", "hp": 65, "move": 0.8, "atk": 1.8, "dmg": 10, "pat": ["cell", "row"], "spr": "muecke", "loot": 13, "boss": false, "tele": false, "drain": true},
+	{"name": "Bannerschnecke", "el": "Code", "hp": 140, "move": 2.6, "atk": 2.8, "dmg": 14, "pat": ["slime", "row"], "spr": "schnecke", "loot": 14, "boss": false, "tele": false},
+	{"name": "Popupblüte", "el": "Virus", "hp": 110, "move": 99.0, "atk": 2.2, "dmg": 13, "pat": ["cross", "pop", "cross"], "spr": "bluete", "loot": 14, "boss": false, "tele": false, "stationary": true},
+	{"name": "Spamkönigin", "el": "Virus", "hp": 520, "move": 1.9, "atk": 2.0, "dmg": 18, "pat": ["row", "slime", "col", "pop"], "spr": "koenigin", "loot": 50, "boss": true, "tele": false, "minion": "mix", "drain": true},
 ]
 
 ## Zonen: Gegner-Pools (Indizes in FOES), Boss, Zähigkeit, Hintergrund. Zone 2 wird nach dem Boss von Zone 1 frei.
@@ -70,8 +75,11 @@ const ZONES := {
 	"vulkan": {"name": "Firewall-Vulkan", "bg": "vulkan", "boss": 10, "hp_mult": 1.25,
 		"early": [7, 9, 5], "late": [7, 8, 9, 4, 6], "elite": [8, 6, 4],
 		"desc": "Glühende Sicherheitsmauern. Wasser hat hier einen Vorteil.", "unlock": "wiesen"},
+	"sumpf": {"name": "Spam-Sümpfe", "bg": "sumpf", "boss": 14, "hp_mult": 1.5,
+		"early": [11, 12, 13], "late": [11, 12, 13, 8, 2, 6], "elite": [12, 13, 8],
+		"desc": "Blubbernde Sümpfe voller Pop-ups. Elektro hat hier einen Vorteil.", "unlock": "vulkan"},
 }
-const ZONE_ORDER := ["wiesen", "vulkan"]
+const ZONE_ORDER := ["wiesen", "vulkan", "sumpf"]
 
 ## Gegner-Pools der Cache-Wiesen (Indizes in FOES); allgemein siehe ZONES
 const POOL_EARLY := [0, 1, 5]
