@@ -8,6 +8,10 @@ var seen_events := {}
 
 
 func _ready() -> void:
+	# Schutz: Tests schreiben NIE in den echten Spielstand oder das echte Spieltest-Log,
+	# auch wenn einzelne Tests persist einschalten (29.09.2026: ein Test hatte den echten Stand verändert)
+	SaveGame.path = "user://test_savegame.json"
+	SaveGame.log_path = "user://test_spieltest_log.csv"
 	test_scripts_compile()
 	test_data()
 	test_hand()
@@ -45,6 +49,7 @@ func _ready() -> void:
 	test_modules()
 	test_combo_chips()
 	test_chip_texts()
+	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
 

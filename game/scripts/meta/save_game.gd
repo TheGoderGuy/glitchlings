@@ -197,6 +197,7 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 # ---------- Spieltest-Log ----------
 
 const LOG_PATH := "user://spieltest_log.csv"
+var log_path := LOG_PATH   # Tests leiten das Log auf eine eigene Datei um
 const LOG_HEADER := "zeit;version;monster;form;zone;ergebnis;etage;kaempfe_gewonnen;chips;dauer_s;schwierigkeit;letzter_gegner"
 
 
@@ -204,8 +205,8 @@ const LOG_HEADER := "zeit;version;monster;form;zone;ergebnis;etage;kaempfe_gewon
 func _log_run(run: RunState, won: bool) -> void:
 	if not persist:
 		return
-	var is_new := not FileAccess.file_exists(LOG_PATH)
-	var f := FileAccess.open(LOG_PATH, FileAccess.READ_WRITE if not is_new else FileAccess.WRITE)
+	var is_new := not FileAccess.file_exists(log_path)
+	var f := FileAccess.open(log_path, FileAccess.READ_WRITE if not is_new else FileAccess.WRITE)
 	if f == null:
 		return
 	if is_new:
@@ -244,6 +245,13 @@ func unlock_all_zones() -> void:
 	for z in GameData.ZONE_ORDER:
 		if not data.cleared.has(z):
 			data.cleared.append(z)
+	save_game()
+
+
+## Testfunktion für den Produzenten: alle Formen im Monsterdex sichtbar (mit Namen)
+func unlock_full_dex() -> void:
+	for f in GameData.FORMS:
+		data.dex[f] = true
 	save_game()
 
 
