@@ -201,7 +201,7 @@ const TRACKS := {
 				"G6 - - - - - - - B5 - D6 - F6 - - -"]},
 		],
 	},
-	# ---------- Zone 3: Spam-Sümpfe ----------
+	# ---------- Zone 3: Viren-Sümpfe ----------
 	"map_sumpf": {
 		"bpm": 96, "loud": 0.17, "lead": "lead_soft", "bass": "bounce", "arp": "offbeat", "stabs": "", "drums": "sumpf_map", "counter": "strings",
 		"sections": [

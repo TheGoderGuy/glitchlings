@@ -49,7 +49,7 @@ Monster-Sammelspiel für **Steam** (Premium, Godot) mit Roguelite-Kämpfen, Evol
 ### Datenbank
 - [[Monster-Übersicht]]
 - [[Chip-Übersicht]]
-- Gegner: [[Bugsy]], [[Glitchmotte]], [[Spamlet (wild)]], [[Pop-Up-Tyrann]]
+- Gegner: [[Bugsy]], [[Glitchmotte]], [[Bytewurm]], [[Kernelmantis]]
 
 ### Archiv
 - [[Alternativkonzepte]] – Die ursprünglichen drei Pitches

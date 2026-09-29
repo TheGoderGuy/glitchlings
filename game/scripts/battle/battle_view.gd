@@ -530,15 +530,7 @@ func _draw_effects() -> void:
 			draw_rect(Rect2(pos - Vector2(12, 2), Vector2(24, 5)), col)
 			draw_rect(Rect2(pos + Vector2(0, -1), Vector2(9, 2)), Color.WHITE)
 	for q in st.pops:
-		var rect := cell_rect(q.c, q.r)
-		var bob := roundi(sin(anim_t * 6.0 + q.c) * 2)
-		var r := Rect2(rect.position.x + 8, rect.position.y - 14 + bob, rect.size.x - 16, 30)
-		draw_rect(r.grow(1), GameData.COL.dark)
-		draw_rect(r, Color.WHITE)
-		draw_rect(Rect2(r.position, Vector2(r.size.x, 7)), Color("#9B4DFF"))
-		draw_rect(Rect2(r.end.x - 7, r.position.y, 7, 7), Color("#FF5470"))
-		_text(Vector2(r.position.x, r.position.y + 20), "GRATIS!", 8, GameData.COL.dark, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, false)
-		draw_rect(Rect2(r.position.x + 2, r.end.y - 4, (r.size.x - 4) * q.t / q.max, 2), Color("#FF5470"))
+		_draw_minion(q)
 	for q in st.parts:
 		if q.has("cell"):
 			continue
@@ -802,6 +794,51 @@ func show_pick_for_screenshot() -> void:
 	st.over = true
 	st.outcome = "won"
 	_fight_over()
+
+
+## Boss-Diener auf dem Spielerfeld: Bitmilbe (Krabbel-Bot) oder Glitch-Spore; beide platzen, wenn die Zeit abläuft
+func _draw_minion(q: Dictionary) -> void:
+	var rect := cell_rect(q.c, q.r)
+	var k: float = 1.0 - q.t / q.max          # 0 = frisch, 1 = platzt gleich
+	var fast := fmod(anim_t, 0.5 - 0.35 * k) < 0.12
+	var cx := roundf(rect.get_center().x)
+	var fy := roundf(rect.position.y + FEET - 6)
+	if q.get("kind", "milbe") == "spore":
+		# pulsierende Spore, die anschwillt
+		var rad := roundf(6.0 + 4.0 * k + sin(anim_t * 8.0) * 1.0)
+		var c := Vector2(cx, fy - rad)
+		draw_circle(c, rad + 1.0, GameData.COL.dark)
+		draw_circle(c, rad, Color("#5E2A86"))
+		draw_circle(c + Vector2(-1, -1), rad - 2.0, Color("#7BD35A") if not fast else Color("#D8FF6A"))
+		draw_rect(Rect2(c.x - rad * 0.5, c.y - rad * 0.6, 2, 2), Color(1, 1, 1, 0.8))
+		for i in 3:
+			var a := anim_t * 2.0 + i * TAU / 3.0
+			var pp := c + Vector2(cos(a), sin(a)) * (rad + 4.0)
+			draw_rect(Rect2(roundi(pp.x), roundi(pp.y), 1, 1), Color("#D8FF6A", 0.8))
+	else:
+		# Bitmilbe: Krabbel-Bot mit blinkendem roten Auge, glüht kurz vor dem Platzen
+		var bob := roundi(sin(anim_t * 12.0 + q.c) * 1.0)
+		var body := Rect2(cx - 11, fy - 13 + bob, 22, 11)
+		for i in 3:
+			var lx := cx - 8 + i * 8
+			var step := 1 if fmod(anim_t * 10.0 + i, 2.0) < 1.0 else -1
+			draw_line(Vector2(lx, fy - 3 + bob), Vector2(lx - 4 + step, fy + 2), GameData.COL.dark, 2.0)
+			draw_line(Vector2(lx, fy - 3 + bob), Vector2(lx + 4 - step, fy + 2), GameData.COL.dark, 2.0)
+		if k > 0.6:
+			draw_rect(body.grow(3), Color("#FF5470", 0.25 + 0.25 * sin(anim_t * 30.0)))
+		draw_rect(body.grow(1), GameData.COL.dark)
+		draw_rect(body, Color("#8A84A0"))
+		draw_rect(Rect2(body.position, Vector2(body.size.x, 3)), Color("#B8B0C8"))
+		draw_rect(Rect2(body.position.x + 3, body.end.y - 3, body.size.x - 6, 1), Color("#FF5470"))
+		var head := Rect2(cx - 17, fy - 12 + bob, 7, 7)
+		draw_rect(head.grow(1), GameData.COL.dark)
+		draw_rect(head, Color("#8A84A0"))
+		draw_rect(Rect2(head.position.x + 1, head.position.y + 2, 3, 3), Color("#FF5470") if fast else Color("#B02A50"))
+		draw_rect(Rect2(cx + 2, fy - 18 + bob, 1, 5), GameData.COL.dark)
+		draw_rect(Rect2(cx + 1, fy - 19 + bob, 3, 2), Color("#FF5470") if fast else Color("#B8B0C8"))
+	# Zündschnur
+	draw_rect(Rect2(cx - 12, fy + 4, 24, 2), GameData.COL.dark)
+	draw_rect(Rect2(cx - 12, fy + 4, 24.0 * q.t / q.max, 2), Color("#FF5470"))
 
 
 func show_evolve_for_screenshot(t: float) -> void:

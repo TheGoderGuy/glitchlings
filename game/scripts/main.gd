@@ -230,6 +230,10 @@ func _screenshot(shot: Dictionary) -> void:
 				run.current_node().type = "fight"
 			_enter_node()
 			current.simulate(shot.get("sim", 2.0))
+			if shot.has("pops"):
+				var pk: String = "spore" if run.map.zone == "sumpf" else "milbe"
+				current.st.pops.append({"c": 0, "r": 0, "t": 2.5, "max": 3.0, "kind": pk})
+				current.st.pops.append({"c": 2, "r": 1, "t": 0.8, "max": 3.0, "kind": pk})
 			if shot.has("lava"):
 				var hk: String = "slime" if run.map.zone == "sumpf" else "lava"
 				current.st.hazards.append({"c": 0, "r": 0, "t": 2.5, "tick": 0.3, "kind": hk})

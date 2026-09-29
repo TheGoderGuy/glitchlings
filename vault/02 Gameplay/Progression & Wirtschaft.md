@@ -115,7 +115,7 @@ Ein regelmäßiger Spieler schließt den Pass um **Tag 36–38** ab. Die letzten
 |---|---|
 | Cache-Wiesen | 80 % |
 | Firewall-Vulkan | 65 % |
-| Spam-Sümpfe | 55 % |
+| Viren-Sümpfe | 55 % |
 | Deep Web | 40–50 % |
 
 ## Schutzmechanismen

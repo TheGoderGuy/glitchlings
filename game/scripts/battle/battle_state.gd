@@ -89,9 +89,9 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 		if def.get("minion", "pop") == "lava":
 			status = "Boss! Ab der Hälfte seiner HP setzt er Felder in Brand. Runter von der Lava!"
 		elif def.get("minion", "pop") == "mix":
-			status = "Boss! Sie verschleimt Felder und schickt Pop-ups. Und jeder Treffer heilt sie!"
+			status = "Boss! Sie verschleimt Felder und streut Glitch-Sporen. Und jeder Treffer heilt sie!"
 		else:
-			status = "Boss! Ab der Hälfte seiner HP tauchen Pop-ups auf. Tritt drauf, um sie zu schließen."
+			status = "Boss! Ab der Hälfte seiner HP schickt er Bitmilben. Tritt drauf, bevor sie platzen!"
 	elif def.get("elite", false):
 		status = "Elite-Gegner: mehr HP, trifft härter."
 	elif run.fights_won == 0:
@@ -148,7 +148,7 @@ func move_player(dc: int, dr: int) -> void:
 			pops.remove_at(i)
 			events.append("pop_close")
 			burst(c + 0.5, r + 0.5, GameData.COL.mint, 10)
-			float_at(c, r, "Zu!", GameData.COL.mint)
+			float_at(c, r, "Zertreten!", GameData.COL.mint)
 
 
 func use_slot(i: int) -> void:
@@ -777,7 +777,7 @@ func _update_logic(dt: float) -> void:
 				var dealt := hurt_player(w.dmg)
 				if over:
 					return
-				# Lebensraub (Spammücke, Spamkönigin)
+				# Lebensraub (Saugmücke, Schwarmkönigin)
 				if dealt > 0 and def.get("drain", false):
 					var heal_e := mini(roundi(dealt * 0.6), e.max - e.hp)
 					if heal_e > 0:
@@ -883,7 +883,7 @@ func _enemy_attack() -> void:
 				for r in 3:
 					cells.append(Vector2i(c, r))
 		"slime", "pop":
-			# Schleim: Feld des Spielers + Nachbar werden klebrig (langsamer) · Pop-up: sofort ein Fenster
+			# Schleim: Feld des Spielers + Nachbar werden klebrig (langsamer) · Sporen: sofort eine Glitch-Spore
 			if kind == "pop":
 				_spawn_pop()
 				return
@@ -930,4 +930,5 @@ func _spawn_pop() -> void:
 		return
 	var cell: Vector2i = free[rng.randi_range(0, free.size() - 1)]
 	events.append("pop")
-	pops.append({"c": cell.x, "r": cell.y, "t": 3.0, "max": 3.0})
+	# Aussehen: Glitch-Spore im Sumpf, sonst Bitmilbe (kleiner Krabbel-Bot)
+	pops.append({"c": cell.x, "r": cell.y, "t": 3.0, "max": 3.0, "kind": "spore" if run.map.zone == "sumpf" else "milbe"})

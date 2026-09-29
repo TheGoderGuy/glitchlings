@@ -49,22 +49,22 @@ const CHIPS := {
 const FOES := [
 	{"name": "Bugsy", "el": "Virus", "hp": 70, "move": 1.4, "atk": 2.4, "dmg": 10, "pat": ["row"], "spr": "bug", "loot": 10, "boss": false, "tele": false},
 	{"name": "Glitchmotte", "el": "Elektro", "hp": 60, "move": 1.0, "atk": 2.0, "dmg": 14, "pat": ["cell"], "spr": "moth", "loot": 10, "boss": false, "tele": true},
-	{"name": "Spamlet", "el": "Virus", "hp": 90, "move": 1.6, "atk": 2.6, "dmg": 12, "pat": ["row", "col"], "spr": "spam", "loot": 10, "boss": false, "tele": false},
-	{"name": "Pop-Up-Tyrann", "el": "Virus", "hp": 320, "move": 1.8, "atk": 2.2, "dmg": 16, "pat": ["row"], "spr": "boss", "loot": 30, "boss": true, "tele": false},
+	{"name": "Bytewurm", "el": "Virus", "hp": 90, "move": 1.6, "atk": 2.6, "dmg": 12, "pat": ["row", "col"], "spr": "wurm", "loot": 10, "boss": false, "tele": false},
+	{"name": "Kernelmantis", "el": "Virus", "hp": 320, "move": 1.8, "atk": 2.2, "dmg": 16, "pat": ["row"], "spr": "mantis", "loot": 30, "boss": true, "tele": false},
 	# --- Cache-Wiesen-Erweiterung 28.09.2026 (Index 4–6) ---
-	{"name": "Captchakäfer", "el": "Code", "hp": 80, "move": 1.5, "atk": 2.5, "dmg": 12, "pat": ["cross"], "spr": "captcha", "loot": 10, "boss": false, "tele": false},
-	{"name": "Spamwespe", "el": "Virus", "hp": 50, "move": 0.8, "atk": 1.7, "dmg": 8, "pat": ["cell", "row", "cell"], "spr": "wespe", "loot": 10, "boss": false, "tele": false},
-	{"name": "Ladebalkenraupe", "el": "Feuer", "hp": 115, "move": 2.2, "atk": 3.2, "dmg": 16, "pat": ["wall"], "spr": "raupe", "loot": 12, "boss": false, "tele": false},
+	{"name": "Chiffrekäfer", "el": "Code", "hp": 80, "move": 1.5, "atk": 2.5, "dmg": 12, "pat": ["cross"], "spr": "kaefer", "loot": 10, "boss": false, "tele": false},
+	{"name": "Datenwespe", "el": "Virus", "hp": 50, "move": 0.8, "atk": 1.7, "dmg": 8, "pat": ["cell", "row", "cell"], "spr": "wespe", "loot": 10, "boss": false, "tele": false},
+	{"name": "Glutraupe", "el": "Feuer", "hp": 115, "move": 2.2, "atk": 3.2, "dmg": 16, "pat": ["wall"], "spr": "raupe", "loot": 12, "boss": false, "tele": false},
 	# --- Firewall-Vulkan (Index 7–10) ---
 	{"name": "Glutmilbe", "el": "Feuer", "hp": 60, "move": 0.7, "atk": 1.6, "dmg": 9, "pat": ["cell", "cell", "row"], "spr": "milbe", "loot": 11, "boss": false, "tele": false},
 	{"name": "Brandmauerassel", "el": "Code", "hp": 130, "move": 2.0, "atk": 3.0, "dmg": 15, "pat": ["col2"], "spr": "assel", "loot": 13, "boss": false, "tele": false},
 	{"name": "Aschefalter", "el": "Feuer", "hp": 75, "move": 1.1, "atk": 2.4, "dmg": 10, "pat": ["lava", "cell"], "spr": "falter", "loot": 12, "boss": false, "tele": true},
 	{"name": "Glutkernskarabäus", "el": "Feuer", "hp": 420, "move": 1.8, "atk": 2.1, "dmg": 17, "pat": ["row", "lava", "col"], "spr": "skarab", "loot": 40, "boss": true, "tele": false, "minion": "lava"},
-	# --- Spam-Sümpfe (Index 11–14) ---
-	{"name": "Spammücke", "el": "Virus", "hp": 65, "move": 0.8, "atk": 1.8, "dmg": 10, "pat": ["cell", "row"], "spr": "muecke", "loot": 13, "boss": false, "tele": false, "drain": true},
-	{"name": "Bannerschnecke", "el": "Code", "hp": 140, "move": 2.6, "atk": 2.8, "dmg": 14, "pat": ["slime", "row"], "spr": "schnecke", "loot": 14, "boss": false, "tele": false},
-	{"name": "Popupblüte", "el": "Virus", "hp": 110, "move": 99.0, "atk": 2.2, "dmg": 13, "pat": ["cross", "pop", "cross"], "spr": "bluete", "loot": 14, "boss": false, "tele": false, "stationary": true},
-	{"name": "Spamkönigin", "el": "Virus", "hp": 520, "move": 1.9, "atk": 2.0, "dmg": 18, "pat": ["row", "slime", "col", "pop"], "spr": "koenigin", "loot": 50, "boss": true, "tele": false, "minion": "mix", "drain": true},
+	# --- Viren-Sümpfe (Index 11–14) ---
+	{"name": "Saugmücke", "el": "Virus", "hp": 65, "move": 0.8, "atk": 1.8, "dmg": 10, "pat": ["cell", "row"], "spr": "muecke", "loot": 13, "boss": false, "tele": false, "drain": true},
+	{"name": "Panzerschnecke", "el": "Code", "hp": 140, "move": 2.6, "atk": 2.8, "dmg": 14, "pat": ["slime", "row"], "spr": "schnecke", "loot": 14, "boss": false, "tele": false},
+	{"name": "Glitchblüte", "el": "Virus", "hp": 110, "move": 99.0, "atk": 2.2, "dmg": 13, "pat": ["cross", "pop", "cross"], "spr": "bluete", "loot": 14, "boss": false, "tele": false, "stationary": true},
+	{"name": "Schwarmkönigin", "el": "Virus", "hp": 520, "move": 1.9, "atk": 2.0, "dmg": 18, "pat": ["row", "slime", "col", "pop"], "spr": "koenigin", "loot": 50, "boss": true, "tele": false, "minion": "mix", "drain": true},
 ]
 
 ## Zonen: Gegner-Pools (Indizes in FOES), Boss, Zähigkeit, Hintergrund. Zone 2 wird nach dem Boss von Zone 1 frei.
@@ -75,9 +75,9 @@ const ZONES := {
 	"vulkan": {"name": "Firewall-Vulkan", "bg": "vulkan", "boss": 10, "hp_mult": 1.25,
 		"early": [7, 9, 5], "late": [7, 8, 9, 4, 6], "elite": [8, 6, 4],
 		"desc": "Glühende Sicherheitsmauern. Wasser hat hier einen Vorteil.", "unlock": "wiesen"},
-	"sumpf": {"name": "Spam-Sümpfe", "bg": "sumpf", "boss": 14, "hp_mult": 1.5,
+	"sumpf": {"name": "Viren-Sümpfe", "bg": "sumpf", "boss": 14, "hp_mult": 1.5,
 		"early": [11, 12, 13], "late": [11, 12, 13, 8, 2, 6], "elite": [12, 13, 8],
-		"desc": "Blubbernde Sümpfe voller Pop-ups. Elektro hat hier einen Vorteil.", "unlock": "vulkan"},
+		"desc": "Blubbernde Sümpfe voller Viren und Glitch-Sporen. Elektro hat hier einen Vorteil.", "unlock": "vulkan"},
 }
 const ZONE_ORDER := ["wiesen", "vulkan", "sumpf"]
 
@@ -299,7 +299,7 @@ const SPECIALS := {
 	"Pufferling": {"name": "Aufblähen", "el": "Wasser", "anim": "self", "hits": [15], "bubble": 60, "bubble_t": 6.0, "desc": "Schutzblase (60 Schaden, 6 s) und 15 Schaden."},
 	"Panzerpuff": {"name": "Panzerblase", "el": "Code", "anim": "field", "hits": [25], "bubble": 90, "bubble_t": 8.0, "desc": "Riesige Schutzblase (90, 8 s), 25 Schaden aufs ganze Feld."},
 	"Frostbyte": {"name": "Frostwelle", "el": "Wasser", "anim": "row", "hits": [30], "stun": 2.5, "desc": "Eiswelle: 30 Schaden, friert 2,5 s ein."},
-	"Kekso": {"name": "Backentasche", "el": "Neutral", "anim": "self", "hits": [], "replay": true, "desc": "Spuckt den zuletzt gespielten Chip gratis noch einmal aus (sonst 30 Schaden)."},
+	"Kekso": {"name": "Backentasche", "el": "Neutral", "anim": "self", "hits": [], "replay": true, "desc": "Spuckt den zuletzt gespielten Chip kostenlos noch einmal aus (sonst 30 Schaden)."},
 	"Tracko": {"name": "Keksfalle", "el": "Virus", "anim": "self", "hits": [], "replay": true, "mines": 2, "desc": "Backentasche und zwei Virus-Minen um den Gegner."},
 	"Cachy": {"name": "Leuchtkeks", "el": "Elektro", "anim": "self", "hits": [], "replay": true, "heal": 30, "desc": "Backentasche und heilt 30 HP."},
 	"Lumi": {"name": "Cursorblitz", "el": "Elektro", "anim": "field", "hits": [35], "desc": "Blitz, der immer trifft: 35 Schaden."},

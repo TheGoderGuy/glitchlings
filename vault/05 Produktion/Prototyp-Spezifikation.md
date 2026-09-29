@@ -14,7 +14,7 @@ Ein spielbarer Browser-Prototyp dieser Spezifikation liegt als Artifact vor (Lin
 | Spielbare Monster | 3: [[Pixmiez]], [[Funkling]], [[Tröpfel]] |
 | Chips | 15 → [[Chip-Übersicht]] |
 | Gegner | 3 → [[Bugsy]], [[Glitchmotte]], [[Spamlet (wild)]] |
-| Boss | 1 → [[Pop-Up-Tyrann]] |
+| Boss | 1 → [[Kernelmantis]] |
 | Run | 3 Kämpfe + Boss, nach jedem Kampf 1 aus 3 Chips |
 
 ## Bewusst NICHT im Prototyp
@@ -65,7 +65,7 @@ Bewegungs-Cooldown: 0,12 s (Tröpfel: 0,18 s). Beim Direktsprung +50 % pro zusä
 2. Kampf 1: Bugsy → Chipwahl (1 aus 3) → +15 HP
 3. Kampf 2: Glitchmotte → Chipwahl → +15 HP
 4. Kampf 3: Spamlet → Chipwahl → +15 HP
-5. Boss: Pop-Up-Tyrann
+5. Boss: Kernelmantis
 6. Ergebnis: Fragmente, Prägung nach Element, Evolutionsvorschau
 
 Bei Niederlage: **Near-Miss-Anzeige** ("Der Tyrann hatte nur noch 8 % HP") und 50 % der Fragmente bleiben.
@@ -148,7 +148,7 @@ Feedback Produzent: Lumi-Linie super, Kekso-Baby super. Pop-up-Frosch, Trojaner-
 **Offen:** Namen Spamlet / Pop-Upsi / Trojo stammen noch aus den alten Objekt-Konzepten.
 
 ### Update: Frosch-Linie umbenannt & überarbeitet (27.09.2026)
-Namen: **Quappel** (Baby, vorher Spamlet) → **Virulurch** (Virus, vorher Pop-Upsi) / **Hüpfbyte** (Code, vorher Trojo). Namen per Websuche gegen Pokémon/Digimon geprüft (Toxiquak & Co. wären Pokémon-Namen gewesen). Vor Launch professionelle Markenprüfung nötig. Alte Spielstände werden beim Laden automatisch umbenannt (`migrateNames`). Der Gegner „Spamlet“ behält seinen Namen, der Boss Pop-Up-Tyrann ist jetzt die Riesenform der wilden Spamlets.
+Namen: **Quappel** (Baby, vorher Spamlet) → **Virulurch** (Virus, vorher Pop-Upsi) / **Hüpfbyte** (Code, vorher Trojo). Namen per Websuche gegen Pokémon/Digimon geprüft (Toxiquak & Co. wären Pokémon-Namen gewesen). Vor Launch professionelle Markenprüfung nötig. Alte Spielstände werden beim Laden automatisch umbenannt (`migrateNames`). Der Gegner „Spamlet“ behält seinen Namen, der Boss Kernelmantis ist jetzt die Riesenform der wilden Spamlets.
 Virulurch/Hüpfbyte neu: stilisierter, näher an Quappels Lila-Rosa-Palette. Tracko neu: Keks-Braun wie Kekso statt dunkel/violett.
 
 ### Update: Pixi-Linie als Katzen (27.09.2026)
@@ -159,7 +159,7 @@ Pixi bleibt eine Katze (Entscheidung Produzent), jetzt im neuen Stil: Pixi (Baby
 Pixi → **Blazebit** (Rookie 64, Feuerkatze) → **Glutluchs** (Champion 80, vorher Glutfuchs) → **Pyrolynx** (Ultra 96, vorher Infernitsune; drei Flammenschweife, Obsidian-Panzer). Namen per Websuche geprüft. Alte Spielstände werden per `migrateNames` umbenannt. Alte Fuchs-Sprites als `*_alt_fuchs.png` aufbewahrt. Die komplette Pixi-Familie ist jetzt im neuen Stil.
 
 ### Update: Gegner, Fusionen, Evolutions-Decks (27.09.2026)
-**Gegner neu:** Bugsy, Glitchmotte, Spamlet (wild) je 64 px, Pop-Up-Tyrann 96 px – im Stil der Monster, aber weiterhin Gegenstände/Insekten. Große Gegner werden jetzt wie Spieler-Monster in fester Pixelgröße gezeichnet (Füße auf der Plattform).
+**Gegner neu:** Bugsy, Glitchmotte, Spamlet (wild) je 64 px, Kernelmantis 96 px – im Stil der Monster, aber weiterhin Gegenstände/Insekten. Große Gegner werden jetzt wie Spieler-Monster in fester Pixelgröße gezeichnet (Füße auf der Plattform).
 **Neu im Tier-Stil:** Frostbyte (Eis-Axolotl, 64), Fusionen Dampfbyte, Wolkerich, Quellcoda, 404-Geist (je 80, echte Tier-Chimären der Eltern).
 **Evolutions-Decks:** Jede entwickelte Form startet mit eigenem 8-Chip-Deck (`EVO_DECK` im Code): 4–6 Element-Chips + Signatur-Chip + neutrale Basis. Babys behalten ihr Basis-Deck. Ziel: Die Spielweise bestimmt die Evolution – und die Evolution verstärkt dann diesen Spielstil. Test: `tests/evodeck.test.js`.
 **Beobachten im Playtest:** Fühlen sich Evolutionen spürbar anders an? Werden Champion/Ultra-Decks zu stark (Pyrolynx: 5 Feuer-Angriffe)?

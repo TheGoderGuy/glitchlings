@@ -26,6 +26,8 @@ static func args() -> Dictionary:
 			shot.zone = a.substr(7)
 		elif a.begins_with("--event="):
 			shot.event = a.substr(8)
+		elif a == "--pops":
+			shot.pops = true
 		elif a == "--lava":
 			shot.lava = true
 		elif a == "--pad":

@@ -4,7 +4,7 @@ element: Virus
 stufe: 1
 stufenname: Baby
 seltenheit: Gewöhnlich
-entwickelt_aus: "Ei (Spam-Sümpfe)"
+entwickelt_aus: "Ei (Viren-Sümpfe)"
 signatur_chip: "Virusspritzer"
 ---
 # Quakli
@@ -12,7 +12,7 @@ signatur_chip: "Virusspritzer"
 ![[Quakli_32_x4.png|192]]
 
 **Element:** Virus | **Stufe:** 1 (Baby) | **Seltenheit:** Gewöhnlich
-**Herkunft:** Ei (Spam-Sümpfe)
+**Herkunft:** Ei (Viren-Sümpfe)
 
 ## Beschreibung
 Ein kleiner, runder Pfeilgiftfrosch mit lila Haut und leuchtend rosa Giftpunkten. Taucht gern unaufgefordert überall auf.

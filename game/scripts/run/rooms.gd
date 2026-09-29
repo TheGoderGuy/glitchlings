@@ -31,12 +31,12 @@ const EVENTS := {
 		"text": "Ein kleiner wilder Glitchling beobachtet dich schüchtern hinter einem Datenhalm.",
 	},
 	"update": {
-		"title": "Update verfügbar",
-		"text": "Ein freundliches Fenster (wirklich kein Spam!) bietet ein Update für einen deiner Chips an.",
+		"title": "Wartungsdrohne",
+		"text": "Eine kleine Wartungsdrohne summt heran. Sie bietet an, einen deiner Chips aufzurüsten.",
 	},
-	"cookies": {
-		"title": "Cookie-Spur", "zone": "wiesen",
-		"text": "Eine Spur aus Browser-Cookies führt quer über die Wiese. Sie riechen nach Vanille.",
+	"beeren": {
+		"title": "Bit-Beeren", "zone": "wiesen",
+		"text": "Am Wegrand wächst ein Strauch voller leuchtender Bit-Beeren. Sie knistern leise.",
 	},
 	"backup": {
 		"title": "Backup-Station",
@@ -63,10 +63,10 @@ const EVENTS := {
 		"title": "Ascheregen", "zone": "vulkan",
 		"text": "Graue Asche rieselt vom Himmel. Darunter glitzert etwas. Ein Chip? Oder nur Glut?",
 	},
-	# ---------- Spam-Sümpfe ----------
-	"spamfilter": {
-		"title": "Verstopfter Spamfilter", "zone": "sumpf",
-		"text": "Ein riesiger Spamfilter ist bis obenhin verstopft. Zwischen dem Müll blinken ein paar Werbebanner.",
+	# ---------- Viren-Sümpfe ----------
+	"datenleitung": {
+		"title": "Verstopfte Datenleitung", "zone": "sumpf",
+		"text": "Eine dicke Datenleitung ragt aus dem Moor und ist verstopft. Zwischen altem Datenschlamm blinkt etwas.",
 	},
 	"irrlicht": {
 		"title": "Irrlicht", "zone": "sumpf",
@@ -144,12 +144,12 @@ static func event_options(run: RunState, key: String) -> Array:
 		"update":
 			var commons: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
 			return [
-				{"id": "install", "label": "Installieren", "desc": "Ein zufälliger gewöhnlicher Chip wird zu einem seltenen.", "enabled": not commons.is_empty()},
-				{"id": "later", "label": "Später erinnern", "desc": "+10 Fragmente fürs Warten.", "enabled": true},
+				{"id": "install", "label": "Aufrüsten lassen", "desc": "Ein zufälliger gewöhnlicher Chip wird zu einem seltenen.", "enabled": not commons.is_empty()},
+				{"id": "later", "label": "Ablehnen", "desc": "Die Drohne lässt zum Abschied 10 Fragmente da.", "enabled": true},
 			]
-		"cookies":
+		"beeren":
 			return [
-				{"id": "collect", "label": "Aufsammeln", "desc": "+25 Fragmente.", "enabled": true},
+				{"id": "collect", "label": "Pflücken", "desc": "+25 Fragmente.", "enabled": true},
 				{"id": "snack", "label": "Naschen", "desc": "+15 HP.", "enabled": run.hp < run.max_hp},
 			]
 		"backup":
@@ -183,10 +183,10 @@ static func event_options(run: RunState, key: String) -> Array:
 				{"id": "dig", "label": "Durchwühlen", "desc": "Halbe Chance: epischer Chip. Sonst verbrennst du dich (−15 HP).", "enabled": run.hp > 15},
 				{"id": "wait", "label": "Abwarten", "desc": "Die Asche legt sich. +10 Fragmente.", "enabled": true},
 			]
-		"spamfilter":
+		"datenleitung":
 			return [
 				{"id": "clean", "label": "Ausmisten", "desc": "Entferne einen Chip aus deinem Deck.", "enabled": run.deck.size() > MIN_DECK},
-				{"id": "read", "label": "Spam lesen", "desc": "+30 Fragmente, aber Kopfschmerzen: −10 HP.", "enabled": run.hp > 10},
+				{"id": "read", "label": "Durchwühlen", "desc": "+30 Fragmente, aber ein Stromschlag: −10 HP.", "enabled": run.hp > 10},
 			]
 		"irrlicht":
 			return [
@@ -241,15 +241,15 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 			var neu := run.random_chip("Selten")
 			run.deck.erase(old)
 			run.deck.append(neu)
-			return "Update installiert: %s wurde zu %s." % [old, neu]
+			return "Die Drohne schraubt und piept: %s wurde zu %s." % [old, neu]
 		["update", "later"]:
 			run.frag += 10
-			return "Das Fenster schließt sich höflich. Für deine Geduld gibt es 10 Fragmente."
-		["cookies", "collect"]:
+			return "Die Drohne piept enttäuscht und lässt 10 Fragmente fallen."
+		["beeren", "collect"]:
 			run.frag += 25
-			return "Du sammelst die Cookies ein und tauschst sie gegen 25 Fragmente."
-		["cookies", "snack"]:
-			return "Mmh, Vanille! +%d HP." % run.heal(15)
+			return "Du pflückst die Beeren und tauschst sie gegen 25 Fragmente."
+		["beeren", "snack"]:
+			return "Mmh, knisternd süß! +%d HP." % run.heal(15)
 		["backup", "copy"]:
 			return "copy"
 		["minibot", "home"]:
@@ -294,12 +294,12 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 		["ascheregen", "wait"]:
 			run.frag += 10
 			return "Als sich die Asche legt, glitzern 10 Fragmente am Boden."
-		["spamfilter", "clean"]:
+		["datenleitung", "clean"]:
 			return "remove"
-		["spamfilter", "read"]:
+		["datenleitung", "read"]:
 			run.frag += 30
 			run.hp -= 10
-			return "„Sie haben gewonnen!“ … tatsächlich: 30 Fragmente. Aber der Kopf brummt: −10 HP."
+			return "Im Datenschlamm liegen 30 Fragmente. Dabei bekommst du einen Stromschlag: −10 HP."
 		["irrlicht", "follow"]:
 			if run.rng.randf() < 0.6:
 				var c := run.random_chip("Selten")

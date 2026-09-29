@@ -14,16 +14,16 @@ Ein Run führt über eine verzweigte Karte durch eine Zone (zuerst **Cache-Wiese
 ## Knoten
 | Knoten | Wirkung |
 |---|---|
-| Kampf | Gegner aus Pool (ab Etage 3 auch Spamlet), +7 % HP pro Etage. Sieg: +10 HP, Chipwahl (überspringbar), Fragmente |
+| Kampf | Gegner aus Pool (ab Etage 3 auch Bytewurm), +7 % HP pro Etage. Sieg: +10 HP, Chipwahl (überspringbar), Fragmente |
 | Elite | +60 % HP, +4 Schaden, schneller, doppelte Fragmente. Chipwahl mit Selten/Episch bevorzugt |
-| Ereignis | 8 Ereignisse (Verlorenes Datenpaket, Bit-Brunnen, Flackernder Chip, Wilder Glitchling, Update verfügbar, Cookie-Spur, Backup-Station, Verirrter Mini-Bot), keine Wiederholung pro Run |
+| Ereignis | 8 Ereignisse (Verlorenes Datenpaket, Bit-Brunnen, Flackernder Chip, Wilder Glitchling, Wartungsdrohne, Bit-Beeren, Backup-Station, Verirrter Mini-Bot), keine Wiederholung pro Run |
 | Rastplatz | Ausruhen (+35 % max. HP) **oder** Deck ausdünnen (1 Chip entfernen, Deck bleibt ≥ 5) |
 | Datenhändler | 3 Chips (Gewöhnlich 25 / Selten 40 / Episch 60 Fragmente), Reparatur +25 HP (20), Chip entfernen (35) |
-| Boss | Pop-Up-Tyrann (320 HP) |
+| Boss | Kernelmantis (320 HP) |
 
 Das Deck-Ausdünnen beantwortet die offene Frage aus Playtest 3 („Chip entfernen statt nur hinzufügen testen“).
 
 ## Offen
 - Schwierigkeit: Der Autopilot gewinnt weiter 40/40 Runs – nach Playtest nachschärfen (mehr Gegnertypen, Elite-Muster).
 - Nur 3 Gegner-Sprites; Elite ist vorerst nur rötlich getönt.
-- Weitere Zonen (Firewall-Vulkan, Spam-Sümpfe …) mit eigenen Ereignissen und Gegnern.
+- Weitere Zonen (Firewall-Vulkan, Viren-Sümpfe …) mit eigenen Ereignissen und Gegnern.

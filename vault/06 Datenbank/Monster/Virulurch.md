@@ -21,7 +21,7 @@ Ein rundlicher lila Giftfrosch in Hüpfhaltung. Magenta Giftflecken wie bei Quak
 überschwänglich, chaotisch
 
 ## Bedingung
-Virus-Prägung dominiert. Korrumpierte Ultra-Form: der Boss [[Pop-Up-Tyrann]].
+Virus-Prägung dominiert. Korrumpierte Ultra-Form: der Boss [[Kernelmantis]].
 
 ## Entwickelt sich zu
 - _Weitere Stufe (Champion/Ultra) folgt in späteren Saisons_

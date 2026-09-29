@@ -13,7 +13,7 @@ Du wirst zum **Operator**: Du ziehst Glitchlings auf, trainierst sie und reparie
 |---|---|---|
 | Cache-Wiesen | Grüne Datenfelder, Startgebiet | freundlich |
 | Firewall-Vulkan | Glühende Sicherheitsmauern | hitzig |
-| Spam-Sümpfe | Pop-ups und Werbebanner als Pflanzen | schräg-komisch |
+| Viren-Sümpfe | Giftiges Moor, Viren-Insekten und Fleischfresser-Pflanzen | schräg-unheimlich |
 | Deep Web | Dunkle Tiefen, Endgame | geheimnisvoll |
 
 ## Tonalität

@@ -38,7 +38,7 @@ status: Alle 25 Monster, 4 Gegner und 3 Ei-Sorten in 32×32 fertig
 
 **Darstellung im Kampf:** Ab Rookie gilt eine feste Pixelgröße (ca. 1 Bildpunkt pro Kunstpixel bei 400 px Breite). Die Füße stehen immer auf der Plattform, größere Formen ragen nach oben über das Feld hinaus. So wirkt jede Stufe sichtbar größer.
 
-**Gegner** bleiben bewusst Gegenstände und Insekten (Käfer, Motten, Fenster): Sie sind die korrumpierten Daten, die Tiere sind die Helden.
+**Gegner** sind digitale Monster und Maschinen (Käfer, Motten, Würmer, Mecha-Insekten, Pflanzen-Monster): Sie sind die korrumpierten Daten, die Tiere sind die Helden. **Keine Internet-/Werbe-Anspielungen** – keine Pop-up-Fenster, Spam, Werbebanner, Cookies, Captchas, Ladebalken (Entscheidung Produzent, 29.09.2026).
 
 **Regel (Entscheidung Produzent, 27.09.2026):** Monster sind echte Tier-Kreaturen im Digimon-/Yu-Gi-Oh-Stil. Das Digitale steckt nur in Körpermerkmalen – Leuchtlinien, Muster, Energie, Element-Effekte. **Keine Gegenstands- oder Kostüm-Konzepte** (Pop-up-Fenster als Körperteil, Trojaner-Holzpferd, Detektivmütze, Keks-Emblem usw. wurden verworfen).
 
@@ -89,7 +89,7 @@ Eine Evolution übernimmt die Farbe ihres Elements als Grundfarbe. So erkennt ma
 ![[kampf-hell.png]]
 - Eigene Seite mint, Gegnerseite rosa, dazwischen ein pulsierender Datenstrom.
 - Plattformen mit sichtbarer Dicke und Schatten unter den Figuren geben Tiefe ohne 3D.
-- **Jede Zone hat einen eigenen Hintergrund** (Cache-Wiesen: Hügel & Wolken, Spam-Sümpfe: violett mit Pop-up-Fenstern am Himmel).
+- **Jede Zone hat einen eigenen Hintergrund** (Cache-Wiesen: Hügel & Wolken, Viren-Sümpfe: violett-grün mit Glühwürmchen).
 - Warnfelder immer Koralle mit weißem Ausrufezeichen. Diese Farbe ist für Gefahr reserviert.
 
 ## Effekte

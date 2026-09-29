@@ -7,17 +7,16 @@ Erstellt mit PixelLab (Pro Flash, Stil-Referenz Bugsy), auf 32 Farben reduziert,
 
 | Gegner | Element | HP | Muster | Idee |
 |---|---|---|---|---|
-| **Captchakäfer** | Code | 80 | Kreuz um den Spieler | Käfer, auf dem Panzer verzerrte Captcha-Zeichen |
-| **Spamwespe** | Virus | 50 | schnell: Feld, Reihe, Feld | Flügel aus Werbe-Pop-ups mit rotem X. Auge von Hand nachgezeichnet (PixelLab hatte es ausgestanzt) |
-| **Ladebalkenraupe** | Feuer | 115 | Wand: 2 Reihen, 1 frei (nie die eigene) | Segmente wie ein überhitzter Ladebalken |
+| **Chiffrekäfer** | Code | 80 | Kreuz um den Spieler | Käfer mit verschlüsselten Leuchtzeichen auf dem Panzer (Sprite unverändert, umbenannt 29.09.2026) |
+| **Datenwespe** | Virus | 50 | schnell: Feld, Reihe, Feld | Wespe mit Schaltkreis-Adern in den Flügeln (neu gezeichnet 29.09.2026) |
+| **Glutraupe** | Feuer | 115 | Wand: 2 Reihen, 1 frei (nie die eigene) | Glühende Raupe mit Lava-Segmenten (umbenannt 29.09.2026) |
 
 ## Gegner-Pools
-- Etage 1–2: Bugsy, Glitchmotte, Spamwespe
+- Etage 1–2: Bugsy, Glitchmotte, Datenwespe
 - ab Etage 3: alle normalen Gegner
-- Elite: Spamlet, Captchakäfer, Ladebalkenraupe (die zäheren)
+- Elite: Bytewurm, Chiffrekäfer, Glutraupe (die zäheren)
 
-Damit haben jetzt auch **Feuer** (gegen Captchakäfer) und **Wasser** (gegen Ladebalkenraupe) echte Vorteilsziele.
+Damit haben jetzt auch **Feuer** (gegen Chiffrekäfer) und **Wasser** (gegen Glutraupe) echte Vorteilsziele.
 
 ## Offen
-- Blinzel-Frames fehlen noch (Spiel nutzt dann das normale Bild).
-- Spamwespe fällt im Autopilot-Test sehr schnell – ggf. auf 60 HP.
+- Datenwespe fällt im Autopilot-Test sehr schnell – ggf. auf 60 HP.

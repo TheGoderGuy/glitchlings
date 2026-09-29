@@ -87,10 +87,10 @@ func _menu(items: Array, sel: int, center_x: float, y: float, width := 200.0) ->
 # ---------- Sprites ----------
 
 ## Gegner-Sprites; Monster-Formen stehen in GameData.FORMS
-const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "spam": "spam_64", "boss": "boss_96",
-	"captcha": "captcha_64", "wespe": "wespe_64", "raupe": "raupe_64",
+const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "wurm": "bytewurm_64", "mantis": "kernelmantis_96",
+	"kaefer": "chiffrekaefer_64", "wespe": "datenwespe_64", "raupe": "raupe_64",
 	"milbe": "milbe_64", "assel": "assel_64", "falter": "falter_64", "skarab": "skarab_96",
-	"muecke": "muecke_64", "schnecke": "schnecke_64", "bluete": "bluete_64", "koenigin": "koenigin_96"}
+	"muecke": "muecke_64", "schnecke": "panzerschnecke_64", "bluete": "glitchbluete_64", "koenigin": "schwarmkoenigin_96"}
 static var _sprites := {}
 
 

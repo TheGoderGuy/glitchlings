@@ -164,23 +164,43 @@
   "dim": true,
   "hi": true
  },
- "schnecke_64": {
-  "crop": "42,14,61,27",
-  "blink": "46,18,50,21,48,17;54,18,58,21,56,17"
- },
  "skarab_96": {
   "crop": "62,46,79,61",
   "blink": "66,50,74,57",
-  "dim": true
- },
- "koenigin_96": {
-  "crop": "66,38,83,53",
-  "blink": "70,43,77,49",
   "dim": true
  },
  "Toxmolch_64": {
   "crop": "42,22,59,37",
   "blink": "49,29,51,31",
   "dim": true
+ },
+ "bytewurm_64": {
+  "crop": "40,16,59,31",
+  "blink": "46,20,58,26",
+  "dim": true
+ },
+ "datenwespe_64": {
+  "crop": "40,20,57,35",
+  "blink": "45,26,52,32",
+  "dim": true,
+  "hi": true
+ },
+ "panzerschnecke_64": {
+  "crop": "42,14,61,29",
+  "blink": "48,20,58,24",
+  "dim": true,
+  "hi": true
+ },
+ "kernelmantis_96": {
+  "crop": "56,14,75,31",
+  "blink": "63,20,66,23",
+  "dim": true,
+  "hi": true
+ },
+ "schwarmkoenigin_96": {
+  "crop": "68,32,87,47",
+  "blink": "76,39,81,42",
+  "dim": true,
+  "hi": true
  }
 }

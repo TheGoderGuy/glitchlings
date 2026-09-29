@@ -34,7 +34,7 @@ Switch ist vorerst gestrichen. Team: Produzent + Claude. Engine: **Godot 4**. Ke
 - Zielumfang zum Release: **5 Zonen, ~100 Monster-Formen, ~80 Chips, 15–25 Stunden**.
 
 ## Kampf-Änderungen gegenüber dem Browser-Prototyp
-- **Pop-ups des Bosses** werden geschlossen, indem man auf ihr Feld tritt (statt antippen) – funktioniert mit Controller und ist eine Ausweich-Entscheidung.
+- **Glitch-Sporen/Bitmilben des Bosses** werden geschlossen, indem man auf ihr Feld tritt (statt antippen) – funktioniert mit Controller und ist eine Ausweich-Entscheidung.
 - Bewegungseingaben während des Bewegungs-Cooldowns werden gepuffert statt verworfen.
 - Chip-Tasten: Controller X/Y/B, Signatur A; Tastatur J/K/L, Leertaste.
 

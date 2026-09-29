@@ -14,7 +14,7 @@ const PANELS := [
 	{"id": "room", "dur": 8.0, "text": "Eines Nachts landet etwas auf deinem Desktop ..."},
 	{"id": "egg", "dur": 9.0, "text": "Du bist jetzt Operator. Zieh die Glitchlings auf, trainiere sie und bring den NEST zurück ins Netz."},
 ]
-const BOOT_LINES := ["NEST-Server v3.1 ... online", "Zonen: Cache-Wiesen, Firewall-Vulkan, Spam-Sümpfe", "Bewohner: 4.096 Glitchlings", "Status: alles friedlich"]
+const BOOT_LINES := ["NEST-Server v3.1 ... online", "Zonen: Cache-Wiesen, Firewall-Vulkan, Viren-Sümpfe", "Bewohner: 4.096 Glitchlings", "Status: alles friedlich"]
 const TYPE_SPEED := 38.0   # Zeichen pro Sekunde
 const FADE := 0.5
 
@@ -197,7 +197,7 @@ func _draw_flight() -> void:
 	draw_texture(zone_texture("wiesen"), Vector2.ZERO)
 	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.35))
 	# korrupte Daten flackern auf, sobald die Glitchlings weg sind
-	var foes := [["bug", 400.0], ["spam", 540.0], ["moth", 470.0]]
+	var foes := [["bug", 400.0], ["wurm", 540.0], ["moth", 470.0]]
 	for i in foes.size():
 		var fa := clampf((t - 4.6 - i * 0.4) / 0.8, 0.0, 1.0)
 		if fa <= 0.0:

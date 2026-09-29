@@ -183,7 +183,7 @@ func test_pop_close() -> void:
 	var st := fresh(3)
 	st.pops.append({"c": 0, "r": 1, "t": 3.0, "max": 3.0})
 	st.move_player(-1, 0)
-	check(st.pops.is_empty(), "Pop-up schließt sich beim Draufsteigen")
+	check(st.pops.is_empty(), "Bitmilbe wird beim Draufsteigen zertreten")
 
 
 func test_choices() -> void:
@@ -298,8 +298,8 @@ func test_new_events() -> void:
 	var commons2 := run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich").size()
 	check(commons2 == commons - 1, "Update macht einen gewöhnlichen Chip selten")
 	var f0 := run.frag
-	Rooms.event_apply(run, "cookies", "collect")
-	check(run.frag == f0 + 25, "Cookie-Spur: +25 Fragmente")
+	Rooms.event_apply(run, "beeren", "collect")
+	check(run.frag == f0 + 25, "Bit-Beeren: +25 Fragmente")
 	var all_ok := true
 	for key in Rooms.EVENTS:
 		for o in Rooms.event_options(run, key):
@@ -310,7 +310,7 @@ func test_new_events() -> void:
 	var zv := Rooms.events_for_zone("vulkan")
 	var zs := Rooms.events_for_zone("sumpf")
 	var zw := Rooms.events_for_zone("wiesen")
-	check(zv.has("schmiede") and not zv.has("irrlicht") and not zv.has("cookies") and zv.has("backup") and zv.size() == 9 and zs.size() == 9 and zw.size() == 8,
+	check(zv.has("schmiede") and not zv.has("irrlicht") and not zv.has("beeren") and zv.has("backup") and zv.size() == 9 and zs.size() == 9 and zw.size() == 8,
 		"Ereignisse je Zone: Wiesen %d, Vulkan %d, Sümpfe %d (5 überall + eigene)" % [zw.size(), zv.size(), zs.size()])
 	var rz := RunState.new("Pixmiez", 5)
 	rz.map = ZoneMap.generate(rz.rng, "sumpf")
@@ -328,7 +328,7 @@ func test_new_events() -> void:
 	var hp3 := r3.hp
 	Rooms.event_apply(r3, "schmiede", "forge")
 	check(r3.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich").size() == commons3 - 1 and r3.hp == hp3 - 10 and r3.deck.any(func(c): return GameData.CHIPS[c].rar == "Episch"), "Glut-Schmiede: gewöhnlicher Chip wird episch, kostet 10 HP")
-	check(Rooms.event_apply(r3, "spamfilter", "clean") == "remove", "Spamfilter: Ausmisten lässt einen Chip entfernen")
+	check(Rooms.event_apply(r3, "datenleitung", "clean") == "remove", "Datenleitung: Ausmisten lässt einen Chip entfernen")
 	Rooms.event_apply(r3, "firewallriss", "sneak")
 	var r3foe := r3.foe_for({"type": "fight"})
 	var stw := BattleState.new(r3, r3foe)
@@ -336,7 +336,7 @@ func test_new_events() -> void:
 	var hurt_ok := true
 	for i in 20:
 		var rr := RunState.new("Tröpfel", 100 + i)
-		for pair in [["ascheregen", "dig"], ["irrlicht", "follow"], ["giftmoor", "dive"], ["spamfilter", "read"]]:
+		for pair in [["ascheregen", "dig"], ["irrlicht", "follow"], ["giftmoor", "dive"], ["datenleitung", "read"]]:
 			if Rooms.event_options(rr, pair[0]).filter(func(o): return o.id == pair[1])[0].enabled:
 				Rooms.event_apply(rr, pair[0], pair[1])
 		if rr.hp <= 0:
@@ -375,7 +375,7 @@ func test_new_foes() -> void:
 	st.e.atk_t = 0.01
 	step(st, 0.05)
 	var cells: Array = st.warns[0].cells
-	check(cells.size() == 3 and cells.has(Vector2i(0, 0)) and cells.has(Vector2i(1, 0)) and cells.has(Vector2i(0, 1)), "Captchakäfer: Kreuz um den Spieler (in der Ecke 3 Felder)")
+	check(cells.size() == 3 and cells.has(Vector2i(0, 0)) and cells.has(Vector2i(1, 0)) and cells.has(Vector2i(0, 1)), "Chiffrekäfer: Kreuz um den Spieler (in der Ecke 3 Felder)")
 	# Wand-Muster: nie die Reihe des Spielers frei
 	var ok := true
 	for i in 30:
@@ -387,7 +387,7 @@ func test_new_foes() -> void:
 		var c2: Array = st2.warns[0].cells
 		if c2.size() != 6 or not c2.has(Vector2i(0, st2.p.r)):
 			ok = false
-	check(ok, "Ladebalkenraupe: Wand über zwei Reihen, die Spielerreihe ist nie sicher")
+	check(ok, "Glutraupe: Wand über zwei Reihen, die Spielerreihe ist nie sicher")
 	var sprites_ok := true
 	for f in GameData.FOES:
 		if not ResourceLoader.exists("res://assets/sprites/%s.png" % PixelCanvas.SPRITE_FILES[f.spr]):
@@ -572,14 +572,14 @@ func test_zone2() -> void:
 	step(st2, 0.05)
 	var cells: Array = st2.warns[0].cells
 	check(cells.size() == 6 and cells.has(Vector2i(0, 0)) and cells.has(Vector2i(1, 2)), "Brandmauerassel: zwei Spalten inkl. der des Spielers")
-	# Boss setzt ab halber HP Felder in Brand statt Pop-ups
+	# Boss setzt ab halber HP Felder in Brand statt Bitmilben
 	var st3 := BattleState.new(RunState.new("Pixmiez", 3), GameData.FOES[10])
 	st3.e.hp = 200
 	st3.e.move_t = 99.0
 	st3.e.atk_t = 99.0
 	st3.e.pop_t = 0.01
 	step(st3, 0.05)
-	check(st3.pops.is_empty() and st3.warns.any(func(w): return w.lava), "Glutkernskarabäus: Lava statt Pop-ups")
+	check(st3.pops.is_empty() and st3.warns.any(func(w): return w.lava), "Glutkernskarabäus: Lava statt Bitmilben")
 	# Komplette Vulkan-Runs laufen durch
 	var stuck := 0
 	var wins := 0
@@ -619,12 +619,12 @@ func test_zone3() -> void:
 	SaveGame.persist = false
 	SaveGame.new_game("Lumi")
 	SaveGame.data.cleared = ["wiesen"]
-	check(not SaveGame.zone_unlocked("sumpf"), "Spam-Sümpfe erst nach dem Vulkan")
+	check(not SaveGame.zone_unlocked("sumpf"), "Viren-Sümpfe erst nach dem Vulkan")
 	var rv := RunState.from_monster(SaveGame.team()[0], 1, "vulkan")
 	var sum := SaveGame.record_run(rv, true)
-	check(sum.get("unlocked", "") == "sumpf" and SaveGame.zone_unlocked("sumpf"), "Vulkan-Boss besiegt: Spam-Sümpfe frei")
+	check(sum.get("unlocked", "") == "sumpf" and SaveGame.zone_unlocked("sumpf"), "Vulkan-Boss besiegt: Viren-Sümpfe frei")
 	var rs := RunState.from_monster(SaveGame.team()[0], 2, "sumpf")
-	check(rs.foe_for({"type": "boss"}).name == "Spamkönigin", "Boss der Sümpfe: Spamkönigin")
+	check(rs.foe_for({"type": "boss"}).name == "Schwarmkönigin", "Boss der Sümpfe: Schwarmkönigin")
 	SaveGame.data = real_data
 	SaveGame.persist = true
 	# Schleim macht langsam, schadet aber nicht
@@ -645,8 +645,8 @@ func test_zone3() -> void:
 	st2.e.atk_t = 0.01
 	step(st2, 0.05)
 	step(st2, 0.8)
-	check(st2.run.hp < 100 and st2.e.hp > 30, "Spammücke heilt sich bei Treffern (HP %d)" % st2.e.hp)
-	# Popupblüte bewegt sich nicht und schickt Pop-ups
+	check(st2.run.hp < 100 and st2.e.hp > 30, "Saugmücke heilt sich bei Treffern (HP %d)" % st2.e.hp)
+	# Glitchblüte bewegt sich nicht und streut Glitch-Sporen
 	var st3 := BattleState.new(RunState.new("Pixmiez", 3), GameData.FOES[13])
 	var pos := Vector2i(st3.e.c, st3.e.r)
 	var got_pop := false
@@ -656,7 +656,7 @@ func test_zone3() -> void:
 			got_pop = true
 		if st3.over:
 			break
-	check(Vector2i(st3.e.c, st3.e.r) == pos and got_pop, "Popupblüte bleibt stehen und schickt Pop-ups")
+	check(Vector2i(st3.e.c, st3.e.r) == pos and got_pop, "Glitchblüte bleibt stehen und streut Glitch-Sporen")
 	# Komplette Sumpf-Runs laufen durch
 	var stuck := 0
 	var wins := 0

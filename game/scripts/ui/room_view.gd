@@ -55,7 +55,7 @@ func _intro() -> String:
 		"vulkan":
 			return "Eine kühle Nische im Vulkangestein. Das Knistern der Glut klingt fast gemütlich."
 		"sumpf":
-			return "Ein trockener Baumstumpf mitten im Moor. Glühwürmchen summen, kein Pop-up weit und breit."
+			return "Ein trockener Baumstumpf mitten im Moor. Glühwürmchen summen, kein Virus weit und breit."
 	return "Ein ruhiger Cache-Winkel. Die Lüfter summen leise. Zeit zum Durchatmen."
 
 
@@ -320,18 +320,22 @@ func _draw_prop(kind: String, x: float, g: float) -> void:
 			if fmod(t, 0.7) < 0.1:
 				draw_line(p + Vector2(3, -2), p + Vector2(9, -7), Color("#FFE98A"), 1.0)
 				draw_line(p + Vector2(-3, 2), p + Vector2(-8, 6), Color("#FFE98A"), 1.0)
-		"spamfilter":
-			# Verstopfter Filter: Trichter voller kleiner Werbefenster
-			draw_rect(Rect2(x - 16, g - 30, 32, 4), Color("#4A3E80"))
-			for i in 8:
-				draw_rect(Rect2(x - 14 + i * 2, g - 26 + i * 3, 28 - i * 4, 3), Color("#2C2352"))
-			draw_rect(Rect2(x - 2, g - 2, 4, 2), Color("#2C2352"))
-			for i in 4:
-				var bx := x - 18 + i * 10 + sin(t * 2.0 + i) * 2.0
-				var by := g - 44 + (i % 2) * 6 + cos(t * 1.7 + i * 1.3) * 2.0
-				draw_rect(Rect2(roundi(bx), roundi(by), 11, 8), Color("#E8E4F4"))
-				draw_rect(Rect2(roundi(bx), roundi(by), 11, 2), [Color("#FF5470"), Color("#58B7FF"), Color("#FFD84D"), Color("#7BD35A")][i])
-				draw_rect(Rect2(roundi(bx) + 2, roundi(by) + 4, 6, 1), Color("#8A84A0"))
+		"datenleitung":
+			# Rohr aus dem Moor, verstopft mit glühendem Datenschlamm, knistert
+			draw_rect(Rect2(x - 5, g - 34, 10, 34), Color("#1E1428"))
+			draw_rect(Rect2(x - 4, g - 34, 8, 34), Color("#4A4458"))
+			draw_rect(Rect2(x - 4, g - 34, 2, 34), Color("#6A6478"))
+			draw_rect(Rect2(x - 7, g - 38, 14, 5), Color("#1E1428"))
+			draw_rect(Rect2(x - 6, g - 37, 12, 3), Color("#6A6478"))
+			draw_rect(Rect2(x - 4, g - 36, 8, 2), Color("#7BD35A", 0.6 + 0.3 * sin(t * 3.0)))
+			for i in 3:
+				var ph := fmod(t * 0.8 + i * 0.33, 1.0)
+				draw_rect(Rect2(x - 3 + i * 3, roundi(g - 38 - ph * 10.0), 2, 2), Color("#7BD35A", 1.0 - ph))
+			for i in 2:
+				draw_rect(Rect2(x - 5, g - 26 + i * 12, 10, 2), Color("#2E2840"))
+			if fmod(t, 1.3) < 0.1:
+				draw_line(Vector2(x + 5, g - 20), Vector2(x + 11, g - 25), Color("#FFE98A"), 1.0)
+				draw_line(Vector2(x + 11, g - 25), Vector2(x + 9, g - 29), Color("#FFE98A"), 1.0)
 		"orakel":
 			# Uralte Kröte auf einem Seerosenblatt, Wellenringe
 			# Wasser mit Wellen, die nach außen laufen
