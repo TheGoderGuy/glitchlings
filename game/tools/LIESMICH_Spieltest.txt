@@ -1,0 +1,51 @@
+GLITCHLINGS – Spieltest-Version 0.2
+===================================
+
+Danke, dass du Glitchlings testest! Das Spiel ist noch in Entwicklung.
+Grafik, Musik und Balancing sind vorläufig. Deine ehrliche Meinung hilft uns sehr.
+
+
+1. STARTEN
+----------
+- ZIP entpacken und "Glitchlings.exe" doppelklicken. Keine Installation nötig.
+- Windows zeigt vielleicht "Der Computer wurde durch Windows geschützt".
+  Das liegt daran, dass das Spiel noch nicht signiert ist:
+  "Weitere Informationen" -> "Trotzdem ausführen".
+- Ein Controller (Xbox/PlayStation) wird unterstützt, Tastatur geht genauso.
+
+
+2. STEUERUNG
+------------
+                      Tastatur              Controller
+  Bewegen             WASD / Pfeiltasten    Steuerkreuz / linker Stick
+  Chip 1 / 2 / 3      J / K / L             X / Y / B
+  Signatur-Attacke    Leertaste             A
+  Pause + Deck        Esc                   Start
+  Menü                Enter / Esc           A / B
+  Reiter wechseln     Q / E                 LB / RB
+
+Der erste Kampf erklärt dir alles Schritt für Schritt.
+
+
+3. WAS WIR UNS WÜNSCHEN
+-----------------------
+- Spiel ca. 30 Minuten, gern 3–5 Runs.
+- Danach: Titelbildschirm -> Optionen -> "Spieltest-Log öffnen".
+  Schick uns die Datei "spieltest_log.csv" aus dem Ordner, der sich öffnet.
+  Darin steht nur: welches Monster, welche Zone, gewonnen/verloren, wie weit, wie lange.
+  Keine persönlichen Daten, nichts wird automatisch ins Internet geschickt.
+- Und beantworte kurz diese Fragen:
+  1. War die Steuerung nach dem ersten Kampf klar?
+  2. Hast du freiwillig einen zweiten Run gestartet? Warum (nicht)?
+  3. Was hat am meisten Spaß gemacht?
+  4. Was war frustrierend oder unklar?
+  5. Welches Monster mochtest du am liebsten, und wozu hat es sich entwickelt?
+
+
+4. GUT ZU WISSEN
+----------------
+- Der Spielstand wird automatisch gespeichert.
+- Neu anfangen: Optionen -> "Spielstand löschen" (zweimal bestätigen).
+- In den Optionen gibt es Lautstärke, Musik, Vollbild, Schwierigkeit und Bildschirmwackeln.
+
+Viel Spaß!

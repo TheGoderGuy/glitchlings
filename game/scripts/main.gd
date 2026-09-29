@@ -69,6 +69,7 @@ func show_station() -> void:
 func start_run(monster_id: int, zone := "wiesen", seed_value := -1) -> void:
 	run = RunState.from_monster(SaveGame.monster(monster_id), seed_value, zone)
 	run.difficulty = Settings.difficulty
+	run.tutorial = not SaveGame.data.get("tutorial_done", false)
 	show_map()
 
 
@@ -200,7 +201,8 @@ func _screenshot(shot: Dictionary) -> void:
 			run.enter(run.next_choices()[0])
 			run.current_node().type = mode
 			_enter_node()
-		"fight", "pick", "pause", "evolve":
+		"fight", "pick", "pause", "evolve", "tutorial":
+			run.tutorial = mode == "tutorial"
 			run.enter(run.next_choices()[0])
 			if floors >= run.map.boss_floor() - 1:
 				run.current_node().type = "boss"

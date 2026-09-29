@@ -35,12 +35,17 @@ var pause_idx := 0
 var heal_info := 0
 var mode_t := 0.0     # Zeit im aktuellen Modus (Eingabesperre gegen versehentliches Durchdrücken)
 var evo := {}
+var tut: Tutorial = null
 
 
 func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 	run = run_state
 	node_type = type
 	st = BattleState.new(run, foe)
+	run.last_foe = foe.name
+	if run.tutorial and run.fights_won == 0 and type == "fight":
+		tut = Tutorial.new()
+		st.status = ""
 	Music.play("boss" if type == "boss" else "battle")
 	_set_mode(Mode.FIGHT)
 
@@ -149,6 +154,13 @@ func _process_fight(delta: float) -> void:
 		st.freeze -= delta
 	else:
 		st.update(delta)
+	if tut != null and tut.active():
+		tut.update(st, delta)
+		if tut.just_finished:
+			Sfx.play("confirm")
+			run.tutorial = false
+			SaveGame.data["tutorial_done"] = true
+			SaveGame.save_game()
 	for ev in st.events:
 		if ev == "win":
 			continue  # ersetzt durch die Siegesfanfare bzw. die Ergebnis-Musik
@@ -212,6 +224,8 @@ func _draw() -> void:
 	draw_set_transform(off)
 	_draw_hud()
 	_draw_hand()
+	if tut != null and tut.active() and mode == Mode.FIGHT:
+		_draw_tutorial()
 	if st.hurt > 0:
 		var a := st.hurt / 0.3 * 0.35
 		for i in 6:
@@ -628,6 +642,22 @@ func _draw_evolve() -> void:
 		_text(Vector2(0, 270), S.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k > 0.6:
 			_text(Vector2(0, 300), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+
+
+func _draw_tutorial() -> void:
+	var tx: Array = tut.texts(InputSetup.pad)
+	if tx.is_empty():
+		return
+	var r := Rect2(130, 66, 380, 50)
+	var pulse := 0.5 + 0.5 * sin(anim_t * 4.0)
+	_box(r, Color(GameData.COL.panel, 0.95), GameData.COL.sun.lerp(GameData.COL.mint, pulse))
+	_text(Vector2(r.position.x + 10, r.position.y + 16), tx[0], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	# Fortschrittspunkte der vier Lernschritte
+	for i in 4:
+		var done: bool = tut.step > i
+		var cur: bool = tut.step == i
+		draw_rect(Rect2(r.end.x - 52 + i * 11, r.position.y + 9, 7, 7), GameData.COL.mint if done else (GameData.COL.sun if cur else GameData.COL.line))
+	draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 32), tx[1], HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, 8, 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 
 
 ## Für Screenshots/Tests: den Kampf mit Autopilot vorspulen.

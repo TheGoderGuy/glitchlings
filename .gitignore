@@ -10,3 +10,5 @@ game/.godot/
 game/export/
 *.tmp
 Glitchlings_spielen.bat
+build/
+Spieltest_bauen.bat

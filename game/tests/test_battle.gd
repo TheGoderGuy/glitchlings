@@ -28,6 +28,7 @@ func _ready() -> void:
 	test_meta()
 	test_fusion()
 	test_zone2()
+	test_tutorial()
 	test_all_specials()
 	test_passives()
 	test_new_lines()
@@ -572,6 +573,41 @@ func test_zone2() -> void:
 				run3.heal(10)
 	check(stuck == 0, "Vulkan-Runs: kein Kampf hängt")
 	print("  info    Vulkan-Autopilot: %d/12 Runs gewonnen" % wins)
+
+
+func test_tutorial() -> void:
+	var run := RunState.new("Pixmiez", 1)
+	var st := BattleState.new(run, GameData.FOES[0])
+	var tut := Tutorial.new()
+	st.e.atk_t = 0.5
+	for i in 3:
+		st.move_player(0, -1 if st.p.r > 0 else 1)
+		for k in 20:
+			st.update(1.0 / 60.0)
+			tut.update(st, 1.0 / 60.0)
+	check(st.warns.is_empty() and tut.step == Tutorial.Step.CHIP, "Tutorial: Gegner greift beim Bewegen-Üben nicht an, nach 3 Schritten weiter")
+	check(st.e.r == st.p.r, "Tutorial: Gegner steht für den ersten Schuss in deiner Reihe")
+	st.e.frozen = 5.0
+	st.hand[0].chip = "Pixelstrahl"
+	st.hand[0].rem = 0.0
+	st.use_slot(0)
+	for k in 40:
+		st.update(1.0 / 60.0)
+		tut.update(st, 1.0 / 60.0)
+	check(tut.step == Tutorial.Step.DODGE, "Tutorial: Treffer mit dem Chip → Ausweichen üben")
+	st.e.frozen = 0.0
+	var bot := BattleBot.new(0.0)
+	var t := 0.0
+	while tut.step == Tutorial.Step.DODGE and t < 20.0:
+		bot.act(st)
+		st.sp = minf(st.sp, 50.0)
+		st.update(1.0 / 60.0)
+		tut.update(st, 1.0 / 60.0)
+		t += 1.0 / 60.0
+	check(tut.step == Tutorial.Step.SPECIAL and st.sp == 100.0, "Tutorial: 2× ausgewichen → Signatur-Leiste voll")
+	st.use_special()
+	tut.update(st, 1.0 / 60.0)
+	check(tut.just_finished and st.e.hp > 0, "Tutorial abgeschlossen, Gegner lebt noch für den freien Kampf")
 
 
 func test_evolution() -> void:

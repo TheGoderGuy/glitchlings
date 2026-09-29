@@ -19,6 +19,9 @@ var start_form := ""
 var base_chips := 0       # Lebenszeit-Prägung des Monsters vor diesem Run
 var base_praeg := {}
 var forms_seen: Array = []
+var tutorial := false     # erster Run: der erste Kampf ist ein geführtes Tutorial
+var last_foe := ""        # für das Spieltest-Log (woran ist der Run gescheitert?)
+var start_ms := 0
 var chips_used := 0
 var fights_won := 0
 var sp_bonus := false     # Signatur-Leiste startet im nächsten Kampf halb voll
@@ -41,6 +44,7 @@ func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
 	form = sp
 	start_form = sp
 	forms_seen = [sp]
+	start_ms = Time.get_ticks_msec()
 	max_hp = mon.hp
 	hp = max_hp
 	deck = mon.deck.duplicate()

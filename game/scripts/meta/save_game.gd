@@ -177,11 +177,41 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 		else:
 			sum.egg = egg
 	sum.hatch_ready = ready_eggs().size()
+	_log_run(run, won)
 	# Übrige Fragmente werden auf die Station gerettet (für das Labor)
 	sum.frag_banked = run.frag
 	data.frag = int(data.get("frag", 0)) + run.frag
 	save_game()
 	return sum
+
+
+# ---------- Spieltest-Log ----------
+
+const LOG_PATH := "user://spieltest_log.csv"
+const LOG_HEADER := "zeit;version;monster;form;zone;ergebnis;etage;kaempfe_gewonnen;chips;dauer_s;schwierigkeit;letzter_gegner"
+
+
+## Eine Zeile pro Run, nur lokal (Tester schicken die Datei selbst). Nichts wird ins Internet gesendet.
+func _log_run(run: RunState, won: bool) -> void:
+	if not persist:
+		return
+	var is_new := not FileAccess.file_exists(LOG_PATH)
+	var f := FileAccess.open(LOG_PATH, FileAccess.READ_WRITE if not is_new else FileAccess.WRITE)
+	if f == null:
+		return
+	if is_new:
+		f.store_line(LOG_HEADER)
+	else:
+		f.seek_end()
+	var dur := (Time.get_ticks_msec() - run.start_ms) / 1000.0
+	var cols := [Time.get_datetime_string_from_system(), ProjectSettings.get_setting("application/config/version", "0.1"),
+		run.species, run.form, run.map.zone, "sieg" if won else "niederlage", run.floor_idx + 1, run.fights_won,
+		run.chips_used, "%.0f" % dur, ["entspannt", "normal", "knackig"][run.difficulty], run.last_foe]
+	f.store_line(";".join(cols.map(func(c): return str(c))))
+
+
+func log_folder() -> String:
+	return ProjectSettings.globalize_path("user://")
 
 
 # ---------- Zonen ----------

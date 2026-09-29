@@ -49,6 +49,8 @@ var special_t := 0.0
 var combo := 0
 var last_chip := ""
 var decoy := 0
+var min_e_hp := 0        # Tutorial: Gegner kann nicht unter diesen Wert fallen
+var min_p_hp := 0        # Tutorial: Spieler kann nicht unter diesen Wert fallen
 var hazards: Array = []  # Lavafelder auf der Spielerseite {c, r, t, tick}
 var decoy_t := 0.0
 var regen_t := 1.0
@@ -448,7 +450,7 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 	if not dot and scan > 0 and not in_special:
 		scan -= 1
 		d = roundi(d * 1.5)
-	e.hp = maxi(0, e.hp - d)
+	e.hp = maxi(min_e_hp, e.hp - d)
 	e.flash = 0.09
 	if not dot and not in_special:
 		sp = minf(100.0, sp + d * 1.2)
@@ -515,7 +517,7 @@ func hurt_player(d: int) -> void:
 	if mon.passive == "Dampfhülle":
 		e.burn = maxi(e.burn, 3)
 		float_at(3 + e.c, e.r, "Dampfhülle", GameData.EL.Feuer)
-	run.hp = maxi(0, run.hp - d)
+	run.hp = maxi(min_p_hp, run.hp - d)
 	events.append("hurt")
 	since_hit = 0.0
 	sp = minf(100.0, sp + d * 1.5)
