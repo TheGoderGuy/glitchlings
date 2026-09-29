@@ -28,6 +28,7 @@ func _ready() -> void:
 	test_meta()
 	test_all_specials()
 	test_passives()
+	test_new_lines()
 	test_map()
 	test_rooms()
 	test_elite_scaling()
@@ -468,12 +469,78 @@ func test_all_specials() -> void:
 		var expected := 0
 		for d in S.hits:
 			expected += roundi(d * GameData.mult(S.el, "Virus"))
+		if S.has("replay"):
+			expected += roundi(30 * GameData.mult(S.el, "Virus"))  # ohne letzten Chip: 30 Schaden
 		var dealt: int = 320 - st.e.hp
 		# Brand/Gift ticken in 1,2 s höchstens einmal mit
 		if dealt < expected or dealt > expected + 9:
 			ok = false
 			printerr("    %s: erwartet %d, verursacht %d" % [f, expected, dealt])
 	check(ok, "Alle %d Signatur-Attacken treffen mit ihrem vollen Schaden" % GameData.SPECIALS.size())
+
+
+func test_new_lines() -> void:
+	# Jede Linie: Baby hat Form, Signatur, Sprite; jede Evolutionsrichtung zeigt auf eine Form
+	var ok := true
+	for sp in GameData.MONS:
+		var M: Dictionary = GameData.MONS[sp]
+		if not GameData.FORMS.has(sp) or not GameData.SPECIALS.has(sp):
+			ok = false
+		for el in M.evo:
+			if not GameData.FORMS.has(M.evo[el]) or GameData.FORMS[M.evo[el]].el != el:
+				ok = false
+				printerr("    Richtung passt nicht: %s %s → %s" % [sp, el, M.evo[el]])
+	check(ok and GameData.MONS.size() == 9, "9 Linien, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
+	# Passive
+	var st := BattleState.new(RunState.new("Brummbit", 1), GameData.FOES[0])
+	st.reflex = 0
+	st.hurt_player(20)
+	check(st.run.hp == 125, "Dickes Fell: 20 Schaden → 15 (HP %d)" % st.run.hp)
+	var st2 := BattleState.new(RunState.new("Lumi", 1), GameData.FOES[0])
+	st2.move_player(0, -1)
+	check(absf(st2.p.cd - 0.05) < 0.001, "Hasenhaken: halbe Bewegungspause")
+	var st3 := BattleState.new(RunState.new("Quakli", 1), GameData.FOES[0])
+	st3.hurt_player(5)
+	check(st3.e.poison == 3, "Giftbaut: Angreifer wird vergiftet")
+	var st4 := BattleState.new(RunState.new("Kauzbit", 1), GameData.FOES[0])
+	st4.e.move_t = 99.0
+	st4.e.atk_t = 0.01
+	step(st4, 0.02)
+	check(absf(st4.warns[0].max - 1.0) < 0.01, "Eulenblick: Warnung 0,3 s länger")
+	var st5 := BattleState.new(RunState.new("Molchi", 1), GameData.FOES[3])
+	st5.e.frozen = 99.0
+	st5.e.poison = 1
+	step(st5, 1.05)
+	check(st5.e.hp == 320 - 6, "Giftdrüsen: Gift wirkt 50 %% stärker (HP %d)" % st5.e.hp)
+	var hamster := 0
+	for i in 40:
+		var st6 := BattleState.new(RunState.new("Kekso", i), GameData.FOES[0])
+		st6.e.frozen = 99.0
+		play(st6, "Pixelstrahl")
+		if st6.draw_pile.has("Pixelstrahl") and st6.disc.is_empty():
+			hamster += 1
+	check(hamster > 3 and hamster < 20, "Hamstern: etwa jeder 4. Chip kommt zurück (%d/40)" % hamster)
+	# Abbild fängt Treffer ab
+	var r7 := RunState.new("Lumi", 1)
+	r7.form = "Screenshina"
+	var st7 := BattleState.new(r7, GameData.FOES[0])
+	st7.e.frozen = 99.0
+	st7.reflex = 0
+	st7.sp = 100.0
+	st7.use_special()
+	st7.hurt_player(10)
+	st7.hurt_player(10)
+	st7.hurt_player(10)
+	check(st7.run.hp == 75, "Abbild fängt 2 Treffer ab, der dritte trifft (HP %d)" % st7.run.hp)
+	# Zungenschlag zieht den Gegner vor den Spieler
+	var st8 := BattleState.new(RunState.new("Quakli", 1), GameData.FOES[0])
+	st8.e.c = 2
+	st8.e.r = 0
+	st8.sp = 100.0
+	st8.use_special()
+	check(st8.e.c == 0 and st8.e.r == st8.p.r, "Zungenschlag zieht den Gegner vor dich")
+	# Eier enthalten jetzt seltenere Linien
+	check(SaveGame.egg_pool("Selten").has("Lumi") and SaveGame.egg_pool("Episch").has("Kauzbit") and not SaveGame.egg_pool("Gewöhnlich").has("Brummbit"), "Seltene Eier enthalten seltenere Linien")
 
 
 func test_passives() -> void:
@@ -596,7 +663,7 @@ func test_simulated_runs() -> void:
 	var forms := {}
 	for seed_value in runs:
 		seed(seed_value)
-		var run := RunState.new(["Pixmiez", "Funkling", "Tröpfel"][seed_value % 3], seed_value)
+		var run := RunState.new(GameData.MONS.keys()[seed_value % GameData.MONS.size()], seed_value)
 		var bot := BattleBot.new(0.25)
 		var won := false
 		while true:

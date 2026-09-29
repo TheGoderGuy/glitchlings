@@ -47,6 +47,9 @@ var jump_t := 0.0
 var special_anim := ""
 var special_t := 0.0
 var combo := 0
+var last_chip := ""
+var decoy := 0
+var decoy_t := 0.0
 var regen_t := 1.0
 var banner := {}
 var status := ""
@@ -119,7 +122,7 @@ func move_player(dc: int, dr: int) -> void:
 		return
 	p.c = c
 	p.r = r
-	p.cd = mon.move
+	p.cd = mon.move * (0.5 if mon.passive == "Hasenhaken" else 1.0)
 	events.append("move")
 	for i in range(pops.size() - 1, -1, -1):
 		var q: Dictionary = pops[i]
@@ -146,7 +149,13 @@ func use_slot(i: int) -> void:
 	run.chips_used += 1
 	if id == "Eisfeld":
 		run.eis += 1
-	disc.append(id)
+	# Hamstern (Kekso-Linie): Chip kommt gleich wieder statt auf den Ablagestapel
+	if mon.passive == "Hamstern" and rng.randf() < 0.25:
+		draw_pile.append(id)
+		float_at(p.c, p.r, "Gehamstert!", GameData.EL.Neutral)
+	else:
+		disc.append(id)
+	last_chip = id
 	var nx := _draw_one()
 	s.chip = nx
 	s.max = GameData.CHIPS[nx].cd if nx != "" else 1.0
@@ -190,6 +199,32 @@ func use_special() -> void:
 	if S.has("heal"):
 		var h := run.heal(S.heal)
 		float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
+	if S.has("decoy"):
+		decoy = S.decoy
+		decoy_t = S.decoy_t
+		float_at(p.c, p.r, "Abbild!", GameData.EL.Code)
+	if S.has("scan"):
+		scan = maxi(scan, S.scan)
+		float_at(p.c, p.r, "Scan x%d" % scan, GameData.EL.Code)
+	if S.has("mines"):
+		var spots: Array = []
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n := Vector2i(e.c + d.x, e.r + d.y)
+			if n.x >= 0 and n.x < 3 and n.y >= 0 and n.y < 3:
+				spots.append(n)
+		for k in mini(S.mines, spots.size()):
+			var sp: Vector2i = spots[rng.randi_range(0, spots.size() - 1)]
+			spots.erase(sp)
+			mines.append({"c": sp.x, "r": sp.y, "arm": 0.3, "t": 8.0})
+	if S.has("replay"):
+		if last_chip != "":
+			float_at(p.c, p.r, "Backentasche: " + last_chip, GameData.EL.Neutral)
+			_apply_chip(last_chip)
+		else:
+			delayed.append({"t": 0.05, "fn": _special_hit.bind(S, true, 30), "mark": false})
+	if S.has("pull") and not over:
+		e.c = 0
+		e.r = p.r
 	# Treffer: beim Sprung auf dem Höhepunkt, sonst sofort, mehrere im Abstand von 0,15 s
 	var t0 := SPECIAL_JUMP * 0.5 if S.anim == "jump" else 0.05
 	for k in S.hits.size():
@@ -403,7 +438,7 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 		return
 	var m := 1.0 if dot else GameData.mult(el, def.el)
 	d = roundi(d * m)
-	if not dot and scan > 0:
+	if not dot and scan > 0 and not in_special:
 		scan -= 1
 		d = roundi(d * 1.5)
 	e.hp = maxi(0, e.hp - d)
@@ -432,6 +467,12 @@ func hurt_player(d: int) -> void:
 		float_at(p.c, p.r, "Katzenreflex!", GameData.COL.mint)
 		burst(p.c + 0.5, p.r + 0.5, Color("#C9B8FF"), 14)
 		return
+	if decoy > 0 and decoy_t > 0:
+		decoy -= 1
+		events.append("block")
+		float_at(p.c, p.r, "Abbild fängt ab!", GameData.EL.Code)
+		burst(p.c + 0.3, p.r + 0.5, GameData.EL.Code, 10)
+		return
 	if mist > 0 and rng.randf() < 0.5:
 		events.append("dodge")
 		float_at(p.c, p.r, "Verfehlt!", GameData.EL.Wasser)
@@ -455,6 +496,11 @@ func hurt_player(d: int) -> void:
 			float_at(p.c, p.r, "Blase platzt", GameData.EL.Wasser)
 		if d <= 0:
 			return
+	if mon.passive == "Dickes Fell":
+		d = maxi(1, roundi(d * 0.75))
+	if mon.passive == "Giftbaut":
+		e.poison = maxi(e.poison, 3)
+		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
 	run.hp = maxi(0, run.hp - d)
 	events.append("hurt")
 	since_hit = 0.0
@@ -535,6 +581,10 @@ func _update_logic(dt: float) -> void:
 		heat -= dt
 	if mist > 0:
 		mist -= dt
+	if decoy_t > 0:
+		decoy_t -= dt
+		if decoy_t <= 0:
+			decoy = 0
 	since_hit += dt
 	if mon.passive == "Regeneration" and since_hit >= 3.0 and run.hp < run.max_hp:
 		regen_t -= dt
@@ -602,12 +652,12 @@ func _update_logic(dt: float) -> void:
 			e.dot_t = 1.0
 			if e.burn > 0:
 				e.burn -= 1
-				hit_enemy(5, "Feuer", true)
+				hit_enemy(8 if mon.passive == "Giftdrüsen" else 5, "Feuer", true)
 				if over:
 					return
 			if e.poison > 0:
 				e.poison -= 1
-				hit_enemy(4, "Virus", true)
+				hit_enemy(6 if mon.passive == "Giftdrüsen" else 4, "Virus", true)
 				if over:
 					return
 	for i in range(bots.size() - 1, -1, -1):
@@ -763,6 +813,8 @@ func _enemy_attack() -> void:
 		_:
 			cells.append(Vector2i(p.c, p.r))
 	warn += def.get("warn_bonus", 0.0)
+	if mon.passive == "Eulenblick":
+		warn += 0.3
 	events.append("warn")
 	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg})
 

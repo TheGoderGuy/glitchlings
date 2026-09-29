@@ -103,8 +103,8 @@ func add_egg(rarity: String, rng: RandomNumberGenerator) -> Dictionary:
 
 ## Welche Babys in welcher Ei-Seltenheit stecken (wächst mit neuen Linien)
 func egg_pool(rarity: String) -> Array:
-	var pools := {"Gewöhnlich": ["Pixmiez", "Funkling", "Tröpfel"], "Selten": ["Pixmiez", "Funkling", "Tröpfel"],
-		"Episch": ["Pixmiez", "Funkling", "Tröpfel"], "Legendär": ["Pixmiez", "Funkling", "Tröpfel"]}
+	var pools := {"Gewöhnlich": ["Pixmiez", "Funkling", "Tröpfel", "Kekso"], "Selten": ["Lumi", "Quakli", "Molchi"],
+		"Episch": ["Brummbit", "Kauzbit"], "Legendär": ["Brummbit", "Kauzbit"]}
 	var out: Array = pools[rarity].filter(func(s): return GameData.MONS.has(s))
 	return out
 

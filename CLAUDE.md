@@ -59,7 +59,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Phase 2d (28.09.2026): 4 Chiptune-Platzhalterstücke (Titel/Karte/Kampf/Boss, selbst synthetisiert), Zonen-Hintergrund Cache-Wiesen, Schwierigkeit Entspannt/Normal/Knackig, Musik-Lautstärke, Blinzel-Frames, 84 Tests
 - [x] Musik 29.09.: Titel/Karte/Boss im GBA/DS-Stil neu (Bossmusik „mega“), alte Kampfmusik bleibt („episch“), Siegesfanfare, Karte läuft nach Kämpfen weiter
 - [x] Phase 3a (29.09.2026): Spielstand, Station (Team/Brutnest/Monsterdex), dauerhafte Evolution (Rookie 15, Champion 60), Eier nach Runs, Schlüpf-Szene, 99 Tests – `vault/05 Produktion/Station.md`
-- [ ] Phase 3b: 6 weitere Linien (Kekso, Lumi, Quakli, Molchi, Brummbit, Kauzbit – Sprites da) als Ei-Inhalt, dann Labor/Fusion · Zone 2 · Phase 4: Steam-Seite + Demo
+- [x] Phase 3b (29.09.2026): 6 weitere Linien (Kekso, Lumi, Quakli, Molchi, Brummbit, Kauzbit) als Ei-Inhalt – 9 Linien, 40 Formen, 6 neue Passive, Monsterdex blättert, 109 Tests
+- [ ] Als Nächstes: Labor/Fusion · Champions+Ultras für Linien ohne Endstufe · Zone 2 · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)

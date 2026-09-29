@@ -18,6 +18,18 @@ Titel → **erster Start:** Starter wählen → Station · **danach:** direkt St
 ## Pro Run (Roguelite, wird zurückgesetzt)
 Deck, Fragmente, HP, Ereignis-Boni.
 
+## Linien & Ei-Inhalt (Phase 3b, 29.09.2026)
+9 Linien, 40 Formen, 40 Signaturen. Starter bleiben Pixmiez, Funkling, Tröpfel – die übrigen gibt es nur aus Eiern:
+
+| Ei | Inhalt |
+|---|---|
+| Gewöhnlich | Pixmiez, Funkling, Tröpfel, Kekso (Hamster) |
+| Selten | Lumi (Hase), Quakli (Frosch), Molchi (Salamander) |
+| Episch | Brummbit (Bär), Kauzbit (Robo-Eule) |
+| Legendär | vorerst wie Episch (später Fusionen/Sonderformen) |
+
+Neue Passive: Hamstern, Hasenhaken, Giftbaut, Giftdrüsen, Dickes Fell, Eulenblick. Neue Signatur-Mechaniken: Backentasche (letzten Chip wiederholen), Minen, Abbild (fängt Treffer ab), Zungenschlag (zieht Gegner heran), Scan.
+Sprites mit Umlaut im Namen liegen im Spiel als `Huepfbyte_64.png` / `Baertron_64.png` (Umlaute in Dateinamen machen Probleme). Blinzel-Frames fehlen noch für Toxmolch, Bärtron, Titanbrumm.
+
 ## Offen
-- Ei-Seltenheit ist noch ohne Wirkung: alle Pools enthalten die 3 Starter. Mit den Linien Kekso, Lumi, Quakli, Molchi, Brummbit, Kauzbit (Sprites vorhanden) bekommen die Seltenheiten Inhalt.
 - Labor/Fusion, Bindung/Pflege, dauerhafte Währung.

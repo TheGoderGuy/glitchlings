@@ -177,6 +177,11 @@ func _screenshot(shot: Dictionary) -> void:
 			show_station()
 			current.tab = {"station": 0, "nest": 1, "dex": 2, "hatch": 0}[mode]
 			current.hatch_t = shot.get("t", 0.0)
+			if mode == "dex":
+				current.sel = int(shot.get("t", 0.0))
+				for f in GameData.FORMS:
+					if f in ["Kekso", "Tracko", "Lumi", "Screenshina", "Holohas", "Quakli", "Hüpfbyte", "Brummbit", "Kauzbit", "Raketauz"]:
+						SaveGame.see(f)
 			current.t_in = 1.0
 		"map":
 			show_map()

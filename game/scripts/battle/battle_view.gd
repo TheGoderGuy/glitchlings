@@ -14,7 +14,7 @@ const FEET := 36        # Fußlinie innerhalb eines Feldes
 const CARD_W := 136
 const CARD_H := 46
 const HAND_Y := 306
-const HAND_X := 57
+const HAND_X := 42
 const HEAL_AFTER_FIGHT := 10
 const BABY_SCALE := 1     # Babys (32 px) im Kampf in Originalgröße, damit die Evolution sichtbar wächst
 
@@ -286,6 +286,9 @@ func _draw_actors() -> void:
 		pcx = lerpf(pcx, gx(3 + e.c) + CW / 2.0 - 30, u)
 		pfy = lerpf(pfy, feet_y(e.r), u) - u * 26.0
 	_shadow(gx(p.c) + CW / 2.0, feet_y(p.r), 30)
+	if st.decoy > 0 and st.decoy_t > 0:
+		for k in st.decoy:
+			_draw_sprite(mkey, pcx - 16 - k * 10, pfy, false, {"scale": BABY_SCALE if run.stage == 1 else 1, "mod": Color(0.6, 1.0, 0.8, 0.35 + 0.1 * sin(anim_t * 8.0 + k))})
 	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1})
 	var body := Vector2(gx(p.c) + CW / 2.0, feet_y(p.r) - 24)
 	if st.shield > 0:
@@ -449,7 +452,7 @@ func _draw_hud() -> void:
 func _draw_hand() -> void:
 	var nx := st.next_chip()
 	_text(Vector2(HAND_X, 298), "Als Nächstes: " + (nx if nx != "" else "–"), 8, GameData.COL.muted)
-	_text(Vector2(HAND_X, 298), ("Start" if InputSetup.pad else "Esc") + ": Pause", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 100)
+	_text(Vector2(HAND_X, 298), ("Start" if InputSetup.pad else "Esc") + ": Pause", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 130)
 	for i in 3:
 		var s: Dictionary = st.hand[i]
 		var r := Rect2(HAND_X + i * (CARD_W + 6), HAND_Y, CARD_W, CARD_H)
@@ -475,7 +478,7 @@ func _draw_hand() -> void:
 			if s.queued:
 				_text(r.position + Vector2(8, 33), "gemerkt", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 14)
 	# Signatur-Attacke
-	var R := Rect2(HAND_X + 3 * (CARD_W + 6), HAND_Y, 100, CARD_H)
+	var R := Rect2(HAND_X + 3 * (CARD_W + 6), HAND_Y, 130, CARD_H)
 	var full := st.sp >= 100
 	var S: Dictionary = run.special()
 	var sel: Color = GameData.EL[S.el]

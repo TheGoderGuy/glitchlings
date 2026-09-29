@@ -8,7 +8,10 @@ enum Tab { TEAM, NEST, DEX }
 const TAB_NAMES := ["Team", "Brutnest", "Monsterdex"]
 const DEX_ORDER := ["Pixmiez", "Blazebit", "Firewallo", "Virulina", "Prismiez", "Glutluchs", "Bollwerkatz",
 	"Funkling", "Glutbyte", "Overclocko", "Magmawulf", "Turbowulf",
-	"Tröpfel", "Kaskadi", "Pufferling", "Frostbyte", "Tsunamander", "Panzerpuff"]
+	"Tröpfel", "Kaskadi", "Pufferling", "Frostbyte", "Tsunamander", "Panzerpuff",
+	"Kekso", "Tracko", "Cachy", "Lumi", "Blinki", "Screenshina", "Holohas",
+	"Quakli", "Virulurch", "Hüpfbyte", "Mechaquak", "Molchi", "Toxmolch", "Magmolch",
+	"Brummbit", "Sonnbrumm", "Bärtron", "Titanbrumm", "Kauzbit", "Optikauz", "Raketauz", "Radarkauz"]
 const HATCH_REVEAL := 2.2
 ## Vorladen! Texturen, die erst in _draw() zum ersten Mal geladen werden, erscheinen weiß.
 const EGG_TEX := {"egg_g": preload("res://assets/sprites/egg_g.png"), "egg_s": preload("res://assets/sprites/egg_s.png"), "egg_e": preload("res://assets/sprites/egg_e.png")}
@@ -237,10 +240,12 @@ func _draw_nest() -> void:
 func _draw_dex() -> void:
 	var R := Rect2(20, 34, 600, 306)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
-	for i in DEX_ORDER.size():
+	# 3 sichtbare Reihen, blättert mit der Auswahl mit
+	var first_row := clampi(sel / 6 - 1, 0, maxi(0, (DEX_ORDER.size() - 1) / 6 - 2))
+	for i in range(first_row * 6, mini(DEX_ORDER.size(), first_row * 6 + 18)):
 		var f: String = DEX_ORDER[i]
 		var known: bool = SaveGame.data.get("dex", {}).has(f)
-		var cell := Rect2(R.position.x + 8 + (i % 6) * 98, R.position.y + 8 + (i / 6) * 96, 94, 92)
+		var cell := Rect2(R.position.x + 8 + (i % 6) * 98, R.position.y + 8 + (i / 6 - first_row) * 96, 94, 92)
 		var active := i == sel
 		_box(cell, GameData.COL.panel.lightened(0.06) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
 		var F: Dictionary = GameData.FORMS[f]
