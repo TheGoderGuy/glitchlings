@@ -7,6 +7,7 @@ extends Node
 const TitleScreen := preload("res://scripts/ui/title.gd")
 const StarterScreen := preload("res://scripts/ui/starter_view.gd")
 const OpeningScreen := preload("res://scripts/ui/opening_view.gd")
+const EndingScreen := preload("res://scripts/ui/ending_view.gd")
 const MapScreen := preload("res://scripts/ui/map_view.gd")
 const RoomScreen := preload("res://scripts/ui/room_view.gd")
 const ResultScreen := preload("res://scripts/ui/result_view.gd")
@@ -52,6 +53,17 @@ func _from_title() -> void:
 		)
 
 
+func show_ending(forms: Array, then: Callable) -> void:
+	var e := EndingScreen.new()
+	var team: Array = forms.duplicate()
+	for m in SaveGame.team():
+		if team.size() < 5 and not team.has(m.form):
+			team.append(m.form)
+	e.team_forms = team
+	e.finished.connect(then)
+	_swap(e)
+
+
 func show_opening(then: Callable) -> void:
 	var o := OpeningScreen.new()
 	o.finished.connect(then)
@@ -79,7 +91,7 @@ func show_station() -> void:
 
 func start_run(monster_id: int, zone := "wiesen", seed_value := -1) -> void:
 	run = RunState.from_monster(SaveGame.monster(monster_id), seed_value, zone)
-	run.difficulty = Settings.difficulty
+	run.difficulty = Settings.difficulty if Settings.difficulty < 3 or SaveGame.game_cleared() else 2
 	run.tutorial = not SaveGame.data.get("tutorial_done", false)
 	show_map()
 
@@ -111,6 +123,9 @@ func _enter_node() -> void:
 func _battle_finished(won: bool) -> void:
 	if not won:
 		show_result(false)
+	elif run.current_node().type == "boss" and GameData.ZONES[run.map.zone].get("final", false):
+		# Ur-Glitch besiegt: Ende und Abspann, danach die Auswertung
+		show_ending([run.form], show_result.bind(true))
 	elif run.current_node().type == "boss":
 		show_result(true)
 	else:
@@ -192,6 +207,9 @@ func _screenshot(shot: Dictionary) -> void:
 			show_starters()
 		"opening":
 			show_opening(show_title)
+			current.seek(shot.get("t", 0.0))
+		"ending":
+			show_ending([shot.get("form", "Pyrolynx")], show_title)
 			current.seek(shot.get("t", 0.0))
 		"station", "nest", "dex", "hatch", "lab", "fusion":
 			if mode == "hatch":

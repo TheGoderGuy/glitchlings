@@ -5,7 +5,7 @@ extends Node
 
 const RESUME := ["map", "title"]
 ## Einblendzeit je Stück: Kämpfe starten knackig, die Karte blendet weich ein
-const FADE_IN := {"map": 1.2, "title": 1.0, "battle": 0.05, "boss": 0.05, "victory": 0.02, "intro": 2.0}
+const FADE_IN := {"map": 1.2, "title": 1.0, "battle": 0.05, "boss": 0.05, "victory": 0.02, "intro": 2.0, "finale": 0.05, "ending": 1.5}
 const FADE_OUT := 0.45
 
 var players: Array[AudioStreamPlayer] = []

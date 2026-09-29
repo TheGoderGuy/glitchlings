@@ -32,11 +32,12 @@ var floor_idx := -1       # -1 = noch vor der ersten Etage
 var pos := -1
 var path: Array = []      # besuchte Knoten als Vector2i(etage, index)
 var rng := RandomNumberGenerator.new()
-var difficulty := 1       # 0 Entspannt, 1 Normal, 2 Knackig (aus den Optionen)
+var difficulty := 1       # 0 Entspannt, 1 Normal, 2 Knackig, 3 Korrumpiert (nach dem Ende, aus den Optionen)
 
-const DIFF_HP := [0.8, 1.0, 1.25]
-const DIFF_DMG := [0.7, 1.0, 1.25]
-const DIFF_WARN := [0.25, 0.0, -0.1]   # Sekunden mehr/weniger Vorwarnung
+const DIFF_HP := [0.8, 1.0, 1.25, 1.5]
+const DIFF_DMG := [0.7, 1.0, 1.25, 1.4]
+const DIFF_WARN := [0.25, 0.0, -0.1, -0.15]   # Sekunden mehr/weniger Vorwarnung
+const DIFF_LOOT := [1.0, 1.0, 1.0, 1.5]      # Korrumpiert lohnt sich: mehr Fragmente
 
 
 func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
@@ -219,6 +220,7 @@ func _apply_difficulty(d: Dictionary) -> Dictionary:
 	d.hp = roundi(d.hp * DIFF_HP[difficulty])
 	d.dmg = maxi(1, roundi(d.dmg * DIFF_DMG[difficulty]))
 	d.warn_bonus = DIFF_WARN[difficulty]
+	d.loot = roundi(d.loot * DIFF_LOOT[difficulty])
 	return d
 
 

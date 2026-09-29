@@ -41,6 +41,7 @@ func _ready() -> void:
 	await test_music()
 	await test_opening()
 	await test_boss_intro()
+	await test_finale()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -393,7 +394,7 @@ func test_new_foes() -> void:
 	for f in GameData.FOES:
 		if not ResourceLoader.exists("res://assets/sprites/%s.png" % PixelCanvas.SPRITE_FILES[f.spr]):
 			sprites_ok = false
-	check(sprites_ok and GameData.FOES.size() == 15, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
+	check(sprites_ok and GameData.FOES.size() == 18, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
 	# Jeder Gegner lässt sich mit dem Autopilot besiegen
 	var all_end := true
 	for i in GameData.FOES.size():
@@ -1098,7 +1099,7 @@ func test_sounds() -> void:
 
 func test_music() -> void:
 	var ok := true
-	for key in ["title", "map", "battle", "boss", "victory", "map_vulkan", "battle_vulkan", "map_sumpf", "battle_sumpf", "intro"]:
+	for key in ["title", "map", "battle", "boss", "victory", "map_vulkan", "battle_vulkan", "map_sumpf", "battle_sumpf", "intro", "map_kern", "finale", "ending"]:
 		var path := "res://assets/music/%s.wav" % key
 		if not ResourceLoader.exists(path):
 			ok = false
@@ -1108,7 +1109,7 @@ func test_music() -> void:
 		var lb := MusicSynth.intro_frames(key) if st.stereo else 0
 		if st.get_length() < 8.0 or lb >= frames:
 			ok = false
-	check(ok, "Alle 10 Musikstücke vorhanden (inkl. Vulkan/Sumpf/Intro), Schleifenpunkte gültig")
+	check(ok, "Alle 13 Musikstücke vorhanden (inkl. Zonen, Intro, Finale, Ende), Schleifenpunkte gültig")
 	check(Music.zone_key("map", "vulkan") == "map_vulkan" and Music.zone_key("battle", "sumpf") == "battle_sumpf" and Music.zone_key("map", "wiesen") == "map" and Music.zone_key("battle", "wiesen") == "battle", "Zonen 2 und 3 haben eigene Karten- und Kampfmusik, Wiesen behalten die alte")
 	# Blinzel-Frames: jede Form außer den bekannten Ausnahmen
 	var no_blink: Array = []
@@ -1223,4 +1224,107 @@ func test_boss_intro() -> void:
 	bv3.setup(r3, r3.foe_for({"type": "fight"}), "fight")
 	check(bv3.mode == bv3.Mode.FIGHT, "Normale Kämpfe starten ohne Intro")
 	bv3.queue_free()
+	Music.stop()
+
+
+## Finale: NEST-Kern, Ur-Glitch, Ende, Schwierigkeit „Korrumpiert“
+func test_finale() -> void:
+	var Z: Dictionary = GameData.ZONES.kern
+	var rk := RunState.new("Pixmiez", 21)
+	rk.map = ZoneMap.generate(rk.rng, "kern")
+	check(rk.map.floors.size() == 5 and rk.map.floors[-1][0].type == "boss" and rk.map.floors[3].all(func(n): return n.type == "rest"), "NEST-Kern: 4 Etagen + Boss, Rast vor dem Ur-Glitch")
+	check(GameData.ZONE_ORDER[-1] == "kern" and Z.unlock == "sumpf", "NEST-Kern wird nach den Viren-Sümpfen frei")
+	var boss := rk.foe_for({"type": "boss"})
+	check(boss.name == "Ur-Glitch" and boss.get("final", false), "Endboss: Ur-Glitch (%d HP)" % boss.hp)
+	# Elementwechsel
+	var st := BattleState.new(rk, boss)
+	st.e.move_t = 99.0
+	st.e.atk_t = 99.0
+	var seen := {st.def.el: true}
+	for i in 5:
+		step(st, BattleState.SHIFT_TIME + 0.05)
+		st.e.atk_t = 99.0
+		st.e.move_t = 99.0
+		st.warns.clear()
+		seen[st.def.el] = true
+	check(seen.size() >= 3, "Ur-Glitch wechselt das Element: %s" % [seen.keys()])
+	var strong := GameData.strong_against(st.def.el)
+	check(strong != "" and GameData.mult(strong, st.def.el) > 1.0 and st.status.contains(strong), "Hinweis nennt das starke Element (%s gegen %s)" % [strong, st.def.el])
+	# Diener passend zum Element
+	st.e.hp = roundi(st.e.max * 0.4)
+	st.def.el = "Feuer"
+	st.e.pop_t = 0.01
+	st.shift_t = 99.0
+	step(st, 0.05)
+	var lava_ok: bool = st.warns.any(func(w): return w.get("lava", false) and w.get("kind", "lava") == "lava")
+	st.warns.clear()
+	st.def.el = "Code"
+	st.e.pop_t = 0.01
+	step(st, 0.05)
+	check(lava_ok and st.pops.any(func(q): return q.kind == "milbe"), "Ur-Glitch-Diener passen zum Element (Feuer: Lava, Code: Bitmilben)")
+	# Spielstand: Ende erreicht → Korrumpiert frei
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.data.cleared = ["wiesen", "vulkan", "sumpf"]
+	SaveGame.data.erase("game_cleared")
+	check(SaveGame.zone_unlocked("kern") and not SaveGame.game_cleared(), "Nach den Sümpfen ist der Kern offen, das Spiel aber noch nicht durch")
+	var rw := RunState.new("Pixmiez", 22)
+	rw.map = ZoneMap.generate(rw.rng, "kern")
+	var sum := SaveGame.record_run(rw, true)
+	check(SaveGame.game_cleared() and sum.get("game_cleared", false), "Ur-Glitch besiegt: Spiel durchgespielt")
+	SaveGame.data = saved
+	# Korrumpiert: härter, aber mehr Fragmente
+	var r3 := RunState.new("Pixmiez", 23)
+	r3.difficulty = 2
+	var f2 := r3.foe_for({"type": "fight"})
+	var r4 := RunState.new("Pixmiez", 23)
+	r4.difficulty = 3
+	var f3 := r4.foe_for({"type": "fight"})
+	check(f3.hp > f2.hp and f3.dmg > f2.dmg and f3.loot > f2.loot, "Korrumpiert: mehr HP/Schaden als Knackig, dafür mehr Fragmente")
+	# Autopilot durch den Kern (Babys wären hier zu schwach: mit Champion-Form wie in einem späten Spielstand)
+	var kwins := 0
+	var kstuck := 0
+	for sv in 9:
+		var rr := RunState.new(["Pixmiez", "Funkling", "Tröpfel"][sv % 3], 300 + sv)
+		rr.form = ["Glutluchs", "Magmawulf", "Tsunamander"][sv % 3]
+		rr.stage = 3
+		rr.max_hp += 20
+		rr.hp = rr.max_hp
+		rr.map = ZoneMap.generate(rr.rng, "kern")
+		var bot := BattleBot.new(0.25)
+		while true:
+			var ch := rr.next_choices()
+			if ch.is_empty():
+				break
+			var node := rr.enter(ch[0])
+			if node.type in ["fight", "elite", "boss"]:
+				var s := BattleState.new(rr, rr.foe_for(node))
+				var tt := 0.0
+				while not s.over and tt < 240.0:
+					bot.act(s)
+					s.update(1.0 / 30.0)
+					tt += 1.0 / 30.0
+				if not s.over:
+					kstuck += 1
+					break
+				if s.outcome == "lost":
+					break
+				if node.type == "boss":
+					kwins += 1
+					break
+				rr.heal(10)
+	check(kstuck == 0, "Kern-Runs: kein Kampf hängt")
+	print("  info    Kern-Autopilot (Champions): %d/9 Runs gewonnen" % kwins)
+	# Ende-Szene läuft durch
+	var En: GDScript = load("res://scripts/ui/ending_view.gd")
+	var ev = En.new()
+	var total := 0.0
+	for pnl in ev.PANELS:
+		total += pnl.dur
+	var ended := [false]
+	ev.finished.connect(func(): ended[0] = true)
+	add_child(ev)
+	ev.seek(total - 0.3)
+	await get_tree().create_timer(0.6).timeout
+	check(ended[0] and total > 40.0 and total < 70.0, "Ende-Szene mit Abspann (%.0f s) läuft durch" % total)
+	ev.queue_free()
 	Music.stop()

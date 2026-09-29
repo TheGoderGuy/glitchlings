@@ -251,6 +251,79 @@ const TRACKS := {
 				"D6 - - - - - - - A5 - C6 - F#6 - - -"]},
 		],
 	},
+	# ---------- Finale: NEST-Kern ----------
+	"map_kern": {
+		"bpm": 100, "loud": 0.17, "lead": "lead_soft", "bass": "bounce", "arp": "arp16", "stabs": "", "drums": "map", "counter": "strings",
+		"sections": [
+			{"name": "A", "chords": ["Cm", "Ab", "Eb", "Bb", "Cm", "Ab", "Fm", "G"], "melody": [
+				"G5 - - - Eb5 - - - C5 - - - D5 - Eb5 -",
+				"C5 - - - - - - - Ab4 - - - C5 - Eb5 -",
+				"Bb4 - - - Eb5 - - - G5 - - - F5 - Eb5 -",
+				"D5 - - - - - - - F5 - - - . . . .",
+				"G5 - - - C6 - - - Bb5 - - - G5 - Eb5 -",
+				"Eb5 - - - Ab5 - - - C6 - - - Ab5 - F5 -",
+				"F5 - - - Ab5 - - - C6 - - - Bb5 - Ab5 -",
+				"G5 - - - - - - - B4 - - - D5 - - -"]},
+			{"name": "B", "chords": ["Ab", "Bb", "Gm", "Cm", "Ab", "Bb", "G", "G"], "melody": [
+				"C6 - - - Bb5 - Ab5 - Eb5 - - - Ab5 - - -",
+				"D6 - - - C6 - Bb5 - F5 - - - Bb5 - - -",
+				"Bb5 - - - G5 - - - D5 - - - G5 - Bb5 -",
+				"C6 - - - - - - - G5 - - - Eb5 - - -",
+				"Eb6 - - - D6 - C6 - Ab5 - - - C6 - Eb6 -",
+				"D6 - - - F6 - - - Bb5 - - - D6 - - -",
+				"B5 - - - D6 - - - G6 - - - F6 - D6 -",
+				"B5 - - - - - - - . . . . D5 - F5 -"]},
+		],
+	},
+	"finale": {
+		"bpm": 184, "loud": 0.21, "lead": "lead_sq", "bass": "octave8", "arp": "arp16", "stabs": "x.x...x...x.x...", "drums": "boss", "counter": "brass",
+		"sections": [
+			{"name": "intro", "chords": ["Em", "B"], "melody": [
+				"E5 . E5 . G5 . E5 . B5 . A5 . G5 . F#5 .",
+				"E5 - - - - - - - D#5 - - - F#5 - B5 -"]},
+			{"name": "A", "chords": ["Em", "C", "D", "B", "Em", "C", "Am", "B"], "melody": [
+				"E5 - - - B5 - - - A5 - G5 - F#5 - E5 -",
+				"G5 - - - E5 - - - C5 - E5 - G5 - C6 -",
+				"D6 - - - C6 - B5 - A5 - - - F#5 - D5 -",
+				"D#5 - - - F#5 - - - B5 - - - A5 - F#5 -",
+				"G5 - - - E5 - G5 - B5 - - - E6 - - -",
+				"E6 - - - D6 - C6 - G5 - - - E5 - G5 -",
+				"A5 - - - C6 - - - E6 - - - D6 - C6 -",
+				"B5 - - - - - - - D#6 - - - F#6 - - -"]},
+			{"name": "B", "chords": ["C", "D", "Em", "Em", "Am", "B", "C", "B"], "melody": [
+				"E6 - - - D6 - C6 - G5 - - - C6 - - -",
+				"F#6 - - - E6 - D6 - A5 - - - D6 - - -",
+				"G6 - - - - - - - E6 - - - B5 - - -",
+				"G5 - B5 - E6 - G6 - B6 - - - - - - -",
+				"A6 - - - G6 - E6 - C6 - - - A5 - - -",
+				"B5 - D#6 - F#6 - - - A6 - - - F#6 - D#6 -",
+				"E6 - - - G6 - - - C6 - - - E6 - - -",
+				"D#6 - - - F#6 - - - B6 - - - . . . ."]},
+		],
+	},
+	"ending": {
+		"bpm": 92, "loud": 0.18, "lead": "brass", "bass": "half", "arp": "arp8", "stabs": "", "drums": "title", "counter": "strings",
+		"sections": [
+			{"name": "A", "chords": ["Bb", "C", "F", "Dm", "Bb", "C", "F", "F"], "melody": [
+				"D5 - - - F5 - - - Bb5 - - - A5 - G5 -",
+				"E5 - - - G5 - - - C6 - - - Bb5 - A5 -",
+				"A5 - - - - - - - F5 - - - C5 - F5 -",
+				"D5 - - - - - - - . . . . A4 - D5 -",
+				"F5 - - - Bb5 - - - D6 - - - C6 - Bb5 -",
+				"A5 - - - G5 - - - E5 - - - G5 - - -",
+				"F5 - - - - - - - - - - - . . . .",
+				". . . . . . . . C5 - D5 - E5 - - -"]},
+			{"name": "B", "chords": ["F", "C", "Dm", "Bb", "F", "C", "Bb", "C"], "melody": [
+				"A5 - - - C6 - - - F6 - - - E6 - C6 -",
+				"E6 - - - D6 - C6 - G5 - - - C6 - - -",
+				"D6 - - - F6 - - - A6 - - - F6 - D6 -",
+				"D6 - - - C6 - Bb5 - F5 - - - Bb5 - - -",
+				"A5 - - - C6 - - - F6 - - - E6 - F6 -",
+				"G6 - - - E6 - C6 - G5 - - - C6 - - -",
+				"Bb5 - - - D6 - - - F6 - - - D6 - Bb5 -",
+				"C6 - - - - - - - E6 - - - G6 - - -"]},
+		],
+	},
 }
 
 ## Schlagzeug-Spuren (16 Schritte): k Kick, s Snare, h Hi-Hat, t Pauke

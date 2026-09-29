@@ -14,7 +14,8 @@ Du wirst zum **Operator**: Du ziehst Glitchlings auf, trainierst sie und reparie
 | Cache-Wiesen | Grüne Datenfelder, Startgebiet | freundlich |
 | Firewall-Vulkan | Glühende Sicherheitsmauern | hitzig |
 | Viren-Sümpfe | Giftiges Moor, Viren-Insekten und Fleischfresser-Pflanzen | schräg-unheimlich |
-| Deep Web | Dunkle Tiefen, Endgame | geheimnisvoll |
+| NEST-Kern | Herz des abgestürzten Servers, Finale mit dem Ur-Glitch | episch |
+| (Deep Web) | Idee für später: dunkle Tiefen, Endgame | geheimnisvoll |
 
 ## Tonalität
 - Süß, verspielt, leicht nerdig. Humor über Technik-Anspielungen (Bugs, Updates, WLAN).

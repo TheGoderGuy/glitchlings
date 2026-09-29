@@ -65,6 +65,10 @@ const FOES := [
 	{"name": "Panzerschnecke", "el": "Code", "hp": 140, "move": 2.6, "atk": 2.8, "dmg": 14, "pat": ["slime", "row"], "spr": "schnecke", "loot": 14, "boss": false, "tele": false},
 	{"name": "Glitchblüte", "el": "Virus", "hp": 110, "move": 99.0, "atk": 2.2, "dmg": 13, "pat": ["cross", "pop", "cross"], "spr": "bluete", "loot": 14, "boss": false, "tele": false, "stationary": true},
 	{"name": "Schwarmkönigin", "el": "Virus", "hp": 520, "move": 1.9, "atk": 2.0, "dmg": 18, "pat": ["row", "slime", "col", "pop"], "spr": "koenigin", "title": "Herrscherin der Viren-Sümpfe", "loot": 50, "boss": true, "tele": false, "minion": "mix", "drain": true},
+	# --- NEST-Kern (Index 15–17) ---
+	{"name": "Kerndrohne", "el": "Code", "hp": 120, "move": 1.4, "atk": 2.4, "dmg": 15, "pat": ["col2", "cross"], "spr": "drohne", "loot": 15, "boss": false, "tele": false},
+	{"name": "Glitchspinne", "el": "Virus", "hp": 95, "move": 1.0, "atk": 2.2, "dmg": 14, "pat": ["wall", "cell", "row"], "spr": "spinne", "loot": 15, "boss": false, "tele": true},
+	{"name": "Ur-Glitch", "el": "Virus", "hp": 680, "move": 1.7, "atk": 1.9, "dmg": 19, "pat": ["row", "cross", "col2", "wall"], "spr": "urglitch", "title": "Der Fehler, der den NEST zerbrach", "loot": 80, "boss": true, "tele": false, "minion": "shift", "shift": true, "final": true},
 ]
 
 ## Zonen: Gegner-Pools (Indizes in FOES), Boss, Zähigkeit, Hintergrund. Zone 2 wird nach dem Boss von Zone 1 frei.
@@ -78,8 +82,13 @@ const ZONES := {
 	"sumpf": {"name": "Viren-Sümpfe", "bg": "sumpf", "boss": 14, "hp_mult": 1.5,
 		"early": [11, 12, 13], "late": [11, 12, 13, 8, 2, 6], "elite": [12, 13, 8],
 		"desc": "Blubbernde Sümpfe voller Viren und Glitch-Sporen. Elektro hat hier einen Vorteil.", "unlock": "vulkan"},
+	"kern": {"name": "NEST-Kern", "bg": "kern", "boss": 17, "hp_mult": 1.6, "floors": 4, "final": true,
+		"early": [15, 16, 12], "late": [15, 16, 8, 13, 4], "elite": [15, 16, 8, 12],
+		"desc": "Das Herz des abgestürzten Servers. Kurz, hart – und am Ende wartet der Ur-Glitch.", "unlock": "sumpf"},
 }
-const ZONE_ORDER := ["wiesen", "vulkan", "sumpf"]
+const ZONE_ORDER := ["wiesen", "vulkan", "sumpf", "kern"]
+## Elemente, durch die der Ur-Glitch wechselt
+const SHIFT_ELEMENTS := ["Virus", "Feuer", "Wasser", "Elektro", "Code"]
 
 ## Gegner-Pools der Cache-Wiesen (Indizes in FOES); allgemein siehe ZONES
 const POOL_EARLY := [0, 1, 5]
@@ -361,6 +370,14 @@ const SPECIALS := {
 
 const BEATS := {"Feuer": "Code", "Code": "Wasser", "Wasser": "Feuer"}
 const RARITY_WEIGHT := {"Gewöhnlich": 6, "Selten": 3, "Episch": 1}
+
+
+## Element, das gegen d besonders stark ist (für Hinweise)
+static func strong_against(d: String) -> String:
+	for a in BEATS:
+		if BEATS[a] == d:
+			return a
+	return {"Virus": "Elektro", "Elektro": "Virus"}.get(d, "")
 
 
 static func mult(a: String, d: String) -> float:

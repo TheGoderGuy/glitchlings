@@ -165,6 +165,10 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 		if not data.cleared.has(z):
 			data.cleared.append(z)
 			sum.unlocked = _newly_unlocked(z)
+		# Finale geschafft: Spiel durchgespielt, Schwierigkeit „Korrumpiert“ frei
+		if GameData.ZONES[z].get("final", false) and not data.get("game_cleared", false):
+			data.game_cleared = true
+			sum.game_cleared = true
 	# Eier im Nest reifen mit jedem abgeschlossenen Run (auch bei Niederlage)
 	for e in nest():
 		e.runs_left = maxi(0, int(e.runs_left) - 1)
@@ -211,7 +215,7 @@ func _log_run(run: RunState, won: bool) -> void:
 	var dur := (Time.get_ticks_msec() - run.start_ms) / 1000.0
 	var cols := [Time.get_datetime_string_from_system(), ProjectSettings.get_setting("application/config/version", "0.1"),
 		run.species, run.form, run.map.zone, "sieg" if won else "niederlage", run.floor_idx + 1, run.fights_won,
-		run.chips_used, "%.0f" % dur, ["entspannt", "normal", "knackig"][run.difficulty], run.last_foe]
+		run.chips_used, "%.0f" % dur, ["entspannt", "normal", "knackig", "korrumpiert"][run.difficulty], run.last_foe]
 	f.store_line(";".join(cols.map(func(c): return str(c))))
 
 
@@ -220,6 +224,11 @@ func log_folder() -> String:
 
 
 # ---------- Zonen ----------
+
+## Ende erreicht (Ur-Glitch besiegt)?
+func game_cleared() -> bool:
+	return data.get("game_cleared", false)
+
 
 func zone_unlocked(z: String) -> bool:
 	var need: String = GameData.ZONES[z].unlock

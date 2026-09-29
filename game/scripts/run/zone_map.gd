@@ -26,12 +26,13 @@ static func generate(rng: RandomNumberGenerator, zone := "wiesen") -> ZoneMap:
 	var m := ZoneMap.new()
 	m.zone = zone
 	m.zone_name = GameData.ZONES[zone].name
-	for f in FLOORS:
+	var n_floors: int = GameData.ZONES[zone].get("floors", FLOORS)   # Finalzone ist kürzer
+	for f in n_floors:
 		var n := 3 if f == 0 else rng.randi_range(2, 4)
 		var row: Array = []
 		for i in n:
 			var x := (i + 0.5) / n + rng.randf_range(-0.05, 0.05)
-			row.append({"type": _roll_type(rng, f), "x": clampf(x, 0.05, 0.95), "next": []})
+			row.append({"type": _roll_type(rng, f, n_floors), "x": clampf(x, 0.05, 0.95), "next": []})
 		m.floors.append(row)
 	m.floors.append([{"type": "boss", "x": 0.5, "next": []}])
 	for f in m.floors.size() - 1:
@@ -39,10 +40,10 @@ static func generate(rng: RandomNumberGenerator, zone := "wiesen") -> ZoneMap:
 	return m
 
 
-static func _roll_type(rng: RandomNumberGenerator, f: int) -> String:
+static func _roll_type(rng: RandomNumberGenerator, f: int, n_floors := FLOORS) -> String:
 	if f == 0:
 		return "fight"
-	if f == FLOORS - 1:
+	if f == n_floors - 1:
 		return "rest"
 	var w := {"fight": 45, "event": 22}
 	if f >= 2:

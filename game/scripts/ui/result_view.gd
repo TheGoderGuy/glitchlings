@@ -52,6 +52,8 @@ func _draw() -> void:
 		lines.append(["Neu im Monsterdex: %s" % f, GameData.COL.sun])
 	if summary.get("unlocked", "") != "":
 		lines.append(["Neue Zone frei: %s!" % GameData.ZONES[summary.unlocked].name, GameData.COL.coral])
+	if summary.get("game_cleared", false):
+		lines.append(["Der NEST ist gerettet! Neue Schwierigkeit: Korrumpiert", GameData.COL.sun])
 	if int(summary.get("frag_banked", 0)) > 0:
 		lines.append(["+%d Fragmente auf die Station gerettet" % int(summary.frag_banked), GameData.COL.sun])
 	var egg: Dictionary = summary.get("egg", {})

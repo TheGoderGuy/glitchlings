@@ -22,6 +22,8 @@ var proj: Array = []
 var warns: Array = []
 var mines: Array = []
 var pops: Array = []
+const SHIFT_TIME := 7.0   # Ur-Glitch: Sekunden bis zum nächsten Elementwechsel
+var shift_t := SHIFT_TIME
 var delayed: Array = []
 var bots: Array = []
 var marks: Array = []
@@ -66,7 +68,7 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	run = run_state
 	mon = run.mon
 	rng = run.rng
-	def = foe
+	def = foe.duplicate() if foe.is_read_only() else foe   # Ur-Glitch ändert def.el während des Kampfs
 	p = {"c": 1, "r": 1, "cd": 0.0, "flash": 0.0}
 	e = {"c": 1, "r": 1, "hp": def.hp, "max": def.hp, "move_t": def.move, "atk_t": def.atk * 0.8,
 		"pi": 0, "frozen": 0.0, "slow": 0.0, "flash": 0.0, "burn": 0, "poison": 0, "dot_t": 1.0, "pop_t": 1.5}
@@ -88,6 +90,8 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	if def.boss:
 		if def.get("minion", "pop") == "lava":
 			status = "Boss! Ab der Hälfte seiner HP setzt er Felder in Brand. Runter von der Lava!"
+		elif def.get("minion", "pop") == "shift":
+			status = "Endboss! Der Ur-Glitch wechselt ständig sein Element. Achte oben rechts darauf!"
 		elif def.get("minion", "pop") == "mix":
 			status = "Boss! Sie verschleimt Felder und streut Glitch-Sporen. Und jeder Treffer heilt sie!"
 		else:
@@ -581,6 +585,18 @@ func on_slime(c: int, r: int) -> bool:
 	return hazards.any(func(hz): return hz.c == c and hz.r == r and hz.get("kind", "lava") == "slime")
 
 
+## Ur-Glitch: nächstes Element (nie dasselbe), mit Hinweis, was jetzt stark ist
+func _shift_element() -> void:
+	var opts: Array = GameData.SHIFT_ELEMENTS.filter(func(x): return x != def.el)
+	def.el = opts[rng.randi_range(0, opts.size() - 1)]
+	var strong := GameData.strong_against(def.el)
+	events.append("shift")
+	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 30)
+	float_at(3 + e.c, e.r, "Jetzt %s!" % def.el, GameData.EL[def.el])
+	status = "Der Ur-Glitch ist jetzt %s. %s-Chips treffen ihn besonders hart!" % [def.el, strong]
+	shake = maxf(shake, 4.0)
+
+
 func boss_phase() -> int:
 	if not def.boss:
 		return 1
@@ -731,6 +747,11 @@ func _update_logic(dt: float) -> void:
 		if e.move_t <= 0:
 			e.move_t = def.move * (0.8 if phase == 3 else 1.0)
 			_move_enemy()
+		if def.get("shift", false):
+			shift_t -= dt
+			if shift_t <= 0:
+				shift_t = SHIFT_TIME * (0.7 if phase == 3 else 1.0)
+				_shift_element()
 		e.atk_t -= edt
 		if e.atk_t <= 0:
 			e.atk_t = 1.5 if phase == 3 else def.atk
@@ -740,6 +761,9 @@ func _update_logic(dt: float) -> void:
 			if e.pop_t <= 0:
 				e.pop_t = 4.0
 				var minion: String = def.get("minion", "pop")
+				if minion == "shift":
+					# Ur-Glitch: Diener passend zum aktuellen Element
+					minion = {"Feuer": "lava", "Virus": "slime"}.get(def.el, "pop")
 				if minion == "mix":
 					minion = "slime" if rng.randf() < 0.5 else "pop"
 				if minion == "slime":
@@ -931,4 +955,7 @@ func _spawn_pop() -> void:
 	var cell: Vector2i = free[rng.randi_range(0, free.size() - 1)]
 	events.append("pop")
 	# Aussehen: Glitch-Spore im Sumpf, sonst Bitmilbe (kleiner Krabbel-Bot)
-	pops.append({"c": cell.x, "r": cell.y, "t": 3.0, "max": 3.0, "kind": "spore" if run.map.zone == "sumpf" else "milbe"})
+	var kind := "spore" if run.map.zone == "sumpf" else "milbe"
+	if def.get("shift", false):
+		kind = "milbe" if def.el == "Code" else "spore"
+	pops.append({"c": cell.x, "r": cell.y, "t": 3.0, "max": 3.0, "kind": kind})

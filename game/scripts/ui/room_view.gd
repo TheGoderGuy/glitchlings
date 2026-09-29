@@ -54,6 +54,8 @@ func _intro() -> String:
 	match run.map.zone:
 		"vulkan":
 			return "Eine kühle Nische im Vulkangestein. Das Knistern der Glut klingt fast gemütlich."
+		"kern":
+			return "Eine stille Wartungsnische im Kern. Die Lüfter laufen noch. Ein letztes Durchatmen."
 		"sumpf":
 			return "Ein trockener Baumstumpf mitten im Moor. Glühwürmchen summen, kein Virus weit und breit."
 	return "Ein ruhiger Cache-Winkel. Die Lüfter summen leise. Zeit zum Durchatmen."
@@ -238,6 +240,12 @@ func _draw_scene() -> void:
 				var x := fmod(i * 71.3 + 20.0 + sin(anim_t * 1.3 + i) * 8.0, W)
 				var y := H - fmod(anim_t * (18.0 + i % 4 * 6.0) + i * 41.0, H)
 				draw_rect(Rect2(roundi(x), roundi(y), 2, 2), Color(Color("#FFD84D") if i % 3 == 0 else Color("#FF8A4C"), 0.7))
+		"kern":
+			# aufsteigende Datenbits in Cyan/Magenta
+			for i in 18:
+				var x := fmod(i * 67.3 + 11.0, W)
+				var y := H - fmod(anim_t * (22.0 + i % 4 * 7.0) + i * 37.0, H)
+				draw_rect(Rect2(roundi(x), roundi(y), 1, 3), Color(Color("#4CC3F0") if i % 3 else Color("#FF5470"), 0.6))
 		"sumpf":
 			# Glühwürmchen
 			for i in 9:

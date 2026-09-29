@@ -22,7 +22,7 @@ func _option_items() -> Array:
 		"Vollbild: " + ("An" if Settings.fullscreen else "Aus"),
 		"Lautstärke: " + _bar_text(Settings.volume),
 		"Musik: " + _bar_text(Settings.music),
-		"Schwierigkeit: " + ["Entspannt", "Normal", "Knackig"][Settings.difficulty],
+		"Schwierigkeit: " + ["Entspannt", "Normal", "Knackig", "Korrumpiert"][Settings.difficulty],
 		"Bildschirmwackeln: " + ("An" if Settings.screen_shake else "Aus"),
 		("Wirklich löschen? Nochmal drücken" if reset_armed else "Spielstand löschen") if SaveGame.has_save() else "Spielstand: keiner",
 		("Test: Alle Zonen frei (erledigt)" if SaveGame.unlocked_zones().size() == GameData.ZONE_ORDER.size() else "Test: Alle Zonen freischalten") if SaveGame.has_save() else "Test: erst Spiel starten",
@@ -115,7 +115,8 @@ func _process(delta: float) -> void:
 				2:
 					Settings.music = clampi(Settings.music + dir, 0, 10)
 				3:
-					Settings.difficulty = (Settings.difficulty + dir + 3) % 3
+					var nd := 4 if SaveGame.game_cleared() else 3   # „Korrumpiert“ erst nach dem Ende
+					Settings.difficulty = (Settings.difficulty + dir + nd) % nd
 				4:
 					Settings.screen_shake = not Settings.screen_shake
 			Settings.apply()
@@ -138,6 +139,8 @@ func _draw() -> void:
 	draw_string(f, lp, logo, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, GameData.COL.ink)
 	draw_set_transform(Vector2.ZERO)
 	_text(Vector2(0, 114), "Brüten. Fusionieren. Prägen.", 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
+	if SaveGame.game_cleared():
+		_text(Vector2(0, 128), "* NEST gerettet *", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 	# Monster-Bühne
 	var bob := 1 if sin(anim_t * 4.0) > 0 else 0
@@ -156,7 +159,9 @@ func _draw() -> void:
 		_text(r.position + Vector2(0, 26), "Optionen", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		_menu(_option_items(), sel, r.get_center().x, r.position.y + 40, 280)
 		if sel == 3:
-			var dd: String = ["Mehr Zeit zum Ausweichen, Gegner treffen schwächer.", "So wie gedacht.", "Zähere Gegner, härtere Treffer, kürzere Warnungen."][Settings.difficulty]
+			var dd: String = ["Mehr Zeit zum Ausweichen, Gegner treffen schwächer.", "So wie gedacht.", "Zähere Gegner, härtere Treffer, kürzere Warnungen.", "Nach dem Ende: stärkste Gegner, knappe Warnungen, 50 % mehr Fragmente."][Settings.difficulty]
+			if not SaveGame.game_cleared():
+				dd += "  (Nach dem Ende gibt es eine vierte Stufe.)"
 			_text(Vector2(0, r.end.y + 14), dd, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 	var pad: bool = InputSetup.pad
 	var hint := ("Steuerkreuz wählen · A bestätigen · B zurück" if pad else "Pfeile wählen · Enter bestätigen · Esc zurück")

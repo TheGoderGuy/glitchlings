@@ -202,5 +202,23 @@
   "blink": "76,39,81,42",
   "dim": true,
   "hi": true
+ },
+ "kerndrohne_64": {
+  "crop": "36,14,55,35",
+  "blink": "43,20,50,30",
+  "dim": true,
+  "hi": true
+ },
+ "glitchspinne_64": {
+  "crop": "40,24,59,41",
+  "blink": "44,28,55,37",
+  "dim": true,
+  "hi": true
+ },
+ "urglitch_96": {
+  "crop": "76,30,95,49",
+  "blink": "83,36,91,41",
+  "dim": true,
+  "hi": true
  }
 }

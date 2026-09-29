@@ -90,7 +90,8 @@ func _menu(items: Array, sel: int, center_x: float, y: float, width := 200.0) ->
 const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "wurm": "bytewurm_64", "mantis": "kernelmantis_96",
 	"kaefer": "chiffrekaefer_64", "wespe": "datenwespe_64", "raupe": "raupe_64",
 	"milbe": "milbe_64", "assel": "assel_64", "falter": "falter_64", "skarab": "skarab_96",
-	"muecke": "muecke_64", "schnecke": "panzerschnecke_64", "bluete": "glitchbluete_64", "koenigin": "schwarmkoenigin_96"}
+	"muecke": "muecke_64", "schnecke": "panzerschnecke_64", "bluete": "glitchbluete_64", "koenigin": "schwarmkoenigin_96",
+	"drohne": "kerndrohne_64", "spinne": "glitchspinne_64", "urglitch": "urglitch_96"}
 static var _sprites := {}
 
 
@@ -228,6 +229,10 @@ const ZONE_PAL := {
 		"ground": "#1A2A1C", "grass": "#3E6A34", "flower": ["#C77DFF", "#FF5470", "#7BD35A"]},
 	"sumpf_boss": {"sky0": "#140A1E", "sky1": "#3A2446", "far": "#241A2E", "near": "#2E2238", "edge": "#C77DFF",
 		"ground": "#1E1428", "grass": "#4E2E5E", "flower": ["#FF5470", "#7BD35A", "#FFD84D"]},
+	"kern": {"sky0": "#05060F", "sky1": "#10213A", "far": "#0E1A2E", "near": "#132640", "edge": "#4CC3F0",
+		"ground": "#0A1424", "grass": "#1E4A6A", "flower": ["#4CC3F0", "#FF5470", "#FFD84D"]},
+	"kern_boss": {"sky0": "#0A0210", "sky1": "#2A0A30", "far": "#1E0A28", "near": "#2A1038", "edge": "#FF5470",
+		"ground": "#140818", "grass": "#3A1A4A", "flower": ["#4CC3F0", "#FF5470", "#FFD84D"]},
 	"vulkan_boss": {"sky0": "#200606", "sky1": "#6A1A10", "far": "#3A1010", "near": "#4A1612", "edge": "#FFB347",
 		"ground": "#2E0C0A", "grass": "#7A2A12", "flower": ["#FFD84D", "#FF8A4C", "#FF5470"]},
 }

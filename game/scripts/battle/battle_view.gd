@@ -873,7 +873,7 @@ func _process_intro(_delta: float) -> void:
 			Sfx.play(c[1], 0.0)
 			if c[1] == "hit_big":
 				st.shake = 10.0
-				Music.play("boss")
+				Music.play(_boss_track())
 	if st.shake > 0:
 		st.shake = maxf(0.0, st.shake - _delta * 20.0)
 	# überspringen (kurze Sperre, damit der Tastendruck von der Karte nicht durchrutscht)
@@ -885,9 +885,13 @@ func _process_intro(_delta: float) -> void:
 		_start_boss_fight()
 
 
+func _boss_track() -> String:
+	return "finale" if st.def.get("final", false) else "boss"
+
+
 func _start_boss_fight() -> void:
-	if Music.current != "boss":
-		Music.play("boss")
+	if Music.current != _boss_track():
+		Music.play(_boss_track())
 	st.shake = 0.0
 	_set_mode(Mode.FIGHT)
 
@@ -924,6 +928,12 @@ func _draw_boss_intro() -> void:
 			draw_rect(Rect2(bx - 90, feet - 2, 180, 3), Color(el, 0.25))
 		else:
 			_draw_sprite(def.spr, bx, feet, true, {"scale": 2, "blink": fmod(anim_t, 3.0) < 0.12})
+			if def.get("final", false):
+				# Glitch-Streifen über dem Endboss
+				for i in 4:
+					if fmod(anim_t * 3.0 + i * 0.37, 1.0) < 0.12:
+						var gy := feet - 20.0 - fmod(i * 47.0 + anim_t * 90.0, 170.0)
+						draw_rect(Rect2(bx - 96, gy, 192, 3), Color("#4CC3F0", 0.5) if i % 2 else Color("#FF5470", 0.5))
 	# Warnstreifen oben und unten
 	var bars := clampf(t / 0.35, 0.0, 1.0)
 	var bh := 26.0
