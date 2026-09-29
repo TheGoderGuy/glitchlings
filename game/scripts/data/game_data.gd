@@ -44,6 +44,24 @@ const CHIPS := {
 	"Wurmloch": {"cat": "Falle", "el": "Virus", "dmg": 10, "cd": 3.0, "rar": "Selten", "desc": "Zieht den Gegner in deine Reihe: 10 Schaden."},
 	"Kurzschluss": {"cat": "Angriff", "el": "Elektro", "dmg": 18, "cd": 2.5, "rar": "Gewöhnlich", "desc": "Projektil: 18 Schaden, betäubt 0,5 s."},
 	"Datenfresser": {"cat": "Angriff", "el": "Virus", "dmg": 15, "cd": 2.0, "rar": "Gewöhnlich", "desc": "Projektil: 15, doppelt gegen vergiftete Gegner."},
+	# --- Erweiterung 29.09.2026: Kombos mit Zonen-Mechaniken und Modulen ---
+	"Glutklinge": {"cat": "Angriff", "el": "Feuer", "dmg": 22, "cd": 1.6, "rar": "Gewöhnlich", "desc": "Nahkampf: vordere zwei Felder deiner Reihe, 22 + kurzer Brand."},
+	"Feuersbrunst": {"cat": "Angriff", "el": "Feuer", "dmg": 30, "cd": 6.0, "rar": "Episch", "desc": "Ganzes Gegnerfeld: 30 + langer Brand. Doppelt, wenn er schon brennt."},
+	"Flutwelle": {"cat": "Angriff", "el": "Wasser", "dmg": 28, "cd": 3.5, "rar": "Selten", "desc": "Welle über deine Reihe: 28, stößt den Gegner zurück."},
+	"Frostsplitter": {"cat": "Angriff", "el": "Wasser", "dmg": 14, "cd": 2.2, "rar": "Gewöhnlich", "desc": "Projektil: 14, dreifach gegen eingefrorene oder langsame Gegner."},
+	"Tsunami": {"cat": "Angriff", "el": "Wasser", "dmg": 35, "cd": 7.0, "rar": "Episch", "desc": "Trifft das ganze Gegnerfeld: 35 und friert 1,5 s ein."},
+	"Kopierschutz": {"cat": "Schild", "el": "Code", "dmg": 15, "cd": 6.0, "rar": "Selten", "desc": "Blockt den nächsten Treffer (6 s) und wirft 15 Schaden zurück."},
+	"Geschützturm": {"cat": "Beschwörung", "el": "Code", "dmg": 12, "cd": 7.0, "rar": "Selten", "desc": "Turm für 8 s: feuert alle 1,5 s einen Laser über deine Reihe (12)."},
+	"Debugger": {"cat": "Angriff", "el": "Code", "dmg": 20, "cd": 2.5, "rar": "Gewöhnlich", "desc": "Laser über deine Reihe: 20. Entfernt Lava, Schleim und Diener auf deiner Seite."},
+	"Kettenblitz": {"cat": "Angriff", "el": "Elektro", "dmg": 15, "cd": 3.0, "rar": "Selten", "desc": "Trifft garantiert: 15, dann springt der Blitz zweimal nach (je 10)."},
+	"Ladungsfeld": {"cat": "Buff", "el": "Elektro", "dmg": 0, "cd": 4.0, "rar": "Gewöhnlich", "desc": "Lädt deine Signatur-Leiste um 25 %."},
+	"Magnetfeld": {"cat": "Feldeffekt", "el": "Elektro", "dmg": 0, "cd": 3.5, "rar": "Gewöhnlich", "desc": "Zieht den Gegner in deine Spalte, betäubt 0,5 s. Kombo mit Blitzlanze!"},
+	"Blackout": {"cat": "Feldeffekt", "el": "Elektro", "dmg": 0, "cd": 7.0, "rar": "Episch", "desc": "Stromausfall: Gegner 3 s betäubt, sein laufender Angriff fällt aus."},
+	"Seuche": {"cat": "Feldeffekt", "el": "Virus", "dmg": 0, "cd": 4.0, "rar": "Selten", "desc": "Verdoppelt das Gift auf dem Gegner (min. 4 s)."},
+	"Sporenfalle": {"cat": "Falle", "el": "Virus", "dmg": 15, "cd": 3.0, "rar": "Gewöhnlich", "desc": "Mine unter dem Gegner: 15 Schaden und 6 s Gift."},
+	"Parasit": {"cat": "Angriff", "el": "Virus", "dmg": 12, "cd": 3.0, "rar": "Selten", "desc": "Projektil: 12 Schaden, du heilst dich um genauso viel."},
+	"Sprungantrieb": {"cat": "Buff", "el": "Neutral", "dmg": 0, "cd": 3.0, "rar": "Gewöhnlich", "desc": "Du weichst dem nächsten Treffer in den nächsten 2 s aus."},
+	"Konter": {"cat": "Schild", "el": "Neutral", "dmg": 35, "cd": 4.0, "rar": "Selten", "desc": "Blockt einen Treffer in den nächsten 1,5 s und schlägt mit 35 zurück."},
 }
 
 const FOES := [

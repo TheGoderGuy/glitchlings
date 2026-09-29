@@ -43,6 +43,8 @@ func _ready() -> void:
 	await test_boss_intro()
 	await test_finale()
 	test_modules()
+	test_combo_chips()
+	test_chip_texts()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -1340,6 +1342,7 @@ func _mod_battle(mods: Array, seed_v := 1) -> BattleState:
 	st.e.move_t = 99.0
 	st.e.atk_t = 99.0
 	st.reflex = 0   # Katzenreflex aus, sonst weicht Pixmiez dem ersten Treffer aus
+	st.def.el = "Neutral"   # kein Element-Vorteil, damit Schadenszahlen exakt sind
 	return st
 
 
@@ -1449,3 +1452,106 @@ func test_modules() -> void:
 	for key in GameData.MODULES:
 		re.add_module(key)
 	check(re.roll_module() == "", "Sind alle Module da, gibt es keins mehr")
+
+
+## Neue Chips (29.09.2026): Kombos prüfen
+func _chip(st: BattleState, id: String) -> void:
+	st.hand = [{"chip": id, "rem": 0.0, "max": 1.0, "queued": false}, {"chip": "", "rem": 0.0, "max": 1.0, "queued": false}, {"chip": "", "rem": 0.0, "max": 1.0, "queued": false}]
+	st.draw_pile = [""]
+	st.use_slot(0)
+
+
+func test_combo_chips() -> void:
+	# Frostsplitter: dreifach gegen eingefrorene Gegner
+	var a := _mod_battle([])
+	a.e.hp = 999
+	a.e.frozen = 5.0
+	a.e.r = a.p.r
+	_chip(a, "Frostsplitter")
+	var h0: int = a.e.hp
+	step(a, 1.0)
+	check(h0 - a.e.hp == 42, "Frostsplitter: 3 × 14 gegen eingefrorene Gegner (%d)" % (h0 - a.e.hp))
+	# Konter: Block + 35 zurück
+	var b := _mod_battle([])
+	b.e.hp = 999
+	_chip(b, "Konter")
+	var hp0: int = b.run.hp
+	b.hurt_player(20)
+	check(b.run.hp == hp0 and b.e.hp == 999 - 35, "Konter blockt und schlägt mit 35 zurück")
+	# Debugger räumt Lava, Schleim und Diener weg
+	var c := _mod_battle([])
+	c.hazards.append({"c": 0, "r": 0, "t": 3.0, "tick": 0.6, "kind": "lava"})
+	c.pops.append({"c": 2, "r": 2, "t": 3.0, "max": 3.0, "kind": "milbe"})
+	_chip(c, "Debugger")
+	check(c.hazards.is_empty() and c.pops.is_empty(), "Debugger entfernt Lava und Diener")
+	# Seuche verdoppelt Gift
+	var d := _mod_battle([])
+	d.e.poison = 5
+	_chip(d, "Seuche")
+	check(d.e.poison == 10, "Seuche verdoppelt das Gift")
+	# Magnetfeld zieht in die eigene Spalte
+	var f := _mod_battle([])
+	f.p.c = 0
+	f.e.c = 2
+	_chip(f, "Magnetfeld")
+	check(f.e.c == 0 and f.e.frozen > 0, "Magnetfeld zieht den Gegner in deine Spalte")
+	# Parasit heilt
+	var g := _mod_battle([])
+	g.run.hp = 50
+	g.e.hp = 999
+	g.e.r = g.p.r
+	_chip(g, "Parasit")
+	step(g, 1.0)
+	check(g.run.hp == 62, "Parasit heilt um den Schaden (HP %d)" % g.run.hp)
+	# Sprungantrieb: nächster Treffer ausgewichen
+	var i := _mod_battle([])
+	_chip(i, "Sprungantrieb")
+	var hp1: int = i.run.hp
+	i.hurt_player(20)
+	var dodged: bool = i.run.hp == hp1
+	i.hurt_player(20)
+	check(dodged and i.run.hp == hp1 - 20, "Sprungantrieb: genau ein Treffer ausgewichen")
+	# Feuersbrunst: doppelt gegen brennende Gegner
+	var j := _mod_battle([])
+	j.e.hp = 999
+	j.e.burn = 2
+	_chip(j, "Feuersbrunst")
+	check(j.e.hp == 999 - 60 and j.e.burn >= 4, "Feuersbrunst: 60 gegen brennende Gegner, langer Brand")
+	# Geschützturm feuert
+	var k := _mod_battle([])
+	k.e.hp = 999
+	k.e.r = k.p.r
+	_chip(k, "Geschützturm")
+	step(k, 1.6)
+	check(k.e.hp <= 999 - 12, "Geschützturm trifft in deiner Reihe (HP %d)" % k.e.hp)
+	# Kettenblitz: 15 + 2 × 10
+	var l := _mod_battle([])
+	l.e.hp = 999
+	_chip(l, "Kettenblitz")
+	step(l, 0.6)
+	check(l.e.hp == 999 - 35, "Kettenblitz: 15 + 10 + 10 (HP %d)" % l.e.hp)
+	# Sporenfalle: Gift nach dem Auslösen
+	var m := _mod_battle([])
+	m.e.hp = 999
+	_chip(m, "Sporenfalle")
+	step(m, 1.0)
+	check(m.e.poison > 0 and m.e.hp < 999, "Sporenfalle: Schaden und Gift")
+
+
+## Jede Chip-Beschreibung passt in 3 Zeilen der Chipwahl-Karte (144 px bei Schriftgröße 8)
+func test_chip_texts() -> void:
+	var too_long: Array = []
+	for k in GameData.CHIPS:
+		var words: PackedStringArray = GameData.CHIPS[k].desc.split(" ")
+		var lines := 1
+		var cur := ""
+		for w in words:
+			var probe := w if cur == "" else cur + " " + w
+			if PixelCanvas.text_width(probe) > 144:
+				lines += 1
+				cur = w
+			else:
+				cur = probe
+		if lines > 3:
+			too_long.append(k)
+	check(too_long.is_empty(), "Alle Chip-Beschreibungen passen auf die Karte (zu lang: %s)" % [too_long])

@@ -64,6 +64,9 @@ var pend_move = null   # vorgemerkter Schritt (Vector2i), wenn noch Bewegungs-Co
 var loot_gained := 0   # tatsächlich erhaltene Fragmente (Sammler-Modul)
 var echo_count := 0    # Echochip: jeder 4. Chip doppelt
 var leech := 0         # Saugbit: gesammelter Schaden
+var counter := 0       # Konter/Kopierschutz: Schaden, der beim Blocken zurückgeht
+var counter_el := "Neutral"
+var dodge_t := 0.0     # Sprungantrieb: nächster Treffer wird ausgewichen
 
 
 ## foe: Gegnerwerte wie in GameData.FOES (für Karten-Knoten per RunState.foe_for skaliert).
@@ -302,7 +305,7 @@ func _apply_chip(id: String) -> void:
 	var el: String = ch.el
 	events.append(_chip_sound(id))
 	match id:
-		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Datenfresser", "Kurzschluss":
+		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Datenfresser", "Kurzschluss", "Frostsplitter", "Parasit":
 			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 11.0, "el": el, "dmg": ch.dmg, "id": id})
 		"Doppelklick":
 			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": el, "dmg": ch.dmg, "id": id})
@@ -360,13 +363,84 @@ func _apply_chip(id: String) -> void:
 			e.r = p.r
 			fx_cell(3 + e.c, e.r, GameData.EL.Virus, 0.4)
 			hit_enemy(ch.dmg, el)
-		"Byteschlag":
+		"Byteschlag", "Glutklinge":
 			for c in [0, 1]:
-				fx_cell(3 + c, p.r, GameData.EL.Neutral, 0.25)
+				fx_cell(3 + c, p.r, GameData.EL[el], 0.25)
 			if e.r == p.r and e.c <= 1:
+				hit_enemy(ch.dmg, el)
+				if id == "Glutklinge":
+					e.burn = maxi(e.burn, 2)
+			else:
+				_miss()
+		"Feuersbrunst", "Tsunami":
+			for c in 3:
+				for r in 3:
+					fx_cell(3 + c, r, GameData.EL[el], 0.4)
+			burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[el], 24)
+			var fire_bonus: bool = id == "Feuersbrunst" and e.burn > 0
+			hit_enemy(ch.dmg * (2 if fire_bonus else 1), el)
+			if id == "Feuersbrunst":
+				e.burn = maxi(e.burn, 4)
+			else:
+				e.frozen = maxf(e.frozen, 1.5)
+				float_at(3 + e.c, e.r, "Eingefroren", GameData.EL.Wasser)
+		"Flutwelle":
+			for c in 3:
+				fx_cell(3 + c, p.r, GameData.EL.Wasser, 0.3)
+			if e.r == p.r:
+				hit_enemy(ch.dmg, el)
+				if e.c < 2:
+					e.c += 1
+			else:
+				_miss()
+		"Kopierschutz", "Konter":
+			shield = 6.0 if id == "Kopierschutz" else 1.5
+			counter = ch.dmg
+			counter_el = el
+			float_at(p.c, p.r, id, GameData.EL[el])
+		"Geschützturm":
+			bots.append({"t": 8.0, "tick": 1.5, "kind": "turret"})
+			float_at(p.c, p.r, "Geschützturm", GameData.EL.Code)
+		"Debugger":
+			for c in 3:
+				fx_cell(3 + c, p.r, GameData.EL.Code, 0.2)
+			if not hazards.is_empty() or not pops.is_empty():
+				hazards.clear()
+				pops.clear()
+				float_at(p.c, p.r, "Aufgeräumt!", GameData.EL.Code)
+			if e.r == p.r:
 				hit_enemy(ch.dmg, el)
 			else:
 				_miss()
+		"Kettenblitz":
+			burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Elektro, 10)
+			hit_enemy(ch.dmg, el)
+			for k in 2:
+				delayed.append({"t": 0.25 * (k + 1), "fn": _chain_hit, "mark": false})
+		"Ladungsfeld":
+			sp = minf(100.0, sp + 25.0)
+			float_at(p.c, p.r, "Signatur +25 %", GameData.EL.Elektro)
+		"Magnetfeld":
+			fx_cell(3 + e.c, e.r, GameData.EL.Elektro, 0.3)
+			e.c = p.c
+			e.frozen = maxf(e.frozen, 0.5)
+			fx_cell(3 + e.c, e.r, GameData.EL.Elektro, 0.4)
+			float_at(3 + e.c, e.r, "Angezogen", GameData.EL.Elektro)
+		"Blackout":
+			warns.clear()
+			e.atk_t = def.atk
+			e.frozen = maxf(e.frozen, 3.0)
+			burst(3 + e.c + 0.5, e.r + 0.5, Color.WHITE, 20)
+			float_at(3 + e.c, e.r, "Blackout!", GameData.EL.Elektro)
+		"Seuche":
+			e.poison = maxi(4, e.poison * 2)
+			fx_cell(3 + e.c, e.r, GameData.EL.Virus, 0.4)
+			float_at(3 + e.c, e.r, "Seuche: Gift %d s" % e.poison, GameData.EL.Virus)
+		"Sporenfalle":
+			mines.append({"c": e.c, "r": e.r, "arm": 0.8, "t": 6.0, "dmg": ch.dmg, "poison": 6})
+		"Sprungantrieb":
+			dodge_t = 2.0
+			float_at(p.c, p.r, "Sprungbereit", GameData.COL.mint)
 		"Glutball":
 			proj.append({"lob": true, "fx": p.c + 0.5, "fr": p.r, "tx": 3 + p.c + 0.5, "tr": p.r, "t": 0.0, "dur": 0.3,
 				"el": "Feuer", "land": _land_glutball.bind(p.c, p.r)})
@@ -409,15 +483,24 @@ func _apply_chip(id: String) -> void:
 
 func _chip_sound(id: String) -> String:
 	match id:
-		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Glutball", "Datenfresser", "Doppelklick", "Laserschuss", "Kurzschluss":
+		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Glutball", "Datenfresser", "Doppelklick", "Laserschuss", "Kurzschluss", "Frostsplitter", "Parasit", "Debugger":
 			return "shoot"
-		"Byteschlag":
+		"Byteschlag", "Glutklinge":
 			return "slash"
-		"Firewall", "Blubberschild", "Hitzeschild", "Nebel":
+		"Firewall", "Blubberschild", "Hitzeschild", "Nebel", "Kopierschutz", "Konter":
 			return "shield"
+		"Feuersbrunst", "Tsunami", "Blackout":
+			return "special"
+		"Sprungantrieb":
+			return "dodge"
 		"Heilpatch", "Neustart":
 			return "heal"
 	return "chip"
+
+
+func _chain_hit() -> void:
+	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Elektro, 8)
+	hit_enemy(10, "Elektro")
 
 
 func _second_click() -> void:
@@ -529,6 +612,11 @@ func hurt_player(d: int) -> int:
 		float_at(p.c, p.r, "Abbild fängt ab!", GameData.EL.Code)
 		burst(p.c + 0.3, p.r + 0.5, GameData.EL.Code, 10)
 		return 0
+	if dodge_t > 0:
+		dodge_t = 0.0
+		events.append("dodge")
+		float_at(p.c, p.r, "Ausgewichen!", GameData.COL.mint)
+		return 0
 	if mist > 0 and rng.randf() < 0.5:
 		events.append("dodge")
 		float_at(p.c, p.r, "Verfehlt!", GameData.EL.Wasser)
@@ -543,6 +631,11 @@ func hurt_player(d: int) -> int:
 		shield = 0.0
 		events.append("block")
 		float_at(p.c, p.r, "Geblockt", GameData.EL.Code)
+		if counter > 0:
+			var cd := counter
+			counter = 0
+			float_at(3 + e.c, e.r - 0.3, "Konter!", GameData.EL[counter_el])
+			hit_enemy(cd, counter_el)
 		return 0
 	if bubble > 0 and bubble_t > 0:
 		var a := mini(bubble, d)
@@ -661,6 +754,10 @@ func _update_logic(dt: float) -> void:
 	p.cd = maxf(0.0, p.cd - dt)
 	if shield > 0:
 		shield -= dt
+		if shield <= 0:
+			counter = 0
+	if dodge_t > 0:
+		dodge_t -= dt
 	if bubble_t > 0:
 		bubble_t -= dt
 		if bubble_t <= 0:
@@ -724,7 +821,17 @@ func _update_logic(dt: float) -> void:
 		pr.x += pr.v * dt
 		if e.r == pr.row and absf(pr.x - (3 + e.c + 0.5)) < 0.4:
 			proj.remove_at(i)
-			hit_enemy(pr.dmg * (2 if pr.id == "Datenfresser" and e.poison > 0 else 1), pr.el)
+			var pm := 1
+			if pr.id == "Datenfresser" and e.poison > 0:
+				pm = 2
+			if pr.id == "Frostsplitter" and (e.frozen > 0 or e.slow > 0):
+				pm = 3
+				float_at(3 + e.c, e.r - 0.3, "Splitter!", GameData.EL.Wasser)
+			hit_enemy(pr.dmg * pm, pr.el)
+			if pr.id == "Parasit":
+				var ph := run.heal(pr.dmg)
+				if ph > 0:
+					float_at(p.c, p.r, "+%d" % ph, GameData.COL.mint)
 			if over:
 				return
 			if pr.id == "Wasserstrahl" and e.c < 2:
@@ -758,8 +865,16 @@ func _update_logic(dt: float) -> void:
 		b.t -= dt
 		b.tick -= dt
 		if b.tick <= 0:
-			b.tick = 1.0
-			hit_enemy(5, "Code", true)
+			if b.get("kind", "bot") == "turret":
+				b.tick = 1.5
+				for c in 3:
+					fx_cell(3 + c, p.r, GameData.EL.Code, 0.15)
+				if e.r == p.r:
+					hit_enemy(12, "Code")
+				events.append("shoot")
+			else:
+				b.tick = 1.0
+				hit_enemy(5, "Code", true)
 			if over:
 				return
 		if b.t <= 0:
@@ -771,7 +886,9 @@ func _update_logic(dt: float) -> void:
 		if mn.arm <= 0 and e.c == mn.c and e.r == mn.r:
 			mines.remove_at(i)
 			burst(3 + mn.c + 0.5, mn.r + 0.5, GameData.EL.Virus, 16)
-			hit_enemy(35, "Virus")
+			hit_enemy(mn.get("dmg", 35), "Virus")
+			if mn.has("poison"):
+				e.poison = maxi(e.poison, mn.poison)
 			if over:
 				return
 			continue

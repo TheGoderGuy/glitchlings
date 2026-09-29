@@ -481,6 +481,14 @@ func _draw_actors() -> void:
 		draw_rect(Rect2(body + Vector2(-14, -18), Vector2(4, 4)), Color.WHITE)
 	for i in st.bots.size():
 		var bp := body + Vector2(-26 + i * 8, -26 + sin(anim_t * 8.0 + i) * 2)
+		if st.bots[i].get("kind", "bot") == "turret":
+			# Geschützturm: kleiner Sockel mit Lauf nach rechts
+			var tp := body + Vector2(18, -4)
+			draw_rect(Rect2(tp + Vector2(-5, -8), Vector2(10, 10)), GameData.COL.dark)
+			draw_rect(Rect2(tp + Vector2(-4, -7), Vector2(8, 8)), GameData.EL.Code)
+			draw_rect(Rect2(tp + Vector2(3, -5), Vector2(8, 3)), GameData.COL.dark)
+			draw_rect(Rect2(tp + Vector2(-2, -5), Vector2(3, 3)), Color.WHITE if fmod(anim_t, 0.6) < 0.3 else GameData.EL.Code.lightened(0.4))
+			continue
 		draw_rect(Rect2(bp, Vector2(8, 6)), GameData.COL.dark)
 		draw_rect(Rect2(bp + Vector2(1, 1), Vector2(6, 4)), GameData.EL.Code)
 
