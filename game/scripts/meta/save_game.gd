@@ -39,6 +39,11 @@ func _upgrade() -> void:
 	for k in ["frag", "recipes", "hints", "cleared"]:
 		if not data.has(k):
 			data[k] = 0 if k == "frag" else []
+	# Element „Licht“ heißt seit 29.09.2026 „Elektro“
+	for m in data.get("team", []):
+		if m.praeg.has("Licht"):
+			m.praeg["Elektro"] = int(m.praeg.get("Elektro", 0)) + int(m.praeg["Licht"])
+			m.praeg.erase("Licht")
 
 
 func save_game() -> void:

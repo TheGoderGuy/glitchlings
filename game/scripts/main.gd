@@ -167,6 +167,8 @@ func _screenshot(shot: Dictionary) -> void:
 		run.enter(run.next_choices()[0])
 	run.frag = 55
 	foe_override = shot.get("foe", -1)
+	if mode in ["map", "pick"] and not shot.has("form"):
+		run.praeg = {"Elektro": 6, "Code": 1, "Feuer": 2, "Neutral": 9}
 	if shot.has("form"):
 		run.form = shot.form
 		run.stage = GameData.FORMS[run.form].stage
@@ -195,6 +197,8 @@ func _screenshot(shot: Dictionary) -> void:
 					if f in ["Kekso", "Tracko", "Lumi", "Screenshina", "Holohas", "Quakli", "Hüpfbyte", "Brummbit", "Kauzbit", "Raketauz"]:
 						SaveGame.see(f)
 			current.t_in = 1.0
+			if mode == "station":
+				current.sel = int(shot.get("t", 0.0))
 		"map":
 			show_map()
 		"event", "rest", "shop":
@@ -221,7 +225,7 @@ func _screenshot(shot: Dictionary) -> void:
 			elif mode == "evolve":
 				current.show_evolve_for_screenshot(shot.get("t", 2.6))
 		"result":
-			run.praeg = {"Neutral": 14, "Feuer": 9, "Licht": 4}
+			run.praeg = {"Neutral": 14, "Feuer": 9, "Elektro": 4}
 			run.chips_used = 27
 			run.fights_won = 3
 			run.form = "Blazebit"

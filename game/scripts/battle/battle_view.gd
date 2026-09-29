@@ -485,9 +485,9 @@ func _draw_actors() -> void:
 		if st.delayed.any(func(d): return d.mark):
 			var cc := Vector2(ecx, efy - 26)
 			var rad := 22.0 + 3.0 * sin(anim_t * 20.0)
-			draw_arc(cc, rad, 0, TAU, 24, GameData.EL.Licht, 1)
-			draw_rect(Rect2(cc.x - 32, cc.y, 64, 1), GameData.EL.Licht)
-			draw_rect(Rect2(cc.x, cc.y - 32, 1, 64), GameData.EL.Licht)
+			draw_arc(cc, rad, 0, TAU, 24, GameData.EL.Elektro, 1)
+			draw_rect(Rect2(cc.x - 32, cc.y, 64, 1), GameData.EL.Elektro)
+			draw_rect(Rect2(cc.x, cc.y - 32, 1, 64), GameData.EL.Elektro)
 
 
 func _proj_pos(pr: Dictionary) -> Vector2:
@@ -667,6 +667,7 @@ func _draw_pause() -> void:
 
 
 func _draw_pick() -> void:
+	var es := run.evo_status()
 	var r := Rect2(40, 30, 560, 300)
 	_panel(r)
 	_text(r.position + Vector2(0, 30), "Sieg!", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
@@ -680,19 +681,34 @@ func _draw_pick() -> void:
 		var ch: Dictionary = GameData.CHIPS[k]
 		var el: Color = GameData.EL[ch.el]
 		var sel := i == pick_idx
-		var c := Rect2(r.position.x + 24 + i * 176, r.position.y + 78 - (4 if sel else 0), 160, 108)
+		var c := Rect2(r.position.x + 24 + i * 176, r.position.y + 78 - (4 if sel else 0), 160, 122)
 		_box(c, GameData.COL.panel.lightened(0.08) if sel else GameData.COL.bg2, GameData.COL.sun if sel else el.darkened(0.3))
 		draw_rect(Rect2(c.position + Vector2(1, 1), Vector2(c.size.x - 2, 4)), el)
 		_text(c.position + Vector2(0, 24), k, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
 		_text(c.position + Vector2(0, 38), "%s · %s" % [ch.el, ch.rar], 8, el, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		var stats: String = ch.cat + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %.1fs" % ch.cd
 		_text(c.position + Vector2(0, 52), stats, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
-		draw_multiline_string(font(), c.position + Vector2(8, 74), ch.desc, HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, 8, 5, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
-	var need := run.evo_need()
+		draw_multiline_string(font(), c.position + Vector2(8, 70), ch.desc, HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, 8, 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		# Wirkung auf die Evolution
+		var tag := ""
+		var tag_col: Color = GameData.COL.muted
+		if ch.el == "Neutral":
+			tag = "Neutral: prägt nicht"
+		elif int(es.need) > 0 and run.stage == 1:
+			if run.mon.evo.has(ch.el):
+				var f: String = run.mon.evo[ch.el]
+				tag = "Prägt > %s" % (f if SaveGame.data.get("dex", {}).has(f) else ch.el + "-Form")
+				tag_col = el
+			else:
+				tag = "Ohne Wirkung auf %s" % run.form
+		elif int(es.need) > 0:
+			tag = "Zählt zur nächsten Stufe"
+			tag_col = el
+		_text(Vector2(c.position.x, c.end.y - 6), tag, 8, tag_col, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 	var evo_line := ""
-	if need > 0:
-		var tgt := run.evo_target()
-		evo_line = " · Prägung %d/%d%s" % [run.total_chips(), need, (" · Richtung " + GameData.FORMS[tgt].el) if tgt != "" else ""]
+	if int(es.need) > 0:
+		var lead: String = ("Richtung %s" % es.leader) if es.leader != "" else "Richtung offen"
+		evo_line = " · Element-Chips %d/%d · %s" % [mini(int(es.total), int(es.need)), int(es.need), lead]
 	_text(Vector2(r.position.x, r.end.y - 36), "Deck: %d Chips · Fragmente: %d%s" % [run.deck.size(), run.frag, evo_line], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	var pad: bool = InputSetup.pad
 	_text(Vector2(r.position.x, r.end.y - 16), "< > wählen   %s nehmen   %s überspringen" % ["A" if pad else "Enter", "B" if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)

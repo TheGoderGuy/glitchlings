@@ -241,30 +241,10 @@ func _draw_team() -> void:
 	_text(Vector2(x, y), "Passiv: " + M.passive, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	draw_multiline_string(font(), Vector2(x, y + 14), M.passive_desc, HORIZONTAL_ALIGNMENT_LEFT, w, 8, 3, GameData.COL.ink, wrap)
 	y += 56
-	# Lebenszeit-Prägung
-	_text(Vector2(x, y), "Prägung (gesamt)", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	var total := 0
-	for k in m.praeg:
-		total += int(m.praeg[k])
-	y += 8
-	for e in GameData.EL:
-		var n := int(m.praeg.get(e, 0))
-		_text(Vector2(x, y + 8), e, 8, GameData.EL[e])
-		_bar(Rect2(x + 56, y + 1, w - 90, 7), float(n) / maxi(1, total), GameData.EL[e])
-		_text(Vector2(x, y + 8), str(n), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, w)
-		y += 12
-	# Evolution
+	# Entwicklung: mögliche Richtungen mit Lebenszeit-Prägung
+	_text(Vector2(x, y), "Entwicklung", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	var probe := RunState.from_monster(m, 1)
-	var need := probe.evo_need()
-	y += 8
-	if need > 0:
-		var tgt := probe.evo_target()
-		var ec: Color = GameData.EL[GameData.FORMS[tgt].el] if tgt != "" else GameData.COL.muted
-		_text(Vector2(x, y), "Nächste Stufe: %d/%d" % [int(m.chips), need], 8, GameData.COL.ink)
-		_text(Vector2(x, y), ("Richtung " + GameData.FORMS[tgt].el) if tgt != "" else "Richtung offen", 8, ec, HORIZONTAL_ALIGNMENT_RIGHT, w)
-		_bar(Rect2(x, y + 5, w, 7), float(m.chips) / need, ec)
-	else:
-		_text(Vector2(x, y), "Höchste Stufe erreicht", 8, GameData.COL.muted)
+	_draw_evo(probe.evo_status(), x, y + 4, w)
 	var pad: bool = InputSetup.pad
 	var zones := SaveGame.unlocked_zones()
 	var zname: String = GameData.ZONES[zones[zone_idx % zones.size()]].name

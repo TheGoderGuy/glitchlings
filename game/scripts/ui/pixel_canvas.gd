@@ -151,6 +151,43 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 	draw_set_transform(off)
 
 
+## Evolutionsstand: je mögliche Richtung ein Balken (Form nur, wenn schon im Dex), Elemente ohne Wirkung, Status.
+## Gibt die benutzte Höhe zurück.
+func _draw_evo(s: Dictionary, x: float, y: float, w: float) -> float:
+	var y0 := y
+	if int(s.need) == 0:
+		_text(Vector2(x, y + 8), "Höchste Stufe erreicht", 8, GameData.COL.muted)
+		return 12.0
+	_text(Vector2(x, y + 8), "Element-Chips", 8, GameData.COL.muted)
+	_text(Vector2(x, y + 8), "%d/%d" % [mini(int(s.total), int(s.need)), int(s.need)], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, w)
+	_bar(Rect2(x, y + 11, w, 4), float(s.total) / maxf(1.0, s.need), GameData.COL.mint)
+	y += 20
+	var maxn := 1
+	for d in s.dirs:
+		maxn = maxi(maxn, int(d.n))
+	for d in s.dirs:
+		var lead: bool = d.el == s.leader
+		var col: Color = GameData.EL[d.el]
+		var known: bool = SaveGame.data.get("dex", {}).has(d.form)
+		var label := "%s > %s" % [d.el, d.form if known else "???"]
+		_text(Vector2(x, y + 8), label, 8, col if lead else col.darkened(0.25), HORIZONTAL_ALIGNMENT_LEFT, -1, lead, lead)
+		_text(Vector2(x, y + 8), str(d.n), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, w)
+		_bar(Rect2(x, y + 10, w, 3), float(d.n) / maxn, col if lead else col.darkened(0.45))
+		y += 16
+	if s.dirs.is_empty() and s.target != "":
+		_text(Vector2(x, y + 8), "> " + s.target, 8, GameData.COL.ink)
+		y += 14
+	if not s.other.is_empty():
+		var parts: Array = []
+		for el in s.other:
+			parts.append("%s %d" % [el, s.other[el]])
+		draw_multiline_string(font(), Vector2(x, y + 8), "Ohne Wirkung: " + ", ".join(parts), HORIZONTAL_ALIGNMENT_LEFT, w, 8, 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		y += 12 * (1 if text_width("Ohne Wirkung: " + ", ".join(parts)) <= w else 2)
+	var msg: String = "Bereit zur Entwicklung!" if s.ready else s.reason
+	_text(Vector2(x, y + 8), msg, 8, GameData.COL.mint if s.ready else GameData.COL.sun)
+	return y + 12 - y0
+
+
 ## Deckliste, gruppiert: „3× Pixelstrahl … Angriff“
 func _draw_deck_list(deck: Array, x: float, y: float, w: float, max_rows := 14) -> void:
 	var counts := {}

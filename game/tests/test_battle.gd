@@ -87,7 +87,7 @@ func step(st: BattleState, seconds: float) -> void:
 func test_data() -> void:
 	check(GameData.mult("Feuer", "Code") == 1.5, "Feuer schlägt Code")
 	check(GameData.mult("Code", "Feuer") == 0.75, "Code gegen Feuer schwach")
-	check(GameData.mult("Licht", "Virus") == 1.5, "Licht schlägt Virus")
+	check(GameData.mult("Elektro", "Virus") == 1.5, "Elektro schlägt Virus")
 	var run := RunState.new("Pixmiez", 1)
 	check(run.hp == 100 and run.deck.size() == 8, "Pixmiez startet mit 100 HP und 8 Chips")
 
@@ -216,11 +216,11 @@ func test_new_chips() -> void:
 	st = fresh()
 	st.e.c = 0
 	st.p.c = 2
-	play(st, "Lichtlanze")
-	check(st.e.hp == 70, "Lichtlanze verfehlt, wenn die Spalten nicht passen")
+	play(st, "Blitzlanze")
+	check(st.e.hp == 70, "Blitzlanze verfehlt, wenn die Spalten nicht passen")
 	st.p.c = 0
-	play(st, "Lichtlanze")
-	check(st.e.hp == 70 - 45, "Lichtlanze trifft passende Spalte, Licht schlägt Virus (70 → %d)" % st.e.hp)
+	play(st, "Blitzlanze")
+	check(st.e.hp == 70 - 45, "Blitzlanze trifft passende Spalte, Elektro schlägt Virus (70 → %d)" % st.e.hp)
 	st = fresh()
 	play(st, "Portscan")
 	play(st, "Laserschuss")
@@ -382,7 +382,7 @@ func test_meta() -> void:
 	# Run 1: Feuer-Prägung, 3 Siege, Rookie erreicht
 	var run := RunState.from_monster(m, 1)
 	run.chips_used = GameData.EVO_AT[2]
-	run.praeg = {"Feuer": 10, "Neutral": 5}
+	run.praeg = {"Feuer": GameData.EVO_AT[2], "Neutral": 5}
 	run.try_evolve()
 	run.fights_won = 3
 	var sum := SaveGame.record_run(run, false)
@@ -611,33 +611,59 @@ func test_tutorial() -> void:
 
 
 func test_evolution() -> void:
-	var run := RunState.new("Pixmiez", 1)
-	run.chips_used = GameData.EVO_AT[2] - 1
-	run.praeg = {"Neutral": 20, "Feuer": 4}
-	check(run.try_evolve().is_empty(), "Unter der Schwelle keine Evolution")
-	run.chips_used = GameData.EVO_AT[2]
-	var ev := run.try_evolve()
-	check(ev.get("to", "") == "Blazebit" and run.stage == 2 and run.max_hp == 110, "Feuer-Prägung: Pixmiez → Blazebit, +10 max. HP")
-	run.chips_used = GameData.EVO_AT[3]
-	check(run.try_evolve().get("to", "") == "Glutluchs" and run.stage == 3, "Champion-Schwelle: Blazebit → Glutluchs")
-	check(run.try_evolve().is_empty(), "Champion ohne weitere Stufe bleibt")
-	var run2 := RunState.new("Pixmiez", 1)
-	run2.chips_used = 30
-	run2.praeg = {"Neutral": 30}
-	check(run2.try_evolve().is_empty(), "Nur neutrale Chips: noch keine Richtung, keine Evolution")
-	var run3 := RunState.new("Pixmiez", 1)
-	run3.chips_used = 30
-	run3.praeg = {"Feuer": 3, "Code": 3, "Wasser": 3, "Virus": 3}
-	check(run3.try_evolve().get("to", "") == "Prismiez", "Bunt gemischt (je ≤ 30 %): geheime Evolution Prismiez")
-	var run4 := RunState.new("Tröpfel", 1)
-	run4.chips_used = GameData.EVO_AT[2]
-	run4.praeg = {"Wasser": 10}
-	run4.eis = 4
-	check(run4.try_evolve().get("to", "") == "Frostbyte", "Tröpfel mit 4× Eisfeld → Frostbyte")
-	var run5 := RunState.new("Funkling", 1)
-	run5.chips_used = GameData.EVO_AT[2]
-	run5.praeg = {"Feuer": 5, "Code": 9}
-	check(run5.try_evolve().get("to", "") == "Overclocko", "Funkling mit mehr Code als Feuer → Overclocko")
+	var need: int = GameData.EVO_AT[2]
+	# Fall des Produzenten: viel Elektro, kaum Code → früher Firewallo, jetzt Prismiez
+	var r := RunState.new("Pixmiez", 1)
+	r.praeg = {"Neutral": 20, "Elektro": need - 1, "Code": 1}
+	check(r.try_evolve().get("to", "") == "Prismiez", "Viel Elektro, kaum Code: Pixmiez → Prismiez (nicht mehr Firewallo)")
+	# Neutral zählt nicht zur Schwelle
+	var r1 := RunState.new("Pixmiez", 1)
+	r1.praeg = {"Neutral": 40, "Feuer": need - 1}
+	check(r1.try_evolve().is_empty() and r1.evo_status().reason.begins_with("Noch 1"), "Neutrale Chips zählen nicht: unter der Schwelle keine Evolution")
+	r1.praeg.Feuer = need
+	var ev := r1.try_evolve()
+	check(ev.get("to", "") == "Blazebit" and r1.stage == 2 and r1.max_hp == 110, "Feuer-Prägung: Pixmiez → Blazebit, +10 max. HP")
+	r1.praeg.Feuer = GameData.EVO_AT[3]
+	check(r1.try_evolve().get("to", "") == "Glutluchs" and r1.stage == 3, "Champion-Schwelle: Blazebit → Glutluchs")
+	check(r1.try_evolve().is_empty(), "Champion ohne weitere Stufe bleibt")
+	# Gleichstand wartet
+	var r2 := RunState.new("Pixmiez", 1)
+	r2.praeg = {"Feuer": 6, "Code": 6}
+	check(r2.try_evolve().is_empty() and r2.evo_status().reason.begins_with("Gleichstand"), "Gleichstand: Evolution wartet (keine Zufallsentscheidung)")
+	# Führung zu knapp (nur 1 Chip Vorsprung) wartet – Elemente ohne Richtung verwässern nicht
+	var r3 := RunState.new("Kekso", 1)
+	r3.praeg = {"Virus": 4, "Elektro": 3, "Code": 3, "Feuer": 3}
+	check(r3.try_evolve().is_empty() and r3.evo_status().reason.begins_with("Führung zu knapp"), "1 Chip Vorsprung: Evolution wartet")
+	var r3b := RunState.new("Kekso", 1)
+	r3b.praeg = {"Virus": 7, "Elektro": 5, "Code": 20}
+	check(r3b.try_evolve().get("to", "") == "Tracko", "2 Vorsprung reicht, viele Code-Chips (ohne Wirkung) verwässern nicht")
+	# Elemente ohne Richtung werden angezeigt, lenken aber nicht
+	var s3 := r3.evo_status()
+	check(s3.other.has("Code") and s3.other.has("Feuer") and s3.dirs.size() == 2, "Kekso: Code/Feuer ohne Wirkung, zwei Richtungen")
+	var r4 := RunState.new("Tröpfel", 1)
+	r4.praeg = {"Wasser": need}
+	r4.eis = 4
+	check(r4.try_evolve().get("to", "") == "Frostbyte", "Tröpfel mit 4× Eisfeld → Frostbyte")
+	var r5 := RunState.new("Funkling", 1)
+	r5.praeg = {"Feuer": 5, "Code": 9}
+	check(r5.try_evolve().get("to", "") == "Overclocko", "Funkling mit mehr Code als Feuer → Overclocko")
+	# Startdecks: überwiegend neutral, genau ein Chip je Richtung
+	var fair := true
+	for sp in GameData.MONS:
+		var M: Dictionary = GameData.MONS[sp]
+		if M.get("fusion", false):
+			continue
+		for el in M.evo:
+			var n: int = M.deck.filter(func(c): return GameData.CHIPS[c].el == el).size()
+			if n != 1:
+				fair = false
+				printerr("    %s: %d× %s im Startdeck" % [sp, n, el])
+		var off: Array = M.deck.filter(func(c): return GameData.CHIPS[c].el != "Neutral" and not M.evo.has(GameData.CHIPS[c].el))
+		if not off.is_empty():
+			fair = false
+			printerr("    %s: Chips ohne Richtung im Startdeck %s" % [sp, off])
+	check(fair, "Startdecks: je Richtung genau ein Chip, sonst neutral")
+	check(GameData.MONS.Pixmiez.evo.get("Elektro", "") == "Prismiez" and not GameData.EL.has("Licht"), "Element Licht heißt jetzt Elektro, Pixmiez hat Elektro-Richtung")
 	var ok := true
 	for f in GameData.FORMS:
 		if not GameData.SPECIALS.has(f) or not ResourceLoader.exists("res://assets/sprites/%s.png" % GameData.FORMS[f].spr):

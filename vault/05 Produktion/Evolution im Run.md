@@ -50,3 +50,16 @@ Jeder Rookie hat jetzt einen Champion (Ausnahme: keine). Namen geprüft (Blitzha
 | Raketauz | Phönixkauz | Feuer | Phönixsturz: 60 + Brand |
 
 Offen: Blinzel-Frames der neuen Champions, Ultras (96 px).
+
+## Überarbeitung 29.09.2026 (Feedback: „Pixmiez wird immer Firewallo, obwohl ich viel Elektro nutze“)
+**Befund:** (1) Pixmiez hatte keine Licht-/Elektro-Richtung, Licht-Chips wurden ignoriert – ein einziger Firewall (Code) im Startdeck entschied. (2) Die Schwelle zählte auch neutrale Chips → Evolution mitten im ersten Run nach 1–3 Element-Chips. (3) Startdecks legten die Richtung fest. (4) Gleichstand entschied die Listenreihenfolge. (5) Nirgends sichtbar, welche Richtungen es gibt.
+
+**Neue Regeln:**
+- Element **„Licht“ heißt jetzt „Elektro“** (Chips Blitzcursor, Blitzlanze, Blendgranate, neu **Kurzschluss**). **Heilpatch ist neutral.**
+- **Pixmiez: Elektro → Prismiez** (vorher nur geheimer Weg).
+- **Nur Element-Chips prägen und zählen:** Rookie ab **12**, Champion ab **35** Element-Chips (über alle Runs).
+- **Klare Führung:** Die führende Richtung braucht **2 Chips Vorsprung** vor der zweitbesten, sonst wartet die Evolution („Führung zu knapp“ / „Gleichstand“). Elemente ohne Richtung zählen zur Schwelle, lenken aber nicht.
+- **Startdecks:** überwiegend neutral + **genau ein Chip je Richtung** → die Spielweise entscheidet.
+- **Anzeige** auf Karte, in der Station und in der Chipwahl: Balken je Richtung (Form, sobald im Dex), „Ohne Wirkung: …“, Status. Chipwahl-Karten zeigen „Prägt > Feuer-Form“ bzw. „Ohne Wirkung auf …“.
+
+**Simulation (gezielter Spieler, 6 Durchläufe je Wunsch):** Pixmiez→Elektro 4/6, Pixmiez→Feuer 5/6, Funkling→Code 5/6, Kekso→Virus 5/6, Brummbit→Code 5/6; kein Monster bleibt Baby. Der Autopilot spielt dabei *alle* Chips – echte Spieler steuern zusätzlich, welche sie einsetzen.

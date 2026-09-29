@@ -150,35 +150,25 @@ func _draw() -> void:
 
 func _draw_side_panels(target: Vector2i) -> void:
 	# Links: Monster + Run-Status
-	var L := Rect2(8, 44, 150, 290)
+	var L := Rect2(8, 36, 150, 300)
 	_box(L, Color(GameData.COL.panel, 0.92), GameData.COL.line)
 	var bob := 1 if sin(anim_t * 4.0) > 0 else 0
-	draw_rect(Rect2(L.position.x + 45, L.position.y + 96, 60, 3), Color(0.05, 0.02, 0.12, 0.35))
-	_draw_sprite(run.form, L.get_center().x, L.position.y + 98, false, {"bob": bob, "blink": fmod(anim_t, 3.3) < 0.13})
-	var y := L.position.y + 116
+	draw_rect(Rect2(L.position.x + 45, L.position.y + 88, 60, 3), Color(0.05, 0.02, 0.12, 0.35))
+	_draw_sprite(run.form, L.get_center().x, L.position.y + 90, false, {"bob": bob, "blink": fmod(anim_t, 3.3) < 0.13})
+	var y := L.position.y + 106
 	_text(Vector2(L.position.x + 8, y), run.form, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	_text(Vector2(L.position.x + 8, y), GameData.STAGE_NAMES[run.stage], 8, GameData.EL[run.form_el()], HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
 	_bar(Rect2(L.position.x + 8, y + 6, L.size.x - 16, 9), float(run.hp) / run.max_hp, GameData.COL.mint)
 	var rows := [["HP", "%d/%d" % [run.hp, run.max_hp], GameData.COL.ink], ["Fragmente", str(run.frag), GameData.COL.sun],
 		["Deck", "%d Chips" % run.deck.size(), GameData.COL.ink], ["Etage", "%d/%d" % [maxi(0, run.floor_idx + 1), run.map.floors.size()], GameData.COL.ink]]
-	y += 30
+	y += 27
 	for row in rows:
 		_text(Vector2(L.position.x + 8, y), row[0], 8, GameData.COL.muted)
 		_text(Vector2(L.position.x + 8, y), row[1], 8, row[2], HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
-		y += 15
-	# Evolution
-	y += 6
-	var need := run.evo_need()
-	if need > 0:
-		var tgt := run.evo_target()
-		_text(Vector2(L.position.x + 8, y), "Prägung", 8, GameData.COL.muted)
-		_text(Vector2(L.position.x + 8, y), "%d/%d" % [mini(run.total_chips(), need), need], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
-		var ec: Color = GameData.EL[GameData.FORMS[tgt].el] if tgt != "" else GameData.COL.muted
-		_bar(Rect2(L.position.x + 8, y + 5, L.size.x - 16, 7), float(run.total_chips()) / need, ec)
-		var dir: String = ("Richtung " + GameData.FORMS[tgt].el) if tgt != "" else "Richtung offen"
-		_text(Vector2(L.position.x + 8, y + 26), dir, 8, ec)
-	else:
-		_text(Vector2(L.position.x + 8, y), "Höchste Stufe im Run", 8, GameData.COL.muted)
+		y += 12
+	# Evolution: mögliche Richtungen und Stand
+	y += 4
+	_draw_evo(run.evo_status(), L.position.x + 8, y, L.size.x - 16)
 	if run.sp_bonus:
 		_text(Vector2(L.position.x + 8, L.end.y - 8), "Signatur-Bonus!", 8, GameData.COL.sun)
 	# Rechts: Auswahl

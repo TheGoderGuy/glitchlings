@@ -273,7 +273,7 @@ func _apply_chip(id: String) -> void:
 	var el: String = ch.el
 	events.append(_chip_sound(id))
 	match id:
-		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Datenfresser":
+		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Datenfresser", "Kurzschluss":
 			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 11.0, "el": el, "dmg": ch.dmg, "id": id})
 		"Doppelklick":
 			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": el, "dmg": ch.dmg, "id": id})
@@ -314,9 +314,9 @@ func _apply_chip(id: String) -> void:
 		"Nebel":
 			mist = 3.0
 			float_at(p.c, p.r, "Nebel", GameData.EL.Wasser)
-		"Lichtlanze":
+		"Blitzlanze":
 			for r in 3:
-				fx_cell(3 + p.c, r, GameData.EL.Licht, 0.3)
+				fx_cell(3 + p.c, r, GameData.EL.Elektro, 0.3)
 			if e.c == p.c:
 				hit_enemy(ch.dmg, el)
 			else:
@@ -325,7 +325,7 @@ func _apply_chip(id: String) -> void:
 			warns.clear()
 			e.atk_t = def.atk
 			burst(3 + e.c + 0.5, e.r + 0.5, Color.WHITE, 16)
-			float_at(3 + e.c, e.r, "Geblendet", GameData.EL.Licht)
+			float_at(3 + e.c, e.r, "Geblendet", GameData.EL.Elektro)
 		"Wurmloch":
 			fx_cell(3 + e.c, e.r, GameData.EL.Virus, 0.3)
 			e.r = p.r
@@ -365,7 +365,7 @@ func _apply_chip(id: String) -> void:
 			var h: int = mini(25, run.max_hp - run.hp)
 			run.hp += h
 			float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
-			burst(p.c + 0.5, p.r + 0.5, GameData.EL.Licht, 10)
+			burst(p.c + 0.5, p.r + 0.5, GameData.EL.Elektro, 10)
 		"Blitzcursor":
 			delayed.append({"t": 0.5, "fn": _blitz, "mark": true})
 		"Mini-Bot":
@@ -380,7 +380,7 @@ func _apply_chip(id: String) -> void:
 
 func _chip_sound(id: String) -> String:
 	match id:
-		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Glutball", "Datenfresser", "Doppelklick", "Laserschuss":
+		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Glutball", "Datenfresser", "Doppelklick", "Laserschuss", "Kurzschluss":
 			return "shoot"
 		"Byteschlag":
 			return "slash"
@@ -436,8 +436,8 @@ func _flammenwelle(col: int) -> void:
 
 
 func _blitz() -> void:
-	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Licht, 12)
-	hit_enemy(20, "Licht")
+	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Elektro, 12)
+	hit_enemy(20, "Elektro")
 
 
 # ---------- Treffer ----------
@@ -657,6 +657,9 @@ func _update_logic(dt: float) -> void:
 				e.c += 1
 			if pr.id == "Virusspritzer":
 				e.poison = 4
+			if pr.id == "Kurzschluss":
+				e.frozen = maxf(e.frozen, 0.5)
+				float_at(3 + e.c, e.r, "Kurzschluss!", GameData.EL.Elektro)
 			continue
 		if pr.x > 6.3:
 			proj.remove_at(i)

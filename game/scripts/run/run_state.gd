@@ -96,45 +96,87 @@ func total_praeg() -> Dictionary:
 	return t
 
 
-func evo_target() -> String:
-	var praeg := total_praeg()
-	if stage == 1:
-		if mon.has("ice") and eis >= 4:
-			return mon.ice
-		var non_neutral := 0
-		var kinds := 0
-		var top := 0
-		for el in praeg:
-			if el != "Neutral":
-				non_neutral += praeg[el]
-				kinds += 1
-				top = maxi(top, praeg[el])
-		# Geheim-Evolution: bunt gemischt, kein Element über 30 %
-		if mon.has("secret") and non_neutral >= 12 and kinds >= 4 and top <= non_neutral * 0.3:
-			return mon.secret
-		var best := ""
-		for el in mon.evo:
-			if praeg.get(el, 0) > 0 and (best == "" or praeg[el] > praeg[best]):
-				best = el
-		return mon.evo[best] if best != "" else ""
-	return GameData.FORMS[form].up
+## Gespielte Element-Chips (alles außer Neutral) über alle Runs – nur sie prägen und zählen für die Schwelle.
+func element_chips() -> int:
+	var n := 0
+	var t := total_praeg()
+	for el in t:
+		if el != "Neutral":
+			n += t[el]
+	return n
 
 
-## Prägung, die für die nächste Stufe nötig ist (0 = Endstufe).
+## Prägung, die für die nächste Stufe nötig ist (Element-Chips; 0 = Endstufe).
 func evo_need() -> int:
 	if stage == 1 or (stage == 2 and GameData.FORMS[form].up != ""):
 		return GameData.EVO_AT[stage + 1]
 	return 0
 
 
-## Entwickelt sich, wenn genug Prägung da ist. Gibt {from, to} zurück oder {}.
-func try_evolve() -> Dictionary:
+## Vollständiger Evolutionsstand für Anzeige und Entscheidung:
+## dirs = mögliche Richtungen [{el, form, n}], other = Element-Chips ohne Richtung,
+## leader = führende Richtung (leer bei Gleichstand), margin = Vorsprung vor der zweitbesten Richtung,
+## target = Form, zu der es gerade gehen würde, ready = Evolution jetzt möglich, reason = Hinweistext.
+func evo_status() -> Dictionary:
+	var t := total_praeg()
+	var total := element_chips()
 	var need := evo_need()
-	if need == 0 or total_chips() < need:
+	var s := {"dirs": [], "other": {}, "total": total, "need": need, "leader": "", "margin": 0, "target": "", "ready": false, "reason": ""}
+	if need == 0:
+		s.reason = "Höchste Stufe"
+		return s
+	if stage == 2:
+		s.target = GameData.FORMS[form].up
+		s.ready = total >= need
+		s.reason = "" if s.ready else "Noch %d Element-Chips" % (need - total)
+		return s
+	for el in mon.evo:
+		s.dirs.append({"el": el, "form": mon.evo[el], "n": int(t.get(el, 0))})
+	for el in t:
+		if el != "Neutral" and not mon.evo.has(el):
+			s.other[el] = int(t[el])
+	# Sonderweg: Tröpfel mit 4× Eisfeld wird zu Frostbyte
+	if mon.has("ice") and eis >= 4:
+		s.leader = "Wasser"
+		s.target = mon.ice
+		s.margin = 99
+	else:
+		# Führende Richtung und Abstand zur zweitbesten (Elemente ohne Richtung zählen hier nicht)
+		var best := -1
+		var second := 0
+		for d in s.dirs:
+			if d.n > best:
+				second = maxi(best, 0)
+				best = d.n
+				s.leader = d.el
+			elif d.n > second:
+				second = d.n
+		s.margin = best - second
+		if best <= 0 or s.margin == 0:
+			s.leader = ""
+		else:
+			s.target = mon.evo[s.leader]
+	if total < need:
+		s.reason = "Noch %d Element-Chips" % (need - total)
+	elif s.leader == "":
+		s.reason = "Gleichstand – spiel mehr von einem Element"
+	elif s.margin < GameData.EVO_LEAD:
+		s.reason = "Führung zu knapp – %s braucht %d Vorsprung" % [s.leader, GameData.EVO_LEAD]
+	else:
+		s.ready = true
+	return s
+
+
+func evo_target() -> String:
+	return evo_status().target
+
+
+## Entwickelt sich, wenn genug Element-Chips gespielt sind und eine Richtung klar führt. Gibt {from, to} zurück oder {}.
+func try_evolve() -> Dictionary:
+	var s := evo_status()
+	if not s.ready or s.target == "":
 		return {}
-	var target := evo_target()
-	if target == "":
-		return {}
+	var target: String = s.target
 	var old := form
 	form = target
 	stage += 1
