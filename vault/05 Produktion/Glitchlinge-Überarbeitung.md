@@ -17,7 +17,7 @@ Nach ausgiebigem Anspielen hat der Produzent die Linien durchgesehen. Umsetzung:
 | **Molchi** | Beide Linien („Wahnsinn“) unverändert. |
 | **Fusionen** | Dampfbyte und Glyphel gestrichen. Neu: **Wolperling** = Lumi + Kauzbit (Wolpertinger: Hase mit Eulenflügeln und Geweih; Elektro; Passiv *Mischwesen* = doppelt so schnell + sieht Angriffe früher; *Geweihblitz*). **Schlummerbit** = Kekso + Brummbit (ersetzt den kurzlebigen Bärtierling; zwei Winterschläfer träumen gemeinsam: schwebt schlafend, Sternenfell, Backen voller Sterne; Elektro; Passiv *Winterschlaf* = 25 % weniger Schaden + Hamstern; *Schlaflied* betäubt 3 s und heilt). **Pustebacke** = Kekso + Quakli (Backentaschen + Schallblase = aufgeblasener Giftgas-Ballon; Virus; Passiv *Schwebegas* = 15 % Ausweichen + Angreifer vergiftet; *Gasexplosion*). Spukatz und Wolkerich bleiben. |
 
-**Monsterdex**: 73 Formen. **Alte Spielstände** werden beim Laden übertragen (`SaveGame.FORM_MIGRATION`): gestrichene Formen → Ersatz auf gleicher Stufe (Pixmiez-Feuer → Elektro-Formen, Sonnbrumm-Linie → Pilzbrumm-Linie, Screenshina-Linie → Perlhopp-Linie, Dampfbyte → Bärtierling, Glyphel → Wolperling), Dex-Einträge und Rezepte ebenso.
+**Monsterdex**: 74 Formen (Stand Nachträge). **Alte Spielstände** werden beim Laden übertragen (`SaveGame.FORM_MIGRATION`): gestrichene Formen → Ersatz auf gleicher Stufe (Pixmiez-Feuer → Elektro-Formen, Sonnbrumm-Linie → Pilzbrumm-Linie, Screenshina-Linie → Perlhopp-Linie, Dampfbyte und Bärtierling → Schlummerbit, Glyphel → Wolperling), Dex-Einträge und Rezepte ebenso.
 
 Alle neuen Sprites: PixelLab Pro Flash, 32 Farben, Blinzel-Frames (Boxen in `tools/sprites/blink_boxes.json`), Namen per `tools/namecheck` geprüft.
 
