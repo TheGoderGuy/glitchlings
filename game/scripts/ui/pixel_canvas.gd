@@ -136,6 +136,7 @@ static func sprite(key: String) -> Dictionary:
 
 
 ## Spieler-Babys (32 px) werden verdoppelt, ab Rookie 1 Kunstpixel = 1 Pixel.
+## opts: scale, bob, flash, blink, mod, clip_top
 func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {}) -> void:
 	var s := sprite(key)
 	var sc: int = opts.get("scale", 2 if s.n <= 32 else 1)
@@ -148,7 +149,12 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 		draw_set_transform(off + Vector2(left + size, top), 0, Vector2(-sc, sc))
 	else:
 		draw_set_transform(off + Vector2(left, top), 0, Vector2(sc, sc))
-	draw_texture(tex, Vector2.ZERO, mod)
+	# clip_top: alles oberhalb dieser Linie weglassen (z. B. 96er-Sprites in kleinen Kacheln)
+	var cut: int = ceili((float(opts.get("clip_top", -INF)) - top) / sc)
+	if cut > 0:
+		draw_texture_rect_region(tex, Rect2(0, cut, s.n, s.n - cut), Rect2(0, cut, s.n, s.n - cut), mod)
+	else:
+		draw_texture(tex, Vector2.ZERO, mod)
 	draw_set_transform(off)
 
 

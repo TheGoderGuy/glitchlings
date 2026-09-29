@@ -108,7 +108,7 @@ func element_chips() -> int:
 
 ## Prägung, die für die nächste Stufe nötig ist (Element-Chips; 0 = Endstufe).
 func evo_need() -> int:
-	if stage == 1 or (stage == 2 and GameData.FORMS[form].up != ""):
+	if stage == 1 or (stage in [2, 3] and GameData.FORMS[form].up != ""):
 		return GameData.EVO_AT[stage + 1]
 	return 0
 
@@ -125,7 +125,7 @@ func evo_status() -> Dictionary:
 	if need == 0:
 		s.reason = "Höchste Stufe"
 		return s
-	if stage == 2:
+	if stage >= 2:
 		s.target = GameData.FORMS[form].up
 		s.ready = total >= need
 		s.reason = "" if s.ready else "Noch %d Element-Chips" % (need - total)

@@ -6,15 +6,18 @@ signal to_title
 
 enum Tab { TEAM, NEST, LAB, DEX }
 const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex"]
-const DEX_ORDER := ["Pixmiez", "Blazebit", "Firewallo", "Virulina", "Prismiez", "Glutluchs", "Bollwerkatz",
-	"Funkling", "Glutbyte", "Overclocko", "Magmawulf", "Turbowulf",
-	"Tröpfel", "Kaskadi", "Pufferling", "Frostbyte", "Tsunamander", "Panzerpuff",
-	"Kekso", "Tracko", "Cachy", "Lumi", "Blinki", "Screenshina", "Holohas",
-	"Quakli", "Virulurch", "Hüpfbyte", "Mechaquak", "Molchi", "Toxmolch", "Magmolch",
-	"Brummbit", "Sonnbrumm", "Bärtron", "Titanbrumm", "Kauzbit", "Optikauz", "Raketauz", "Radarkauz",
-	"Dampfbyte", "Wolkerich", "Glyphel", "Spukatz",
-	"Toxipanth", "Prismalynx", "Glaziolotl", "Schattnager", "Glanzbacke", "Strahlhase",
-	"Toxikröt", "Sumpfdrak", "Lavadrak", "Sonnenpranke", "Phönixkauz"]
+## Nach Linien: Baby → Rookies → Champions → Ultras, am Ende die Fusionen
+const DEX_ORDER := [
+	"Pixmiez", "Blazebit", "Firewallo", "Virulina", "Prismiez", "Glutluchs", "Bollwerkatz", "Toxipanth", "Prismalynx", "Pyrolynx", "Bastionkatz", "Venomynx", "Aurorlynx",
+	"Funkling", "Glutbyte", "Overclocko", "Magmawulf", "Turbowulf", "Glutfenrir", "Hyperwulf",
+	"Tröpfel", "Kaskadi", "Pufferling", "Frostbyte", "Tsunamander", "Panzerpuff", "Glaziolotl", "Leviamander", "Kolosspuff", "Kryolotl",
+	"Kekso", "Tracko", "Cachy", "Schattnager", "Glanzbacke", "Phantomnager", "Stellarbacke",
+	"Lumi", "Blinki", "Screenshina", "Strahlhase", "Holohas", "Plasmahase", "Quantenhas",
+	"Quakli", "Virulurch", "Hüpfbyte", "Toxikröt", "Mechaquak", "Miasmakröt", "Gigaquak",
+	"Molchi", "Toxmolch", "Magmolch", "Sumpfdrak", "Lavadrak", "Hydradrak", "Vulkandrak",
+	"Brummbit", "Sonnbrumm", "Bärtron", "Sonnenpranke", "Titanbrumm", "Supernovabär", "Kolossbrumm",
+	"Kauzbit", "Optikauz", "Raketauz", "Radarkauz", "Phönixkauz", "Orbitkauz", "Infernokauz",
+	"Dampfbyte", "Wolkerich", "Glyphel", "Spukatz"]
 const HATCH_REVEAL := 2.2
 ## Vorladen! Texturen, die erst in _draw() zum ersten Mal geladen werden, erscheinen weiß.
 const EGG_TEX := {"egg_g": preload("res://assets/sprites/egg_g.png"), "egg_s": preload("res://assets/sprites/egg_s.png"), "egg_e": preload("res://assets/sprites/egg_e.png")}
@@ -291,9 +294,9 @@ func _draw_dex() -> void:
 		var F: Dictionary = GameData.FORMS[f]
 		var feet := cell.position.y + 77
 		if known:
-			_draw_sprite(f, cell.get_center().x, feet, false, {"scale": 1, "bob": 1 if active and sin(anim_t * 4.0) > 0 else 0})
+			_draw_sprite(f, cell.get_center().x, feet, false, {"scale": 1, "bob": 1 if active and sin(anim_t * 4.0) > 0 else 0, "clip_top": cell.position.y + 2})
 		else:
-			_draw_sprite(f, cell.get_center().x, feet, false, {"scale": 1, "flash": true, "mod": Color(0.2, 0.17, 0.34, 0.95)})
+			_draw_sprite(f, cell.get_center().x, feet, false, {"scale": 1, "flash": true, "mod": Color(0.2, 0.17, 0.34, 0.95), "clip_top": cell.position.y + 2})
 		_text(Vector2(cell.position.x, cell.end.y - 6), f if known else "???", 8, GameData.EL[F.el] if known else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cell.size.x)
 
 

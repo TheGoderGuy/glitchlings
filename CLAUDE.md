@@ -25,6 +25,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - **Monster:** 45 im Monsterdex. Spielbare Babys: Pixmiez (Katze), Funkling (Welpe), Tröpfel (Axolotl), Kekso (Hamster), Lumi (Hase), Quakli (Frosch), Molchi (Salamander), Brummbit (Bär, Tank), Kauzbit (Robo-Eule) + 4 Fusionen.
 - **Elemente (Godot):** Feuer, Wasser, Code, **Elektro** (früher „Licht“), Virus, Neutral.
 - **Evolution:** Prägung = Element der gespielten Chips. Stufen im Prototyp: Rookie 100, Champion 250, Ultra 500 Prägung, +10 HP je Stufe.
+  **Godot (29.09.2026):** nur Element-Chips zählen, Rookie 12 / Champion 35 / **Ultra 80**, alle 9 Linien bis Ultra (21 Ultras, 96 px), 76 Formen im Dex.
   Nur die **Feuer-Linie (Katze)** hat alle 4 Stufen: Pixmiez → Blazebit → Glutluchs → Pyrolynx (Tabelle `UP` im Code).
   **Funkling- & Tröpfel-Linie** (27.09.2026, PixelLab): Babys Funkling (Welpe) + Tröpfel (Axolotl) 32 px, Rookies Glutbyte, Overclocko, Kaskadi, Pufferling 64 px, Champions Magmawulf (← Glutbyte) und Tsunamander (← Kaskadi) 80 px. Übrige Champions + alle Ultras fehlen noch.
   **Hamster/Hase/Frosch-Redesign** (27.09.2026): Kekso → Tracko/Cachy, Lumi → Blinki/Screenshina, Quakli (früher Spamlet) → Virulurch/Hüpfbyte als Tiere (Baby 32, Rookie 64). Gegner „Spamlet“ bleibt Pop-up-Fenster (`spam`).
@@ -68,7 +69,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] C Champions (29.09.2026): 11 neue Champions per PixelLab (Rookie als Referenz), jeder Rookie hat jetzt eine Endstufe – 55 Formen
 - [x] Evolution überarbeitet (29.09.2026): Licht → **Elektro**, Heilpatch neutral, Pixmiez Elektro→Prismiez, nur Element-Chips zählen (Rookie 12, Champion 35), 2 Chips Vorsprung nötig, faire Startdecks, Richtungsanzeige überall – Details `vault/05 Produktion/Evolution im Run.md`
 - [x] Zone 3 Spam-Sümpfe (29.09.2026): Spammücke (Lebensraub), Bannerschnecke (Schleim verlangsamt), Popupblüte (stationär, Pop-ups), Boss Spamkönigin, 154 Tests – `vault/05 Produktion/Zone Spam-Sümpfe.md`
-- [ ] Ultras (96) · Blinzel-Frames neue Sprites · Zone-2-Musik/-Ereignisse · Zone 3 · Phase 4: Steam-Seite + Demo
+- [x] Ultras (29.09.2026): 21 Ultras (96 px, PixelLab) mit Signatur-Attacken, ab 80 Element-Chips, Dex nach Linien sortiert, 156 Tests – `vault/05 Produktion/Evolution im Run.md`
+- [ ] Blinzel-Frames neue Sprites · Zone-2/3-Musik/-Ereignisse · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)
@@ -86,9 +88,9 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Neue Linien Molchi, Brummbit, Kauzbit (Baby + Rookies, Passive, Signaturen)
 - [x] Signatur-Fähigkeiten der 4 Fusionen (Godot, 29.09.2026)
 - [x] 7 Mecha-Champions der Code-Richtungen (Bollwerkatz, Turbowulf, Panzerpuff, Mechaquak, Holohas, Titanbrumm, Radarkauz)
-- [x] Champions für die übrigen Nicht-Code-Rookies (Godot, 29.09.2026) · [ ] Ultras
+- [x] Champions für die übrigen Nicht-Code-Rookies (Godot, 29.09.2026) · [x] Ultras (Godot, 29.09.2026)
 - [x] Station-Leben: Bindung/Pflege + Expeditionen (`vault/05 Produktion/Station-Leben.md`)
-- [x] Champions der übrigen Linien · [ ] Ultras
+- [x] Champions der übrigen Linien · [x] Ultras (Godot)
 - [ ] Angriffsanimationen / Idle-Animationen
 - [ ] Prototyp mit 5–10 externen Testern spielen lassen, Ergebnisse ins Playtest-Log (`vault/05 Produktion/Prototyp-Spezifikation.md`)
 

@@ -49,7 +49,7 @@ Jeder Rookie hat jetzt einen Champion (Ausnahme: keine). Namen geprüft (Blitzha
 | Sonnbrumm | Sonnenpranke | Licht | Sonnenschlag: 55, heilt 40 |
 | Raketauz | Phönixkauz | Feuer | Phönixsturz: 60 + Brand |
 
-Offen: Blinzel-Frames der neuen Champions, Ultras (96 px).
+Offen: Blinzel-Frames der neuen Champions. Ultras: siehe unten.
 
 ## Überarbeitung 29.09.2026 (Feedback: „Pixmiez wird immer Firewallo, obwohl ich viel Elektro nutze“)
 **Befund:** (1) Pixmiez hatte keine Licht-/Elektro-Richtung, Licht-Chips wurden ignoriert – ein einziger Firewall (Code) im Startdeck entschied. (2) Die Schwelle zählte auch neutrale Chips → Evolution mitten im ersten Run nach 1–3 Element-Chips. (3) Startdecks legten die Richtung fest. (4) Gleichstand entschied die Listenreihenfolge. (5) Nirgends sichtbar, welche Richtungen es gibt.
@@ -63,3 +63,34 @@ Offen: Blinzel-Frames der neuen Champions, Ultras (96 px).
 - **Anzeige** auf Karte, in der Station und in der Chipwahl: Balken je Richtung (Form, sobald im Dex), „Ohne Wirkung: …“, Status. Chipwahl-Karten zeigen „Prägt > Feuer-Form“ bzw. „Ohne Wirkung auf …“.
 
 **Simulation (gezielter Spieler, 6 Durchläufe je Wunsch):** Pixmiez→Elektro 4/6, Pixmiez→Feuer 5/6, Funkling→Code 5/6, Kekso→Virus 5/6, Brummbit→Code 5/6; kein Monster bleibt Baby. Der Autopilot spielt dabei *alle* Chips – echte Spieler steuern zusätzlich, welche sie einsetzen.
+
+## Ultras (Stufe 4, 96 px) – 29.09.2026
+Jeder der 21 Champions hat jetzt ein Ultra (PixelLab Pro Flash, Stilreferenz Pyrolynx, auf 32 Farben reduziert). **Ab 80 Element-Chips** (über alle Runs) entwickelt sich ein Champion zu seinem Ultra, +10 HP, neue Signatur-Attacke. Die Richtung ist ab dem Rookie festgelegt – für Champion und Ultra zählt nur noch die Gesamtzahl der Element-Chips.
+
+| Champion | Ultra | Element | Signatur |
+|---|---|---|---|
+| Glutluchs | Pyrolynx | Feuer | Dreischweif-Inferno: Reihe 3 × 28 + Brand |
+| Bollwerkatz | Bastionkatz | Code | Bastionssprung: 70, betäubt 1,5 s, Schild 8 s |
+| Toxipanth | Venomynx | Virus | Dreigiftschweif: Feld 3 × 25 + sehr langes Gift |
+| Prismalynx | Aurorlynx | Elektro | Polarlicht: Feld 60, heilt 50 |
+| Magmawulf | Glutfenrir | Feuer | Fenrirbrand: 2 × 45 + langer Brand |
+| Turbowulf | Hyperwulf | Code | Hyperschub: lädt alle Chips, übertaktet 10 s, 4 × 20 |
+| Tsunamander | Leviamander | Wasser | Leviathanflut: Feld 75, friert 2 s ein |
+| Panzerpuff | Kolosspuff | Code | Kolossblase: Blase 120 (10 s) + Feld 35 |
+| Glaziolotl | Kryolotl | Wasser | Absoluter Nullpunkt: Feld 55, 4 s eingefroren |
+| Schattnager | Phantomnager | Virus | Phantomfalle: Backentasche, 4 Minen, 2 Schatten, 35 |
+| Glanzbacke | Stellarbacke | Elektro | Sternenkeks: Backentasche, heilt 60, 30 |
+| Holohas | Quantenhas | Code | Quantenarmee: 4 Abbilder (12 s) + 40 |
+| Strahlhase | Plasmahase | Elektro | Plasmasturm: 4 × 25 |
+| Toxikröt | Miasmakröt | Virus | Miasma: Feld 40 + extrem langes Gift |
+| Mechaquak | Gigaquak | Code | Gigasprung: 85, betäubt 2,5 s |
+| Sumpfdrak | Hydradrak | Virus | Dreikopfatem: Reihe 3 × 30 + Gift |
+| Lavadrak | Vulkandrak | Feuer | Eruption: Feld 55 + langer Brand |
+| Sonnenpranke | Supernovabär | Elektro | Supernova: 75, heilt 55 |
+| Titanbrumm | Kolossbrumm | Code | Kolossfäuste: 2 × 55, betäubt 2 s |
+| Phönixkauz | Infernokauz | Feuer | Infernosturz: 85 + langer Brand |
+| Radarkauz | Orbitkauz | Code | Orbitalschlag: 40, nächste 8 Treffer +50 % |
+
+Zwei Entwürfe wurden neu generiert: **Bastionkatz** hatte einen Burgturm auf dem Rücken (verstößt gegen „keine Gegenstände als Körper“), **Phantomnager** sah wie eine Katze aus (jetzt klar Ratte). Der Monsterdex ist jetzt nach Linien sortiert (Baby → Rookies → Champions → Ultras, Fusionen am Ende) und hat 76 Einträge; 96er-Sprites werden oben an der Kachel abgeschnitten.
+
+Offen: Blinzel-Frames der Champions und Ultras, Balancing der Ultra-Signaturen nach dem Anspielen (80 Element-Chips ≈ 3–4 Runs mit einem Monster).

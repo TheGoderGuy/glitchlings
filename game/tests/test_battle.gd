@@ -742,6 +742,22 @@ func test_evolution() -> void:
 			printerr("    %s: Chips ohne Richtung im Startdeck %s" % [sp, off])
 	check(fair, "Startdecks: je Richtung genau ein Chip, sonst neutral")
 	check(GameData.MONS.Pixmiez.evo.get("Elektro", "") == "Prismiez" and not GameData.EL.has("Licht"), "Element Licht heißt jetzt Elektro, Pixmiez hat Elektro-Richtung")
+	# Ultras: jede Stufe-3-Form (außer Fusionen) führt zu einer gültigen Ultra-Form
+	var chain_ok := true
+	for f in GameData.FORMS:
+		var F: Dictionary = GameData.FORMS[f]
+		if F.up != "" and (not GameData.FORMS.has(F.up) or GameData.FORMS[F.up].stage != F.stage + 1):
+			chain_ok = false
+			printerr("    Kette kaputt: %s -> %s" % [f, F.up])
+		if F.stage == 3 and not GameData.MONS.get(f, {}).get("fusion", false) and F.up == "":
+			chain_ok = false
+			printerr("    Champion ohne Ultra: ", f)
+	check(chain_ok, "Evolutionsketten gültig, jeder Champion hat ein Ultra")
+	var ru := RunState.new("Pixmiez", 1)
+	ru.form = "Glutluchs"
+	ru.stage = 3
+	ru.praeg = {"Feuer": GameData.EVO_AT[4]}
+	check(ru.try_evolve().get("to", "") == "Pyrolynx" and ru.stage == 4, "Ab 80 Element-Chips: Glutluchs → Pyrolynx (Ultra)")
 	var ok := true
 	for f in GameData.FORMS:
 		if not GameData.SPECIALS.has(f) or not ResourceLoader.exists("res://assets/sprites/%s.png" % GameData.FORMS[f].spr):
