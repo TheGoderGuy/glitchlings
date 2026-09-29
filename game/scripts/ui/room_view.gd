@@ -51,6 +51,11 @@ func _intro() -> String:
 			return Rooms.EVENTS[event_key].text
 		"shop":
 			return "Ein freundlicher Händler-Bot piept: Frische Chips, fast ohne Bugs!"
+	match run.map.zone:
+		"vulkan":
+			return "Eine kühle Nische im Vulkangestein. Das Knistern der Glut klingt fast gemütlich."
+		"sumpf":
+			return "Ein trockener Baumstumpf mitten im Moor. Glühwürmchen summen, kein Pop-up weit und breit."
 	return "Ein ruhiger Cache-Winkel. Die Lüfter summen leise. Zeit zum Durchatmen."
 
 
@@ -169,12 +174,12 @@ func _show_message(text: String, done: bool) -> void:
 
 
 func _draw() -> void:
-	_draw_background()
+	_draw_scene()
 	# Monster links
 	var bob := 1 if sin(anim_t * 4.0) > 0 else 0
 	var blink := fmod(anim_t, 3.4) < 0.13
-	draw_rect(Rect2(40, 262, 80, 4), Color(0.05, 0.02, 0.12, 0.35))
-	_draw_sprite(run.form, 80, 264, false, {"bob": bob, "blink": blink})
+	draw_rect(Rect2(MON_X - 30, FEET_Y - 2, 60, 4), Color(0.05, 0.02, 0.12, 0.35))
+	_draw_sprite(run.form, MON_X, FEET_Y, false, {"bob": bob, "blink": blink})
 	_text(Vector2(8, 290), "HP %d/%d" % [run.hp, run.max_hp], 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, 144)
 	_text(Vector2(8, 304), "Fragmente %d" % run.frag, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, 144)
 	_text(Vector2(8, 318), "Deck %d Chips" % run.deck.size(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 144)
@@ -217,3 +222,155 @@ func _option_row(r: Rect2, label: String, active: bool, enabled: bool, mark := C
 		_text(Vector2(r.position.x + 6 + (1 if sin(anim_t * 10.0) > 0 else 0), r.position.y + r.size.y - 5), ">", 8, GameData.COL.sun)
 	var col: Color = GameData.COL.ink if (active and enabled) else (GameData.COL.muted if enabled else Color(GameData.COL.muted, 0.4))
 	_text(Vector2(r.position.x, r.position.y + r.size.y - 5), label, 8, col, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+
+
+# ---------- Szene hinter dem Menü ----------
+
+## Zonenlandschaft, Stimmung der Zone und ein kleines Bild zum Ereignis neben dem Monster
+func _draw_scene() -> void:
+	var zone: String = run.map.zone
+	_draw_zone(GameData.ZONES[zone].bg)
+	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.3))
+	match zone:
+		"vulkan":
+			# aufsteigende Glut
+			for i in 16:
+				var x := fmod(i * 71.3 + 20.0 + sin(anim_t * 1.3 + i) * 8.0, W)
+				var y := H - fmod(anim_t * (18.0 + i % 4 * 6.0) + i * 41.0, H)
+				draw_rect(Rect2(roundi(x), roundi(y), 2, 2), Color(Color("#FFD84D") if i % 3 == 0 else Color("#FF8A4C"), 0.7))
+		"sumpf":
+			# Glühwürmchen
+			for i in 9:
+				var x := 20.0 + fmod(i * 67.0, 600.0) + sin(anim_t * 0.9 + i * 1.7) * 14.0
+				var y := 150.0 + fmod(i * 37.0, 90.0) + cos(anim_t * 1.1 + i) * 8.0
+				draw_rect(Rect2(roundi(x), roundi(y), 2, 2), Color("#D8FF6A", 0.35 + 0.35 * sin(anim_t * 3.0 + i * 2.1)))
+	_draw_prop(event_key if type == "event" else type, PROP_X, FEET_Y)
+
+
+const MON_X := 60.0
+const PROP_X := 132.0
+const FEET_Y := 264.0
+
+
+func _draw_prop(kind: String, x: float, g: float) -> void:
+	var t := anim_t
+	match kind:
+		"rest":
+			# Lagerfeuer
+			draw_rect(Rect2(x - 16, g - 1, 32, 1), Color("#FF8A4C", 0.35 + 0.15 * sin(t * 7.0)))
+			draw_rect(Rect2(x - 10, g - 3, 20, 3), Color("#5A3A2A"))
+			draw_rect(Rect2(x - 7, g - 5, 14, 2), Color("#7A5038"))
+			for i in 5:
+				var h := roundf(8.0 + 5.0 * sin(t * 9.0 + i * 1.9) + (3.0 if i == 2 else 0.0))
+				draw_rect(Rect2(x - 7 + i * 3, g - 5 - h, 2, h), Color("#FF8A4C"))
+				draw_rect(Rect2(x - 7 + i * 3, g - 5 - roundf(h * 0.5), 2, roundf(h * 0.5)), Color("#FFD84D"))
+		"schmiede":
+			# Amboss mit glühendem Stahl, Funken im Takt der Hammerschläge
+			draw_rect(Rect2(x - 12, g - 16, 24, 5), Color("#4A4458"))
+			draw_rect(Rect2(x - 17, g - 16, 5, 3), Color("#4A4458"))
+			draw_rect(Rect2(x - 12, g - 16, 24, 1), Color("#6A6478"))
+			draw_rect(Rect2(x - 5, g - 11, 10, 7), Color("#2E2840"))
+			draw_rect(Rect2(x - 10, g - 4, 20, 4), Color("#2E2840"))
+			var glow := 0.6 + 0.4 * sin(t * 4.0)
+			draw_rect(Rect2(x - 7, g - 18, 13, 2), Color("#FF8A4C").lerp(Color("#FFD84D"), glow))
+			var ph := fmod(t, 1.1)
+			if ph < 0.45:
+				for i in 9:
+					var a := 0.35 + i * 0.3
+					var d := ph * 55.0
+					var sp := Vector2(x, g - 19) + Vector2(cos(a) * d, -sin(a) * d + ph * ph * 90.0)
+					draw_rect(Rect2(roundi(sp.x), roundi(sp.y), 1, 1), Color("#FFD84D", 1.0 - ph * 2.0))
+		"lavaquelle":
+			_pool(x, g, Color("#C8431E"), Color("#FF8A4C"), Color("#FFD84D"), Color(1, 1, 1, 0.22))
+		"giftmoor":
+			_pool(x, g, Color("#4A2466"), Color("#7A3AA0"), Color("#C77DFF"), Color("#B8FF6A", 0.18))
+		"firewallriss":
+			# Mauerstück mit glühenden Fugen und einem Riss
+			var wx := x - 16
+			var wy := g - 46
+			draw_rect(Rect2(wx, wy, 32, 46), Color("#3A1A1E"))
+			var fuge := Color("#FF8A4C", 0.55 + 0.25 * sin(t * 2.0))
+			for row in 6:
+				draw_rect(Rect2(wx, wy + row * 8, 32, 1), fuge)
+				var off := 0 if row % 2 == 0 else 8
+				for cx in range(off, 32, 16):
+					draw_rect(Rect2(wx + cx, wy + row * 8, 1, 8), fuge)
+			var crack := [Vector2(16, 0), Vector2(13, 9), Vector2(18, 17), Vector2(14, 26), Vector2(19, 35), Vector2(16, 46)]
+			for i in crack.size() - 1:
+				draw_line(Vector2(wx, wy) + crack[i], Vector2(wx, wy) + crack[i + 1], Color("#120D24"), 3.0)
+			draw_rect(Rect2(wx - 1, wy - 2, 34, 2), Color("#FF8A4C"))
+		"ascheregen":
+			# Asche fällt über den ganzen Bildschirm, unten glitzert etwas
+			for i in 40:
+				var ax := fmod(i * 53.7 + sin(anim_t * 0.8 + i) * 10.0, W)
+				var ay := fmod(anim_t * (12.0 + i % 5 * 4.0) + i * 29.0, H)
+				draw_rect(Rect2(roundi(ax), roundi(ay), 2 if i % 4 == 0 else 1, 1), Color("#B8B0C8", 0.55))
+			draw_rect(Rect2(x - 12, g - 3, 24, 3), Color("#5A5468"))
+			draw_rect(Rect2(x - 7, g - 5, 14, 2), Color("#6A6478"))
+			if fmod(t, 1.6) < 0.25:
+				draw_rect(Rect2(x + 2, g - 7, 1, 3), Color.WHITE)
+				draw_rect(Rect2(x + 1, g - 6, 3, 1), Color.WHITE)
+		"irrlicht":
+			# Tanzendes Licht mit Halo, knistert elektrisch
+			var p := Vector2(x + sin(t * 1.3) * 16.0, g - 44 + sin(t * 2.1) * 8.0)
+			draw_circle(p, 13.0, Color("#FFE98A", 0.08))
+			draw_circle(p, 8.0, Color("#FFE98A", 0.18))
+			draw_circle(p, 4.0, Color("#FFF6C8", 0.8))
+			draw_rect(Rect2(roundi(p.x) - 1, roundi(p.y) - 1, 2, 2), Color.WHITE)
+			if fmod(t, 0.7) < 0.1:
+				draw_line(p + Vector2(3, -2), p + Vector2(9, -7), Color("#FFE98A"), 1.0)
+				draw_line(p + Vector2(-3, 2), p + Vector2(-8, 6), Color("#FFE98A"), 1.0)
+		"spamfilter":
+			# Verstopfter Filter: Trichter voller kleiner Werbefenster
+			draw_rect(Rect2(x - 16, g - 30, 32, 4), Color("#4A3E80"))
+			for i in 8:
+				draw_rect(Rect2(x - 14 + i * 2, g - 26 + i * 3, 28 - i * 4, 3), Color("#2C2352"))
+			draw_rect(Rect2(x - 2, g - 2, 4, 2), Color("#2C2352"))
+			for i in 4:
+				var bx := x - 18 + i * 10 + sin(t * 2.0 + i) * 2.0
+				var by := g - 44 + (i % 2) * 6 + cos(t * 1.7 + i * 1.3) * 2.0
+				draw_rect(Rect2(roundi(bx), roundi(by), 11, 8), Color("#E8E4F4"))
+				draw_rect(Rect2(roundi(bx), roundi(by), 11, 2), [Color("#FF5470"), Color("#58B7FF"), Color("#FFD84D"), Color("#7BD35A")][i])
+				draw_rect(Rect2(roundi(bx) + 2, roundi(by) + 4, 6, 1), Color("#8A84A0"))
+		"orakel":
+			# Uralte Kröte auf einem Seerosenblatt, Wellenringe
+			# Wasser mit Wellen, die nach außen laufen
+			for dy in range(-2, 1):
+				var ww := roundf(26.0 * sqrt(1.0 - pow(dy / 3.0, 2.0)))
+				draw_rect(Rect2(x - ww, g - 1 + dy, ww * 2, 1), Color("#1E3A5A"))
+			for k in 2:
+				var rr := fmod(t * 6.0 + k * 7.0, 14.0)
+				var wc := Color("#8FD8FF", 0.6 * (1.0 - rr / 14.0))
+				draw_rect(Rect2(roundi(x - 17 - rr), g - 2, 4, 1), wc)
+				draw_rect(Rect2(roundi(x + 13 + rr), g - 2, 4, 1), wc)
+			draw_rect(Rect2(x - 15, g - 3, 30, 3), Color("#2E7A3A"))
+			draw_rect(Rect2(x - 12, g - 4, 24, 1), Color("#4FA85A"))
+			draw_rect(Rect2(x - 1, g - 3, 2, 3), Color("#1E4A26"))
+			# Kröte
+			draw_rect(Rect2(x - 9, g - 11, 18, 7), Color("#5A6A3A"))
+			draw_rect(Rect2(x - 10, g - 8, 20, 4), Color("#4A5A2E"))
+			draw_rect(Rect2(x - 8, g - 14, 5, 4), Color("#5A6A3A"))
+			draw_rect(Rect2(x + 3, g - 14, 5, 4), Color("#5A6A3A"))
+			var shut := fmod(t, 4.0) < 0.15
+			draw_rect(Rect2(x - 7, g - 13, 3, 2 if not shut else 1), Color("#FFD84D") if not shut else Color("#2E3A1E"))
+			draw_rect(Rect2(x + 4, g - 13, 3, 2 if not shut else 1), Color("#FFD84D") if not shut else Color("#2E3A1E"))
+			draw_rect(Rect2(x - 6, g - 7, 12, 1), Color("#2E3A1E"))
+			draw_rect(Rect2(x - 11, g - 12, 1, 1), Color("#C8D8A0"))  # Barthaar
+
+
+## Blubbernde Quelle/Moorloch: flache Ellipse, Blasen, Dampfschwaden
+func _pool(x: float, g: float, deep: Color, mid: Color, hi: Color, steam: Color) -> void:
+	for dy in range(-4, 1):
+		var w := roundf(22.0 * sqrt(1.0 - pow(dy / 5.0, 2.0)))
+		draw_rect(Rect2(x - w, g - 1 + dy, w * 2, 1), deep if dy < -1 else mid)
+	draw_rect(Rect2(x - 14, g - 4, 10, 1), hi)
+	for i in 3:
+		var ph := fmod(anim_t * 0.9 + i * 0.37, 1.0)
+		var bx := x - 10 + i * 9
+		var bs := 1 if ph < 0.8 else 2
+		draw_rect(Rect2(bx, roundi(g - 5 - ph * 6.0), bs, bs), Color(hi, 1.0 - ph))
+	for i in 3:
+		var ph := fmod(anim_t * 0.35 + i * 0.33, 1.0)
+		var sx := x - 12 + i * 12 + sin(anim_t + i) * 4.0
+		var sz := 2 if ph < 0.5 else 3
+		draw_rect(Rect2(roundi(sx), roundi(g - 8 - ph * 40.0), sz, sz), Color(steam, minf(1.0, steam.a * 2.5) * (1.0 - ph)))

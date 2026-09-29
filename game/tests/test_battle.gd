@@ -1114,7 +1114,7 @@ func test_music() -> void:
 		var spr: String = GameData.FORMS[f].spr
 		if not ResourceLoader.exists("res://assets/sprites/%s_blink.png" % spr):
 			no_blink.append(f)
-	check(no_blink == ["Toxmolch"], "Alle Formen blinzeln (ohne Blinzel-Frame: %s)" % ", ".join(no_blink))
+	check(no_blink.is_empty(), "Alle Formen blinzeln (ohne Blinzel-Frame: %s)" % ", ".join(no_blink))
 	var foe_no_blink: Array = []
 	for k in PixelCanvas.SPRITE_FILES:
 		if not ResourceLoader.exists("res://assets/sprites/%s_blink.png" % PixelCanvas.SPRITE_FILES[k]):

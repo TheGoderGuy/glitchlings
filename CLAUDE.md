@@ -73,6 +73,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Blinzel-Frames für alle Champions + Ultras (29.09.2026, außer Toxmolch), Boxen in `tools/sprites/blink_boxes.json`
 - [x] Zonenmusik (29.09.2026): `map_vulkan`/`battle_vulkan`, `map_sumpf`/`battle_sumpf`, 158 Tests
 - [x] Zonen-Ereignisse + Gegner-Blinzeln (29.09.2026): je 4 eigene Ereignisse für Vulkan und Sümpfe (16 insgesamt, 3 nur Wiesen), Element-Prägung aus Ereignissen, „Gegner geschwächt“, 167 Tests
+- [x] Toxmolch blinzelt, Ereignis-Bildschirm mit Zonenlandschaft + animierter Szene je Ereignis, Lagerfeuer am Rastplatz (29.09.2026)
 - [ ] Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**

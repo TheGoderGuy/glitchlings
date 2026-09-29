@@ -19,6 +19,8 @@ Pools: früh Mücke, Schnecke, Blüte · später + Brandmauerassel, Spamlet, Lad
 - [x] Blinzel-Frames: Spammücke, Bannerschnecke (Stielaugen), Spamkönigin. Die Popupblüte hat keine Augen.
 - [x] Eigene Ereignisse (29.09.2026): **Verstopfter Spamfilter** (Chip entfernen | +30 Fragmente, −10 HP), **Irrlicht** (60 %: seltener Chip, sonst −12 HP | +3 Elektro-Prägung), **Giftmoor** (−8 HP: +3 Virus-Prägung | +20 HP), **Quak-Orakel** (20 Fragmente: epischer Chip | +3 Wasser-Prägung und verrät die Evolutionsrichtung).
 
+**Ereignis-Bildschirm (29.09.2026):** Zonenlandschaft als Hintergrund (Vulkan: aufsteigende Glut, Sümpfe: Glühwürmchen), neben dem Monster eine kleine animierte Szene je Ereignis (Amboss mit Funken, Quelle/Moorloch mit Blasen und Dampf, Firewall-Mauer mit Riss, Ascheregen, Irrlicht, verstopfter Filter mit Werbefenstern, Orakel-Kröte auf Seerose) und ein Lagerfeuer am Rastplatz. Rastplatz-Texte je Zone.
+
 **Element-Prägung aus Ereignissen:** zählt wie 3 gespielte Element-Chips und lenkt so die Evolution. Vulkan lockt Richtung Feuer, die Sümpfe Richtung Elektro, Virus und Wasser.
 - [x] Eigene Musik (siehe unten).
 
