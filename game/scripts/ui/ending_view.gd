@@ -12,13 +12,18 @@ const PANELS := [
 	{"id": "end", "dur": 7.0, "text": ""},
 ]
 const REBOOT_LINES := ["Ur-Glitch ... defragmentiert", "Korruption: 0 %", "NEST-Server v3.1 ... Neustart", "Bewohner: 4.096 Glitchlings ... zurück", "Status: alles friedlich"]
+## Name im Abspann (an einer Stelle änderbar)
+const CREATOR := "TheGoderGuy"
 ## Abspann: [Text, Größe, Farbe] – "" = Leerzeile
 const CREDITS := [
 	["GLITCHLINGS", 24, "ink"], ["", 8, ""],
-	["Produktion", 8, "muted"], ["TheGoderGuy", 16, "sun"], ["", 8, ""],
-	["Game Design, Code und Pixel-Art-Regie", 8, "muted"], ["Claude (Anthropic)", 16, "mint"], ["", 8, ""],
-	["Monster und Gegner", 8, "muted"], ["erstellt mit PixelLab, Farben von Hand reduziert", 8, "ink"], ["", 8, ""],
-	["Musik und Sound", 8, "muted"], ["selbst synthetisiert, Ton für Ton", 8, "ink"], ["", 8, ""],
+	["Ein Spiel von", 8, "muted"], [CREATOR, 24, "sun"], ["", 8, ""],
+	["Idee und Produktion", 8, "muted"], [CREATOR, 16, "sun"], ["", 8, ""],
+	["Game Design", 8, "muted"], [CREATOR, 16, "sun"], ["", 8, ""],
+	["Programmierung", 8, "muted"], [CREATOR, 16, "sun"], ["", 8, ""],
+	["Pixel-Art-Regie", 8, "muted"], [CREATOR, 16, "sun"], ["", 8, ""],
+	["Musik und Sound", 8, "muted"], [CREATOR, 16, "sun"], ["", 8, ""],
+	["Monster und Gegner", 8, "muted"], ["erstellt mit PixelLab", 8, "ink"], ["", 8, ""],
 	["Schrift", 8, "muted"], ["Silkscreen von Jason Kottke (SIL Open Font License)", 8, "ink"], ["", 8, ""],
 	["Engine", 8, "muted"], ["Godot 4", 8, "ink"], ["", 8, ""],
 	["Besonderer Dank", 8, "muted"], ["an alle Spieltester", 8, "ink"], ["und an dich, Operator", 8, "ink"],
@@ -212,14 +217,15 @@ func _draw_credits() -> void:
 		var y := H - fmod(anim_t * (10.0 + i % 5 * 3.0) + i * 53.0, H)
 		draw_rect(Rect2(roundi(x), roundi(y), 1 if i % 3 else 2, 1 if i % 3 else 2), Color("#B8FFE9", 0.35))
 	var band := H - 104.0   # darunter läuft die Parade
-	var y0 := band + 16.0 - t * 22.0
+	var y0 := band + 16.0 - t * 24.0
 	var y := y0
 	for c in CREDITS:
 		var size: int = c[1]
+		y += {24: 20.0, 16: 6.0}.get(size, 0.0)   # große Zeilen brauchen Platz nach oben
 		if c[0] != "":
 			var col: Color = GameData.COL.get(c[2], GameData.COL.ink)
 			_text(Vector2(0, y), c[0], size, col, HORIZONTAL_ALIGNMENT_CENTER, W, true, size > 8)
-		y += 12 if size == 8 else (22 if size == 16 else 34)
+		y += 12 if size == 8 else (16 if size == 16 else 14)
 	# kleine Parade am unteren Rand, in einem eigenen Band (die Namen steigen darüber auf)
 	draw_rect(Rect2(0, band, W, H - band), Color("#05030C"))
 	draw_rect(Rect2(0, band, W, 1), Color(GameData.COL.line, 0.8))

@@ -38,6 +38,6 @@ Entscheidung Produzent: **kurze Finalzone + Ur-Glitch als Endboss + Ende mit Abs
 - **Schwierigkeit „Korrumpiert“** (Optionen, erst nach dem Ende wählbar): Gegner-HP ×1,5, Schaden ×1,4, Warnungen 0,15 s kürzer, **Fragmente ×1,5**.
 
 ## Offen
-- Abspann-Namen prüfen/anpassen (Produktion: TheGoderGuy).
+- [x] Abspann: überall TheGoderGuy (Ein Spiel von, Idee und Produktion, Game Design, Programmierung, Pixel-Art-Regie, Musik und Sound); Name steht als `CREATOR` in `ending_view.gd`.
 - Eigene Ereignisse im NEST-Kern (z. B. Erinnerungsfragmente des NEST mit Lore).
 - Autopilot gewinnt fast immer – echtes Anspielen nötig, ob der Ur-Glitch fordernd genug ist.
