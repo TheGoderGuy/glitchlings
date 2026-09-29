@@ -50,6 +50,7 @@ func _ready() -> void:
 	test_combo_chips()
 	test_chip_texts()
 	test_form_migration()
+	test_badger_raccoon()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -862,7 +863,7 @@ func test_new_lines() -> void:
 				ok = false
 				printerr("    Richtung passt nicht: %s %s → %s" % [sp, el, M.evo[el]])
 	var lines: int = GameData.MONS.keys().filter(func(k): return not GameData.MONS[k].get("fusion", false)).size()
-	check(ok and lines == 9, "9 Linien + Fusionen, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
+	check(ok and lines == 11, "11 Linien + Fusionen, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
 	# Passive
 	var st := BattleState.new(RunState.new("Brummbit", 1), GameData.FOES[0])
 	st.reflex = 0
@@ -1592,3 +1593,26 @@ func test_form_migration() -> void:
 			ok = false
 	check(ok, "Alte Spielstände: gestrichene Formen werden übertragen (Glutluchs → Prismalynx, Dampfbyte → Schlummerbit)")
 	SaveGame.data = saved
+
+
+## Dachs (Buddli) und Waschbär (Maskli): Passive
+func test_badger_raccoon() -> void:
+	var rb := RunState.new("Buddli", 1)
+	var sb := BattleState.new(rb, GameData.FOES[0])
+	sb.def.el = "Neutral"
+	sb.e.hp = 999
+	sb.hit_enemy(20, "Neutral")
+	var normal: int = 999 - sb.e.hp
+	rb.hp = roundi(rb.max_hp * 0.2)
+	sb.e.hp = 999
+	sb.hit_enemy(20, "Neutral")
+	check(normal == 20 and 999 - sb.e.hp == 30, "Furchtlos: unter 30 %% HP +50 %% Schaden (%d → %d)" % [normal, 999 - sb.e.hp])
+	var rm := RunState.new("Maskli", 1)
+	var sm := BattleState.new(rm, GameData.FOES[0])
+	sm.e.hp = 999
+	for s in sm.hand:
+		s.rem = 5.0
+	for i in 4:
+		sm.hit_enemy(5, "Neutral")
+	check(sm.hand.any(func(s): return s.rem == 0.0), "Langfinger: der 4. Treffer lädt einen Chip sofort")
+	check(SaveGame.egg_pool("Selten").has("Maskli") and SaveGame.egg_pool("Episch").has("Buddli"), "Dachs und Waschbär schlüpfen aus Eiern")

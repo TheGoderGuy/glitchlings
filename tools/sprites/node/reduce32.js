@@ -6,7 +6,8 @@ const px=[];for(let i=0;i<a.data.length;i+=4)if(a.data[i+3]>0)px.push([a.data[i]
 const d2=(p,c)=>(p[0]-c[0])**2*0.3+(p[1]-c[1])**2*0.59+(p[2]-c[2])**2*0.11;
 // deterministische k-means++ (am weitesten entfernte Punkte)
 let C=[px[0].slice(0,3)];
-while(C.length<K){let best=0,bi=0;for(const p of px){const m=Math.min(...C.map(c=>d2(p,c)));if(m>best){best=m;bi=p;}}C.push(bi.slice(0,3));}
+// (hat das Bild weniger als K Farben, bleibt es bei denen, die es gibt)
+while(C.length<K){let best=0,bi=0;for(const p of px){const m=Math.min(...C.map(c=>d2(p,c)));if(m>best){best=m;bi=p;}}if(best===0)break;C.push(bi.slice(0,3));}
 let asg=new Array(px.length);
 for(let it=0;it<40;it++){for(let j=0;j<px.length;j++){let b=1e9,bi=0;C.forEach((c,k)=>{const v=d2(px[j],c);if(v<b){b=v;bi=k;}});asg[j]=bi;}
  const S=C.map(()=>[0,0,0,0]);px.forEach((p,j)=>{const s=S[asg[j]];s[0]+=p[0];s[1]+=p[1];s[2]+=p[2];s[3]++;});

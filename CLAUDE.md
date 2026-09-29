@@ -81,6 +81,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Module (29.09.2026): 22 passive Run-Gegenstände (Elite, Händler, Modulkapsel), Anzeige in Kampf/Karte/Räumen/Pause, 204 Tests – `vault/05 Produktion/Module.md`
 - [x] Chips 28 → 45 (29.09.2026): 17 neue Kombo-Chips (je Element 7–8), Konter/Ausweichen/Geschützturm, 216 Tests – Tabelle in `vault/06 Datenbank/Chip-Übersicht.md`
 - [x] Glitchlinge überarbeitet (29.09.2026): Brummbit Gift-Linie (Pilzbrumm/Sporenpranke/Myzelgrizz), Lumi Wasser-Linie (Perlhopp/Gischthase/Lunaflut), Pixmiez ohne Feuer-Linie, Leviamander/Tracko/Gigaquak/Kekso neu, Fusionen Wolperling, Schlummerbit, Pustebacke statt Dampfbyte/Glyphel, Brummbit braun, Gigaquak Titan, 74 Formen, Spielstand-Übertragung – `vault/05 Produktion/Glitchlinge-Überarbeitung.md`
+- [x] Dachs (Buddli: Feuer/Elektro) und Waschbär (Maskli: Wasser/Virus) als neue Linien bis Ultra, Passive Furchtlos/Langfinger, 88 Formen, 223 Tests – `vault/05 Produktion/Dachs und Waschbär.md`
 - [x] Idle-Animationen: Test mit 6 Figuren, 10 Bilder/s (`tools/sprites/node/anim_frames.js`) · [ ] alle Figuren animieren
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo
@@ -113,7 +114,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - Jedes Ergebnis selbst ansehen und kritisch prüfen (Silhouette, Lesbarkeit bei Originalgröße, Stilregeln oben), dann ggf. per Inpainting nachbessern.
 - Fertige Sprites ins Spiel einbauen: Sprite-Daten stehen in `prototype/index.html` im Objekt `SPR` (Palette `pal`, Pixelzeilen `px`,
   Blinzel-Frame `pb`, dunkle Farben `ol`, Größe `n`). Werkzeuge in `tools/sprites/node/` (einmalig `npm install`):
-  1. `node reduce32.js <roh.png> <aus.png>` – auf **32 Farben** reduzieren (Original als `*_pixellab_original.png` behalten)
+  1. `node reduce32.js <roh.png> <aus.png>` – auf **32 Farben** reduzieren (Original als `*_pixellab_original.png` behalten). Danach mit `holes.js --fill` bleibt die Palette erhalten (seit 29.09.2026).
   2. `node holes.js <png> --fill` – eingeschlossene Löcher füllen (PixelLab stanzt manchmal Augen aus!)
   3. Augen suchen: `node eyes.js <png>` (Vorschlag, Ergebnis immer visuell prüfen; bei Glubschaugen Fellfarbe per fx,fy vorgeben)
   4. `node png2spr.js <png> <Schlüssel> --blink "x0,y0,x1,y1;…" --insert` → Eintrag + Blinzel-PNG (ein Rechteck je Auge)

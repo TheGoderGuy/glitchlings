@@ -64,6 +64,7 @@ var pend_move = null   # vorgemerkter Schritt (Vector2i), wenn noch Bewegungs-Co
 var loot_gained := 0   # tatsächlich erhaltene Fragmente (Sammler-Modul)
 var echo_count := 0    # Echochip: jeder 4. Chip doppelt
 var leech := 0         # Saugbit: gesammelter Schaden
+var steal_count := 0   # Langfinger (Waschbär): jeder 4. Treffer lädt einen Chip
 var counter := 0       # Konter/Kopierschutz: Schaden, der beim Blocken zurückgeht
 var counter_el := "Neutral"
 var dodge_t := 0.0     # Sprungantrieb: nächster Treffer wird ausgewichen
@@ -562,6 +563,9 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 		m = 2.0
 	if not dot and not in_special and run.has_mod("verstaerker"):
 		d += 3
+	# Furchtlos (Dachs): unter 30 % HP härter
+	if not dot and mon.passive == "Furchtlos" and run.hp * 10 < run.max_hp * 3:
+		d = roundi(d * 1.5)
 	d = roundi(d * m)
 	if not dot and run.has_mod("kritbit") and rng.randf() < 0.2:
 		d *= 2
@@ -573,6 +577,15 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 	e.flash = 0.09
 	if not dot and not in_special:
 		sp = minf(100.0, sp + d * 1.2 * (1.3 if run.has_mod("kondensator") else 1.0))
+	# Langfinger (Waschbär): jeder 4. Chip-Treffer lädt einen Chip sofort
+	if not dot and not in_special and mon.passive == "Langfinger":
+		steal_count += 1
+		if steal_count % 4 == 0:
+			for s in hand:
+				if s.chip != "" and s.rem > 0:
+					s.rem = 0.0
+					float_at(p.c, p.r, "Geklaut!", GameData.COL.sun)
+					break
 	if not dot and run.has_mod("saugbit"):
 		leech += d
 		if leech >= 10:

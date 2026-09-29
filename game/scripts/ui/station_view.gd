@@ -17,6 +17,8 @@ const DEX_ORDER := [
 	"Molchi", "Toxmolch", "Magmolch", "Sumpfdrak", "Lavadrak", "Hydradrak", "Vulkandrak",
 	"Brummbit", "Pilzbrumm", "Bärtron", "Sporenpranke", "Titanbrumm", "Myzelgrizz", "Kolossbrumm",
 	"Kauzbit", "Optikauz", "Raketauz", "Radarkauz", "Phönixkauz", "Orbitkauz", "Infernokauz",
+	"Buddli", "Glimmdachs", "Zackdachs", "Magmadachs", "Donnerdachs", "Pyromeles", "Voltameles",
+	"Maskli", "Plätschbär", "Klaubär", "Flutmaske", "Nachtmaske", "Hydrocyon", "Virocyon",
 	"Wolkerich", "Spukatz", "Wolperling", "Schlummerbit", "Pustebacke"]
 const HATCH_REVEAL := 2.2
 ## Vorladen! Texturen, die erst in _draw() zum ersten Mal geladen werden, erscheinen weiß.
