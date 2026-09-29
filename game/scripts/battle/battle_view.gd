@@ -36,6 +36,18 @@ var heal_info := 0
 var mode_t := 0.0     # Zeit im aktuellen Modus (Eingabesperre gegen versehentliches Durchdrücken)
 var evo := {}
 var tut: Tutorial = null
+# Animations-Timer (prozedural, nur Versatz – keine Skalierung, damit Pixel scharf bleiben)
+var p_lunge := 0.0      # Vorschnellen beim Angriff
+var p_knock := 0.0      # Zurückweichen bei Treffer
+var p_hop := 0.0        # kleiner Hüpfer beim Bewegen
+var e_knock := 0.0
+var e_strike := 0.0     # Gegner schnellt beim Zuschlagen vor
+var muzzle := 0.0
+var muzzle_col := Color.WHITE
+var dust: Array = []    # Staubwolken {x, y, t}
+var last_cell := Vector2i(1, 1)
+const LUNGE := 0.16
+const KNOCK := 0.14
 
 
 func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
@@ -51,6 +63,44 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 
 
 # ---------- Ablauf ----------
+
+func _animate_event(ev: String) -> void:
+	match ev:
+		"shoot", "slash", "chip":
+			p_lunge = LUNGE
+			if ev != "chip":
+				muzzle = 0.09
+				muzzle_col = GameData.EL[GameData.CHIPS[st.last_chip].el] if st.last_chip != "" else Color.WHITE
+		"hit", "hit_big":
+			e_knock = KNOCK * (1.5 if ev == "hit_big" else 1.0)
+		"hurt":
+			p_knock = KNOCK
+		"strike":
+			e_strike = 0.12
+		"move":
+			p_hop = 0.09
+			var fy := feet_y(last_cell.y)
+			var fx := gx(last_cell.x) + CW / 2.0
+			for i in 4:
+				dust.append({"x": fx + randf_range(-10, 10), "y": fy - randf_range(0, 3), "vx": randf_range(-14, 14), "t": 0.35})
+	last_cell = Vector2i(st.p.c, st.p.r)
+
+
+func _tick_anims(dt: float) -> void:
+	p_lunge = maxf(0.0, p_lunge - dt)
+	p_knock = maxf(0.0, p_knock - dt)
+	p_hop = maxf(0.0, p_hop - dt)
+	e_knock = maxf(0.0, e_knock - dt)
+	e_strike = maxf(0.0, e_strike - dt)
+	muzzle = maxf(0.0, muzzle - dt)
+	for i in range(dust.size() - 1, -1, -1):
+		var d: Dictionary = dust[i]
+		d.t -= dt
+		d.x += d.vx * dt
+		d.y -= 10.0 * dt
+		if d.t <= 0:
+			dust.remove_at(i)
+
 
 func _fight_over() -> void:
 	if st.outcome == "lost" or node_type == "boss":
@@ -150,6 +200,7 @@ func _process_fight(delta: float) -> void:
 				st.use_slot(i)
 		if Input.is_action_just_pressed("special"):
 			st.use_special()
+	_tick_anims(delta)
 	if st.freeze > 0:
 		st.freeze -= delta
 	else:
@@ -162,6 +213,7 @@ func _process_fight(delta: float) -> void:
 			SaveGame.data["tutorial_done"] = true
 			SaveGame.save_game()
 	for ev in st.events:
+		_animate_event(ev)
 		if ev == "win":
 			continue  # ersetzt durch die Siegesfanfare bzw. die Ergebnis-Musik
 		Sfx.play(ev)
@@ -354,12 +406,30 @@ func _draw_actors() -> void:
 		var u := sin(k * PI)
 		pcx = lerpf(pcx, gx(3 + e.c) + CW / 2.0 - 30, u)
 		pfy = lerpf(pfy, feet_y(e.r), u) - u * 26.0
+	# Vorschnellen (Bogen hin und zurück), Rückstoß, Hüpfer
+	if p_lunge > 0:
+		pcx += sin((1.0 - p_lunge / LUNGE) * PI) * 7.0
+	if p_knock > 0:
+		pcx -= sin((1.0 - p_knock / KNOCK) * PI) * 5.0
+	if p_hop > 0:
+		pfy -= 2.0
+	for d in dust:
+		var a: float = d.t / 0.35
+		var s := 3 if a > 0.5 else 2
+		draw_rect(Rect2(roundi(d.x), roundi(d.y), s, s), Color(0.85, 0.85, 0.95, 0.5 * a))
 	_shadow(gx(p.c) + CW / 2.0, feet_y(p.r), 30)
 	if st.decoy > 0 and st.decoy_t > 0:
 		for k in st.decoy:
 			_draw_sprite(mkey, pcx - 16 - k * 10, pfy, false, {"scale": BABY_SCALE if run.stage == 1 else 1, "mod": Color(0.6, 1.0, 0.8, 0.35 + 0.1 * sin(anim_t * 8.0 + k))})
 	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1})
 	var body := Vector2(gx(p.c) + CW / 2.0, feet_y(p.r) - 24)
+	if muzzle > 0:
+		# Mündungsblitz vorn am Monster
+		var mz := Vector2(roundi(pcx + 22), roundi(pfy - 22))
+		var k := muzzle / 0.09
+		draw_rect(Rect2(mz - Vector2(5, 1) * k * 2, Vector2(10, 2) * k * 2), Color(muzzle_col, 0.9))
+		draw_rect(Rect2(mz - Vector2(1, 4) * k * 2, Vector2(2, 8) * k * 2), Color(muzzle_col, 0.9))
+		draw_rect(Rect2(mz - Vector2(2, 2), Vector2(4, 4)), Color.WHITE)
 	if st.shield > 0:
 		for i in 12:
 			var a0 := i * TAU / 12.0 + anim_t * 2.0
@@ -380,16 +450,35 @@ func _draw_actors() -> void:
 		draw_rect(Rect2(bp + Vector2(1, 1), Vector2(6, 4)), GameData.EL.Code)
 
 	# Gegner
-	if e.hp > 0 or st.outcome != "won":
+	var defeated: bool = st.outcome == "won"
+	if e.hp > 0 or defeated:
 		var ecx := gx(3 + e.c) + CW / 2.0
 		var efy := feet_y(e.r)
+		# Ausholen während einer Warnung, dann Vorschnellen
+		var windup := 0.0
+		for w in st.warns:
+			windup = maxf(windup, 1.0 - w.t / w.max)
+		ecx += windup * 4.0
+		if e_strike > 0:
+			ecx -= sin((1.0 - e_strike / 0.12) * PI) * 9.0
+		if e_knock > 0:
+			ecx += sin((1.0 - e_knock / (KNOCK * 1.5)) * PI) * 6.0
+		var fade := 1.0
+		if defeated:
+			# Niederlage: blinken, absinken, verblassen
+			var k2 := clampf(1.0 - end_timer / 0.65, 0.0, 1.0)
+			fade = 1.0 - k2
+			efy += k2 * 10.0
+			if fmod(anim_t, 0.1) < 0.05:
+				fade *= 0.4
 		_shadow(ecx, efy, 44 if st.def.boss else 34)
 		var tint := Color.WHITE
 		if st.boss_phase() == 3 and sin(anim_t * 14.0) > 0.4:
 			tint = Color("#FF9DB3")
 		elif st.def.get("elite", false):
 			tint = Color(1.0, 0.78, 0.72)
-		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0, "blink": blink_e, "bob": bob_e, "mod": tint})
+		tint.a = fade
+		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint})
 		if e.frozen > 0:
 			var rect := cell_rect(3 + e.c, e.r)
 			draw_rect(Rect2(rect.position.x + 4, rect.position.y - 40, rect.size.x - 8, rect.size.y + 34), Color(GameData.EL.Wasser, 0.3))
@@ -665,11 +754,17 @@ func simulate(seconds: float) -> void:
 	var bot := BattleBot.new(0.15)
 	var dt := 1.0 / 60.0
 	var steps := 0
-	while steps * dt < seconds and not st.over:
+	while steps * dt < seconds and (not st.over or end_timer > 0.1):
 		bot.act(st)
 		st.update(dt)
+		for ev in st.events:
+			_animate_event(ev)
+		st.events.clear()
+		_tick_anims(dt)
 		anim_t += dt
 		steps += 1
+		if st.over:
+			end_timer = 0.65 if end_timer < 0 else end_timer - dt
 	st.events.clear()
 
 

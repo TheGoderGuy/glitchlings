@@ -206,3 +206,6 @@ Bindung (0–5 Herzen, faire Boni, sinkt nie), Pflege-Ansicht (streicheln, Daten
 
 ### Update Spielfeld (29.09.2026)
 Feedback: „Manchmal ist das Spielfeld ein bisschen zu klein.“ → Felder 88×50 statt 80×44, Battle-Network-Paneele (Fase, Innenplatte mit Datenraster, Vorderkante, hintere Reihe dunkler), Sockel mit Schatten unter der Arena, leuchtende Mittellinie. Handleiste etwas tiefer.
+
+### Update Kampf-Juice (29.09.2026)
+Prozedurale Animationen ohne Skalierung (Pixel bleiben scharf): Vorschnellen + Mündungsblitz bei Angriffs-Chips, Rückstoß bei Treffern (Spieler und Gegner), Gegner holt während der Warnung aus und schnellt beim Zuschlagen vor (+ Wusch-Sound), Hüpfer + Staubwolke beim Bewegen, besiegte Gegner blinken, sinken ab und verblassen.

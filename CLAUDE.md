@@ -63,7 +63,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Labor/Fusion (29.09.2026): 4 Fusionen mit neuen Passiven/Signaturen, Rezeptbuch mit Gerüchten, Fragmente werden gerettet, 120 Tests
 - [x] Zone 2 Firewall-Vulkan (29.09.2026): 3 Gegner + Boss (PixelLab), Lava-Mechanik, Zwei-Spalten-Angriff, Zonen-Freischaltung + Auswahl, 133 Tests – `vault/05 Produktion/Zone Firewall-Vulkan.md`
 - [x] Spieltest-Paket (29.09.2026): Windows-.exe (`Spieltest_bauen.bat` → `build/Glitchlings_Spieltest.zip`), Tutorial im ersten Kampf, lokales Spieltest-Log, LIESMICH – `vault/05 Produktion/Externer Spieltest.md`
-- [ ] B: Kampf-Juice (Angriffs-/Treffer-Animationen prozedural) · C: fehlende Champions (PixelLab) · Zone-2-Musik/-Ereignisse · Phase 4: Steam-Seite + Demo
+- [x] B Kampf-Juice (29.09.2026): Vorschnellen, Mündungsblitz, Rückstoß, Ausholen/Zuschlagen, Staub, Niederlage-Animation
+- [ ] C: fehlende Champions (PixelLab) · Zone-2-Musik/-Ereignisse · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)

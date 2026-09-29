@@ -736,6 +736,7 @@ func _update_logic(dt: float) -> void:
 		w.t -= dt
 		if w.t <= 0:
 			warns.remove_at(i)
+			events.append("strike")
 			if w.get("lava", false):
 				for cell in w.cells:
 					hazards.append({"c": cell.x, "r": cell.y, "t": 3.0, "tick": 0.0})
