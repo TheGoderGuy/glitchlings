@@ -193,7 +193,8 @@ func _draw() -> void:
 	if st == null:
 		_draw_background()
 		return
-	_draw_zone("wiesen_boss" if st.def.boss else "wiesen")
+	var zbg: String = GameData.ZONES[run.map.zone].bg
+	_draw_zone(zbg + "_boss" if st.def.boss else zbg)
 	if st == null:
 		return
 	if mode == Mode.EVOLVE:
@@ -249,6 +250,20 @@ func _draw_arena() -> void:
 			var rect := cell_rect(cell.x, cell.y)
 			draw_rect(rect, Color(GameData.COL.coral, a))
 			_text(rect.position + Vector2(0, 26), "!", 16, Color(1, 1, 1, minf(1.0, 0.4 + k)), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true, true)
+	for hz in st.hazards:
+		var rect := cell_rect(hz.c, hz.r)
+		var fade := minf(1.0, hz.t / 0.5)
+		draw_rect(rect, Color("#7A1F0E", 0.85 * fade))
+		for k in 5:
+			var bx := rect.position.x + 6 + fmod(k * 17.0 + anim_t * 9.0 * (1 + k % 2), rect.size.x - 12)
+			var by := rect.position.y + 6 + (k * 7) % int(rect.size.y - 12)
+			draw_rect(Rect2(roundi(bx), roundi(by), 3, 3), Color("#FFB347", fade * (0.6 + 0.4 * sin(anim_t * 8.0 + k))))
+		draw_rect(Rect2(rect.position, Vector2(rect.size.x, 2)), Color("#FF8A4C", fade))
+	for w in st.warns:
+		if w.get("lava", false):
+			for cell in w.cells:
+				var rr := cell_rect(cell.x, cell.y)
+				draw_rect(rr.grow(-2), Color("#FF8A4C", 0.25 + 0.25 * sin(anim_t * 20.0)))
 	for q in st.parts:
 		if q.has("cell"):
 			draw_rect(cell_rect(q.c, q.r), Color(q.color, q.t / q.max * 0.8))

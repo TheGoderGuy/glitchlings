@@ -88,7 +88,8 @@ func _menu(items: Array, sel: int, center_x: float, y: float, width := 200.0) ->
 
 ## Gegner-Sprites; Monster-Formen stehen in GameData.FORMS
 const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "spam": "spam_64", "boss": "boss_96",
-	"captcha": "captcha_64", "wespe": "wespe_64", "raupe": "raupe_64"}
+	"captcha": "captcha_64", "wespe": "wespe_64", "raupe": "raupe_64",
+	"milbe": "milbe_64", "assel": "assel_64", "falter": "falter_64", "skarab": "skarab_96"}
 static var _sprites := {}
 
 
@@ -177,6 +178,10 @@ const ZONE_PAL := {
 		"ground": "#193B38", "grass": "#2C6A55", "flower": ["#6EE7C5", "#FFD84D", "#C9B8FF"]},
 	"wiesen_boss": {"sky0": "#1A0C24", "sky1": "#3A1636", "far": "#2A1733", "near": "#3A1E3B", "edge": "#6B2C55",
 		"ground": "#2A1430", "grass": "#5A2A4E", "flower": ["#FF5470", "#FF9DB3", "#C77DFF"]},
+	"vulkan": {"sky0": "#1A0A14", "sky1": "#4A1A1E", "far": "#2A1418", "near": "#361A1A", "edge": "#FF6A2A",
+		"ground": "#24100F", "grass": "#5E2416", "flower": ["#FF8A4C", "#FFC83D", "#FF5470"]},
+	"vulkan_boss": {"sky0": "#200606", "sky1": "#6A1A10", "far": "#3A1010", "near": "#4A1612", "edge": "#FFB347",
+		"ground": "#2E0C0A", "grass": "#7A2A12", "flower": ["#FFD84D", "#FF8A4C", "#FF5470"]},
 }
 
 

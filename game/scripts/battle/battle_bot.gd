@@ -20,6 +20,8 @@ func act(st: BattleState) -> void:
 			continue
 		for cell in w.cells:
 			danger[cell] = true
+	for hz in st.hazards:
+		danger[Vector2i(hz.c, hz.r)] = true
 	var here := Vector2i(st.p.c, st.p.r)
 	var dirs := [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
 	if st.p.cd <= 0 and st.pend_move == null:

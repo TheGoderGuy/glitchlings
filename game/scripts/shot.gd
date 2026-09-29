@@ -22,6 +22,10 @@ static func args() -> Dictionary:
 			shot.t = float(a.substr(4))
 		elif a.begins_with("--foe="):
 			shot.foe = int(a.substr(6))
+		elif a.begins_with("--zone="):
+			shot.zone = a.substr(7)
+		elif a == "--lava":
+			shot.lava = true
 		elif a == "--pad":
 			shot.pad = true
 	return shot if shot.has("path") else {}

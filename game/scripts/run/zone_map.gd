@@ -17,12 +17,15 @@ const TYPE_DESC := {
 	"boss": "Der Herrscher dieser Zone.",
 }
 
+var zone := "wiesen"
 var zone_name := "Cache-Wiesen"
 var floors: Array = []
 
 
-static func generate(rng: RandomNumberGenerator) -> ZoneMap:
+static func generate(rng: RandomNumberGenerator, zone := "wiesen") -> ZoneMap:
 	var m := ZoneMap.new()
+	m.zone = zone
+	m.zone_name = GameData.ZONES[zone].name
 	for f in FLOORS:
 		var n := 3 if f == 0 else rng.randi_range(2, 4)
 		var row: Array = []

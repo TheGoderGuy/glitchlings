@@ -66,8 +66,8 @@ func show_station() -> void:
 	_swap(s)
 
 
-func start_run(monster_id: int, seed_value := -1) -> void:
-	run = RunState.from_monster(SaveGame.monster(monster_id), seed_value)
+func start_run(monster_id: int, zone := "wiesen", seed_value := -1) -> void:
+	run = RunState.from_monster(SaveGame.monster(monster_id), seed_value, zone)
 	run.difficulty = Settings.difficulty
 	show_map()
 
@@ -148,6 +148,7 @@ func _demo_save() -> void:
 	SaveGame.data.stats = {"runs": 6, "wins": 1}
 	SaveGame.data.frag = 85
 	SaveGame.data.hints = [2]
+	SaveGame.data.cleared = ["wiesen"]
 
 
 func _screenshot(shot: Dictionary) -> void:
@@ -157,6 +158,8 @@ func _screenshot(shot: Dictionary) -> void:
 	_demo_save()
 	var mode: String = shot.get("mode", "title")
 	run = RunState.new(shot.get("mon", "Pixmiez"), 7)
+	if shot.has("zone"):
+		run.map = ZoneMap.generate(run.rng, shot.zone)
 	# auf der Karte bis zur gewünschten Etage vorlaufen (immer erster Weg)
 	var floors: int = shot.get("floor", 0)
 	for f in floors:
@@ -205,6 +208,10 @@ func _screenshot(shot: Dictionary) -> void:
 				run.current_node().type = "fight"
 			_enter_node()
 			current.simulate(shot.get("sim", 2.0))
+			if shot.has("lava"):
+				current.st.hazards.append({"c": 0, "r": 0, "t": 2.5, "tick": 0.3})
+				current.st.hazards.append({"c": 2, "r": 2, "t": 2.0, "tick": 0.3})
+				current.st.warns.append({"cells": [Vector2i(1, 0)], "t": 0.4, "max": 0.8, "dmg": 0, "lava": true})
 			if mode == "pick":
 				current.show_pick_for_screenshot()
 			elif mode == "pause":

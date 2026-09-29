@@ -27,6 +27,7 @@ func _ready() -> void:
 	test_evolution()
 	test_meta()
 	test_fusion()
+	test_zone2()
 	test_all_specials()
 	test_passives()
 	test_new_lines()
@@ -352,7 +353,7 @@ func test_new_foes() -> void:
 	for f in GameData.FOES:
 		if not ResourceLoader.exists("res://assets/sprites/%s.png" % PixelCanvas.SPRITE_FILES[f.spr]):
 			sprites_ok = false
-	check(sprites_ok and GameData.FOES.size() == 7, "Alle 7 Gegner haben ein Sprite")
+	check(sprites_ok and GameData.FOES.size() == 11, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
 	# Jeder Gegner lässt sich mit dem Autopilot besiegen
 	var all_end := true
 	for i in GameData.FOES.size():
@@ -478,6 +479,96 @@ func test_fusion() -> void:
 	SaveGame.path = real_path
 	SaveGame.data = real_data
 	SaveGame.persist = true
+
+
+func test_zone2() -> void:
+	var real_data := SaveGame.data.duplicate(true)
+	SaveGame.persist = false
+	SaveGame.new_game("Tröpfel")
+	check(SaveGame.unlocked_zones() == ["wiesen"], "Zu Beginn nur die Cache-Wiesen frei")
+	var run := RunState.from_monster(SaveGame.team()[0], 1)
+	var sum := SaveGame.record_run(run, true)
+	check(sum.get("unlocked", "") == "vulkan" and SaveGame.unlocked_zones() == ["wiesen", "vulkan"], "Boss der Cache-Wiesen besiegt: Firewall-Vulkan frei")
+	var r2 := RunState.from_monster(SaveGame.team()[0], 2, "vulkan")
+	check(r2.map.zone == "vulkan" and r2.map.zone_name == "Firewall-Vulkan", "Run im Firewall-Vulkan")
+	var boss := r2.foe_for({"type": "boss"})
+	check(boss.name == "Glutkernskarabäus" and boss.hp == 420, "Boss im Vulkan: Glutkernskarabäus")
+	r2.enter(r2.next_choices()[0])
+	var f := r2.foe_for({"type": "fight"})
+	var base: Dictionary = GameData.FOES.filter(func(x): return x.name == f.name)[0]
+	check([7, 9, 5].has(GameData.FOES.find(base)) and f.hp == roundi(base.hp * 1.25), "Vulkan-Gegner aus eigenem Pool, 25 %% zäher (%s %d)" % [f.name, f.hp])
+	SaveGame.data = real_data
+	SaveGame.persist = true
+	# Lava: Feld des Spielers brennt, bis man es verlässt
+	var st := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[9])
+	st.reflex = 0
+	st.def = st.def.duplicate()
+	st.def.pat = ["lava"]
+	st.def.tele = false
+	st.e.move_t = 99.0
+	st.e.atk_t = 0.01
+	step(st, 0.05)
+	check(st.warns.size() == 1 and st.warns[0].lava and st.warns[0].cells.has(Vector2i(st.p.c, st.p.r)), "Aschefalter: Lava-Warnung auf dem Spielerfeld")
+	st.e.atk_t = 99.0
+	step(st, 0.8)
+	check(not st.hazards.is_empty(), "Lava liegt nach der Warnung")
+	var hp0: int = st.run.hp
+	step(st, 1.3)
+	check(st.run.hp < hp0, "Auf Lava stehen kostet HP (%d → %d)" % [hp0, st.run.hp])
+	st.move_player(0, -1 if st.p.r > 0 else 1)
+	var hp1: int = st.run.hp
+	step(st, 1.0)
+	var still_on := st.hazards.any(func(hz): return hz.c == st.p.c and hz.r == st.p.r)
+	check(still_on or st.run.hp == hp1, "Runter von der Lava: kein weiterer Schaden")
+	step(st, 3.0)
+	check(st.hazards.is_empty(), "Lava verschwindet nach 3 s")
+	# Zwei Spalten
+	var st2 := BattleState.new(RunState.new("Pixmiez", 2), GameData.FOES[8])
+	st2.p.c = 0
+	st2.e.move_t = 99.0
+	st2.e.atk_t = 0.01
+	step(st2, 0.05)
+	var cells: Array = st2.warns[0].cells
+	check(cells.size() == 6 and cells.has(Vector2i(0, 0)) and cells.has(Vector2i(1, 2)), "Brandmauerassel: zwei Spalten inkl. der des Spielers")
+	# Boss setzt ab halber HP Felder in Brand statt Pop-ups
+	var st3 := BattleState.new(RunState.new("Pixmiez", 3), GameData.FOES[10])
+	st3.e.hp = 200
+	st3.e.move_t = 99.0
+	st3.e.atk_t = 99.0
+	st3.e.pop_t = 0.01
+	step(st3, 0.05)
+	check(st3.pops.is_empty() and st3.warns.any(func(w): return w.lava), "Glutkernskarabäus: Lava statt Pop-ups")
+	# Komplette Vulkan-Runs laufen durch
+	var stuck := 0
+	var wins := 0
+	for sv in 12:
+		seed(sv)
+		var run3 := RunState.new(["Tröpfel", "Kaskadi", "Pixmiez"][sv % 3] if sv % 3 == 0 else "Tröpfel", sv)
+		run3.map = ZoneMap.generate(run3.rng, "vulkan")
+		var bot := BattleBot.new(0.25)
+		while true:
+			var ch := run3.next_choices()
+			if ch.is_empty():
+				break
+			var node := run3.enter(ch[0])
+			if node.type in ["fight", "elite", "boss"]:
+				var s := BattleState.new(run3, run3.foe_for(node))
+				var t := 0.0
+				while not s.over and t < 180.0:
+					bot.act(s)
+					s.update(1.0 / 30.0)
+					t += 1.0 / 30.0
+				if not s.over:
+					stuck += 1
+					break
+				if s.outcome == "lost":
+					break
+				if node.type == "boss":
+					wins += 1
+					break
+				run3.heal(10)
+	check(stuck == 0, "Vulkan-Runs: kein Kampf hängt")
+	print("  info    Vulkan-Autopilot: %d/12 Runs gewonnen" % wins)
 
 
 func test_evolution() -> void:

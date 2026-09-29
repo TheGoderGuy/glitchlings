@@ -36,7 +36,7 @@ func load_game() -> void:
 
 ## Ältere Spielstände um neue Felder ergänzen
 func _upgrade() -> void:
-	for k in ["frag", "recipes", "hints"]:
+	for k in ["frag", "recipes", "hints", "cleared"]:
 		if not data.has(k):
 			data[k] = 0 if k == "frag" else []
 
@@ -56,7 +56,7 @@ func reset() -> void:
 
 ## Neues Spiel mit dem gewählten Starter
 func new_game(starter: String) -> Dictionary:
-	data = {"version": VERSION, "team": [], "nest": [], "dex": {}, "next_id": 1, "stats": {"runs": 0, "wins": 0}, "frag": 0, "recipes": [], "hints": []}
+	data = {"version": VERSION, "team": [], "nest": [], "dex": {}, "next_id": 1, "stats": {"runs": 0, "wins": 0}, "frag": 0, "recipes": [], "hints": [], "cleared": []}
 	var m := add_monster(starter)
 	save_game()
 	return m
@@ -156,6 +156,10 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 	data.stats.runs = int(data.stats.runs) + 1
 	if won:
 		data.stats.wins = int(data.stats.wins) + 1
+		var z: String = run.map.zone
+		if not data.cleared.has(z):
+			data.cleared.append(z)
+			sum.unlocked = _newly_unlocked(z)
 	# Eier im Nest reifen mit jedem abgeschlossenen Run (auch bei Niederlage)
 	for e in nest():
 		e.runs_left = maxi(0, int(e.runs_left) - 1)
@@ -178,6 +182,24 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 	data.frag = int(data.get("frag", 0)) + run.frag
 	save_game()
 	return sum
+
+
+# ---------- Zonen ----------
+
+func zone_unlocked(z: String) -> bool:
+	var need: String = GameData.ZONES[z].unlock
+	return need == "" or data.get("cleared", []).has(need)
+
+
+func unlocked_zones() -> Array:
+	return GameData.ZONE_ORDER.filter(func(z): return zone_unlocked(z))
+
+
+func _newly_unlocked(cleared_zone: String) -> String:
+	for z in GameData.ZONE_ORDER:
+		if GameData.ZONES[z].unlock == cleared_zone:
+			return z
+	return ""
 
 
 # ---------- Labor ----------

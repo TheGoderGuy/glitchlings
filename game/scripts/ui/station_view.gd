@@ -1,7 +1,7 @@
 extends PixelCanvas
 ## Station (Hub): Team, Brutnest, Monsterdex. Startet Runs und lässt bereite Eier schlüpfen.
 
-signal start_run(monster_id: int)
+signal start_run(monster_id: int, zone: String)
 signal to_title
 
 enum Tab { TEAM, NEST, LAB, DEX }
@@ -26,6 +26,7 @@ var hatch_egg := {}
 var fuse_sel: Array = []     # IDs der gewählten Labor-Monster (max. 2)
 var fuse_msg := ""
 var fusion := {}             # laufende Fusions-Szene
+var zone_idx := 0            # gewählte Zone im Team-Reiter
 
 
 func _ready() -> void:
@@ -88,10 +89,17 @@ func _process(delta: float) -> void:
 			Tab.TEAM:
 				var n := SaveGame.team().size()
 				_nav_v(n)
+				var zones := SaveGame.unlocked_zones()
+				if zones.size() > 1 and Input.is_action_just_pressed("move_right"):
+					zone_idx = (zone_idx + 1) % zones.size()
+					Sfx.play("select")
+				elif zones.size() > 1 and Input.is_action_just_pressed("move_left"):
+					zone_idx = (zone_idx + zones.size() - 1) % zones.size()
+					Sfx.play("select")
 				if Input.is_action_just_pressed("confirm") and n > 0:
 					Sfx.play("confirm")
 					set_process(false)
-					start_run.emit(int(SaveGame.team()[sel].id))
+					start_run.emit(int(SaveGame.team()[sel].id), zones[zone_idx % zones.size()])
 			Tab.LAB:
 				var n := SaveGame.team().size() + 1   # letzte Zeile: „Fusionieren“
 				_nav_v(n)
@@ -256,7 +264,11 @@ func _draw_team() -> void:
 	else:
 		_text(Vector2(x, y), "Höchste Stufe erreicht", 8, GameData.COL.muted)
 	var pad: bool = InputSetup.pad
-	_text(Vector2(R.position.x, R.end.y - 12), "%s Mit %s in die %s" % ["A" if pad else "Enter", form, "Cache-Wiesen"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	var zones := SaveGame.unlocked_zones()
+	var zname: String = GameData.ZONES[zones[zone_idx % zones.size()]].name
+	var arrows := zones.size() > 1
+	_text(Vector2(R.position.x, R.end.y - 26), ("< %s >" if arrows else "%s") % zname, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	_text(Vector2(R.position.x, R.end.y - 12), "%s Mit %s losziehen" % ["A" if pad else "Enter", form], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 
 
 func _draw_nest() -> void:

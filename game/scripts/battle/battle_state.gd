@@ -49,6 +49,7 @@ var special_t := 0.0
 var combo := 0
 var last_chip := ""
 var decoy := 0
+var hazards: Array = []  # Lavafelder auf der Spielerseite {c, r, t, tick}
 var decoy_t := 0.0
 var regen_t := 1.0
 var banner := {}
@@ -79,7 +80,10 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 		run.sp_bonus = false
 		sp = 50.0
 	if def.boss:
-		status = "Boss! Ab der Hälfte seiner HP tauchen Pop-ups auf. Tritt drauf, um sie zu schließen."
+		if def.get("minion", "pop") == "lava":
+			status = "Boss! Ab der Hälfte seiner HP setzt er Felder in Brand. Runter von der Lava!"
+		else:
+			status = "Boss! Ab der Hälfte seiner HP tauchen Pop-ups auf. Tritt drauf, um sie zu schließen."
 	elif def.get("elite", false):
 		status = "Elite-Gegner: mehr HP, trifft härter."
 	elif run.fights_won == 0:
@@ -716,13 +720,26 @@ func _update_logic(dt: float) -> void:
 			e.pop_t -= dt
 			if e.pop_t <= 0:
 				e.pop_t = 4.0
-				_spawn_pop()
+				if def.get("minion", "pop") == "lava":
+					var cells: Array = []
+					for k in 2:
+						cells.append(Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2)))
+					events.append("warn")
+					warns.append({"cells": cells, "t": 0.9, "max": 0.9, "dmg": 0, "lava": true})
+				else:
+					_spawn_pop()
 
 	for i in range(warns.size() - 1, -1, -1):
 		var w: Dictionary = warns[i]
 		w.t -= dt
 		if w.t <= 0:
 			warns.remove_at(i)
+			if w.get("lava", false):
+				for cell in w.cells:
+					hazards.append({"c": cell.x, "r": cell.y, "t": 3.0, "tick": 0.0})
+					fx_cell(cell.x, cell.y, GameData.EL.Feuer, 0.3)
+				events.append("hit")
+				continue
 			var hit := false
 			for cell in w.cells:
 				fx_cell(cell.x, cell.y, GameData.COL.coral, 0.25)
@@ -732,6 +749,18 @@ func _update_logic(dt: float) -> void:
 				hurt_player(w.dmg)
 				if over:
 					return
+	for i in range(hazards.size() - 1, -1, -1):
+		var hz: Dictionary = hazards[i]
+		hz.t -= dt
+		if hz.c == p.c and hz.r == p.r:
+			hz.tick -= dt
+			if hz.tick <= 0:
+				hz.tick = 0.6
+				hurt_player(maxi(3, roundi(def.dmg * 0.4)))
+				if over:
+					return
+		if hz.t <= 0:
+			hazards.remove_at(i)
 	for i in range(pops.size() - 1, -1, -1):
 		var q: Dictionary = pops[i]
 		q.t -= dt
@@ -811,6 +840,19 @@ func _enemy_attack() -> void:
 				var n := Vector2i(p.c + d.x, p.r + d.y)
 				if n.x >= 0 and n.x < 3 and n.y >= 0 and n.y < 3:
 					cells.append(n)
+		"col2":
+			# zwei benachbarte Spalten, eine davon die des Spielers
+			var other: int = p.c + (1 if p.c == 0 else (-1 if p.c == 2 else (1 if rng.randf() < 0.5 else -1)))
+			for c in [p.c, other]:
+				for r in 3:
+					cells.append(Vector2i(c, r))
+		"lava":
+			# Feld des Spielers + ein weiteres wird zu Lava
+			cells.append(Vector2i(p.c, p.r))
+			var n := Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2))
+			if n != Vector2i(p.c, p.r):
+				cells.append(n)
+			warn = 0.8
 		"wall":
 			# Zwei Reihen, eine bleibt frei – nie die, in der der Spieler steht
 			var safe_rows: Array = [0, 1, 2].filter(func(r): return r != p.r)
@@ -826,7 +868,7 @@ func _enemy_attack() -> void:
 	if mon.passive == "Eulenblick":
 		warn += 0.3
 	events.append("warn")
-	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg})
+	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg, "lava": kind == "lava"})
 
 
 func _spawn_pop() -> void:

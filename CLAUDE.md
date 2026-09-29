@@ -61,7 +61,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Phase 3a (29.09.2026): Spielstand, Station (Team/Brutnest/Monsterdex), dauerhafte Evolution (Rookie 15, Champion 60), Eier nach Runs, Schlüpf-Szene, 99 Tests – `vault/05 Produktion/Station.md`
 - [x] Phase 3b (29.09.2026): 6 weitere Linien (Kekso, Lumi, Quakli, Molchi, Brummbit, Kauzbit) als Ei-Inhalt – 9 Linien, 40 Formen, 6 neue Passive, Monsterdex blättert, 109 Tests
 - [x] Labor/Fusion (29.09.2026): 4 Fusionen mit neuen Passiven/Signaturen, Rezeptbuch mit Gerüchten, Fragmente werden gerettet, 120 Tests
-- [ ] Zone 2 (Firewall-Vulkan) · Champions+Ultras für Linien ohne Endstufe · Phase 4: Steam-Seite + Demo
+- [x] Zone 2 Firewall-Vulkan (29.09.2026): 3 Gegner + Boss (PixelLab), Lava-Mechanik, Zwei-Spalten-Angriff, Zonen-Freischaltung + Auswahl, 133 Tests – `vault/05 Produktion/Zone Firewall-Vulkan.md`
+- [ ] Champions+Ultras für Linien ohne Endstufe · Zone-2-Musik/-Ereignisse · Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)

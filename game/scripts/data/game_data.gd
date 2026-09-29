@@ -54,12 +54,28 @@ const FOES := [
 	{"name": "Captchakäfer", "el": "Code", "hp": 80, "move": 1.5, "atk": 2.5, "dmg": 12, "pat": ["cross"], "spr": "captcha", "loot": 10, "boss": false, "tele": false},
 	{"name": "Spamwespe", "el": "Virus", "hp": 50, "move": 0.8, "atk": 1.7, "dmg": 8, "pat": ["cell", "row", "cell"], "spr": "wespe", "loot": 10, "boss": false, "tele": false},
 	{"name": "Ladebalkenraupe", "el": "Feuer", "hp": 115, "move": 2.2, "atk": 3.2, "dmg": 16, "pat": ["wall"], "spr": "raupe", "loot": 12, "boss": false, "tele": false},
+	# --- Firewall-Vulkan (Index 7–10) ---
+	{"name": "Glutmilbe", "el": "Feuer", "hp": 60, "move": 0.7, "atk": 1.6, "dmg": 9, "pat": ["cell", "cell", "row"], "spr": "milbe", "loot": 11, "boss": false, "tele": false},
+	{"name": "Brandmauerassel", "el": "Code", "hp": 130, "move": 2.0, "atk": 3.0, "dmg": 15, "pat": ["col2"], "spr": "assel", "loot": 13, "boss": false, "tele": false},
+	{"name": "Aschefalter", "el": "Feuer", "hp": 75, "move": 1.1, "atk": 2.4, "dmg": 10, "pat": ["lava", "cell"], "spr": "falter", "loot": 12, "boss": false, "tele": true},
+	{"name": "Glutkernskarabäus", "el": "Feuer", "hp": 420, "move": 1.8, "atk": 2.1, "dmg": 17, "pat": ["row", "lava", "col"], "spr": "skarab", "loot": 40, "boss": true, "tele": false, "minion": "lava"},
 ]
 
-## Gegner-Pools je Etage (Indizes in FOES)
-const POOL_EARLY := [0, 1, 5]            # Etage 1–2: Bugsy, Glitchmotte, Spamwespe
-const POOL_LATE := [0, 1, 2, 4, 5, 6]    # ab Etage 3 alle normalen Gegner
-const POOL_ELITE := [2, 4, 6]            # Elite: die zäheren Gegner
+## Zonen: Gegner-Pools (Indizes in FOES), Boss, Zähigkeit, Hintergrund. Zone 2 wird nach dem Boss von Zone 1 frei.
+const ZONES := {
+	"wiesen": {"name": "Cache-Wiesen", "bg": "wiesen", "boss": 3, "hp_mult": 1.0,
+		"early": [0, 1, 5], "late": [0, 1, 2, 4, 5, 6], "elite": [2, 4, 6],
+		"desc": "Grüne Datenwiesen. Das Startgebiet.", "unlock": ""},
+	"vulkan": {"name": "Firewall-Vulkan", "bg": "vulkan", "boss": 10, "hp_mult": 1.25,
+		"early": [7, 9, 5], "late": [7, 8, 9, 4, 6], "elite": [8, 6, 4],
+		"desc": "Glühende Sicherheitsmauern. Wasser hat hier einen Vorteil.", "unlock": "wiesen"},
+}
+const ZONE_ORDER := ["wiesen", "vulkan"]
+
+## Gegner-Pools der Cache-Wiesen (Indizes in FOES); allgemein siehe ZONES
+const POOL_EARLY := [0, 1, 5]
+const POOL_LATE := [0, 1, 2, 4, 5, 6]
+const POOL_ELITE := [2, 4, 6]
 
 ## Spielbare Linien (Baby-Werte). evo: Element der meistgespielten Chips → Rookie.
 const MONS := {

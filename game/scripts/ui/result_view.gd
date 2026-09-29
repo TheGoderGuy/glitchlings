@@ -31,7 +31,7 @@ func _draw() -> void:
 	var r := Rect2(90, 24, 460, 312)
 	_box(r, GameData.COL.panel, GameData.COL.sun if won else GameData.COL.coral)
 	_text(r.position + Vector2(0, 30), "Zone gesäubert!" if won else "Run beendet", 16, GameData.COL.sun if won else GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-	var sub := "Der Pop-Up-Tyrann ist defragmentiert. Die %s atmen auf." % run.map.zone_name if won else "%s braucht eine Pause. Alles Gelernte bleibt!" % run.form
+	var sub := "%s ist defragmentiert. %s ist wieder sicher." % [GameData.FOES[GameData.ZONES[run.map.zone].boss].name, run.map.zone_name] if won else "%s braucht eine Pause. Alles Gelernte bleibt!" % run.form
 	_text(r.position + Vector2(0, 48), sub, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	_text(r.position + Vector2(0, 64), "Etage %d/%d · Kämpfe %d · Chips %d · Fragmente %d" % [maxi(0, run.floor_idx + 1), run.map.floors.size(), run.fights_won, run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	# Monster links
@@ -50,6 +50,8 @@ func _draw() -> void:
 		lines.append(["Entwicklung gespeichert: %s → %s" % [run.start_form, run.form], GameData.EL[run.form_el()]])
 	for f in summary.get("new_dex", []):
 		lines.append(["Neu im Monsterdex: %s" % f, GameData.COL.sun])
+	if summary.get("unlocked", "") != "":
+		lines.append(["Neue Zone frei: %s!" % GameData.ZONES[summary.unlocked].name, GameData.COL.coral])
 	if int(summary.get("frag_banked", 0)) > 0:
 		lines.append(["+%d Fragmente auf die Station gerettet" % int(summary.frag_banked), GameData.COL.sun])
 	var egg: Dictionary = summary.get("egg", {})

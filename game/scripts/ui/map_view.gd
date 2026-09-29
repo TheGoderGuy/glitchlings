@@ -89,7 +89,7 @@ func node_pos(f: int, i: int) -> Vector2:
 
 
 func _draw() -> void:
-	_draw_zone("wiesen")
+	_draw_zone(GameData.ZONES[run.map.zone].bg)
 	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.35))
 	var m := run.map
 	var ch := run.next_choices()

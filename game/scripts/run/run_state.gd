@@ -63,8 +63,10 @@ func form_el() -> String:
 
 ## Ziel der nächsten Evolution nach aktueller Prägung (leer = noch keine Richtung).
 ## Run mit einem Team-Monster aus dem Spielstand starten (Form, Stufe und Lebenszeit-Prägung übernehmen)
-static func from_monster(m: Dictionary, seed_value: int = -1) -> RunState:
+static func from_monster(m: Dictionary, seed_value: int = -1, zone := "wiesen") -> RunState:
 	var r := RunState.new(m.species, seed_value)
+	if zone != "wiesen":
+		r.map = ZoneMap.generate(r.rng, zone)
 	r.monster_id = int(m.id)
 	r.form = m.form
 	r.start_form = m.form
@@ -174,12 +176,13 @@ func _apply_difficulty(d: Dictionary) -> Dictionary:
 
 
 func _base_foe(node: Dictionary) -> Dictionary:
+	var Z: Dictionary = GameData.ZONES[map.zone]
 	if node.type == "boss":
-		return GameData.FOES[3].duplicate()
-	var pool: Array = GameData.POOL_ELITE if node.type == "elite" else (GameData.POOL_EARLY if floor_idx < 2 else GameData.POOL_LATE)
+		return GameData.FOES[Z.boss].duplicate()
+	var pool: Array = Z.elite if node.type == "elite" else (Z.early if floor_idx < 2 else Z.late)
 	var base: Dictionary = GameData.FOES[pool[rng.randi_range(0, pool.size() - 1)]]
 	var d := base.duplicate()
-	d.hp = roundi(base.hp * (1.0 + 0.07 * floor_idx))
+	d.hp = roundi(base.hp * (1.0 + 0.07 * floor_idx) * Z.hp_mult)
 	d.elite = node.type == "elite"
 	if d.elite:
 		d.name = "Elite-" + base.name
