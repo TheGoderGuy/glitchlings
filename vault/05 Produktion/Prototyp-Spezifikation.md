@@ -203,3 +203,6 @@ Bindung (0–5 Herzen, faire Boni, sinkt nie), Pflege-Ansicht (streicheln, Daten
 **Stand:** Station mit Spielstand, 9 Linien + 4 Fusionen (44 Formen), Labor, Zone 2 mit Lava-Mechanik, Musik im GBA/DS-Stil.
 **Beobachtung:** „Spielt sich sehr gut.“ Vulkan per Testfunktion angespielt.
 **Offen:** Schwierigkeit bleibt zu beobachten (Autopilot gewinnt alles), externe Tester fehlen noch.
+
+### Update Spielfeld (29.09.2026)
+Feedback: „Manchmal ist das Spielfeld ein bisschen zu klein.“ → Felder 88×50 statt 80×44, Battle-Network-Paneele (Fase, Innenplatte mit Datenraster, Vorderkante, hintere Reihe dunkler), Sockel mit Schatten unter der Arena, leuchtende Mittellinie. Handleiste etwas tiefer.

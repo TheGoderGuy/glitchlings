@@ -5,15 +5,15 @@ extends PixelCanvas
 signal finished(won: bool)
 signal gave_up
 
-const CW := 80          # Feldbreite
-const CH := 44          # Feldhöhe
-const GAP := 14         # Abstand zwischen Spieler- und Gegnerseite
-const X0 := 73
-const Y0 := 150
-const FEET := 36        # Fußlinie innerhalb eines Feldes
+const CW := 88          # Feldbreite
+const CH := 50          # Feldhöhe
+const GAP := 16         # Abstand zwischen Spieler- und Gegnerseite
+const X0 := 48
+const Y0 := 136
+const FEET := 39        # Fußlinie innerhalb eines Feldes
 const CARD_W := 136
-const CARD_H := 46
-const HAND_Y := 306
+const CARD_H := 44
+const HAND_Y := 310
 const HAND_X := 42
 const HEAL_AFTER_FIGHT := 10
 const BABY_SCALE := 1     # Babys (32 px) im Kampf in Originalgröße, damit die Evolution sichtbar wächst
@@ -205,6 +205,7 @@ func _draw() -> void:
 		off = Vector2(roundi(randf_range(-s, s)), roundi(randf_range(-s, s)))
 		draw_set_transform(off)
 	_draw_arena()
+	_draw_arena_overlays()
 	_draw_actors()
 	_draw_effects()
 	off = Vector2.ZERO
@@ -227,19 +228,58 @@ func _draw() -> void:
 
 
 func _draw_arena() -> void:
+	# Sockel unter dem Spielfeld mit Schatten, damit es auf dem Hintergrund steht
+	var full := Rect2(X0 - 6, Y0 - 5, 6 * CW + GAP + 12, 3 * CH + 12)
+	draw_rect(Rect2(full.position + Vector2(4, 8), full.size), Color(0.02, 0.01, 0.06, 0.45))
+	var left := Rect2(full.position, Vector2(3 * CW + 6 + GAP / 2.0, full.size.y))
+	var right := Rect2(Vector2(left.end.x, full.position.y), Vector2(full.end.x - left.end.x, full.size.y))
+	draw_rect(left, GameData.COL.tileP.darkened(0.72))
+	draw_rect(right, GameData.COL.tileE.darkened(0.72))
+	draw_rect(Rect2(full.position, Vector2(full.size.x, 1)), Color(1, 1, 1, 0.12))
+	draw_rect(Rect2(full.position.x, full.end.y - 3, full.size.x, 3), Color(0, 0, 0, 0.35))
 	for c in 6:
 		for r in 3:
-			var rect := cell_rect(c, r)
-			var top: Color = GameData.COL.tileP if c < 3 else GameData.COL.tileE
-			draw_rect(rect.grow(1), GameData.COL.dark)
-			draw_rect(rect, top.darkened(0.35))
-			draw_rect(Rect2(rect.position, Vector2(rect.size.x, rect.size.y - 4)), top)
-			draw_rect(Rect2(rect.position + Vector2(1, 1), Vector2(rect.size.x - 2, 1)), top.lightened(0.25))
-	# Mittellinie
+			_draw_panel(c, r)
+	# Mittellinie: leuchtender Datenstrom
 	var mx := X0 + 3 * CW + GAP / 2 - 1
-	for y in range(Y0, Y0 + 3 * CH, 6):
-		var a := 0.25 + 0.5 * maxf(0.0, sin(y * 0.12 - anim_t * 6.0))
-		draw_rect(Rect2(mx, y, 2, 3), Color(GameData.COL.sun, a))
+	draw_rect(Rect2(mx - 2, Y0 - 2, 6, 3 * CH), Color(GameData.COL.sun, 0.08))
+	for y in range(Y0, Y0 + 3 * CH - 2, 4):
+		var a := 0.2 + 0.6 * maxf(0.0, sin(y * 0.1 - anim_t * 5.0))
+		draw_rect(Rect2(mx, y, 2, 2), Color(GameData.COL.sun, a))
+
+
+## Ein Feld im Battle-Network-Stil: Fläche mit Kante, Innenplatte, Datenraster und Vorderkante
+func _draw_panel(c: int, r: int) -> void:
+	var rect := cell_rect(c, r)
+	var base: Color = GameData.COL.tileP if c < 3 else GameData.COL.tileE
+	base = base.darkened(0.1 * (2 - r) / 2.0)   # hintere Reihe etwas dunkler (Tiefe)
+	var edge := 6
+	var face := Rect2(rect.position, Vector2(rect.size.x, rect.size.y - edge))
+	draw_rect(rect.grow(1), GameData.COL.dark)
+	# Vorderkante
+	draw_rect(Rect2(rect.position.x, face.end.y, rect.size.x, edge), base.darkened(0.55))
+	draw_rect(Rect2(rect.position.x, face.end.y, rect.size.x, 1), base.darkened(0.2))
+	draw_rect(Rect2(rect.position.x + 3, face.end.y + 2, rect.size.x - 6, 1), base.darkened(0.4))
+	# Fläche mit Fase
+	draw_rect(face, base)
+	var inner := face.grow(-4)
+	draw_rect(inner, base.lightened(0.07))
+	var grid := Color(base.lightened(0.3), 0.18)
+	for gx in range(int(inner.position.x) + 7, int(inner.end.x) - 2, 8):
+		draw_rect(Rect2(gx, inner.position.y + 1, 1, inner.size.y - 2), grid)
+	for gy in range(int(inner.position.y) + 6, int(inner.end.y) - 2, 7):
+		draw_rect(Rect2(inner.position.x + 1, gy, inner.size.x - 2, 1), grid)
+	draw_rect(Rect2(face.position, Vector2(face.size.x, 1)), base.lightened(0.4))
+	draw_rect(Rect2(face.position, Vector2(1, face.size.y)), base.lightened(0.22))
+	draw_rect(Rect2(face.position.x, face.end.y - 1, face.size.x, 1), base.darkened(0.3))
+	draw_rect(Rect2(face.end.x - 1, face.position.y, 1, face.size.y), base.darkened(0.3))
+	# kleine Eckmarken
+	var mk := base.lightened(0.5)
+	for p in [inner.position, Vector2(inner.end.x - 2, inner.position.y)]:
+		draw_rect(Rect2(p, Vector2(2, 2)), Color(mk, 0.7))
+
+
+func _draw_arena_overlays() -> void:
 	for m in st.marks:
 		for r in 3:
 			draw_rect(cell_rect(3 + m.col, r), Color(m.color, 0.35 + 0.3 * sin(anim_t * 30.0)))
@@ -466,8 +506,8 @@ func _draw_hud() -> void:
 
 func _draw_hand() -> void:
 	var nx := st.next_chip()
-	_text(Vector2(HAND_X, 298), "Als Nächstes: " + (nx if nx != "" else "–"), 8, GameData.COL.muted)
-	_text(Vector2(HAND_X, 298), ("Start" if InputSetup.pad else "Esc") + ": Pause", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 130)
+	_text(Vector2(HAND_X, 302), "Als Nächstes: " + (nx if nx != "" else "–"), 8, GameData.COL.muted)
+	_text(Vector2(HAND_X, 302), ("Start" if InputSetup.pad else "Esc") + ": Pause", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 130)
 	for i in 3:
 		var s: Dictionary = st.hand[i]
 		var r := Rect2(HAND_X + i * (CARD_W + 6), HAND_Y, CARD_W, CARD_H)
