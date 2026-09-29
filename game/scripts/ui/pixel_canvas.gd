@@ -93,6 +93,7 @@ const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "wurm": "bytewurm_64"
 	"muecke": "muecke_64", "schnecke": "panzerschnecke_64", "bluete": "glitchbluete_64", "koenigin": "schwarmkoenigin_96",
 	"drohne": "kerndrohne_64", "spinne": "glitchspinne_64", "urglitch": "urglitch_96"}
 static var _sprites := {}
+const IDLE_FPS := 6.0   # Bilder pro Sekunde der Idle-Animationen
 
 
 ## Alle Sprites beim Spielstart laden: Texturen, die erst in _draw() zum ersten Mal geladen werden, bleiben in dem Bild weiß.
@@ -131,20 +132,30 @@ static func sprite(key: String) -> Dictionary:
 			var a := white.get_pixel(x, y).a
 			if a > 0.0:
 				white.set_pixel(x, y, Color(1, 1, 1, a))
-	var s := {"tex": tex, "blink": blink, "flash": ImageTexture.create_from_image(white), "n": img.get_width(), "foot": foot}
+	# Idle-Animation (optional): assets/sprites/anim/<datei>_idle_0.png, _1, … (Frame 0 = Grundbild)
+	var idle: Array = []
+	while ResourceLoader.exists("res://assets/sprites/anim/%s_idle_%d.png" % [file, idle.size()]):
+		idle.append(load("res://assets/sprites/anim/%s_idle_%d.png" % [file, idle.size()]))
+	var s := {"tex": tex, "blink": blink, "flash": ImageTexture.create_from_image(white), "n": img.get_width(), "foot": foot, "idle": idle}
 	_sprites[key] = s
 	return s
 
 
 ## Spieler-Babys (32 px) werden verdoppelt, ab Rookie 1 Kunstpixel = 1 Pixel.
-## opts: scale, bob, flash, blink, mod, clip_top
+## opts: scale, bob, flash, blink, mod, clip_top, anim (false = Idle-Animation aus)
+## Hat ein Sprite Idle-Frames, laufen sie statt Wippen und Blinzeln (Phase je Position versetzt).
 func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {}) -> void:
 	var s := sprite(key)
 	var sc: int = opts.get("scale", 2 if s.n <= 32 else 1)
 	var size: int = s.n * sc
-	var top := roundi(feet_y - size + s.foot * sc - opts.get("bob", 0))
+	var animated: bool = not s.idle.is_empty() and opts.get("anim", true)
+	var bob: int = 0 if animated else opts.get("bob", 0)
+	var top := roundi(feet_y - size + s.foot * sc - bob)
 	var left := roundi(cx - size / 2.0)
 	var tex: Texture2D = s.flash if opts.get("flash", false) else (s.blink if opts.get("blink", false) else s.tex)
+	if animated and not opts.get("flash", false):
+		var fi: int = int(anim_t * IDLE_FPS + absf(cx) * 0.037) % s.idle.size()
+		tex = s.idle[fi]
 	var mod: Color = opts.get("mod", Color.WHITE)
 	if flip:
 		draw_set_transform(off + Vector2(left + size, top), 0, Vector2(-sc, sc))
