@@ -27,6 +27,8 @@ var fights_won := 0
 var sp_bonus := false     # Signatur-Leiste startet im nächsten Kampf halb voll
 var foe_weak := false     # nächster Gegner startet mit 25 % weniger HP (Ereignis „Riss in der Firewall“)
 var seen_events: Array = []
+var modules: Array = []   # Module (GameData.MODULES) für diesen Run
+var backup_used := false  # Backup-Kern schon verbraucht?
 var map: ZoneMap
 var floor_idx := -1       # -1 = noch vor der ersten Etage
 var pos := -1
@@ -246,6 +248,36 @@ func _base_foe(node: Dictionary) -> Dictionary:
 # ---------- Deck ----------
 
 ## 3 verschiedene Chips, gewichtet nach Seltenheit.
+# ---------- Module ----------
+
+func has_mod(id: String) -> bool:
+	return modules.has(id)
+
+
+## Zufälliges, noch nicht vorhandenes Modul ("" wenn alle da sind)
+func roll_module(weights: Dictionary = GameData.RARITY_WEIGHT) -> String:
+	var pool: Array = []
+	for k in GameData.MODULES:
+		if not modules.has(k):
+			for i in weights[GameData.MODULES[k].rar]:
+				pool.append(k)
+	return "" if pool.is_empty() else pool[rng.randi_range(0, pool.size() - 1)]
+
+
+func add_module(id: String) -> void:
+	if id != "" and not modules.has(id):
+		modules.append(id)
+
+
+## Chipwahl nach einem Kampf (Suchalgorithmus: mindestens ein seltener oder epischer Chip)
+func roll_pick(weights: Dictionary) -> Array:
+	var out := roll_choices(weights)
+	if has_mod("suchalgorithmus") and out.all(func(k): return GameData.CHIPS[k].rar == "Gewöhnlich"):
+		var better: Array = roll_choices({"Gewöhnlich": 0, "Selten": 3, "Episch": 1}, out.slice(0, 2))
+		out[2] = better[0]
+	return out
+
+
 func roll_choices(weights: Dictionary = GameData.RARITY_WEIGHT, exclude: Array = []) -> Array:
 	var pool: Array = []
 	for k in GameData.CHIPS:

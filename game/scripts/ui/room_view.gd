@@ -185,6 +185,9 @@ func _draw() -> void:
 	_text(Vector2(8, 290), "HP %d/%d" % [run.hp, run.max_hp], 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, 144)
 	_text(Vector2(8, 304), "Fragmente %d" % run.frag, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, 144)
 	_text(Vector2(8, 318), "Deck %d Chips" % run.deck.size(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 144)
+	if not run.modules.is_empty():
+		var mw := minf(run.modules.size(), 9) * 15.0
+		_draw_module_row(run.modules, 80 - mw / 2.0, 326, 9)
 
 	var r := Rect2(160, 24, 460, 312)
 	_box(r, Color(GameData.COL.panel, 0.95), _type_col())
@@ -328,6 +331,16 @@ func _draw_prop(kind: String, x: float, g: float) -> void:
 			if fmod(t, 0.7) < 0.1:
 				draw_line(p + Vector2(3, -2), p + Vector2(9, -7), Color("#FFE98A"), 1.0)
 				draw_line(p + Vector2(-3, 2), p + Vector2(-8, 6), Color("#FFE98A"), 1.0)
+		"modulkapsel":
+			# halb vergrabene Kapsel, die im Takt leuchtet
+			draw_rect(Rect2(x - 12, g - 16, 24, 14), Color("#1E1428"))
+			draw_rect(Rect2(x - 11, g - 15, 22, 12), Color("#6A6478"))
+			draw_rect(Rect2(x - 11, g - 15, 22, 3), Color("#8A84A0"))
+			draw_rect(Rect2(x - 3, g - 12, 6, 6), Color("#FFC83D", 0.5 + 0.5 * sin(t * 4.0)))
+			draw_rect(Rect2(x - 16, g - 3, 32, 3), Color("#2E2840"))
+			if fmod(t, 1.5) < 0.2:
+				draw_rect(Rect2(x + 8, g - 22, 1, 3), Color.WHITE)
+				draw_rect(Rect2(x + 7, g - 21, 3, 1), Color.WHITE)
 		"datenleitung":
 			# Rohr aus dem Moor, verstopft mit glühendem Datenschlamm, knistert
 			draw_rect(Rect2(x - 5, g - 34, 10, 34), Color("#1E1428"))

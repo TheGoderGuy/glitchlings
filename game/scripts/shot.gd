@@ -26,6 +26,10 @@ static func args() -> Dictionary:
 			shot.zone = a.substr(7)
 		elif a.begins_with("--event="):
 			shot.event = a.substr(8)
+		elif a.begins_with("--mods="):
+			shot.mods = a.substr(7).split(",")
+		elif a.begins_with("--newmod="):
+			shot.newmod = a.substr(9)
 		elif a == "--pops":
 			shot.pops = true
 		elif a == "--lava":

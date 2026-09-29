@@ -371,6 +371,52 @@ const SPECIALS := {
 const BEATS := {"Feuer": "Code", "Code": "Wasser", "Wasser": "Feuer"}
 const RARITY_WEIGHT := {"Gewöhnlich": 6, "Selten": 3, "Episch": 1}
 
+## Module: passive Gegenstände, die nur für den laufenden Run gelten (Quelle: Elite, Händler, Modulkapsel).
+## pic = Piktogramm (PICTOS), col = Farbe des Symbols
+const MODULES := {
+	"verstaerker": {"name": "Verstärker", "rar": "Gewöhnlich", "pic": "star", "col": "#FFC83D", "desc": "Chip-Treffer machen +3 Schaden."},
+	"schnelllader": {"name": "Schnelllader", "rar": "Gewöhnlich", "pic": "gear", "col": "#6EE7C5", "desc": "Chips laden 15 % schneller."},
+	"startsignal": {"name": "Startsignal", "rar": "Gewöhnlich", "pic": "bolt", "col": "#FFE45C", "desc": "Die Signatur-Leiste startet jeden Kampf zu einem Viertel gefüllt."},
+	"panzerplatte": {"name": "Panzerplatte", "rar": "Gewöhnlich", "pic": "shield", "col": "#58B7FF", "desc": "Jeder Treffer gegen dich macht 2 Schaden weniger."},
+	"sammler": {"name": "Sammler", "rar": "Gewöhnlich", "pic": "coin", "col": "#FFC83D", "desc": "+30 % Fragmente aus Kämpfen."},
+	"lebensbit": {"name": "Lebensbit", "rar": "Gewöhnlich", "pic": "heart", "col": "#FF7A8A", "desc": "Nach jedem Sieg heilst du 8 HP zusätzlich."},
+	"schleimschuhe": {"name": "Schleimschuhe", "rar": "Gewöhnlich", "pic": "boot", "col": "#7BD35A", "desc": "Schleim bremst dich nicht, Lava schadet dir nur halb so viel."},
+	"rabattchip": {"name": "Rabattchip", "rar": "Gewöhnlich", "pic": "coin", "col": "#58D68D", "desc": "Beim Datenhändler ist alles 25 % billiger."},
+	"ueberhitzer": {"name": "Überhitzer", "rar": "Selten", "pic": "flame", "col": "#FF8A4C", "desc": "Brand verursacht doppelten Schaden."},
+	"giftkapsel": {"name": "Giftkapsel", "rar": "Selten", "pic": "skull", "col": "#C77DFF", "desc": "Gift verursacht 50 % mehr Schaden."},
+	"kaeltekern": {"name": "Kältekern", "rar": "Selten", "pic": "snow", "col": "#8FD8FF", "desc": "Einfrieren und Betäuben halten 50 % länger."},
+	"elementlinse": {"name": "Elementlinse", "rar": "Selten", "pic": "eye", "col": "#FF8FD8", "desc": "Element-Vorteil macht doppelten statt 1,5-fachen Schaden."},
+	"dornenpanzer": {"name": "Dornenpanzer", "rar": "Selten", "pic": "spike", "col": "#58B7FF", "desc": "Wirst du getroffen, erleidet der Gegner 6 Schaden."},
+	"reflexbooster": {"name": "Reflexbooster", "rar": "Selten", "pic": "arrow", "col": "#6EE7C5", "desc": "Du bewegst dich 25 % schneller."},
+	"prisma": {"name": "Prisma", "rar": "Selten", "pic": "gem", "col": "#FFE45C", "desc": "Element-Chips prägen doppelt: Evolution kommt schneller."},
+	"kondensator": {"name": "Kondensator", "rar": "Selten", "pic": "bolt", "col": "#4CC3F0", "desc": "Die Signatur-Leiste lädt 30 % schneller."},
+	"notschild": {"name": "Notschild", "rar": "Selten", "pic": "shield", "col": "#8FD8FF", "desc": "Jeder Kampf beginnt mit einer Blase, die 20 Schaden abfängt."},
+	"suchalgorithmus": {"name": "Suchalgorithmus", "rar": "Selten", "pic": "eye", "col": "#FFC83D", "desc": "Bei jeder Chipwahl ist mindestens ein seltener oder epischer Chip."},
+	"backupkern": {"name": "Backup-Kern", "rar": "Episch", "pic": "heart", "col": "#FFC83D", "desc": "Einmal pro Run: Statt zu verlieren kämpfst du mit 30 % HP weiter."},
+	"kritbit": {"name": "Kritbit", "rar": "Episch", "pic": "star", "col": "#FF5470", "desc": "20 % Chance auf doppelten Schaden."},
+	"saugbit": {"name": "Saugbit", "rar": "Episch", "pic": "heart", "col": "#C77DFF", "desc": "Heilt 1 HP pro 10 Schaden, den du austeilst."},
+	"echochip": {"name": "Echochip", "rar": "Episch", "pic": "gear", "col": "#FF8FD8", "desc": "Jeder 4. Chip wird doppelt ausgelöst."},
+}
+const MODULE_PRICE := {"Gewöhnlich": 45, "Selten": 70, "Episch": 100}
+const MODULE_WEIGHT_ELITE := {"Gewöhnlich": 3, "Selten": 4, "Episch": 2}
+## Piktogramme 6×6 für Modul-Symbole
+const PICTOS := {
+	"star": ["..##..", "..##..", "######", ".####.", ".#..#.", "#....#"],
+	"gear": [".#..#.", "######", "##..##", "##..##", "######", ".#..#."],
+	"bolt": ["...##.", "..##..", ".####.", "..##..", ".##...", ".#...."],
+	"shield": ["######", "######", "######", ".####.", ".####.", "..##.."],
+	"coin": [".####.", "##..##", "#.##.#", "#.##.#", "##..##", ".####."],
+	"heart": ["##.##.", "######", "######", ".####.", "..##..", "......"],
+	"boot": [".##...", ".##...", ".##...", ".####.", "######", "......"],
+	"flame": ["..#...", ".##.#.", ".####.", "######", "######", ".####."],
+	"skull": [".####.", "######", "#.##.#", "######", ".#.#..", "......"],
+	"snow": ["#.#.#.", ".###..", "#####.", ".###..", "#.#.#.", "......"],
+	"eye": ["......", ".####.", "##..##", "#.##.#", "##..##", ".####."],
+	"spike": ["#...#.", ".#.#..", "..#...", ".#.#..", "#...#.", "......"],
+	"arrow": ["..#...", "..##..", "######", "######", "..##..", "..#..."],
+	"gem": ["..##..", ".####.", "######", ".####.", "..##..", "......"],
+}
+
 
 ## Element, das gegen d besonders stark ist (für Hinweise)
 static func strong_against(d: String) -> String:

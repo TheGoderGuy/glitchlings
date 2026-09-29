@@ -38,6 +38,7 @@ var pick_idx := 1
 var pause_idx := 0
 var heal_info := 0
 var mode_t := 0.0     # Zeit im aktuellen Modus (Eingabesperre gegen versehentliches Durchdrücken)
+var new_module := ""  # Modul aus einem Elite-Sieg (Anzeige in der Chipwahl)
 var evo := {}
 var tut: Tutorial = null
 # Animations-Timer (prozedural, nur Versatz – keine Skalierung, damit Pixel scharf bleiben)
@@ -122,8 +123,13 @@ func _fight_over() -> void:
 			_set_mode(Mode.EVOLVE)
 			Sfx.play("charge", 0.0)
 			return
-	heal_info = run.heal(HEAL_AFTER_FIGHT)
-	choices = run.roll_choices(RunState.ELITE_WEIGHT if node_type == "elite" else GameData.RARITY_WEIGHT)
+	heal_info = run.heal(HEAL_AFTER_FIGHT + (8 if run.has_mod("lebensbit") else 0))
+	choices = run.roll_pick(RunState.ELITE_WEIGHT if node_type == "elite" else GameData.RARITY_WEIGHT)
+	# Elite-Belohnung: ein neues Modul
+	new_module = ""
+	if node_type == "elite":
+		new_module = run.roll_module(GameData.MODULE_WEIGHT_ELITE)
+		run.add_module(new_module)
 	pick_idx = 1
 	_set_mode(Mode.PICK)
 
@@ -598,6 +604,9 @@ func _draw_hud() -> void:
 		_box(Rect2(bx, 45, bw, 13), GameData.COL.dark, bf[1])
 		_text(Vector2(bx, 55), bf[0], 8, bf[1], HORIZONTAL_ALIGNMENT_CENTER, bw, false)
 		bx += bw + 3
+	# Module: kleine Symbole neben den Buffs
+	if not run.modules.is_empty():
+		_draw_module_row(run.modules, bx + (4 if buffs.size() > 0 else 0), 44, 8)
 	# Gegner rechts
 	var E := Rect2(W - 208, 8, 200, 34)
 	_box(E, Color(GameData.COL.panel, 0.9), GameData.EL[st.def.el].darkened(0.3))
@@ -683,12 +692,14 @@ func _panel(r: Rect2) -> void:
 
 
 func _draw_pause() -> void:
-	var r := Rect2(150, 40, 340, 280)
+	var r := Rect2(60, 40, 520, 280)
 	_panel(r)
 	_text(r.position + Vector2(0, 28), "Pause", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-	_text(r.position + Vector2(0, 46), "Dein Deck", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-	_draw_deck_list(run.deck, r.position.x + 24, r.position.y + 66, r.size.x - 48, 10)
-	_text(Vector2(r.position.x, r.end.y - 62), "Ziehstapel %d · Abwurf %d" % [st.draw_pile.size(), st.disc.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	_text(Vector2(r.position.x + 20, r.position.y + 46), "Dein Deck", 8, GameData.COL.muted)
+	_draw_deck_list(run.deck, r.position.x + 20, r.position.y + 66, 220, 10)
+	_text(Vector2(r.position.x + 270, r.position.y + 46), "Module (%d)" % run.modules.size(), 8, GameData.COL.muted)
+	_draw_module_list(run.modules, r.position.x + 270, r.position.y + 58, 230, 4)
+	_text(Vector2(r.position.x + 20, r.end.y - 62), "Ziehstapel %d · Abwurf %d" % [st.draw_pile.size(), st.disc.size()], 8, GameData.COL.muted)
 	_menu(PAUSE_ITEMS, pause_idx, r.get_center().x, r.end.y - 50, 160)
 
 
@@ -697,11 +708,20 @@ func _draw_pick() -> void:
 	var r := Rect2(40, 30, 560, 300)
 	_panel(r)
 	_text(r.position + Vector2(0, 30), "Sieg!", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-	var line := "%s ist defragmentiert. +%d Fragmente" % [st.def.name, st.def.loot]
+	var line := "%s ist defragmentiert. +%d Fragmente" % [st.def.name, st.loot_gained if st.loot_gained > 0 else st.def.loot]
 	if heal_info > 0:
 		line += ", +%d HP" % heal_info
 	_text(r.position + Vector2(0, 48), line + ".", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	_text(r.position + Vector2(0, 62), "Wähle einen Chip für den Rest des Runs.", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	# Elite-Belohnung: neues Modul unter den Karten
+	if new_module != "":
+		var M: Dictionary = GameData.MODULES[new_module]
+		var head: String = "Neues Modul: " + M.name
+		var tw := text_width(head, 8, true)
+		var tx := r.get_center().x - tw / 2.0 + 9
+		_draw_module_icon(new_module, Vector2(tx - 20, r.position.y + 213))
+		_text(Vector2(tx, r.position.y + 224), head, 8, Color(M.col), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+		_text(Vector2(r.position.x, r.position.y + 240), M.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	for i in 3:
 		var k: String = choices[i]
 		var ch: Dictionary = GameData.CHIPS[k]
@@ -975,6 +995,12 @@ func show_intro_for_screenshot(t: float) -> void:
 	mode_t = t
 	anim_t = t
 	st.shake = 0.0
+
+
+func show_pick_modules_for_screenshot(mods: Array, elite_mod: String) -> void:
+	for m in mods:
+		run.add_module(m)
+	new_module = elite_mod
 
 
 func show_evolve_for_screenshot(t: float) -> void:

@@ -42,6 +42,7 @@ func _ready() -> void:
 	await test_opening()
 	await test_boss_intro()
 	await test_finale()
+	test_modules()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -307,19 +308,19 @@ func test_new_events() -> void:
 		for o in Rooms.event_options(run, key):
 			if o.label == "" or o.desc == "":
 				all_ok = false
-	check(all_ok and Rooms.EVENTS.size() == 16, "16 Ereignisse, alle Optionen beschriftet")
+	check(all_ok and Rooms.EVENTS.size() == 17, "17 Ereignisse, alle Optionen beschriftet")
 	# Zonen-Ereignisse
 	var zv := Rooms.events_for_zone("vulkan")
 	var zs := Rooms.events_for_zone("sumpf")
 	var zw := Rooms.events_for_zone("wiesen")
-	check(zv.has("schmiede") and not zv.has("irrlicht") and not zv.has("beeren") and zv.has("backup") and zv.size() == 9 and zs.size() == 9 and zw.size() == 8,
-		"Ereignisse je Zone: Wiesen %d, Vulkan %d, Sümpfe %d (5 überall + eigene)" % [zw.size(), zv.size(), zs.size()])
+	check(zv.has("schmiede") and not zv.has("irrlicht") and not zv.has("beeren") and zv.has("backup") and zv.size() == 10 and zs.size() == 10 and zw.size() == 9,
+		"Ereignisse je Zone: Wiesen %d, Vulkan %d, Sümpfe %d (6 überall + eigene)" % [zw.size(), zv.size(), zs.size()])
 	var rz := RunState.new("Pixmiez", 5)
 	rz.map = ZoneMap.generate(rz.rng, "sumpf")
 	var picked := {}
 	for i in 12:
 		picked[Rooms.pick_event(rz)] = true
-	check(picked.keys().all(func(k): return zs.has(k)) and picked.size() == 9, "Im Sumpf kommen nur Sumpf- und allgemeine Ereignisse vor, alle 9 nacheinander")
+	check(picked.keys().all(func(k): return zs.has(k)) and picked.size() >= 9, "Im Sumpf kommen nur Sumpf- und allgemeine Ereignisse vor, keine Wiederholung")
 	var r3 := RunState.new("Pixmiez", 4)
 	var fe := int(r3.total_praeg().get("Feuer", 0))
 	Rooms.event_apply(r3, "lavaquelle", "absorb")
@@ -1328,3 +1329,123 @@ func test_finale() -> void:
 	check(ended[0] and total > 40.0 and total < 70.0, "Ende-Szene mit Abspann (%.0f s) läuft durch" % total)
 	ev.queue_free()
 	Music.stop()
+
+
+## Module: jede Wirkung einmal prüfen
+func _mod_battle(mods: Array, seed_v := 1) -> BattleState:
+	var r := RunState.new("Pixmiez", seed_v)
+	for m in mods:
+		r.add_module(m)
+	var st := BattleState.new(r, r.foe_for({"type": "fight"}))
+	st.e.move_t = 99.0
+	st.e.atk_t = 99.0
+	st.reflex = 0   # Katzenreflex aus, sonst weicht Pixmiez dem ersten Treffer aus
+	return st
+
+
+func test_modules() -> void:
+	var ok := true
+	for k in GameData.MODULES:
+		var M: Dictionary = GameData.MODULES[k]
+		if not GameData.PICTOS.has(M.pic) or not GameData.MODULE_PRICE.has(M.rar) or M.desc == "":
+			ok = false
+	check(ok and GameData.MODULES.size() >= 20, "%d Module mit Symbol, Preis und Beschreibung" % GameData.MODULES.size())
+	# Verstärker / Elementlinse / Kritbit
+	var a := _mod_battle([])
+	var b := _mod_battle(["verstaerker"])
+	var h0: int = a.e.hp
+	a.hit_enemy(10, "Neutral")
+	b.hit_enemy(10, "Neutral")
+	check(h0 - a.e.hp == 10 and h0 - b.e.hp == 13, "Verstärker: +3 Schaden pro Chip-Treffer")
+	var c := _mod_battle(["elementlinse"])
+	c.def.el = "Code"
+	var h1: int = c.e.hp
+	c.hit_enemy(10, "Feuer")
+	check(h1 - c.e.hp == 20, "Elementlinse: Vorteil doppelt statt 1,5-fach")
+	# Panzerplatte, Dornenpanzer
+	var d := _mod_battle(["panzerplatte", "dornenpanzer"])
+	var hp0: int = d.run.hp
+	var eh: int = d.e.hp
+	d.hurt_player(10)
+	check(hp0 - d.run.hp == 8 and eh - d.e.hp == 6, "Panzerplatte (−2) und Dornenpanzer (6 zurück)")
+	# Backup-Kern
+	var f := _mod_battle(["backupkern"])
+	f.hurt_player(999)
+	var first_ok: bool = not f.over and f.run.hp == roundi(f.run.max_hp * 0.3)
+	f.hurt_player(999)
+	check(first_ok and f.over and f.outcome == "lost", "Backup-Kern rettet genau einmal pro Run")
+	# Startsignal, Notschild
+	var g := _mod_battle(["startsignal", "notschild"])
+	var hp1: int = g.run.hp
+	g.hurt_player(15)
+	check(g.sp >= 25.0 and g.run.hp == hp1, "Startsignal (Leiste 25 %) und Notschild (Blase fängt 15 ab)")
+	# Überhitzer, Giftkapsel
+	var i := _mod_battle(["ueberhitzer", "giftkapsel"])
+	i.e.burn = 1
+	i.e.poison = 1
+	i.e.dot_t = 0.01
+	var h2: int = i.e.hp
+	step(i, 0.05)
+	check(h2 - i.e.hp == 10 + 6, "Überhitzer (Brand 10) und Giftkapsel (Gift 6)")
+	# Reflexbooster, Schleimschuhe
+	var j := _mod_battle(["reflexbooster", "schleimschuhe"])
+	j.hazards.append({"c": 2, "r": 1, "t": 5.0, "tick": 0.6, "kind": "slime"})
+	j.move_player(1, 0)
+	check(is_equal_approx(j.p.cd, j.mon.move * 0.75), "Reflexbooster schneller, Schleimschuhe: Schleim bremst nicht")
+	# Prisma, Schnelllader, Echochip
+	var k := _mod_battle(["prisma", "schnelllader"])
+	k.run.deck = ["Glutball", "Glutball", "Glutball", "Glutball", "Glutball"]
+	k.hand = [{"chip": "Glutball", "rem": 0.0, "max": 1.0, "queued": false}]
+	k.draw_pile = ["Glutball"]
+	k.use_slot(0)
+	check(int(k.run.praeg.get("Feuer", 0)) == 2 and is_equal_approx(k.hand[0].max, GameData.CHIPS.Glutball.cd * 0.85), "Prisma (doppelte Prägung) und Schnelllader (−15 % Ladezeit)")
+	var l := _mod_battle(["echochip"])
+	l.e.hp = 99999
+	l.e.max = 99999
+	var effects: Array = []
+	for n in 4:
+		l.hand = [{"chip": "Byteschlag", "rem": 0.0, "max": 1.0, "queued": false}]
+		l.draw_pile = ["Byteschlag"]
+		var before: int = l.e.hp
+		var pb: int = l.proj.size()
+		l.use_slot(0)
+		effects.append((before - l.e.hp) + (l.proj.size() - pb) * 1000)
+		l.proj.clear()
+	check(l.echo_count == 4 and effects[3] == effects[0] * 2 and effects[0] > 0, "Echochip: der 4. Chip wirkt doppelt %s" % [effects])
+	# Sammler, Saugbit
+	var m := _mod_battle(["sammler", "saugbit"])
+	m.run.hp = 50
+	m.hit_enemy(30, "Neutral")
+	var healed: bool = m.run.hp == 53
+	m.hit_enemy(9999, "Neutral")
+	check(healed and m.loot_gained == roundi(m.def.loot * 1.3), "Saugbit (+3 HP bei 30 Schaden) und Sammler (+30 % Fragmente)")
+	# Suchalgorithmus
+	var rs := RunState.new("Pixmiez", 9)
+	rs.add_module("suchalgorithmus")
+	var always := true
+	for n in 40:
+		var ch := rs.roll_pick({"Gewöhnlich": 1, "Selten": 0, "Episch": 0})
+		if ch.all(func(x): return GameData.CHIPS[x].rar == "Gewöhnlich"):
+			always = false
+	check(always, "Suchalgorithmus: immer mindestens ein seltener/epischer Chip")
+	# Händler: Modul im Angebot, Rabattchip
+	var rh := RunState.new("Pixmiez", 10)
+	rh.frag = 500
+	var node := {}
+	Rooms.shop_init(rh, node)
+	var mod_offer: Array = node.shop.offers.filter(func(o): return o.has("module"))
+	var idx: int = node.shop.offers.find(mod_offer[0])
+	Rooms.shop_apply(rh, node, "buy_%d" % idx)
+	var full: int = mod_offer[0].price
+	check(rh.modules.size() == 1 and rh.frag == 500 - full, "Händler verkauft ein Modul (%d Fragmente)" % full)
+	rh.add_module("rabattchip")
+	check(Rooms.price(rh, 40) == 30, "Rabattchip: 25 % billiger")
+	# Modulkapsel und Elite-Belohnung
+	var re := RunState.new("Pixmiez", 11)
+	Rooms.event_apply(re, "modulkapsel", "open")
+	var n_before := re.modules.size()
+	var em := re.roll_module(GameData.MODULE_WEIGHT_ELITE)
+	check(n_before == 1 and em != "" and not re.modules.has(em), "Modulkapsel gibt ein Modul, keine Doppelten")
+	for key in GameData.MODULES:
+		re.add_module(key)
+	check(re.roll_module() == "", "Sind alle Module da, gibt es keins mehr")

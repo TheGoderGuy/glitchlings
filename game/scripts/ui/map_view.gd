@@ -140,11 +140,13 @@ func _draw() -> void:
 	_draw_side_panels(target)
 	if paused:
 		_dim()
-		var pr := Rect2(170, 40, 300, 280)
+		var pr := Rect2(60, 40, 520, 280)
 		_box(pr, GameData.COL.panel, GameData.COL.line)
 		_text(pr.position + Vector2(0, 28), "Pause", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, pr.size.x, true, true)
-		_text(pr.position + Vector2(0, 46), "Dein Deck (%d)" % run.deck.size(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, pr.size.x)
-		_draw_deck_list(run.deck, pr.position.x + 24, pr.position.y + 66, pr.size.x - 48, 10)
+		_text(Vector2(pr.position.x + 20, pr.position.y + 46), "Dein Deck (%d)" % run.deck.size(), 8, GameData.COL.muted)
+		_draw_deck_list(run.deck, pr.position.x + 20, pr.position.y + 66, 220, 10)
+		_text(Vector2(pr.position.x + 270, pr.position.y + 46), "Module (%d)" % run.modules.size(), 8, GameData.COL.muted)
+		_draw_module_list(run.modules, pr.position.x + 270, pr.position.y + 58, 230, 4)
 		_menu(["Weiter", "Aufgeben"], pause_idx, pr.get_center().x, pr.end.y - 50, 160)
 
 
@@ -182,8 +184,11 @@ func _draw_side_panels(target: Vector2i) -> void:
 		_text(R.position + Vector2(30, 18), ZoneMap.TYPE_NAMES[n.type], 8, ICON_COL[n.type], HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 		draw_multiline_string(font(), R.position + Vector2(8, 40), ZoneMap.TYPE_DESC[n.type], HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 16, 8, 8, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	var pad: bool = InputSetup.pad
-	var hint := "< > Weg wählen\n%s betreten\n%s Pause + Deck" % ["A" if pad else "Enter", "Start" if pad else "Esc"]
+	var hint := "< > Weg wählen\n%s betreten\n%s Pause, Deck, Module" % ["A" if pad else "Enter", "Start" if pad else "Esc"]
 	draw_multiline_string(font(), Vector2(W - 150, 214), hint, HORIZONTAL_ALIGNMENT_LEFT, 140, 8, 4, GameData.COL.muted)
+	# Module dieses Runs (Details in der Pause)
+	if not run.modules.is_empty():
+		_draw_module_row(run.modules, W - 154, 248, 9)
 	# Legende zweispaltig
 	var G := Rect2(W - 158, 268, 150, 66)
 	_box(G, Color(GameData.COL.bg2, 0.9), GameData.COL.line)

@@ -61,6 +61,9 @@ var status := ""
 var over := false
 var outcome := ""      # "won" / "lost"
 var pend_move = null   # vorgemerkter Schritt (Vector2i), wenn noch Bewegungs-Cooldown läuft
+var loot_gained := 0   # tatsächlich erhaltene Fragmente (Sammler-Modul)
+var echo_count := 0    # Echochip: jeder 4. Chip doppelt
+var leech := 0         # Saugbit: gesammelter Schaden
 
 
 ## foe: Gegnerwerte wie in GameData.FOES (für Karten-Knoten per RunState.foe_for skaliert).
@@ -83,6 +86,11 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	if run.sp_bonus:
 		run.sp_bonus = false
 		sp = 50.0
+	if run.has_mod("startsignal"):
+		sp = maxf(sp, 25.0)
+	if run.has_mod("notschild"):
+		bubble = maxi(bubble, 20)
+		bubble_t = 999.0
 	if run.foe_weak:
 		run.foe_weak = false
 		e.hp = roundi(e.hp * 0.75)
@@ -142,7 +150,9 @@ func move_player(dc: int, dr: int) -> void:
 	p.c = c
 	p.r = r
 	p.cd = mon.move * (0.5 if mon.passive == "Hasenhaken" else 1.0)
-	if on_slime(p.c, p.r) or on_slime(p.c - dc, p.r - dr):
+	if run.has_mod("reflexbooster"):
+		p.cd *= 0.75
+	if not run.has_mod("schleimschuhe") and (on_slime(p.c, p.r) or on_slime(p.c - dc, p.r - dr)):
 		p.cd *= 3.0
 		float_at(p.c, p.r, "Klebrig!", Color("#7BD35A"))
 	events.append("move")
@@ -167,7 +177,7 @@ func use_slot(i: int) -> void:
 	s.queued = false
 	var id: String = s.chip
 	var ch: Dictionary = GameData.CHIPS[id]
-	run.praeg[ch.el] = run.praeg.get(ch.el, 0) + 1
+	run.praeg[ch.el] = run.praeg.get(ch.el, 0) + (2 if run.has_mod("prisma") and ch.el != "Neutral" else 1)
 	run.chips_used += 1
 	if id == "Eisfeld":
 		run.eis += 1
@@ -180,9 +190,15 @@ func use_slot(i: int) -> void:
 	last_chip = id
 	var nx := _draw_one()
 	s.chip = nx
-	s.max = GameData.CHIPS[nx].cd if nx != "" else 1.0
+	s.max = (GameData.CHIPS[nx].cd if nx != "" else 1.0) * (0.85 if run.has_mod("schnelllader") else 1.0)
 	s.rem = s.max
 	_apply_chip(id)
+	# Echochip: jeder 4. Chip wird ein zweites Mal ausgelöst
+	if run.has_mod("echochip"):
+		echo_count += 1
+		if echo_count % 4 == 0 and not over:
+			float_at(p.c, p.r, "Echo!", Color("#FF8FD8"))
+			_apply_chip(id)
 	# Übermut: jeder 3. Chip halbiert die Ladezeit der anderen
 	if mon.passive == "Übermut":
 		combo += 1
@@ -459,14 +475,28 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 	if over:
 		return
 	var m := 1.0 if dot else GameData.mult(el, def.el)
+	if m > 1.0 and run.has_mod("elementlinse"):
+		m = 2.0
+	if not dot and not in_special and run.has_mod("verstaerker"):
+		d += 3
 	d = roundi(d * m)
+	if not dot and run.has_mod("kritbit") and rng.randf() < 0.2:
+		d *= 2
+		float_at(3 + e.c, e.r - 0.3, "Krit!", GameData.COL.coral)
 	if not dot and scan > 0 and not in_special:
 		scan -= 1
 		d = roundi(d * 1.5)
 	e.hp = maxi(min_e_hp, e.hp - d)
 	e.flash = 0.09
 	if not dot and not in_special:
-		sp = minf(100.0, sp + d * 1.2)
+		sp = minf(100.0, sp + d * 1.2 * (1.3 if run.has_mod("kondensator") else 1.0))
+	if not dot and run.has_mod("saugbit"):
+		leech += d
+		if leech >= 10:
+			var hh := run.heal(leech / 10)
+			leech %= 10
+			if hh > 0:
+				float_at(p.c, p.r, "+%d" % hh, GameData.COL.mint)
 	events.append("tick" if dot else ("hit_big" if d >= 30 or m > 1 else "hit"))
 	var col: Color = GameData.COL.sun if m > 1 else (GameData.EL[el] if dot else GameData.COL.ink)
 	float_at(3 + e.c, e.r, ("Effektiv! " if m > 1 else "") + str(d), col)
@@ -524,6 +554,8 @@ func hurt_player(d: int) -> int:
 			return 0
 	if mon.passive == "Dickes Fell":
 		d = maxi(1, roundi(d * 0.75))
+	if run.has_mod("panzerplatte"):
+		d = maxi(1, d - 2)
 	if mon.passive == "Giftbaut":
 		e.poison = maxi(e.poison, 3)
 		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
@@ -531,9 +563,16 @@ func hurt_player(d: int) -> int:
 		e.burn = maxi(e.burn, 3)
 		float_at(3 + e.c, e.r, "Dampfhülle", GameData.EL.Feuer)
 	run.hp = maxi(min_p_hp, run.hp - d)
+	# Backup-Kern: einmal pro Run weiterkämpfen statt verlieren
+	if run.hp <= 0 and run.has_mod("backupkern") and not run.backup_used:
+		run.backup_used = true
+		run.hp = maxi(1, roundi(run.max_hp * 0.3))
+		events.append("heal")
+		float_at(p.c, p.r - 0.4, "Backup-Kern!", GameData.COL.sun)
+		burst(p.c + 0.5, p.r + 0.5, GameData.COL.sun, 24)
 	events.append("hurt")
 	since_hit = 0.0
-	sp = minf(100.0, sp + d * 1.5)
+	sp = minf(100.0, sp + d * 1.5 * (1.3 if run.has_mod("kondensator") else 1.0))
 	p.flash = 0.12
 	hurt = 0.3
 	parts.append({"ring": true, "x": p.c + 0.5, "y": p.r + 0.45, "color": GameData.COL.coral, "t": 0.3, "max": 0.3})
@@ -541,6 +580,10 @@ func hurt_player(d: int) -> int:
 	float_at(p.c, p.r, "-%d" % d, GameData.COL.coral)
 	if run.hp <= 0:
 		_lose()
+		return d
+	# Dornenpanzer: Angreifer bekommt Schaden zurück
+	if run.has_mod("dornenpanzer"):
+		hit_enemy(6, "Neutral", true)
 	return d
 
 
@@ -550,7 +593,8 @@ func _win() -> void:
 	over = true
 	outcome = "won"
 	events.append("win")
-	run.frag += def.loot
+	loot_gained = roundi(def.loot * (1.3 if run.has_mod("sammler") else 1.0))
+	run.frag += loot_gained
 	run.fights_won += 1
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 24)
 
@@ -701,12 +745,12 @@ func _update_logic(dt: float) -> void:
 			e.dot_t = 1.0
 			if e.burn > 0:
 				e.burn -= 1
-				hit_enemy(8 if mon.passive == "Giftdrüsen" else 5, "Feuer", true)
+				hit_enemy((8 if mon.passive == "Giftdrüsen" else 5) * (2 if run.has_mod("ueberhitzer") else 1), "Feuer", true)
 				if over:
 					return
 			if e.poison > 0:
 				e.poison -= 1
-				hit_enemy(6 if mon.passive == "Giftdrüsen" else 4, "Virus", true)
+				hit_enemy(roundi((6 if mon.passive == "Giftdrüsen" else 4) * (1.5 if run.has_mod("giftkapsel") else 1.0)), "Virus", true)
 				if over:
 					return
 	for i in range(bots.size() - 1, -1, -1):
@@ -741,7 +785,7 @@ func _update_logic(dt: float) -> void:
 		e.slow -= dt
 		edt = dt * 0.5
 	if e.frozen > 0:
-		e.frozen -= dt
+		e.frozen -= dt * (0.67 if run.has_mod("kaeltekern") else 1.0)
 	else:
 		e.move_t -= edt
 		if e.move_t <= 0:
@@ -814,7 +858,7 @@ func _update_logic(dt: float) -> void:
 			hz.tick -= dt
 			if hz.tick <= 0:
 				hz.tick = 0.6
-				hurt_player(maxi(3, roundi(def.dmg * 0.4)))
+				hurt_player(maxi(2, roundi(def.dmg * (0.2 if run.has_mod("schleimschuhe") else 0.4))))
 				if over:
 					return
 		if hz.t <= 0:

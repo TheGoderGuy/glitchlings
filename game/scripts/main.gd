@@ -193,6 +193,8 @@ func _screenshot(shot: Dictionary) -> void:
 		run.enter(run.next_choices()[0])
 	run.frag = 55
 	foe_override = shot.get("foe", -1)
+	for m in shot.get("mods", []):
+		run.add_module(m)
 	if mode in ["map", "pick"] and not shot.has("form"):
 		run.praeg = {"Elektro": 6, "Code": 1, "Feuer": 2, "Neutral": 9}
 	if shot.has("form"):
@@ -265,6 +267,8 @@ func _screenshot(shot: Dictionary) -> void:
 				current.st.warns.append({"cells": [Vector2i(1, 0)], "t": 0.4, "max": 0.8, "dmg": 0, "lava": true})
 			if mode == "pick":
 				current.show_pick_for_screenshot()
+				current.new_module = shot.get("newmod", "")
+				run.add_module(current.new_module)
 			elif mode == "pause":
 				current.show_pause_for_screenshot()
 			elif mode == "evolve":

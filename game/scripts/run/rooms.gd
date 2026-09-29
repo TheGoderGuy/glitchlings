@@ -42,6 +42,10 @@ const EVENTS := {
 		"title": "Backup-Station",
 		"text": "Eine alte Backup-Station summt vor sich hin. Auf dem Display blinkt: KOPIEREN?",
 	},
+	"modulkapsel": {
+		"title": "Modulkapsel",
+		"text": "Eine halb vergrabene Kapsel summt leise. Darin steckt ein Modul, das noch funktioniert.",
+	},
 	"minibot": {
 		"title": "Verirrter Mini-Bot",
 		"text": "Ein kleiner Bot piept verzweifelt. Er hat seinen Heimweg verloren und ein Rad klemmt.",
@@ -162,6 +166,11 @@ static func event_options(run: RunState, key: String) -> Array:
 				{"id": "home", "label": "Heimbringen", "desc": "Der Bot schließt sich dir an: Mini-Bot ins Deck.", "enabled": true},
 				{"id": "repair", "label": "Rad reparieren (10)", "desc": "Er bedankt sich mit einem zufälligen seltenen Chip.", "enabled": run.frag >= 10},
 			]
+		"modulkapsel":
+			return [
+				{"id": "open", "label": "Einbauen", "desc": "Ein zufälliges Modul für diesen Run.", "enabled": true},
+				{"id": "scrap", "label": "Ausschlachten", "desc": "+25 Fragmente.", "enabled": true},
+			]
 		"schmiede":
 			var commons2: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
 			return [
@@ -260,6 +269,16 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 			var c := run.random_chip("Selten")
 			run.deck.append(c)
 			return "Das Rad läuft wieder! Zum Dank schenkt er dir %s." % c
+		["modulkapsel", "open"]:
+			var m := run.roll_module({"Gewöhnlich": 5, "Selten": 3, "Episch": 1})
+			if m == "":
+				run.frag += 25
+				return "Die Kapsel ist leer … aber 25 Fragmente liegen darin."
+			run.add_module(m)
+			return "Modul eingebaut: %s. %s" % [GameData.MODULES[m].name, GameData.MODULES[m].desc]
+		["modulkapsel", "scrap"]:
+			run.frag += 25
+			return "Du zerlegst die Kapsel: 25 Fragmente."
 		["schmiede", "forge"]:
 			var commons: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
 			var old: String = commons[run.rng.randi_range(0, commons.size() - 1)]
@@ -340,12 +359,21 @@ static func _imprint(run: RunState, el: String, text: String) -> String:
 
 # ---------- Datenhändler ----------
 
+## Preis nach Rabattchip-Modul
+static func price(run: RunState, base: int) -> int:
+	return roundi(base * 0.75) if run.has_mod("rabattchip") else base
+
+
 static func shop_init(run: RunState, node: Dictionary) -> void:
 	if node.has("shop"):
 		return
 	var offers: Array = []
 	for c in run.roll_choices({"Gewöhnlich": 5, "Selten": 4, "Episch": 2}):
 		offers.append({"chip": c, "price": PRICE[GameData.CHIPS[c].rar], "sold": false})
+	# ein Modul im Angebot
+	var m := run.roll_module({"Gewöhnlich": 4, "Selten": 3, "Episch": 1})
+	if m != "":
+		offers.append({"module": m, "price": GameData.MODULE_PRICE[GameData.MODULES[m].rar], "sold": false})
 	node.shop = {"offers": offers, "repair": false, "remove": false}
 
 
@@ -353,30 +381,41 @@ static func shop_options(run: RunState, node: Dictionary) -> Array:
 	var out: Array = []
 	for i in node.shop.offers.size():
 		var o: Dictionary = node.shop.offers[i]
+		var pr := price(run, o.price)
+		if o.has("module"):
+			var M: Dictionary = GameData.MODULES[o.module]
+			out.append({"id": "buy_%d" % i, "label": "Modul: %s (%d)" % [M.name, pr] if not o.sold else "Modul: %s – verkauft" % M.name,
+				"desc": "%s: %s" % [M.rar, M.desc], "enabled": not o.sold and run.frag >= pr, "module": o.module})
+			continue
 		var ch: Dictionary = GameData.CHIPS[o.chip]
-		out.append({"id": "buy_%d" % i, "label": "%s (%d)" % [o.chip, o.price] if not o.sold else "%s – verkauft" % o.chip,
-			"desc": "%s · %s: %s" % [ch.el, ch.rar, ch.desc], "enabled": not o.sold and run.frag >= o.price, "chip": o.chip})
-	out.append({"id": "repair", "label": "Reparatur (%d)" % PRICE_REPAIR, "desc": "Heilt 25 HP. Einmal pro Besuch.",
-		"enabled": not node.shop.repair and run.frag >= PRICE_REPAIR and run.hp < run.max_hp})
-	out.append({"id": "remove", "label": "Chip entfernen (%d)" % PRICE_REMOVE, "desc": "Entferne einen Chip aus deinem Deck. Einmal pro Besuch.",
-		"enabled": not node.shop.remove and run.frag >= PRICE_REMOVE and run.deck.size() > MIN_DECK})
+		out.append({"id": "buy_%d" % i, "label": "%s (%d)" % [o.chip, pr] if not o.sold else "%s – verkauft" % o.chip,
+			"desc": "%s · %s: %s" % [ch.el, ch.rar, ch.desc], "enabled": not o.sold and run.frag >= pr, "chip": o.chip})
+	var p_rep := price(run, PRICE_REPAIR)
+	var p_rem := price(run, PRICE_REMOVE)
+	out.append({"id": "repair", "label": "Reparatur (%d)" % p_rep, "desc": "Heilt 25 HP. Einmal pro Besuch.",
+		"enabled": not node.shop.repair and run.frag >= p_rep and run.hp < run.max_hp})
+	out.append({"id": "remove", "label": "Chip entfernen (%d)" % p_rem, "desc": "Entferne einen Chip aus deinem Deck. Einmal pro Besuch.",
+		"enabled": not node.shop.remove and run.frag >= p_rem and run.deck.size() > MIN_DECK})
 	return out
 
 
 static func shop_apply(run: RunState, node: Dictionary, id: String) -> String:
 	if id.begins_with("buy_"):
 		var o: Dictionary = node.shop.offers[int(id.substr(4))]
-		run.frag -= o.price
+		run.frag -= price(run, o.price)
 		o.sold = true
+		if o.has("module"):
+			run.add_module(o.module)
+			return "Modul eingebaut: %s. %s" % [GameData.MODULES[o.module].name, GameData.MODULES[o.module].desc]
 		run.deck.append(o.chip)
 		return "%s kommt in dein Deck." % o.chip
 	match id:
 		"repair":
-			run.frag -= PRICE_REPAIR
+			run.frag -= price(run, PRICE_REPAIR)
 			node.shop.repair = true
 			return "Repariert: +%d HP." % run.heal(25)
 		"remove":
-			run.frag -= PRICE_REMOVE
+			run.frag -= price(run, PRICE_REMOVE)
 			node.shop.remove = true
 			return "remove"
 	return ""

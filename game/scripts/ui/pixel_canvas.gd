@@ -196,6 +196,47 @@ func _draw_evo(s: Dictionary, x: float, y: float, w: float) -> float:
 	return y + 12 - y0
 
 
+## Modul-Symbol (14×14): Rahmen in Seltenheitsfarbe, Piktogramm in Modulfarbe
+func _draw_module_icon(id: String, pos: Vector2) -> void:
+	var M: Dictionary = GameData.MODULES[id]
+	var rc: Color = {"Gewöhnlich": GameData.COL.line.lightened(0.3), "Selten": Color("#58B7FF"), "Episch": Color("#FFC83D")}[M.rar]
+	pos = pos.round()
+	draw_rect(Rect2(pos, Vector2(14, 14)), GameData.COL.dark)
+	draw_rect(Rect2(pos + Vector2(1, 1), Vector2(12, 12)), rc)
+	draw_rect(Rect2(pos + Vector2(2, 2), Vector2(10, 10)), GameData.COL.dark)
+	var pic: Array = GameData.PICTOS[M.pic]
+	var col := Color(M.col)
+	for y in 6:
+		for x in 6:
+			if pic[y][x] == "#":
+				draw_rect(Rect2(pos + Vector2(4 + x, 4 + y), Vector2(1, 1)), col)
+
+
+## Reihe von Modul-Symbolen; gibt die Breite zurück
+func _draw_module_row(mods: Array, x: float, y: float, max_n := 10) -> float:
+	var n := mini(mods.size(), max_n)
+	for i in n:
+		_draw_module_icon(mods[i], Vector2(x + i * 15, y))
+	if mods.size() > max_n:
+		_text(Vector2(x + n * 15 + 2, y + 11), "+%d" % (mods.size() - max_n), 8, GameData.COL.muted)
+	return n * 15.0
+
+
+## Liste mit Symbol, Name und Beschreibung (max_rows Einträge, danach nur Symbole)
+func _draw_module_list(mods: Array, x: float, y: float, w: float, max_rows := 5) -> void:
+	if mods.is_empty():
+		draw_multiline_string(font(), Vector2(x, y + 8), "Noch keine. Module gibt es bei Elite-Gegnern, beim Händler und in Modulkapseln.", HORIZONTAL_ALIGNMENT_LEFT, w, 8, 3, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		return
+	for i in mini(mods.size(), max_rows):
+		var M: Dictionary = GameData.MODULES[mods[i]]
+		_draw_module_icon(mods[i], Vector2(x, y))
+		_text(Vector2(x + 20, y + 10), M.name, 8, Color(M.col), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+		draw_multiline_string(font(), Vector2(x + 20, y + 22), M.desc, HORIZONTAL_ALIGNMENT_LEFT, w - 20, 8, 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		y += 38
+	if mods.size() > max_rows:
+		_draw_module_row(mods.slice(max_rows), x, y, 14)
+
+
 ## Deckliste, gruppiert: „3× Pixelstrahl … Angriff“
 func _draw_deck_list(deck: Array, x: float, y: float, w: float, max_rows := 14) -> void:
 	var counts := {}
