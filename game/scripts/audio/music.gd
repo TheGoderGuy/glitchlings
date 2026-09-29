@@ -12,6 +12,7 @@ var players: Array[AudioStreamPlayer] = []
 var active := 0
 var current := ""
 var positions := {}   # gemerkte Abspielposition je Stück
+var tween: Tween      # laufende Überblendung (wird bei jedem Wechsel abgebrochen)
 
 
 func _ready() -> void:
@@ -48,13 +49,16 @@ func play(key: String) -> void:
 	stream.loop_begin = MusicSynth.intro_frames(key) if stream.stereo and MusicSynth.TRACKS.has(key) else 0
 	neu.stream = stream
 	var fade_in: float = FADE_IN.get(key, 0.6)
+	# Laufende Blenden des vorigen Wechsels abbrechen – sonst stoppt ihr verspäteter
+	# Stopp-Befehl genau den Abspieler, der gerade das neue Stück spielt (Musik bleibt stumm).
+	_kill_tween()
 	neu.volume_db = -30.0 if fade_in > 0.1 else 0.0
 	neu.play(positions.get(key, 0.0) if RESUME.has(key) else 0.0)
-	var tw := create_tween().set_parallel(true)
+	tween = create_tween().set_parallel(true)
 	if fade_in > 0.1:
-		tw.tween_property(neu, "volume_db", 0.0, fade_in).set_trans(Tween.TRANS_SINE)
-	tw.tween_property(old, "volume_db", -80.0, FADE_OUT).set_trans(Tween.TRANS_SINE)
-	tw.chain().tween_callback(old.stop)
+		tween.tween_property(neu, "volume_db", 0.0, fade_in).set_trans(Tween.TRANS_SINE)
+	tween.tween_property(old, "volume_db", -80.0, FADE_OUT).set_trans(Tween.TRANS_SINE)
+	tween.chain().tween_callback(_stop_if_inactive.bind(old))
 
 
 func stop() -> void:
@@ -62,7 +66,24 @@ func stop() -> void:
 	if current != "" and old.playing and RESUME.has(current):
 		positions[current] = old.get_playback_position()
 	current = ""
+	_kill_tween()
+	tween = create_tween().set_parallel(true)
 	for p in players:
-		var tw := create_tween()
-		tw.tween_property(p, "volume_db", -80.0, FADE_OUT * 2.0)
-		tw.tween_callback(p.stop)
+		tween.tween_property(p, "volume_db", -80.0, FADE_OUT * 2.0)
+	tween.chain().tween_callback(func():
+		# nur stoppen, wenn inzwischen kein neues Stück gestartet wurde
+		if current == "":
+			for p in players:
+				p.stop()
+	)
+
+
+func _kill_tween() -> void:
+	if tween != null and tween.is_valid():
+		tween.kill()
+
+
+## Stoppt einen Abspieler nur, wenn er nicht (wieder) der aktive ist
+func _stop_if_inactive(p: AudioStreamPlayer) -> void:
+	if p != players[active] or current == "":
+		p.stop()

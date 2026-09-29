@@ -958,6 +958,24 @@ func test_music() -> void:
 	var saved: float = Music.positions.get("map", -1.0)
 	Music.play("map")
 	check(saved > 0.05 and Music.players[Music.active].get_playback_position() >= saved - 0.05, "Kartenmusik läuft nach dem Kampf an derselben Stelle weiter (%.2f s)" % saved)
+	# Fehlerfall vom Produzenten: Sieg → Karte → sofort nächster Kampf (schneller als die Blende)
+	Music.play("battle")
+	await get_tree().create_timer(0.2).timeout
+	Music.play("victory")
+	await get_tree().create_timer(0.1).timeout
+	Music.play("map")
+	await get_tree().create_timer(0.1).timeout
+	Music.play("battle")
+	await get_tree().create_timer(1.0).timeout
+	var ap: AudioStreamPlayer = Music.players[Music.active]
+	check(ap.playing and ap.volume_db > -1.0 and Music.current == "battle", "Kampfmusik läuft nach schnellem Wechsel weiter (nicht stumm)")
+	# auch nach stop() und sofortigem Neustart
+	Music.stop()
+	await get_tree().create_timer(0.1).timeout
+	Music.play("map")
+	await get_tree().create_timer(1.5).timeout
+	ap = Music.players[Music.active]
+	check(ap.playing and ap.volume_db > -1.0, "Musik läuft nach Stopp + sofortigem Neustart")
 	Music.stop()
 	var old: AudioStreamWAV = load("res://assets/music/battle.wav")
 	check(not old.stereo and old.mix_rate == 22050, "Kampfmusik ist die alte, epische Fassung (bleibt unverändert)")

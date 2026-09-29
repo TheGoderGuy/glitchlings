@@ -209,3 +209,6 @@ Feedback: „Manchmal ist das Spielfeld ein bisschen zu klein.“ → Felder 88�
 
 ### Update Kampf-Juice (29.09.2026)
 Prozedurale Animationen ohne Skalierung (Pixel bleiben scharf): Vorschnellen + Mündungsblitz bei Angriffs-Chips, Rückstoß bei Treffern (Spieler und Gegner), Gegner holt während der Warnung aus und schnellt beim Zuschlagen vor (+ Wusch-Sound), Hüpfer + Staubwolke beim Bewegen, besiegte Gegner blinken, sinken ab und verblassen.
+
+### Bugfix Musik (29.09.2026)
+Feedback: Kampfmusik blieb manchmal stumm (Karte → nächster Kampf). Ursache: verspäteter Stopp-Befehl der vorigen Überblendung traf den Abspieler, der gerade die neue Musik spielte (passiert beim schnellen Durchklicken). Fix: laufende Blenden werden bei jedem Wechsel abgebrochen, gestoppt wird nur ein inaktiver Abspieler. Regressionstest stellt den schnellen Wechsel nach (schlug mit altem Code fehl).
