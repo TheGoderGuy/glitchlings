@@ -81,6 +81,10 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	if run.sp_bonus:
 		run.sp_bonus = false
 		sp = 50.0
+	if run.foe_weak:
+		run.foe_weak = false
+		e.hp = roundi(e.hp * 0.75)
+		float_at(3 + e.c, e.r, "Geschwächt!", GameData.COL.sun)
 	if def.boss:
 		if def.get("minion", "pop") == "lava":
 			status = "Boss! Ab der Hälfte seiner HP setzt er Felder in Brand. Runter von der Lava!"

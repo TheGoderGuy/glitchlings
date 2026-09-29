@@ -204,6 +204,8 @@ func _screenshot(shot: Dictionary) -> void:
 		"event", "rest", "shop":
 			run.enter(run.next_choices()[0])
 			run.current_node().type = mode
+			if shot.has("event"):
+				run.current_node().event = shot.event
 			_enter_node()
 		"fight", "pick", "pause", "evolve", "tutorial":
 			run.tutorial = mode == "tutorial"

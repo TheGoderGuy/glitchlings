@@ -3,20 +3,23 @@ extends RefCounted
 ## Logik der Nicht-Kampf-Knoten (Rastplatz, Ereignis, Datenhändler), ohne Grafik.
 ## Jede Option: {"id", "label", "desc", "enabled"}. apply() gibt einen Ergebnistext zurück.
 ## Ergebnis "remove" bedeutet: Die Ansicht soll den Spieler einen Chip zum Entfernen wählen lassen.
+## Ereignisse mit "zone" kommen nur dort vor, alle anderen überall.
 
 const REST_HEAL := 0.35
 const MIN_DECK := 5
 const PRICE := {"Gewöhnlich": 25, "Selten": 40, "Episch": 60}
 const PRICE_REPAIR := 20
 const PRICE_REMOVE := 35
+## Prägung, die ein Element-Ereignis schenkt (zählt wie gespielte Element-Chips)
+const EVENT_PRAEG := 3
 
 const EVENTS := {
 	"datenpaket": {
-		"title": "Verlorenes Datenpaket",
+		"title": "Verlorenes Datenpaket", "zone": "wiesen",
 		"text": "Im hohen Gras der Cache-Wiesen liegt ein versiegeltes Datenpaket. Es summt leise.",
 	},
 	"brunnen": {
-		"title": "Bit-Brunnen",
+		"title": "Bit-Brunnen", "zone": "wiesen",
 		"text": "Ein Brunnen voller glitzernder Bits. Das Plätschern klingt wie ein alter Modem-Ton.",
 	},
 	"korrupt": {
@@ -32,7 +35,7 @@ const EVENTS := {
 		"text": "Ein freundliches Fenster (wirklich kein Spam!) bietet ein Update für einen deiner Chips an.",
 	},
 	"cookies": {
-		"title": "Cookie-Spur",
+		"title": "Cookie-Spur", "zone": "wiesen",
 		"text": "Eine Spur aus Browser-Cookies führt quer über die Wiese. Sie riechen nach Vanille.",
 	},
 	"backup": {
@@ -42,6 +45,40 @@ const EVENTS := {
 	"minibot": {
 		"title": "Verirrter Mini-Bot",
 		"text": "Ein kleiner Bot piept verzweifelt. Er hat seinen Heimweg verloren und ein Rad klemmt.",
+	},
+	# ---------- Firewall-Vulkan ----------
+	"schmiede": {
+		"title": "Glut-Schmiede", "zone": "vulkan",
+		"text": "An einer verlassenen Esse glüht noch Datenstahl. Ein Chip ließe sich hier härten, wenn du die Hitze aushältst.",
+	},
+	"lavaquelle": {
+		"title": "Heiße Quelle", "zone": "vulkan",
+		"text": "Zwischen schwarzen Felsen dampft eine Quelle. Das Wasser ist angenehm warm, der Rand glüht orange.",
+	},
+	"firewallriss": {
+		"title": "Riss in der Firewall", "zone": "vulkan",
+		"text": "Eine glühende Sicherheitsmauer hat einen Riss. Dahinter hört man etwas schnarchen.",
+	},
+	"ascheregen": {
+		"title": "Ascheregen", "zone": "vulkan",
+		"text": "Graue Asche rieselt vom Himmel. Darunter glitzert etwas. Ein Chip? Oder nur Glut?",
+	},
+	# ---------- Spam-Sümpfe ----------
+	"spamfilter": {
+		"title": "Verstopfter Spamfilter", "zone": "sumpf",
+		"text": "Ein riesiger Spamfilter ist bis obenhin verstopft. Zwischen dem Müll blinken ein paar Werbebanner.",
+	},
+	"irrlicht": {
+		"title": "Irrlicht", "zone": "sumpf",
+		"text": "Ein flackerndes Licht tanzt über das Moor und knistert elektrisch. Es will, dass du ihm folgst.",
+	},
+	"giftmoor": {
+		"title": "Giftmoor", "zone": "sumpf",
+		"text": "Violetter Schlamm blubbert vor sich hin. Er riecht streng, aber irgendwie auch belebend.",
+	},
+	"orakel": {
+		"title": "Quak-Orakel", "zone": "sumpf",
+		"text": "Eine uralte Kröte sitzt auf einem Seerosenblatt aus Pixeln. Sie soll alles über Evolutionen wissen.",
 	},
 }
 
@@ -67,10 +104,15 @@ static func rest_apply(run: RunState, id: String) -> String:
 
 # ---------- Ereignisse ----------
 
+static func events_for_zone(zone: String) -> Array:
+	return EVENTS.keys().filter(func(k): return EVENTS[k].get("zone", zone) == zone)
+
+
 static func pick_event(run: RunState) -> String:
-	var free: Array = EVENTS.keys().filter(func(k): return not run.seen_events.has(k))
+	var pool := events_for_zone(run.map.zone)
+	var free: Array = pool.filter(func(k): return not run.seen_events.has(k))
 	if free.is_empty():
-		free = EVENTS.keys()
+		free = pool
 	var key: String = free[run.rng.randi_range(0, free.size() - 1)]
 	run.seen_events.append(key)
 	return key
@@ -119,6 +161,47 @@ static func event_options(run: RunState, key: String) -> Array:
 			return [
 				{"id": "home", "label": "Heimbringen", "desc": "Der Bot schließt sich dir an: Mini-Bot ins Deck.", "enabled": true},
 				{"id": "repair", "label": "Rad reparieren (10)", "desc": "Er bedankt sich mit einem zufälligen seltenen Chip.", "enabled": run.frag >= 10},
+			]
+		"schmiede":
+			var commons2: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
+			return [
+				{"id": "forge", "label": "Schmieden (−10 HP)", "desc": "Ein zufälliger gewöhnlicher Chip wird zu einem epischen.", "enabled": not commons2.is_empty() and run.hp > 10},
+				{"id": "slag", "label": "Schlacke verkaufen", "desc": "+15 Fragmente.", "enabled": true},
+			]
+		"lavaquelle":
+			return [
+				{"id": "bathe", "label": "Baden", "desc": "+25 HP.", "enabled": run.hp < run.max_hp},
+				{"id": "absorb", "label": "Glut aufnehmen", "desc": "+%d Feuer-Prägung (zählt für die Evolution)." % EVENT_PRAEG, "enabled": true},
+			]
+		"firewallriss":
+			return [
+				{"id": "sneak", "label": "Durchschlüpfen", "desc": "Der nächste Gegner startet mit 25 % weniger HP.", "enabled": not run.foe_weak},
+				{"id": "patch", "label": "Flicken (15)", "desc": "Firewall-Chip ins Deck und +5 max. HP.", "enabled": run.frag >= 15},
+			]
+		"ascheregen":
+			return [
+				{"id": "dig", "label": "Durchwühlen", "desc": "Halbe Chance: epischer Chip. Sonst verbrennst du dich (−15 HP).", "enabled": run.hp > 15},
+				{"id": "wait", "label": "Abwarten", "desc": "Die Asche legt sich. +10 Fragmente.", "enabled": true},
+			]
+		"spamfilter":
+			return [
+				{"id": "clean", "label": "Ausmisten", "desc": "Entferne einen Chip aus deinem Deck.", "enabled": run.deck.size() > MIN_DECK},
+				{"id": "read", "label": "Spam lesen", "desc": "+30 Fragmente, aber Kopfschmerzen: −10 HP.", "enabled": run.hp > 10},
+			]
+		"irrlicht":
+			return [
+				{"id": "follow", "label": "Folgen", "desc": "Meist ein seltener Chip. Manchmal ein Sumpfloch (−12 HP).", "enabled": run.hp > 12},
+				{"id": "charge", "label": "Ladung abgreifen", "desc": "+%d Elektro-Prägung (zählt für die Evolution)." % EVENT_PRAEG, "enabled": true},
+			]
+		"giftmoor":
+			return [
+				{"id": "dive", "label": "Eintauchen (−8 HP)", "desc": "+%d Virus-Prägung (zählt für die Evolution)." % EVENT_PRAEG, "enabled": run.hp > 8},
+				{"id": "mud", "label": "Heilschlamm", "desc": "+20 HP.", "enabled": run.hp < run.max_hp},
+			]
+		"orakel":
+			return [
+				{"id": "offer", "label": "Opfergabe (20)", "desc": "Ein zufälliger epischer Chip.", "enabled": run.frag >= 20},
+				{"id": "listen", "label": "Zuhören", "desc": "+%d Wasser-Prägung, und das Orakel verrät deinen Weg." % EVENT_PRAEG, "enabled": true},
 			]
 	return []
 
@@ -177,7 +260,82 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 			var c := run.random_chip("Selten")
 			run.deck.append(c)
 			return "Das Rad läuft wieder! Zum Dank schenkt er dir %s." % c
+		["schmiede", "forge"]:
+			var commons: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
+			var old: String = commons[run.rng.randi_range(0, commons.size() - 1)]
+			var neu := run.random_chip("Episch")
+			run.deck.erase(old)
+			run.deck.append(neu)
+			run.hp -= 10
+			return "Zischend kühlt der Stahl ab: %s ist jetzt %s. Die Hitze kostet 10 HP." % [old, neu]
+		["schmiede", "slag"]:
+			run.frag += 15
+			return "Ein Händler zahlt 15 Fragmente für die Schlacke."
+		["lavaquelle", "bathe"]:
+			return "Herrlich warm! +%d HP." % run.heal(25)
+		["lavaquelle", "absorb"]:
+			return _imprint(run, "Feuer", "%s atmet die Glut ein." % run.species)
+		["firewallriss", "sneak"]:
+			run.foe_weak = true
+			return "Du schlüpfst durch den Riss und stellst dem Wächter ein Bein. Der nächste Gegner ist geschwächt."
+		["firewallriss", "patch"]:
+			run.frag -= 15
+			run.deck.append("Firewall")
+			run.max_hp += 5
+			run.hp += 5
+			return "Die Mauer ist geflickt. Ein Firewall-Chip bleibt übrig, +5 max. HP."
+		["ascheregen", "dig"]:
+			if run.rng.randf() < 0.5:
+				var c := run.random_chip("Episch")
+				run.deck.append(c)
+				return "Unter der Asche liegt %s! Er kommt in dein Deck." % c
+			run.hp -= 15
+			return "Autsch, nur Glut! −15 HP."
+		["ascheregen", "wait"]:
+			run.frag += 10
+			return "Als sich die Asche legt, glitzern 10 Fragmente am Boden."
+		["spamfilter", "clean"]:
+			return "remove"
+		["spamfilter", "read"]:
+			run.frag += 30
+			run.hp -= 10
+			return "„Sie haben gewonnen!“ … tatsächlich: 30 Fragmente. Aber der Kopf brummt: −10 HP."
+		["irrlicht", "follow"]:
+			if run.rng.randf() < 0.6:
+				var c := run.random_chip("Selten")
+				run.deck.append(c)
+				return "Das Irrlicht führt dich zu %s und verpufft zufrieden." % c
+			run.hp -= 12
+			return "Platsch! Ein Sumpfloch. Das Irrlicht kichert: −12 HP."
+		["irrlicht", "charge"]:
+			return _imprint(run, "Elektro", "Es knistert! %s saugt die Ladung auf." % run.species)
+		["giftmoor", "dive"]:
+			run.hp -= 8
+			return _imprint(run, "Virus", "%s taucht in den Schlamm (−8 HP)." % run.species)
+		["giftmoor", "mud"]:
+			return "Der Schlamm kühlt und heilt: +%d HP." % run.heal(20)
+		["orakel", "offer"]:
+			run.frag -= 20
+			var c := run.random_chip("Episch")
+			run.deck.append(c)
+			return "Die Kröte verschluckt die Fragmente und rülpst %s aus." % c
+		["orakel", "listen"]:
+			var msg := _imprint(run, "Wasser", "Die Kröte murmelt uralte Weisheiten.")
+			var es := run.evo_status()
+			if int(es.need) == 0:
+				return msg + " „Du bist am Ziel deines Weges.“"
+			if es.target != "" and SaveGame.data.get("dex", {}).has(es.target):
+				return msg + " „Dein Weg führt zu %s.“" % es.target
+			if es.leader != "":
+				return msg + " „Dein Weg führt zu %s.“" % es.leader
+			return msg + " „Dein Weg ist noch offen.“"
 	return "Du gehst weiter."
+
+
+## Element-Prägung aus einem Ereignis: zählt wie gespielte Element-Chips (Evolution)
+static func _imprint(run: RunState, el: String, text: String) -> String:
+	run.praeg[el] = run.praeg.get(el, 0) + EVENT_PRAEG
+	return "%s +%d %s-Prägung." % [text, EVENT_PRAEG, el]
 
 
 # ---------- Datenhändler ----------

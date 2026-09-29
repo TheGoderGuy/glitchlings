@@ -25,6 +25,7 @@ var start_ms := 0
 var chips_used := 0
 var fights_won := 0
 var sp_bonus := false     # Signatur-Leiste startet im nächsten Kampf halb voll
+var foe_weak := false     # nächster Gegner startet mit 25 % weniger HP (Ereignis „Riss in der Firewall“)
 var seen_events: Array = []
 var map: ZoneMap
 var floor_idx := -1       # -1 = noch vor der ersten Etage

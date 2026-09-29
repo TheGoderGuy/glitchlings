@@ -16,7 +16,10 @@ Daten: `GameData.ZONES.sumpf`, Gegner-Indizes 11–14. Sprites per PixelLab (Sti
 Pools: früh Mücke, Schnecke, Blüte · später + Brandmauerassel, Spamlet, Ladebalkenraupe · Elite: Schnecke, Blüte, Brandmauerassel.
 
 ## Offen
-- Blinzel-Frames der Gegner, eigene Ereignisse für Zone 2 und 3.
+- [x] Blinzel-Frames: Spammücke, Bannerschnecke (Stielaugen), Spamkönigin. Die Popupblüte hat keine Augen.
+- [x] Eigene Ereignisse (29.09.2026): **Verstopfter Spamfilter** (Chip entfernen | +30 Fragmente, −10 HP), **Irrlicht** (60 %: seltener Chip, sonst −12 HP | +3 Elektro-Prägung), **Giftmoor** (−8 HP: +3 Virus-Prägung | +20 HP), **Quak-Orakel** (20 Fragmente: epischer Chip | +3 Wasser-Prägung und verrät die Evolutionsrichtung).
+
+**Element-Prägung aus Ereignissen:** zählt wie 3 gespielte Element-Chips und lenkt so die Evolution. Vulkan lockt Richtung Feuer, die Sümpfe Richtung Elektro, Virus und Wasser.
 - [x] Eigene Musik (siehe unten).
 
 **Musik (29.09.2026):** eigene Stücke je Zone, selbst synthetisiert (`MusicSynth.TRACKS`, Rendern: `godot --headless --path game --script res://tools/render_music.gd -- <stück>`). Firewall-Vulkan: Karte `map_vulkan` (e-Moll, 108 BPM, Blech + Pauken), Kampf `battle_vulkan` (c-Moll, 172 BPM). Spam-Sümpfe: Karte `map_sumpf` (d-Moll, 96 BPM, Flöte, gezupfte Offbeats, Shuffle), Kampf `battle_sumpf` (g-Moll, 160 BPM, Offbeat-Bläser). Cache-Wiesen behalten die alte „epische“ Kampfmusik, der Boss hat überall die „mega“-Bossmusik. `Music.zone_key("map", zone)` wählt das Stück, Karten setzen je Zone an ihrer Stelle fort.

@@ -72,7 +72,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Ultras (29.09.2026): 21 Ultras (96 px, PixelLab) mit Signatur-Attacken, ab 80 Element-Chips, Dex nach Linien sortiert, 156 Tests – `vault/05 Produktion/Evolution im Run.md`
 - [x] Blinzel-Frames für alle Champions + Ultras (29.09.2026, außer Toxmolch), Boxen in `tools/sprites/blink_boxes.json`
 - [x] Zonenmusik (29.09.2026): `map_vulkan`/`battle_vulkan`, `map_sumpf`/`battle_sumpf`, 158 Tests
-- [ ] Zone-2/3-Ereignisse · Blinzel-Frames der Zonen-Gegner · Phase 4: Steam-Seite + Demo
+- [x] Zonen-Ereignisse + Gegner-Blinzeln (29.09.2026): je 4 eigene Ereignisse für Vulkan und Sümpfe (16 insgesamt, 3 nur Wiesen), Element-Prägung aus Ereignissen, „Gegner geschwächt“, 167 Tests
+- [ ] Phase 4: Steam-Seite + Demo
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)

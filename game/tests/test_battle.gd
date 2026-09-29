@@ -304,7 +304,43 @@ func test_new_events() -> void:
 		for o in Rooms.event_options(run, key):
 			if o.label == "" or o.desc == "":
 				all_ok = false
-	check(all_ok and Rooms.EVENTS.size() == 8, "8 Ereignisse, alle Optionen beschriftet")
+	check(all_ok and Rooms.EVENTS.size() == 16, "16 Ereignisse, alle Optionen beschriftet")
+	# Zonen-Ereignisse
+	var zv := Rooms.events_for_zone("vulkan")
+	var zs := Rooms.events_for_zone("sumpf")
+	var zw := Rooms.events_for_zone("wiesen")
+	check(zv.has("schmiede") and not zv.has("irrlicht") and not zv.has("cookies") and zv.has("backup") and zv.size() == 9 and zs.size() == 9 and zw.size() == 8,
+		"Ereignisse je Zone: Wiesen %d, Vulkan %d, Sümpfe %d (5 überall + eigene)" % [zw.size(), zv.size(), zs.size()])
+	var rz := RunState.new("Pixmiez", 5)
+	rz.map = ZoneMap.generate(rz.rng, "sumpf")
+	var picked := {}
+	for i in 12:
+		picked[Rooms.pick_event(rz)] = true
+	check(picked.keys().all(func(k): return zs.has(k)) and picked.size() == 9, "Im Sumpf kommen nur Sumpf- und allgemeine Ereignisse vor, alle 9 nacheinander")
+	var r3 := RunState.new("Pixmiez", 4)
+	var fe := int(r3.total_praeg().get("Feuer", 0))
+	Rooms.event_apply(r3, "lavaquelle", "absorb")
+	check(int(r3.total_praeg().get("Feuer", 0)) == fe + Rooms.EVENT_PRAEG, "Heiße Quelle: Glut aufnehmen gibt Feuer-Prägung")
+	Rooms.event_apply(r3, "irrlicht", "charge")
+	check(int(r3.praeg.get("Elektro", 0)) == Rooms.EVENT_PRAEG and r3.evo_status().dirs.any(func(d): return d.el == "Elektro" and d.n >= Rooms.EVENT_PRAEG), "Irrlicht: Elektro-Prägung zählt für Pixmiez’ Elektro-Richtung")
+	var commons3 := r3.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich").size()
+	var hp3 := r3.hp
+	Rooms.event_apply(r3, "schmiede", "forge")
+	check(r3.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich").size() == commons3 - 1 and r3.hp == hp3 - 10 and r3.deck.any(func(c): return GameData.CHIPS[c].rar == "Episch"), "Glut-Schmiede: gewöhnlicher Chip wird episch, kostet 10 HP")
+	check(Rooms.event_apply(r3, "spamfilter", "clean") == "remove", "Spamfilter: Ausmisten lässt einen Chip entfernen")
+	Rooms.event_apply(r3, "firewallriss", "sneak")
+	var r3foe := r3.foe_for({"type": "fight"})
+	var stw := BattleState.new(r3, r3foe)
+	check(not r3.foe_weak and stw.e.hp == roundi(r3foe.hp * 0.75), "Riss in der Firewall: nächster Gegner startet mit 75 %% HP (%d/%d)" % [stw.e.hp, r3foe.hp])
+	var hurt_ok := true
+	for i in 20:
+		var rr := RunState.new("Tröpfel", 100 + i)
+		for pair in [["ascheregen", "dig"], ["irrlicht", "follow"], ["giftmoor", "dive"], ["spamfilter", "read"]]:
+			if Rooms.event_options(rr, pair[0]).filter(func(o): return o.id == pair[1])[0].enabled:
+				Rooms.event_apply(rr, pair[0], pair[1])
+		if rr.hp <= 0:
+			hurt_ok = false
+	check(hurt_ok, "Riskante Ereignisse können nie auf 0 HP bringen")
 
 
 func test_difficulty() -> void:
@@ -1079,6 +1115,11 @@ func test_music() -> void:
 		if not ResourceLoader.exists("res://assets/sprites/%s_blink.png" % spr):
 			no_blink.append(f)
 	check(no_blink == ["Toxmolch"], "Alle Formen blinzeln (ohne Blinzel-Frame: %s)" % ", ".join(no_blink))
+	var foe_no_blink: Array = []
+	for k in PixelCanvas.SPRITE_FILES:
+		if not ResourceLoader.exists("res://assets/sprites/%s_blink.png" % PixelCanvas.SPRITE_FILES[k]):
+			foe_no_blink.append(k)
+	check(foe_no_blink == ["bluete"], "Alle Gegner mit Augen blinzeln (ohne: %s)" % ", ".join(foe_no_blink))
 	# Karte spielt nach einem Kampf weiter statt neu zu beginnen
 	Music.play("map")
 	await get_tree().create_timer(0.6).timeout

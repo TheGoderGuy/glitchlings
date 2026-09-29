@@ -171,6 +171,8 @@ func _draw_side_panels(target: Vector2i) -> void:
 	_draw_evo(run.evo_status(), L.position.x + 8, y, L.size.x - 16)
 	if run.sp_bonus:
 		_text(Vector2(L.position.x + 8, L.end.y - 8), "Signatur-Bonus!", 8, GameData.COL.sun)
+	if run.foe_weak:
+		_text(Vector2(L.position.x + 8, L.end.y - (20 if run.sp_bonus else 8)), "Gegner geschwächt!", 8, GameData.COL.sun)
 	# Rechts: Auswahl
 	var R := Rect2(W - 158, 44, 150, 150)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
