@@ -80,6 +80,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Finale + Ende (29.09.2026): Zone 4 NEST-Kern (4 Etagen, Kerndrohne, Glitchspinne), Endboss Ur-Glitch (wechselt das Element), Ende-Szene + Abspann, danach weiterspielen, Schwierigkeit „Korrumpiert“, Musik map_kern/finale/ending, 188 Tests – `vault/05 Produktion/Finale und Ende.md`
 - [x] Module (29.09.2026): 22 passive Run-Gegenstände (Elite, Händler, Modulkapsel), Anzeige in Kampf/Karte/Räumen/Pause, 204 Tests – `vault/05 Produktion/Module.md`
 - [x] Chips 28 → 45 (29.09.2026): 17 neue Kombo-Chips (je Element 7–8), Konter/Ausweichen/Geschützturm, 216 Tests – Tabelle in `vault/06 Datenbank/Chip-Übersicht.md`
+- [x] Glitchlinge überarbeitet (29.09.2026): Brummbit Gift-Linie (Pilzbrumm/Sporenpranke/Myzelgrizz), Lumi Wasser-Linie (Perlhopp/Gischthase/Lunaflut), Pixmiez ohne Feuer-Linie, Leviamander/Tracko/Gigaquak/Kekso neu, Fusionen Wolperling + Bärtierling statt Dampfbyte/Glyphel, 73 Formen, Spielstand-Übertragung – `vault/05 Produktion/Glitchlinge-Überarbeitung.md`
+- [x] Idle-Animationen: Test mit 6 Figuren, 10 Bilder/s (`tools/sprites/node/anim_frames.js`) · [ ] alle Figuren animieren
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo
 

@@ -67,6 +67,7 @@ var leech := 0         # Saugbit: gesammelter Schaden
 var counter := 0       # Konter/Kopierschutz: Schaden, der beim Blocken zurückgeht
 var counter_el := "Neutral"
 var dodge_t := 0.0     # Sprungantrieb: nächster Treffer wird ausgewichen
+var tardi_used := false  # Bärtierling „Unzerstörbar“ schon verbraucht?
 
 
 ## foe: Gegnerwerte wie in GameData.FOES (für Karten-Knoten per RunState.foe_for skaliert).
@@ -152,7 +153,7 @@ func move_player(dc: int, dr: int) -> void:
 		return
 	p.c = c
 	p.r = r
-	p.cd = mon.move * (0.5 if mon.passive == "Hasenhaken" else 1.0)
+	p.cd = mon.move * (0.5 if mon.passive in ["Hasenhaken", "Mischwesen"] else 1.0)
 	if run.has_mod("reflexbooster"):
 		p.cd *= 0.75
 	if not run.has_mod("schleimschuhe") and (on_slime(p.c, p.r) or on_slime(p.c - dc, p.r - dr)):
@@ -652,10 +653,13 @@ func hurt_player(d: int) -> int:
 	if mon.passive == "Giftbaut":
 		e.poison = maxi(e.poison, 3)
 		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
-	if mon.passive == "Dampfhülle":
-		e.burn = maxi(e.burn, 3)
-		float_at(3 + e.c, e.r, "Dampfhülle", GameData.EL.Feuer)
 	run.hp = maxi(min_p_hp, run.hp - d)
+	# Unzerstörbar (Bärtierling): einmal pro Kampf mit 1 HP stehen bleiben
+	if run.hp <= 0 and mon.passive == "Unzerstörbar" and not tardi_used:
+		tardi_used = true
+		run.hp = 1
+		float_at(p.c, p.r - 0.4, "Unzerstörbar!", GameData.EL.Wasser)
+		burst(p.c + 0.5, p.r + 0.5, GameData.EL.Wasser, 20)
 	# Backup-Kern: einmal pro Run weiterkämpfen statt verlieren
 	if run.hp <= 0 and run.has_mod("backupkern") and not run.backup_used:
 		run.backup_used = true
@@ -1096,7 +1100,7 @@ func _enemy_attack() -> void:
 		_:
 			cells.append(Vector2i(p.c, p.r))
 	warn += def.get("warn_bonus", 0.0)
-	if mon.passive == "Eulenblick":
+	if mon.passive in ["Eulenblick", "Mischwesen"]:
 		warn += 0.3
 	events.append("warn")
 	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg, "lava": kind == "lava" or kind == "slime", "kind": "slime" if kind == "slime" else "lava"})

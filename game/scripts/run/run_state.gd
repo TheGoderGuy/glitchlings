@@ -6,7 +6,7 @@ const ELITE_WEIGHT := {"Gewöhnlich": 2, "Selten": 4, "Episch": 2}
 
 var species: String      # Linie (Baby-Name)
 var mon: Dictionary       # Baby-Werte der Linie
-var form: String          # aktuelle Form (nach Evolution z. B. Blazebit)
+var form: String          # aktuelle Form (nach Evolution z. B. Firewallo)
 var stage := 1            # 1 Baby, 2 Rookie, 3 Champion
 var eis := 0              # gespielte Eisfeld-Chips (Tröpfel → Frostbyte)
 var max_hp: int

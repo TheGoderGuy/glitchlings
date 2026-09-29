@@ -49,6 +49,7 @@ func _ready() -> void:
 	test_modules()
 	test_combo_chips()
 	test_chip_texts()
+	test_form_migration()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -474,7 +475,7 @@ func test_fusion() -> void:
 	var real_path := SaveGame.path
 	var real_data := SaveGame.data.duplicate(true)
 	SaveGame.persist = false
-	SaveGame.new_game("Funkling")
+	SaveGame.new_game("Brummbit")
 	var a: Dictionary = SaveGame.team()[0]
 	var b := SaveGame.add_monster("Tröpfel")
 	var c := SaveGame.add_monster("Lumi")
@@ -491,11 +492,11 @@ func test_fusion() -> void:
 	SaveGame.data.frag = 130
 	var r3 := SaveGame.try_fuse(int(b.id), int(a.id), rng)
 	var team_forms: Array = SaveGame.team().map(func(m): return m.form)
-	check(r3.ok and r3.result == "Dampfbyte" and SaveGame.frag() == 30 and team_forms == ["Lumi", "Dampfbyte"], "Funkling + Tröpfel = Dampfbyte (100 Fragmente, beide Eltern gehen auf)")
-	check(SaveGame.data.recipes.has("Dampfbyte") and SaveGame.data.dex.has("Dampfbyte"), "Rezept und Dex-Eintrag gespeichert")
+	check(r3.ok and r3.result == "Bärtierling" and SaveGame.frag() == 30 and team_forms == ["Lumi", "Bärtierling"], "Tröpfel + Brummbit = Bärtierling (100 Fragmente, beide Eltern gehen auf)")
+	check(SaveGame.data.recipes.has("Bärtierling") and SaveGame.data.dex.has("Bärtierling"), "Rezept und Dex-Eintrag gespeichert")
 	var fused := SaveGame.monster(int(r3.id))
 	var run := RunState.from_monster(fused, 1)
-	check(run.stage == 3 and run.max_hp == 115 and run.evo_need() == 0, "Fusion kämpft auf Champion-Niveau (115 HP), keine weitere Evolution")
+	check(run.stage == 3 and run.max_hp == GameData.MONS["Bärtierling"].hp + 20 and run.evo_need() == 0, "Fusion kämpft auf Champion-Niveau (%d HP), keine weitere Evolution" % run.max_hp)
 	# Spukatz braucht eine Virus-Katze
 	var q := SaveGame.add_monster("Quakli")
 	var px := SaveGame.add_monster("Pixmiez")
@@ -509,9 +510,14 @@ func test_fusion() -> void:
 	# Passive der Fusionen
 	var st := BattleState.new(RunState.new("Wolkerich", 1), GameData.FOES[0])
 	check(st.bubble == 30, "Wolkendecke: Kampf beginnt mit Schutzblase")
-	var st2 := BattleState.new(RunState.new("Dampfbyte", 1), GameData.FOES[0])
-	st2.hurt_player(5)
-	check(st2.e.burn == 3, "Dampfhülle: Angreifer brennt")
+	var st2 := BattleState.new(RunState.new("Bärtierling", 1), GameData.FOES[0])
+	st2.hurt_player(9999)
+	var survived: bool = not st2.over and st2.run.hp == 1
+	st2.hurt_player(9999)
+	check(survived and st2.over, "Unzerstörbar: einmal pro Kampf mit 1 HP stehen bleiben")
+	var stw := BattleState.new(RunState.new("Wolperling", 1), GameData.FOES[0])
+	stw.move_player(1, 0)
+	check(is_equal_approx(stw.p.cd, GameData.MONS.Wolperling.move * 0.5), "Mischwesen: Wolperling bewegt sich doppelt so schnell")
 	var dodges := 0
 	for i in 200:
 		var st3 := BattleState.new(RunState.new("Spukatz", i), GameData.FOES[0])
@@ -743,17 +749,17 @@ func test_evolution() -> void:
 	check(r.try_evolve().get("to", "") == "Prismiez", "Viel Elektro, kaum Code: Pixmiez → Prismiez (nicht mehr Firewallo)")
 	# Neutral zählt nicht zur Schwelle
 	var r1 := RunState.new("Pixmiez", 1)
-	r1.praeg = {"Neutral": 40, "Feuer": need - 1}
+	r1.praeg = {"Neutral": 40, "Code": need - 1}
 	check(r1.try_evolve().is_empty() and r1.evo_status().reason.begins_with("Noch 1"), "Neutrale Chips zählen nicht: unter der Schwelle keine Evolution")
-	r1.praeg.Feuer = need
+	r1.praeg.Code = need
 	var ev := r1.try_evolve()
-	check(ev.get("to", "") == "Blazebit" and r1.stage == 2 and r1.max_hp == 110, "Feuer-Prägung: Pixmiez → Blazebit, +10 max. HP")
-	r1.praeg.Feuer = GameData.EVO_AT[3]
-	check(r1.try_evolve().get("to", "") == "Glutluchs" and r1.stage == 3, "Champion-Schwelle: Blazebit → Glutluchs")
+	check(ev.get("to", "") == "Firewallo" and r1.stage == 2 and r1.max_hp == 110, "Code-Prägung: Pixmiez → Firewallo, +10 max. HP")
+	r1.praeg.Code = GameData.EVO_AT[3]
+	check(r1.try_evolve().get("to", "") == "Bollwerkatz" and r1.stage == 3, "Champion-Schwelle: Firewallo → Bollwerkatz")
 	check(r1.try_evolve().is_empty(), "Champion ohne weitere Stufe bleibt")
 	# Gleichstand wartet
 	var r2 := RunState.new("Pixmiez", 1)
-	r2.praeg = {"Feuer": 6, "Code": 6}
+	r2.praeg = {"Virus": 6, "Code": 6}
 	check(r2.try_evolve().is_empty() and r2.evo_status().reason.begins_with("Gleichstand"), "Gleichstand: Evolution wartet (keine Zufallsentscheidung)")
 	# Führung zu knapp (nur 1 Chip Vorsprung) wartet – Elemente ohne Richtung verwässern nicht
 	var r3 := RunState.new("Kekso", 1)
@@ -801,10 +807,10 @@ func test_evolution() -> void:
 			printerr("    Champion ohne Ultra: ", f)
 	check(chain_ok, "Evolutionsketten gültig, jeder Champion hat ein Ultra")
 	var ru := RunState.new("Pixmiez", 1)
-	ru.form = "Glutluchs"
+	ru.form = "Bollwerkatz"
 	ru.stage = 3
-	ru.praeg = {"Feuer": GameData.EVO_AT[4]}
-	check(ru.try_evolve().get("to", "") == "Pyrolynx" and ru.stage == 4, "Ab 80 Element-Chips: Glutluchs → Pyrolynx (Ultra)")
+	ru.praeg = {"Code": GameData.EVO_AT[4]}
+	check(ru.try_evolve().get("to", "") == "Bastionkatz" and ru.stage == 4, "Ab 80 Element-Chips: Bollwerkatz → Bastionkatz (Ultra)")
 	var ok := true
 	for f in GameData.FORMS:
 		if not GameData.SPECIALS.has(f) or not ResourceLoader.exists("res://assets/sprites/%s.png" % GameData.FORMS[f].spr):
@@ -880,8 +886,8 @@ func test_new_lines() -> void:
 			hamster += 1
 	check(hamster > 3 and hamster < 20, "Hamstern: etwa jeder 4. Chip kommt zurück (%d/40)" % hamster)
 	# Abbild fängt Treffer ab
-	var r7 := RunState.new("Lumi", 1)
-	r7.form = "Screenshina"
+	var r7 := RunState.new("Kekso", 1)
+	r7.form = "Phantomnager"
 	var st7 := BattleState.new(r7, GameData.FOES[0])
 	st7.e.frozen = 99.0
 	st7.reflex = 0
@@ -890,7 +896,7 @@ func test_new_lines() -> void:
 	st7.hurt_player(10)
 	st7.hurt_player(10)
 	st7.hurt_player(10)
-	check(st7.run.hp == 75, "Abbild fängt 2 Treffer ab, der dritte trifft (HP %d)" % st7.run.hp)
+	check(st7.run.hp == st7.run.max_hp - 10, "Abbild fängt 2 Treffer ab, der dritte trifft (HP %d)" % st7.run.hp)
 	# Zungenschlag zieht den Gegner vor den Spieler
 	var st8 := BattleState.new(RunState.new("Quakli", 1), GameData.FOES[0])
 	st8.e.c = 2
@@ -921,7 +927,7 @@ func test_passives() -> void:
 	st2.use_slot(2)
 	check(absf(st2.hand[0].rem - before * 0.5) < 0.01, "Übermut: 3. Chip halbiert die Ladezeit der anderen")
 	var run3 := RunState.new("Pixmiez", 1)
-	run3.form = "Glutluchs"
+	run3.form = "Bollwerkatz"
 	run3.stage = 3
 	var st3 := BattleState.new(run3, GameData.FOES[0])
 	check(st3.reflex == 2, "Katzenreflex ab Champion: zwei Ausweicher")
@@ -1293,7 +1299,7 @@ func test_finale() -> void:
 	var kstuck := 0
 	for sv in 9:
 		var rr := RunState.new(["Pixmiez", "Funkling", "Tröpfel"][sv % 3], 300 + sv)
-		rr.form = ["Glutluchs", "Magmawulf", "Tsunamander"][sv % 3]
+		rr.form = ["Bollwerkatz", "Magmawulf", "Tsunamander"][sv % 3]
 		rr.stage = 3
 		rr.max_hp += 20
 		rr.hp = rr.max_hp
@@ -1560,3 +1566,22 @@ func test_chip_texts() -> void:
 		if lines > 3:
 			too_long.append(k)
 	check(too_long.is_empty(), "Alle Chip-Beschreibungen passen auf die Karte (zu lang: %s)" % [too_long])
+
+
+## Alte Spielstände: gestrichene Formen und Fusionen werden auf den Ersatz übertragen (29.09.2026)
+func test_form_migration() -> void:
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.data = {"team": [
+		{"id": 1, "species": "Pixmiez", "form": "Glutluchs", "stage": 3, "praeg": {}, "chips": 0, "runs": 0, "wins": 0},
+		{"id": 2, "species": "Brummbit", "form": "Supernovabär", "stage": 4, "praeg": {}, "chips": 0, "runs": 0, "wins": 0},
+		{"id": 3, "species": "Dampfbyte", "form": "Dampfbyte", "stage": 3, "praeg": {}, "chips": 0, "runs": 0, "wins": 0}],
+		"dex": {"Pyrolynx": true, "Lumi": true}, "recipes": ["Glyphel"]}
+	SaveGame._upgrade()
+	var t: Array = SaveGame.data.team
+	var ok: bool = t[0].form == "Prismalynx" and t[1].form == "Myzelgrizz" and t[2].species == "Bärtierling" and t[2].form == "Bärtierling"
+	ok = ok and SaveGame.data.dex.has("Aurorlynx") and not SaveGame.data.dex.has("Pyrolynx") and SaveGame.data.recipes == ["Wolperling"]
+	for m in t:
+		if not GameData.FORMS.has(m.form) or not GameData.MONS.has(m.species):
+			ok = false
+	check(ok, "Alte Spielstände: gestrichene Formen werden übertragen (Glutluchs → Prismalynx, Dampfbyte → Bärtierling)")
+	SaveGame.data = saved

@@ -161,13 +161,13 @@ func _demo_save() -> void:
 	c.praeg = {"Code": 20, "Feuer": 8, "Neutral": 16}
 	SaveGame.see("Overclocko")
 	var p: Dictionary = SaveGame.team()[0]
-	p.form = "Blazebit"
+	p.form = "Prismiez"
 	p.stage = 2
 	p.chips = 38
 	p.praeg = {"Feuer": 15, "Neutral": 19, "Code": 4}
 	p.runs = 3
 	p.wins = 1
-	SaveGame.see("Blazebit")
+	SaveGame.see("Prismiez")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
 	SaveGame.add_egg("Gewöhnlich", rng)
@@ -211,7 +211,7 @@ func _screenshot(shot: Dictionary) -> void:
 			show_opening(show_title)
 			current.seek(shot.get("t", 0.0))
 		"ending":
-			show_ending([shot.get("form", "Pyrolynx")], show_title)
+			show_ending([shot.get("form", "Aurorlynx")], show_title)
 			current.seek(shot.get("t", 0.0))
 		"station", "nest", "dex", "hatch", "lab", "fusion":
 			if mode == "hatch":
@@ -228,7 +228,7 @@ func _screenshot(shot: Dictionary) -> void:
 			if mode == "dex":
 				current.sel = int(shot.get("t", 0.0))
 				for f in GameData.FORMS:
-					if f in ["Kekso", "Tracko", "Lumi", "Screenshina", "Holohas", "Quakli", "Hüpfbyte", "Brummbit", "Kauzbit", "Raketauz"]:
+					if f in ["Kekso", "Tracko", "Lumi", "Perlhopp", "Gischthase", "Quakli", "Hüpfbyte", "Brummbit", "Kauzbit", "Raketauz"]:
 						SaveGame.see(f)
 			current.t_in = 1.0
 			if mode == "station":
@@ -277,7 +277,7 @@ func _screenshot(shot: Dictionary) -> void:
 			run.praeg = {"Neutral": 14, "Feuer": 9, "Elektro": 4}
 			run.chips_used = 27
 			run.fights_won = 3
-			run.form = "Blazebit"
+			run.form = "Prismiez"
 			run.stage = 2
 			run.monster_id = 1
 			show_result(false)

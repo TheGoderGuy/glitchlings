@@ -229,7 +229,7 @@ func _draw_credits() -> void:
 	# kleine Parade am unteren Rand, in einem eigenen Band (die Namen steigen darüber auf)
 	draw_rect(Rect2(0, band, W, H - band), Color("#05030C"))
 	draw_rect(Rect2(0, band, W, 1), Color(GameData.COL.line, 0.8))
-	var forms := ["Pyrolynx", "Leviamander", "Supernovabär", "Orbitkauz", "Plasmahase", "Hydradrak"]
+	var forms := ["Aurorlynx", "Leviamander", "Myzelgrizz", "Orbitkauz", "Lunaflut", "Hydradrak"]
 	for i in forms.size():
 		var x := fmod(t * 30.0 + i * 120.0, W + 120.0) - 60.0
 		_draw_sprite(forms[i], x, H - 2, false, {"bob": 1 if sin(anim_t * 5.0 + i) > 0 else 0, "mod": Color(1, 1, 1, 0.9)})

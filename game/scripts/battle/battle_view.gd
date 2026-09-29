@@ -1015,7 +1015,7 @@ func show_evolve_for_screenshot(t: float) -> void:
 	st.over = true
 	st.outcome = "won"
 	run.chips_used = maxi(run.chips_used, GameData.EVO_AT[2])
-	var evo_el: String = "Feuer" if run.stage == 1 else GameData.FORMS[run.form].el
+	var evo_el: String = run.mon.evo.keys()[0] if run.stage == 1 else GameData.FORMS[run.form].el
 	run.praeg[evo_el] = run.praeg.get(evo_el, 0) + maxi(9, run.evo_need())
 	_fight_over()
 	mode_t = t

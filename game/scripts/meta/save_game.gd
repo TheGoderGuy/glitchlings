@@ -35,6 +35,13 @@ func load_game() -> void:
 
 
 ## Ältere Spielstände um neue Felder ergänzen
+## Gestrichene Formen (29.09.2026) → Ersatz an gleicher Stelle der Linie
+const FORM_MIGRATION := {"Blazebit": "Prismiez", "Glutluchs": "Prismalynx", "Pyrolynx": "Aurorlynx",
+	"Sonnbrumm": "Pilzbrumm", "Sonnenpranke": "Sporenpranke", "Supernovabär": "Myzelgrizz",
+	"Screenshina": "Perlhopp", "Holohas": "Gischthase", "Quantenhas": "Lunaflut",
+	"Dampfbyte": "Bärtierling", "Glyphel": "Wolperling"}
+
+
 func _upgrade() -> void:
 	for k in ["frag", "recipes", "hints", "cleared"]:
 		if not data.has(k):
@@ -44,6 +51,20 @@ func _upgrade() -> void:
 		if m.praeg.has("Licht"):
 			m.praeg["Elektro"] = int(m.praeg.get("Elektro", 0)) + int(m.praeg["Licht"])
 			m.praeg.erase("Licht")
+	# Gestrichene Formen und Fusionen ersetzen
+	for m in data.get("team", []):
+		if FORM_MIGRATION.has(m.form):
+			m.form = FORM_MIGRATION[m.form]
+		if FORM_MIGRATION.has(m.species):
+			m.species = FORM_MIGRATION[m.species]
+	for old in FORM_MIGRATION:
+		if data.get("dex", {}).has(old):
+			data.dex.erase(old)
+			data.dex[FORM_MIGRATION[old]] = true
+	var rec: Array = []
+	for r in data.get("recipes", []):
+		rec.append(FORM_MIGRATION.get(r, r))
+	data.recipes = rec
 
 
 func save_game() -> void:

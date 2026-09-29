@@ -8,16 +8,16 @@ enum Tab { TEAM, NEST, LAB, DEX }
 const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex"]
 ## Nach Linien: Baby → Rookies → Champions → Ultras, am Ende die Fusionen
 const DEX_ORDER := [
-	"Pixmiez", "Blazebit", "Firewallo", "Virulina", "Prismiez", "Glutluchs", "Bollwerkatz", "Toxipanth", "Prismalynx", "Pyrolynx", "Bastionkatz", "Venomynx", "Aurorlynx",
+	"Pixmiez", "Firewallo", "Virulina", "Prismiez", "Bollwerkatz", "Toxipanth", "Prismalynx", "Bastionkatz", "Venomynx", "Aurorlynx",
 	"Funkling", "Glutbyte", "Overclocko", "Magmawulf", "Turbowulf", "Glutfenrir", "Hyperwulf",
 	"Tröpfel", "Kaskadi", "Pufferling", "Frostbyte", "Tsunamander", "Panzerpuff", "Glaziolotl", "Leviamander", "Kolosspuff", "Kryolotl",
 	"Kekso", "Tracko", "Cachy", "Schattnager", "Glanzbacke", "Phantomnager", "Stellarbacke",
-	"Lumi", "Blinki", "Screenshina", "Strahlhase", "Holohas", "Plasmahase", "Quantenhas",
+	"Lumi", "Blinki", "Perlhopp", "Strahlhase", "Gischthase", "Plasmahase", "Lunaflut",
 	"Quakli", "Virulurch", "Hüpfbyte", "Toxikröt", "Mechaquak", "Miasmakröt", "Gigaquak",
 	"Molchi", "Toxmolch", "Magmolch", "Sumpfdrak", "Lavadrak", "Hydradrak", "Vulkandrak",
-	"Brummbit", "Sonnbrumm", "Bärtron", "Sonnenpranke", "Titanbrumm", "Supernovabär", "Kolossbrumm",
+	"Brummbit", "Pilzbrumm", "Bärtron", "Sporenpranke", "Titanbrumm", "Myzelgrizz", "Kolossbrumm",
 	"Kauzbit", "Optikauz", "Raketauz", "Radarkauz", "Phönixkauz", "Orbitkauz", "Infernokauz",
-	"Dampfbyte", "Wolkerich", "Glyphel", "Spukatz"]
+	"Wolkerich", "Spukatz", "Wolperling", "Bärtierling"]
 const HATCH_REVEAL := 2.2
 ## Vorladen! Texturen, die erst in _draw() zum ersten Mal geladen werden, erscheinen weiß.
 const EGG_TEX := {"egg_g": preload("res://assets/sprites/egg_g.png"), "egg_s": preload("res://assets/sprites/egg_s.png"), "egg_e": preload("res://assets/sprites/egg_e.png")}
