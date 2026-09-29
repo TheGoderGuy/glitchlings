@@ -88,6 +88,19 @@ const TRACKS := {
 				". . . . . . . . G5 - A5 - B5 - - -"]},
 		],
 	},
+	"victory": {
+		"bpm": 132, "loud": 0.17, "lead": "brass", "bass": "half", "arp": "arp8", "stabs": "", "drums": "map", "counter": "strings",
+		"sections": [
+			{"name": "intro", "chords": ["C", "G"], "melody": [
+				"G4 . C5 . E5 . G5 - - - E5 . G5 - - -",
+				"A5 - - - B5 - - - D6 - - - - - - -"]},
+			{"name": "A", "chords": ["C", "Am", "F", "G"], "melody": [
+				"E5 - - - G5 - - - C6 - - - G5 - - -",
+				"A5 - - - E5 - - - C5 - - - E5 - - -",
+				"F5 - - - A5 - - - C6 - - - A5 - - -",
+				"G5 - - - B5 - - - D6 - - - B5 - - -"]},
+		],
+	},
 	"boss": {
 		"bpm": 176, "loud": 0.21, "lead": "lead_sq", "bass": "octave8", "arp": "arp16", "stabs": "x.x...x...x.x...", "drums": "boss", "counter": "brass",
 		"sections": [

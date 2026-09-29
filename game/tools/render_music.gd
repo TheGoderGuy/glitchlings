@@ -4,7 +4,7 @@ extends SceneTree
 ## Die alte Kampfmusik (battle.wav) gefällt dem Produzenten („episch“) und wird NICHT überschrieben;
 ## die neue Fassung landet zum Vergleich in battle_neu.wav.
 
-const OUT := {"title": "title", "map": "map", "boss": "boss", "battle": "battle_neu"}
+const OUT := {"title": "title", "map": "map", "boss": "boss", "battle": "battle_neu", "victory": "victory"}
 
 
 func _init() -> void:

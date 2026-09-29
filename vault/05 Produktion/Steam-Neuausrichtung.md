@@ -60,3 +60,6 @@ Neuer Synthesizer (`game/scripts/audio/music_synth.gd`): Streicher-Flächen, Ble
 - Neu: Titel (Fanfare, C-Dur), Karte (beschwingt, G-Dur), Boss (d-Moll, Aufhellung nach D-Dur im B-Teil)
 - Zum Vergleich: `battle_neu.wav` (neue Kampf-Fassung, wird im Spiel nicht benutzt)
 - Eigene Melodien, nur der Stil ist angelehnt – keine Pokémon-Melodien übernehmen (Urheberrecht).
+- Feedback 29.09.: **Bossmusik „mega“** (bleibt). Die Wechsel durch die kurzen Kämpfe wirkten „nicht rund“ → Lösung wie in Pokémon:
+  **Siegesfanfare** nach jedem gewonnenen Kampf (läuft während der Chipwahl in einer ruhigen Schleife weiter),
+  **Kartenmusik läuft an derselben Stelle weiter** statt neu zu starten, Kämpfe starten knackig ohne Einblenden, die Karte blendet weich ein (1,2 s).

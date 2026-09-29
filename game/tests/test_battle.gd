@@ -32,7 +32,7 @@ func _ready() -> void:
 	test_elite_scaling()
 	test_simulated_runs()
 	test_sounds()
-	test_music()
+	await test_music()
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
 
@@ -630,7 +630,7 @@ func test_sounds() -> void:
 
 func test_music() -> void:
 	var ok := true
-	for key in ["title", "map", "battle", "boss"]:
+	for key in ["title", "map", "battle", "boss", "victory"]:
 		var path := "res://assets/music/%s.wav" % key
 		if not ResourceLoader.exists(path):
 			ok = false
@@ -638,8 +638,16 @@ func test_music() -> void:
 		var st: AudioStreamWAV = load(path)
 		var frames := roundi(st.get_length() * st.mix_rate)
 		var lb := MusicSynth.intro_frames(key) if st.stereo else 0
-		if st.get_length() < 15.0 or lb >= frames:
+		if st.get_length() < 8.0 or lb >= frames:
 			ok = false
-	check(ok, "Alle 4 Musikstücke vorhanden, Schleifenpunkte gültig")
+	check(ok, "Alle 5 Musikstücke vorhanden, Schleifenpunkte gültig")
+	# Karte spielt nach einem Kampf weiter statt neu zu beginnen
+	Music.play("map")
+	await get_tree().create_timer(0.6).timeout
+	Music.play("battle")
+	var saved: float = Music.positions.get("map", -1.0)
+	Music.play("map")
+	check(saved > 0.05 and Music.players[Music.active].get_playback_position() >= saved - 0.05, "Kartenmusik läuft nach dem Kampf an derselben Stelle weiter (%.2f s)" % saved)
+	Music.stop()
 	var old: AudioStreamWAV = load("res://assets/music/battle.wav")
 	check(not old.stereo and old.mix_rate == 22050, "Kampfmusik ist die alte, epische Fassung (bleibt unverändert)")

@@ -150,11 +150,17 @@ func _process_fight(delta: float) -> void:
 	else:
 		st.update(delta)
 	for ev in st.events:
+		if ev == "win":
+			continue  # ersetzt durch die Siegesfanfare bzw. die Ergebnis-Musik
 		Sfx.play(ev)
 	st.events.clear()
 	if st.over:
 		if end_timer < 0:
 			end_timer = 0.65
+			if st.outcome == "won":
+				Music.play("victory" if node_type != "boss" else "title")
+			else:
+				Music.stop()
 		end_timer -= delta
 		if end_timer <= 0:
 			_fight_over()
