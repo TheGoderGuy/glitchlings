@@ -51,9 +51,9 @@ func _draw() -> void:
 		_draw_sprite(sp, r.get_center().x, r.position.y + 88, false, {"bob": bob, "blink": fmod(anim_t + i, 3.1) < 0.13})
 		_text(Vector2(r.position.x, r.position.y + 108), sp, 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		_text(Vector2(r.position.x, r.position.y + 122), "%s · %s · %d HP" % [m.animal, m.el, m.hp], 8, el, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-		draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 140), m.trait, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 20, 8, 2, GameData.COL.muted, wrap)
+		draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 140), m.trait, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 20, tsz(8), 2, GameData.COL.muted, wrap)
 		_text(Vector2(r.position.x + 10, r.position.y + 172), "Passiv: " + m.passive, 8, GameData.COL.mint)
-		draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 186), m.passive_desc, HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, 8, 3, GameData.COL.ink, wrap)
+		draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 186), m.passive_desc, HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 3, GameData.COL.ink, wrap)
 		var S: Dictionary = GameData.SPECIALS[sp]
 		_text(Vector2(r.position.x + 10, r.position.y + 228), "Signatur: " + S.name, 8, GameData.COL.sun)
 		var dirs: Array = m.evo.keys()

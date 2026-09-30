@@ -47,4 +47,5 @@ timeout 60 godot --path game --quit-after 900 -- --shot=C:/tmp/karte.png --mode=
 `--foe=N` Gegner, `--form=Name` Monsterform, `--mon=Starter`. `--mode` = title | options | starter | station | nest | dex | hatch | map | event | rest | shop | fight | pick | pause | result, `--floor=N` Etage, `--pad` zeigt Controller-Tasten.
 
 ## Lizenzen
-- Schrift **Silkscreen** – SIL Open Font License 1.1 (`assets/fonts/OFL.txt`), kommerziell frei, muss in den Credits genannt werden.
+- Schrift **Silkscreen** (Überschriften, Logo) – SIL Open Font License 1.1 (`assets/fonts/OFL.txt`), kommerziell frei, muss in den Credits genannt werden.
+- Schrift **Pixeloid Sans** von GGBotNet (Fließtext, 9-px-Raster, seit 30.09.2026) – SIL Open Font License 1.1 (`assets/fonts/Pixeloid-OFL.txt`), ebenfalls in den Credits.

@@ -127,7 +127,7 @@ func _draw() -> void:
 		var shown: String = p.text.substr(0, clampi(int((t - 0.4) * TYPE_SPEED), 0, p.text.length()))
 		draw_rect(Rect2(0, H - 64, W, 64), Color(GameData.COL.dark, 0.82))
 		draw_rect(Rect2(0, H - 64, W, 1), Color(GameData.COL.line, 0.8))
-		draw_multiline_string(font(), Vector2(40, H - 40), shown, HORIZONTAL_ALIGNMENT_CENTER, W - 80, 8, 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), Vector2(40, H - 40), shown, HORIZONTAL_ALIGNMENT_CENTER, W - 80, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	# Ein- und Ausblenden
 	var a := 0.0
 	if t < FADE:
@@ -186,9 +186,9 @@ func _draw_crash() -> void:
 	var jit := Vector2(rng.randi_range(-3, 3), 0)
 	draw_set_transform(off + Vector2(0, 0), 0, Vector2(2, 2))
 	var lp := Vector2(0, 150 / 2.0)
-	draw_string(font(true), lp + jit * 0.5 + Vector2(-1, 0), big, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 16, Color("#4CC3F0", 0.8))
-	draw_string(font(true), lp - jit * 0.5 + Vector2(1, 0), big, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 16, Color("#FF5470", 0.8))
-	draw_string(font(true), lp, big, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 16, Color.WHITE)
+	draw_string(font(true, 16), lp + jit * 0.5 + Vector2(-1, 0), big, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 16, Color("#4CC3F0", 0.8))
+	draw_string(font(true, 16), lp - jit * 0.5 + Vector2(1, 0), big, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 16, Color("#FF5470", 0.8))
+	draw_string(font(true, 16), lp, big, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 16, Color.WHITE)
 	draw_set_transform(off)
 
 

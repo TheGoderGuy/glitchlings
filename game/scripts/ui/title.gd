@@ -144,7 +144,7 @@ func _draw() -> void:
 	var y := 92.0
 	var jitter := Vector2(glitch_off) if glitch_t < 0.15 else Vector2.ZERO
 	draw_set_transform(Vector2(0, 0), 0, Vector2(2, 2))
-	var f := font(true)
+	var f := font(true, 24)
 	var lp := Vector2(0, y / 2)
 	draw_string(f, lp + Vector2(-1, 0) + jitter, logo, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, Color("#4CC3F0", 0.8))
 	draw_string(f, lp + Vector2(1, 0) - jitter, logo, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, Color("#FF5470", 0.8))

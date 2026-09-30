@@ -769,7 +769,7 @@ func _draw_pick() -> void:
 		_text(c.position + Vector2(0, 38), "%s · %s" % [ch.el, ch.rar], 8, el, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		var stats: String = ch.cat + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %.1fs" % ch.cd
 		_text(c.position + Vector2(0, 52), stats, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
-		draw_multiline_string(font(), c.position + Vector2(8, 70), ch.desc, HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, 8, 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), c.position + Vector2(8, 70), ch.desc, HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 		# Synergie mit Deck, Modulen oder Passiv
 		var combo := GameData.synergy(k, run.deck, run.modules, run.mon.passive)
 		if combo != "":
@@ -848,7 +848,7 @@ func _draw_tutorial() -> void:
 		var done: bool = tut.step > i
 		var cur: bool = tut.step == i
 		draw_rect(Rect2(r.end.x - 52 + i * 11, r.position.y + 9, 7, 7), GameData.COL.mint if done else (GameData.COL.sun if cur else GameData.COL.line))
-	draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 32), tx[1], HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, 8, 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 32), tx[1], HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 
 
 ## Für Screenshots/Tests: den Kampf mit Autopilot vorspulen.
@@ -1019,7 +1019,7 @@ func _draw_boss_intro() -> void:
 		var nx := lerpf(-260.0, 36.0, 1.0 - pow(1.0 - k, 3.0))
 		var name_s: String = def.name.to_upper()
 		var jit := Vector2(randi_range(-2, 2), 0) if fmod(anim_t, 1.3) < 0.08 else Vector2.ZERO
-		var f := font(true)
+		var f := font(true, 24)
 		var fs := 24 if text_width(name_s, 24, true) <= 290 else 16
 		draw_rect(Rect2(nx - 12, 96, 300, 3), el)
 		draw_string(f, Vector2(nx - 1, 136) + jit, name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color("#4CC3F0", 0.8))

@@ -40,6 +40,8 @@ static func args() -> Dictionary:
 			shot.choices = a.substr(10).split(",")
 		elif a.begins_with("--deck="):
 			shot.deck = a.substr(7).split(",")
+		elif a.begins_with("--font="):
+			shot.font = a.substr(7)
 		elif a == "--glitchnode":
 			shot.glitchnode = true
 		elif a == "--guard":

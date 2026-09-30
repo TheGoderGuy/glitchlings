@@ -199,13 +199,15 @@ func _draw() -> void:
 	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
 	match state:
 		State.MENU:
-			draw_multiline_string(font(), r.position + Vector2(24, 54), _intro(), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, 8, 4, GameData.COL.ink, wrap)
+			draw_multiline_string(font(), r.position + Vector2(24, 54), _intro(), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 4, GameData.COL.ink, wrap)
 			var o := _options()
-			var y := r.position.y + 96
+			# viele Einträge (Händler): enger stapeln, damit die Beschreibung unten frei bleibt
+			var step := 24 if o.size() <= 6 else 20
+			var y := r.position.y + (96 if o.size() <= 6 else 88)
 			for i in o.size():
-				_option_row(Rect2(r.position.x + 60, y + i * 24, r.size.x - 120, 18), o[i].label, i == sel, o[i].enabled)
+				_option_row(Rect2(r.position.x + 60, y + i * step, r.size.x - 120, 17), o[i].label, i == sel, o[i].enabled)
 			if sel < o.size():
-				draw_multiline_string(font(), Vector2(r.position.x + 24, r.end.y - 40), o[sel].desc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, 8, 3, GameData.COL.muted, wrap)
+				draw_multiline_string(font(), Vector2(r.position.x + 24, r.end.y - 40), o[sel].desc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 3, GameData.COL.muted, wrap)
 		State.REMOVE:
 			var q: String = {"copy": "Welchen Chip kopieren?", "upgrade": "Welchen Chip verbessern?"}.get(choose_mode, "Welchen Chip entfernen?")
 			_text(r.position + Vector2(0, 54), q, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
@@ -223,7 +225,7 @@ func _draw() -> void:
 				var cy := r.position.y + 68 + (i % per_col) * 20
 				_option_row(Rect2(cx, cy, cw, 16), "%d× %s" % [run.deck.count(c), c], i == sel, true, GameData.EL[GameData.chip(c).el])
 		State.MESSAGE:
-			draw_multiline_string(font(), r.position + Vector2(24, 120), message, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, 8, 5, GameData.COL.ink, wrap)
+			draw_multiline_string(font(), r.position + Vector2(24, 120), message, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 5, GameData.COL.ink, wrap)
 			_text(Vector2(r.position.x, r.end.y - 20), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 
 

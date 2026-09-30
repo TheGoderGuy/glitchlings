@@ -24,7 +24,7 @@ const CREDITS := [
 	["Pixel-Art-Regie", 8, "muted"], [CREATOR, 16, "sun"], ["", 8, ""],
 	["Musik und Sound", 8, "muted"], [CREATOR, 16, "sun"], ["", 8, ""],
 	["Monster und Gegner", 8, "muted"], ["erstellt mit PixelLab", 8, "ink"], ["", 8, ""],
-	["Schrift", 8, "muted"], ["Silkscreen von Jason Kottke (SIL Open Font License)", 8, "ink"], ["", 8, ""],
+	["Schrift", 8, "muted"], ["Pixeloid Sans von GGBotNet (SIL Open Font License)", 8, "ink"], ["Silkscreen von Jason Kottke (SIL Open Font License)", 8, "ink"], ["", 8, ""],
 	["Engine", 8, "muted"], ["Godot 4", 8, "ink"], ["", 8, ""],
 	["Besonderer Dank", 8, "muted"], ["an alle Spieltester", 8, "ink"], ["und an dich, Operator", 8, "ink"],
 ]
@@ -134,7 +134,7 @@ func _draw() -> void:
 		var shown: String = p.text.substr(0, clampi(int((t - 0.4) * TYPE_SPEED), 0, p.text.length()))
 		draw_rect(Rect2(0, H - 64, W, 64), Color(GameData.COL.dark, 0.82))
 		draw_rect(Rect2(0, H - 64, W, 1), Color(GameData.COL.line, 0.8))
-		draw_multiline_string(font(), Vector2(40, H - 40), shown, HORIZONTAL_ALIGNMENT_CENTER, W - 80, 8, 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), Vector2(40, H - 40), shown, HORIZONTAL_ALIGNMENT_CENTER, W - 80, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	var a := 0.0
 	if t < FADE:
 		a = 1.0 - t / FADE
@@ -239,8 +239,8 @@ func _draw_end() -> void:
 	draw_texture(zone_texture("wiesen"), Vector2.ZERO)
 	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.55))
 	draw_set_transform(Vector2.ZERO, 0, Vector2(2, 2))
-	draw_string_outline(font(true), Vector2(0, 46), "ENDE", HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, 4, GameData.COL.dark)
-	draw_string(font(true), Vector2(0, 46), "ENDE", HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, GameData.COL.sun)
+	draw_string_outline(font(true, 24), Vector2(0, 46), "ENDE", HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, 4, GameData.COL.dark)
+	draw_string(font(true, 24), Vector2(0, 46), "ENDE", HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, GameData.COL.sun)
 	draw_set_transform(Vector2.ZERO)
 	_text(Vector2(0, 124), "Der NEST ist gerettet. Aber noch sind nicht alle Glitchlings gefunden ...", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if t > 1.5:

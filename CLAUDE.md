@@ -84,6 +84,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Dachs (Buddli: Feuer/Elektro) und Waschbär (Maskli: Wasser/Virus) als neue Linien bis Ultra, Passive Furchtlos/Langfinger, 88 Formen, 223 Tests – `vault/05 Produktion/Dachs und Waschbär.md`
 - [x] Ebenen + Wächter (30.09.2026): Zonen 3 Ebenen × 5 Etagen (Kern 2), 7 Wächter (Sprungschreck, Dornwurz, Schlackwurm, Magmaskorp, Schnappkelch, Schlickkrake, Skolopendrox), Boss-Phasen mit neuen Mustern, goldene Großangriffe (ausweichen = Überlastet), Wächtermusik, Run speichern/fortsetzen, 239 Tests – `vault/05 Produktion/Ebenen und Wächter.md`
 - [x] Deckbau + Station-Ausbau (30.09.2026): verbesserte Chips (`Name+`, Rast/Händler/Ereignisse), Synergie-Hinweise in der Chipwahl, Glitch-Elite (riskante Route), 9 neue Ereignisse (26, NEST-Kern mit Lore), Station-Reiter „Ausbau“ (6 Ausbauten), 261 Tests – `vault/05 Produktion/Deckbau und Station-Ausbau.md`
+- [x] Schrift (30.09.2026): Fließtext jetzt **Pixeloid Sans** (9 px, Kleinbuchstaben, OFL), Überschriften/Logo bleiben Silkscreen; alle Bildschirme geprüft (Händler, Station, Labor angepasst)
 - [x] Idle-Animationen: Test mit 6 Figuren, 10 Bilder/s (`tools/sprites/node/anim_frames.js`) · [ ] alle Figuren animieren
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo
@@ -124,6 +125,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - Nutzungsrechte von PixelLab für kommerzielle Nutzung vor dem Launch prüfen lassen.
 
 ## Qualitätsregeln für Änderungen am Prototyp
+- Godot-Text: im Code nur die Größen 8 / 16 / 24 verwenden. `_text()` bildet 8 automatisch auf die Pixeloid-Rastergröße ab; bei direkten `draw_multiline_string`/`draw_string`-Aufrufen `tsz(8)` und `font(bold, größe)` benutzen. Kein „→“ o. Ä. (fehlt in den Pixelschriften), stattdessen „>“.
 - Godot: Texturen **nie erst in `_draw()` laden** (bleiben im ersten Bild weiß) – `preload` oder `PixelCanvas.sprite()` (alles wird in `main._ready` vorgeladen).
 - Godot (`game/`): nach jeder Änderung **zuerst `--headless --import` auf SCRIPT ERROR prüfen** (ein Parse-Fehler in main.gd lässt das Spiel leer hängen!), dann Godot-Tests, bei Grafikänderungen per `--shot` einen Screenshot rendern – immer mit `timeout 60 … --quit-after 900`, damit nichts hängen bleibt. Godot-Exe: `~/AppData/Local/Microsoft/WinGet/Packages/GodotEngine*/Godot_*_console.exe`.
 - Godot-Tests dürfen **nie** den echten Spielstand oder das echte Spieltest-Log schreiben: `test_battle.gd` leitet in `_ready` `SaveGame.path` und `SaveGame.log_path` auf `user://test_*`-Dateien um (29.09.2026 hatte ein Test den echten Stand verändert). Diese Umleitung nie entfernen; neue Testfunktionen, die speichern, brauchen sonst nichts Zusätzliches.

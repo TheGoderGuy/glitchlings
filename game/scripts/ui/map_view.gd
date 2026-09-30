@@ -207,10 +207,10 @@ func _draw_side_panels(target: Vector2i) -> void:
 		var n: Dictionary = run.map.node(target.x, target.y)
 		_icon(ICONS[n.type], R.position + Vector2(16, 14), 1, ICON_COL[n.type])
 		_text(R.position + Vector2(30, 18), ZoneMap.TYPE_NAMES[n.type], 8, ICON_COL[n.type], HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-		draw_multiline_string(font(), R.position + Vector2(8, 40), ZoneMap.TYPE_DESC[n.type], HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 16, 8, 8, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), R.position + Vector2(8, 40), ZoneMap.TYPE_DESC[n.type], HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 16, tsz(8), 8, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	var pad: bool = InputSetup.pad
 	var hint := "< > Weg wählen\n%s betreten\n%s Pause, Deck, Module" % ["A" if pad else "Enter", "Start" if pad else "Esc"]
-	draw_multiline_string(font(), Vector2(W - 150, 214), hint, HORIZONTAL_ALIGNMENT_LEFT, 140, 8, 4, GameData.COL.muted)
+	draw_multiline_string(font(), Vector2(W - 150, 214), hint, HORIZONTAL_ALIGNMENT_LEFT, 140, tsz(8), 4, GameData.COL.muted)
 	# Module dieses Runs (Details in der Pause)
 	if not run.modules.is_empty():
 		_draw_module_row(run.modules, W - 154, 248, 9)

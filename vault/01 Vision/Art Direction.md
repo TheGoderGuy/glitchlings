@@ -99,7 +99,8 @@ Eine Evolution übernimmt die Farbe ihres Elements als Grundfarbe. So erkennt ma
 - Schadenszahlen in Pixelschrift mit dunkler Kontur
 
 ## Schrift
-- **Silkscreen** (Pixel) für Titel, Zahlen, Schadenszahlen
+- **Silkscreen** (Pixel) für Titel, Logo und große Schadenszahlen
+- **Pixeloid Sans** (Pixel, 9-px-Raster, mit Kleinbuchstaben) für allen Fließtext (seit 30.09.2026: mehr Details, besser lesbar als Silkscreen in klein)
 - **Nunito** (rund) für alle Fließtexte und Chips, damit es auch für Kinder gut lesbar bleibt
 
 ## Werkzeuge für das Team

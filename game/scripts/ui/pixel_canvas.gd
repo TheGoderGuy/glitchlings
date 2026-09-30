@@ -1,23 +1,36 @@
 class_name PixelCanvas
 extends Node2D
-## Basis für alle Bildschirme: zeichnet direkt in 640×360 mit der Pixel-Schrift Silkscreen.
-## Schriftgrößen nur 8 / 16 / 24 (Silkscreen ist auf ein 8-px-Raster gebaut).
+## Basis für alle Bildschirme: zeichnet direkt in 640×360.
+## Im Code gibt es nur die Schriftgrößen 8 / 16 / 24. Größe 8 (Fließtext) nutzt die gewählte Pixelschrift
+## in ihrer Rastergröße (tsz), 16 und 24 (Überschriften, Logo) bleiben in Silkscreen.
 
 const W := 640
 const H := 360
 
-static var _font_r: FontFile
-static var _font_b: FontFile
+## Pixelschriften nur in ihrer Rastergröße zeichnen, sonst verzerren sie
+const FONT_SETS := {
+	"silkscreen": {"r": "Silkscreen-Regular.ttf", "b": "Silkscreen-Bold.ttf", "px": 8},
+	"pixeloid": {"r": "PixeloidSans.ttf", "b": "PixeloidSans-Bold.ttf", "px": 9},
+}
+static var font_set := "pixeloid"   # Fließtext: Pixeloid Sans (seit 30.09.2026, vorher Silkscreen)
+static var _fonts := {}
 
 var anim_t := 0.0
 var off := Vector2.ZERO
 
 
-static func font(bold := false) -> FontFile:
-	if _font_r == null:
-		_font_r = _load_font("res://assets/fonts/Silkscreen-Regular.ttf")
-		_font_b = _load_font("res://assets/fonts/Silkscreen-Bold.ttf")
-	return _font_b if bold else _font_r
+## Schrift für eine Code-Größe: unter 16 die Fließtext-Schrift, ab 16 Silkscreen
+static func font(bold := false, size := 8) -> FontFile:
+	var set_name: String = font_set if size < 16 else "silkscreen"
+	var key := set_name + ("_b" if bold else "_r")
+	if not _fonts.has(key):
+		_fonts[key] = _load_font("res://assets/fonts/" + FONT_SETS[set_name]["b" if bold else "r"])
+	return _fonts[key]
+
+
+## Code-Größe (8 / 16 / 24) → tatsächliche Zeichengröße der Schrift
+static func tsz(size: int) -> int:
+	return int(FONT_SETS[font_set].px) if size < 16 else size
 
 
 static func _load_font(path: String) -> FontFile:
@@ -30,15 +43,15 @@ static func _load_font(path: String) -> FontFile:
 
 
 static func text_width(s: String, size := 8, bold := false) -> float:
-	return font(bold).get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
+	return font(bold, size).get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, tsz(size)).x
 
 
 func _text(pos: Vector2, s: String, size := 8, color: Color = GameData.COL.ink, align := HORIZONTAL_ALIGNMENT_LEFT, width := -1.0, outline := true, bold := false) -> void:
-	var f := font(bold)
+	var f := font(bold, size)
 	pos = pos.round()
 	if outline:
-		draw_string_outline(f, pos, s, align, width, size, maxi(2, size / 4), Color(GameData.COL.dark, color.a))
-	draw_string(f, pos, s, align, width, size, color)
+		draw_string_outline(f, pos, s, align, width, tsz(size), maxi(2, size / 4), Color(GameData.COL.dark, color.a))
+	draw_string(f, pos, s, align, width, tsz(size), color)
 
 
 func _box(r: Rect2, fill: Color, border: Color) -> void:
@@ -202,7 +215,7 @@ func _draw_evo(s: Dictionary, x: float, y: float, w: float) -> float:
 		var parts: Array = []
 		for el in s.other:
 			parts.append("%s %d" % [el, s.other[el]])
-		draw_multiline_string(font(), Vector2(x, y + 8), "Ohne Wirkung: " + ", ".join(parts), HORIZONTAL_ALIGNMENT_LEFT, w, 8, 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), Vector2(x, y + 8), "Ohne Wirkung: " + ", ".join(parts), HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 		y += 12 * (1 if text_width("Ohne Wirkung: " + ", ".join(parts)) <= w else 2)
 	var msg: String = "Bereit zur Entwicklung!" if s.ready else s.reason
 	_text(Vector2(x, y + 8), msg, 8, GameData.COL.mint if s.ready else GameData.COL.sun)
@@ -238,13 +251,13 @@ func _draw_module_row(mods: Array, x: float, y: float, max_n := 10) -> float:
 ## Liste mit Symbol, Name und Beschreibung (max_rows Einträge, danach nur Symbole)
 func _draw_module_list(mods: Array, x: float, y: float, w: float, max_rows := 5) -> void:
 	if mods.is_empty():
-		draw_multiline_string(font(), Vector2(x, y + 8), "Noch keine. Module gibt es bei Elite-Gegnern, beim Händler und in Modulkapseln.", HORIZONTAL_ALIGNMENT_LEFT, w, 8, 3, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), Vector2(x, y + 8), "Noch keine. Module gibt es bei Elite-Gegnern, beim Händler und in Modulkapseln.", HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 3, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 		return
 	for i in mini(mods.size(), max_rows):
 		var M: Dictionary = GameData.MODULES[mods[i]]
 		_draw_module_icon(mods[i], Vector2(x, y))
 		_text(Vector2(x + 20, y + 10), M.name, 8, Color(M.col), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-		draw_multiline_string(font(), Vector2(x + 20, y + 22), M.desc, HORIZONTAL_ALIGNMENT_LEFT, w - 20, 8, 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), Vector2(x + 20, y + 22), M.desc, HORIZONTAL_ALIGNMENT_LEFT, w - 20, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 		y += 38
 	if mods.size() > max_rows:
 		_draw_module_row(mods.slice(max_rows), x, y, 14)

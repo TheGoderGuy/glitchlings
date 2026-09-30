@@ -218,7 +218,7 @@ func _draw_tabs() -> void:
 		_text(Vector2(r.position.x, r.position.y + 13), TAB_NAMES[i], 8, GameData.COL.ink if active else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, w, true, active)
 		x += w + 4
 	var st: Dictionary = SaveGame.data.get("stats", {})
-	_text(Vector2(0, 36), "Fragmente %d · Dex %d/%d " % [SaveGame.frag(), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
+	_text(Vector2(0, H - 8), "Fragmente %d · Dex %d/%d " % [SaveGame.frag(), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
 
 
 func _draw_team() -> void:
@@ -260,10 +260,10 @@ func _draw_team() -> void:
 	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
 	var S: Dictionary = GameData.SPECIALS[form]
 	_text(Vector2(x, y), "Signatur: " + S.name, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	draw_multiline_string(font(), Vector2(x, y + 14), S.desc, HORIZONTAL_ALIGNMENT_LEFT, w, 8, 2, GameData.COL.ink, wrap)
+	draw_multiline_string(font(), Vector2(x, y + 14), S.desc, HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 2, GameData.COL.ink, wrap)
 	y += 44
 	_text(Vector2(x, y), "Passiv: " + M.passive, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	draw_multiline_string(font(), Vector2(x, y + 14), M.passive_desc, HORIZONTAL_ALIGNMENT_LEFT, w, 8, 3, GameData.COL.ink, wrap)
+	draw_multiline_string(font(), Vector2(x, y + 14), M.passive_desc, HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 3, GameData.COL.ink, wrap)
 	y += 56
 	# Entwicklung: mögliche Richtungen mit Lebenszeit-Prägung
 	_text(Vector2(x, y), "Entwicklung", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
@@ -330,7 +330,7 @@ func _draw_nest() -> void:
 		var rc := _rarity_col(e.rarity)
 		_text(Vector2(r.position.x, r.position.y + 136), "%s Ei" % e.rarity, 8, rc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		var txt := "schlüpft nach dem nächsten Run" if left == 1 else ("bereit!" if left <= 0 else "noch %d Runs" % left)
-		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 152), txt, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, 8, 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 152), txt, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	_text(Vector2(R.position.x, R.end.y - 18), "Gewöhnlich 1 Run · Selten 2 · Episch 3 · Legendär 5", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 
 
@@ -392,12 +392,12 @@ func _draw_lab() -> void:
 			_text(Vector2(slot.position.x, slot.get_center().y + 3), "?", 16, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, slot.size.x, true, true)
 	_text(Vector2(R.position.x, R.position.y + 84), "+", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 	var info := fuse_msg if fuse_msg != "" else "Kostet %d Fragmente, nur bei Erfolg. Beide verschmelzen." % GameData.FUSION_COST
-	draw_multiline_string(font(), Vector2(R.position.x + 12, R.end.y - 10), info, HORIZONTAL_ALIGNMENT_CENTER, R.size.x - 24, 8, 2, GameData.COL.sun if fuse_msg != "" else GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	draw_multiline_string(font(), Vector2(R.position.x + 12, R.end.y - 10), info, HORIZONTAL_ALIGNMENT_CENTER, R.size.x - 24, tsz(8), 2, GameData.COL.sun if fuse_msg != "" else GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	# Rezeptbuch
 	var B := Rect2(206, 190, 426, 150)
 	_box(B, Color(GameData.COL.panel, 0.92), GameData.COL.line)
 	_text(Vector2(B.position.x + 12, B.position.y + 16), "Rezeptbuch", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	var y := B.position.y + 34
+	var y := B.position.y + 32
 	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
 	for i in GameData.RECIPES.size():
 		var R2: Dictionary = GameData.RECIPES[i]
@@ -411,8 +411,9 @@ func _draw_lab() -> void:
 			col = GameData.COL.ink
 		else:
 			line = "???"
-		draw_multiline_string(font(), Vector2(B.position.x + 12, y), line, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 24, 8, 2, col, wrap)
-		y += 28
+		draw_multiline_string(font(), Vector2(B.position.x + 12, y), line, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 24, tsz(8), 2, col, wrap)
+		# Zeilenabstand nach tatsächlicher Höhe (Gerüchte brauchen oft zwei Zeilen)
+		y += font().get_multiline_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 24, tsz(8), 2, wrap).y + 5
 
 
 func _draw_fusion() -> void:

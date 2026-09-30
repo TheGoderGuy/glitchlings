@@ -191,6 +191,7 @@ func _demo_save() -> void:
 
 func _screenshot(shot: Dictionary) -> void:
 	InputSetup.pad = shot.get("pad", false)
+	PixelCanvas.font_set = shot.get("font", PixelCanvas.font_set)
 	seed(7)
 	SaveGame.persist = false
 	_demo_save()
