@@ -260,10 +260,10 @@ func _draw_deck_list(deck: Array, x: float, y: float, w: float, max_rows := 14) 
 		if row >= max_rows:
 			_text(Vector2(x + 14, y), "…", 8, GameData.COL.muted)
 			return
-		var el: Color = GameData.EL[GameData.CHIPS[k].el]
+		var el: Color = GameData.EL[GameData.chip(k).el]
 		draw_rect(Rect2(x, y - 7, 7, 7), el)
-		_text(Vector2(x + 14, y), "%d× %s" % [counts[k], k], 8)
-		_text(Vector2(x + 14, y), GameData.CHIPS[k].cat, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, w - 14)
+		_text(Vector2(x + 14, y), "%d× %s" % [counts[k], k], 8, GameData.COL.sun if GameData.is_upgraded(k) else GameData.COL.ink)
+		_text(Vector2(x + 14, y), GameData.chip(k).cat, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, w - 14)
 		y += 14
 		row += 1
 

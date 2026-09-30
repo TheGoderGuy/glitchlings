@@ -14,7 +14,7 @@ var sel := 0
 var message := ""
 var done_after_message := false
 var remove_list: Array = []
-var choose_mode := "remove"   # remove | copy
+var choose_mode := "remove"   # remove | copy | upgrade
 var state_t := 0.0
 
 
@@ -106,7 +106,11 @@ func _process(delta: float) -> void:
 			if Input.is_action_just_pressed("confirm"):
 				Sfx.play("confirm")
 				var chip: String = remove_list[sel]
-				if choose_mode == "copy":
+				if choose_mode == "upgrade":
+					var neu := run.upgrade_chip(chip)
+					Sfx.play("evolve", 0.0)
+					_show_message("%s ist jetzt %s: %s." % [chip, neu, GameData.upgrade_text(chip)], type != "shop")
+				elif choose_mode == "copy":
 					run.deck.append(chip)
 					_show_message("Kopie erstellt: %s ist jetzt noch einmal in deinem Deck." % chip, true)
 				else:
@@ -153,12 +157,12 @@ func _choose(id: String) -> void:
 			result = Rooms.shop_apply(run, node, id)
 		_:
 			result = Rooms.rest_apply(run, id)
-	if result == "remove" or result == "copy":
+	if result in ["remove", "copy", "upgrade"]:
 		choose_mode = result
 		var seen := {}
 		remove_list = []
 		for c in run.deck:
-			if not seen.has(c):
+			if not seen.has(c) and (result != "upgrade" or not GameData.is_upgraded(c)):
 				seen[c] = true
 				remove_list.append(c)
 		sel = 0
@@ -203,7 +207,11 @@ func _draw() -> void:
 			if sel < o.size():
 				draw_multiline_string(font(), Vector2(r.position.x + 24, r.end.y - 40), o[sel].desc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, 8, 3, GameData.COL.muted, wrap)
 		State.REMOVE:
-			_text(r.position + Vector2(0, 54), "Welchen Chip kopieren?" if choose_mode == "copy" else "Welchen Chip entfernen?", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+			var q: String = {"copy": "Welchen Chip kopieren?", "upgrade": "Welchen Chip verbessern?"}.get(choose_mode, "Welchen Chip entfernen?")
+			_text(r.position + Vector2(0, 54), q, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+			if choose_mode == "upgrade" and sel < remove_list.size():
+				var cu: String = remove_list[sel]
+				_text(Vector2(r.position.x, r.end.y - 14), "%s > %s+: %s" % [cu, cu, GameData.upgrade_text(cu)], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 			# bis 10 Einträge einspaltig, sonst zweispaltig
 			var cols := 1 if remove_list.size() <= 10 else 2
 			var cw := 280.0 if cols == 1 else 200.0
@@ -213,7 +221,7 @@ func _draw() -> void:
 				var c: String = remove_list[i]
 				var cx := x0 + (i / per_col) * (cw + 10)
 				var cy := r.position.y + 68 + (i % per_col) * 20
-				_option_row(Rect2(cx, cy, cw, 16), "%d× %s" % [run.deck.count(c), c], i == sel, true, GameData.EL[GameData.CHIPS[c].el])
+				_option_row(Rect2(cx, cy, cw, 16), "%d× %s" % [run.deck.count(c), c], i == sel, true, GameData.EL[GameData.chip(c).el])
 		State.MESSAGE:
 			draw_multiline_string(font(), r.position + Vector2(24, 120), message, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, 8, 5, GameData.COL.ink, wrap)
 			_text(Vector2(r.position.x, r.end.y - 20), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
@@ -265,6 +273,9 @@ const FEET_Y := 264.0
 
 func _draw_prop(kind: String, x: float, g: float) -> void:
 	var t := anim_t
+	if kind in ["werkbank", "pusteblumen", "obsidian", "glutkaefer", "wrack", "gluehwuermer", "logbuch", "nestbewohner", "kernspeicher"]:
+		_draw_prop_new(kind, x, g)
+		return
 	match kind:
 		"rest":
 			# Lagerfeuer
@@ -381,6 +392,127 @@ func _draw_prop(kind: String, x: float, g: float) -> void:
 			draw_rect(Rect2(x + 4, g - 13, 3, 2 if not shut else 1), Color("#FFD84D") if not shut else Color("#2E3A1E"))
 			draw_rect(Rect2(x - 6, g - 7, 12, 1), Color("#2E3A1E"))
 			draw_rect(Rect2(x - 11, g - 12, 1, 1), Color("#C8D8A0"))  # Barthaar
+
+
+## Szenen der Ereignisse vom 30.09.2026
+func _draw_prop_new(kind: String, x: float, g: float) -> void:
+	var t := anim_t
+	match kind:
+		"werkbank":
+			# Tisch mit Schraubstock, Hammer und einem Chip, der aufblitzt
+			draw_rect(Rect2(x - 20, g - 20, 40, 4), Color("#7A5038"))
+			draw_rect(Rect2(x - 20, g - 20, 40, 1), Color("#9A6848"))
+			draw_rect(Rect2(x - 18, g - 16, 3, 16), Color("#5A3A2A"))
+			draw_rect(Rect2(x + 15, g - 16, 3, 16), Color("#5A3A2A"))
+			draw_rect(Rect2(x - 14, g - 26, 8, 6), Color("#6A6478"))
+			draw_rect(Rect2(x - 12, g - 30, 4, 4), Color("#8A84A0"))
+			draw_rect(Rect2(x + 4, g - 22, 12, 2), Color("#8A84A0"))
+			draw_rect(Rect2(x + 12, g - 25, 4, 5), Color("#4A4458"))
+			draw_rect(Rect2(x - 3, g - 24, 6, 4), Color("#2E7A5A"))
+			if fmod(t, 1.4) < 0.18:
+				draw_rect(Rect2(x - 1, g - 29, 2, 3), Color.WHITE)
+				draw_rect(Rect2(x - 2, g - 28, 4, 1), Color.WHITE)
+		"pusteblumen":
+			for i in 4:
+				var fx := x - 18 + i * 12
+				var hgt := 16.0 + (i % 2) * 6.0
+				draw_rect(Rect2(fx, g - hgt, 1, hgt), Color("#4FA85A"))
+				draw_circle(Vector2(fx, g - hgt), 4.0, Color("#E8F0FF", 0.85))
+				draw_circle(Vector2(fx, g - hgt), 1.5, Color("#B8C8E0"))
+			for i in 8:
+				var ph := fmod(t * 0.25 + i * 0.125, 1.0)
+				var sx := x - 10 + ph * 70.0 + sin(t * 2.0 + i) * 4.0
+				var sy := g - 24 - ph * 50.0 + cos(t * 1.7 + i) * 3.0
+				draw_rect(Rect2(roundi(sx), roundi(sy), 1, 1), Color("#6EE7C5", 1.0 - ph))
+		"obsidian":
+			# schwarzer Spiegel mit wanderndem Glanz
+			draw_rect(Rect2(x - 12, g - 46, 24, 44), Color("#120D24"))
+			draw_rect(Rect2(x - 11, g - 45, 22, 42), Color("#241C3A"))
+			# feste Spiegelkanten und ein schräger Glanz, der langsam wandert
+			draw_rect(Rect2(x - 11, g - 45, 1, 42), Color("#6A5A9A"))
+			draw_rect(Rect2(x - 11, g - 45, 22, 1), Color("#6A5A9A"))
+			var sh := fmod(t * 10.0, 50.0) - 6.0
+			for k in 10:
+				var yy := g - 45 + sh + k
+				var xx := x - 10 + k * 2
+				if yy > g - 45 and yy < g - 3 and xx < x + 10:
+					draw_rect(Rect2(xx, yy, 3, 1), Color("#E8DCFF", 0.55))
+			# Spiegelbild: ein leuchtender Umriss, der größer wirkt
+			var ref := 0.25 + 0.15 * sin(t * 2.0)
+			draw_rect(Rect2(x - 5, g - 30, 10, 14), Color("#FF8A4C", ref * 0.6))
+			draw_rect(Rect2(x - 3, g - 36, 6, 6), Color("#FF8A4C", ref * 0.6))
+			draw_rect(Rect2(x - 3, g - 34, 1, 1), Color("#FFD84D", 0.9))
+			draw_rect(Rect2(x + 2, g - 34, 1, 1), Color("#FFD84D", 0.9))
+			draw_rect(Rect2(x - 15, g - 3, 30, 3), Color("#3A2A2E"))
+			draw_rect(Rect2(x - 12, g - 47, 24, 1), Color("#FF8A4C", 0.6))
+		"glutkaefer":
+			# Steinhaufen mit schlafenden Käfern, die im Atemrhythmus glühen, dazwischen Fragmente
+			draw_rect(Rect2(x - 20, g - 8, 40, 8), Color("#3A2A2E"))
+			draw_rect(Rect2(x - 14, g - 14, 26, 6), Color("#4A3438"))
+			for i in 4:
+				var bx := x - 16 + i * 10
+				var by := g - 9 - (i % 2) * 6
+				var glow := 0.5 + 0.5 * sin(t * 1.5 + i * 1.3)
+				draw_rect(Rect2(bx, by, 6, 4), Color("#5A1E0E"))
+				draw_rect(Rect2(bx + 1, by + 1, 4, 2), Color("#FF8A4C").lerp(Color("#FFD84D"), glow))
+			if fmod(t, 1.2) < 0.2:
+				draw_rect(Rect2(x + 3, g - 19, 1, 3), Color.WHITE)
+				draw_rect(Rect2(x + 2, g - 18, 3, 1), Color.WHITE)
+		"wrack":
+			# schiefes Server-Gehäuse im Moor mit blinkenden Lämpchen
+			var pts := PackedVector2Array([Vector2(x - 14, g), Vector2(x - 20, g - 34), Vector2(x + 2, g - 40), Vector2(x + 10, g)])
+			draw_colored_polygon(pts, Color("#3A3448"))
+			draw_polyline(PackedVector2Array([pts[0], pts[1], pts[2], pts[3]]), Color("#1E1428"), 2.0)
+			for i in 4:
+				var on := fmod(t * 2.0 + i * 0.7, 2.0) < 1.0
+				draw_rect(Rect2(x - 14 + i * 4, g - 26 + i, 2, 2), Color("#6EE7C5") if on else Color("#2E5A4A"))
+			draw_rect(Rect2(x - 24, g - 2, 40, 2), Color("#2E5A24", 0.8))
+		"gluehwuermer":
+			for i in 22:
+				var a := t * (0.6 + (i % 5) * 0.15) + i * 0.9
+				var rad := 10.0 + (i % 6) * 5.0
+				var p := Vector2(x + cos(a) * rad, g - 30 + sin(a * 1.3) * rad * 0.6)
+				draw_rect(Rect2(roundi(p.x), roundi(p.y), 2, 2), Color("#D8FF6A", 0.4 + 0.5 * sin(t * 4.0 + i)))
+		"logbuch":
+			# Terminal auf einem Ständer, Zeilen laufen durch, rote Fehlerzeile blinkt
+			draw_rect(Rect2(x - 18, g - 44, 36, 28), Color("#1E1428"))
+			draw_rect(Rect2(x - 16, g - 42, 32, 24), Color("#0A1A20"))
+			for k in 5:
+				var ln := int(t * 3.0 + k) % 7
+				var w := 8 + (ln * 5) % 20
+				var err := (ln == 3)
+				draw_rect(Rect2(x - 14, g - 40 + k * 4, w, 2), Color("#FF5470") if err else Color("#4CC3F0", 0.8))
+			draw_rect(Rect2(x - 2, g - 16, 4, 16), Color("#3A3448"))
+			draw_rect(Rect2(x - 8, g - 2, 16, 2), Color("#3A3448"))
+		"nestbewohner":
+			# Lüfter, der sich dreht, dahinter drei Augenpaare
+			var c := Vector2(x, g - 22)
+			draw_circle(c, 18.0, Color("#1E1428"))
+			draw_circle(c, 16.0, Color("#3A3448"))
+			for k in 4:
+				var a := t * 3.0 + k * TAU / 4.0
+				draw_line(c, c + Vector2(cos(a), sin(a)) * 14.0, Color("#6A6478"), 3.0)
+			draw_circle(c, 3.0, Color("#8A84A0"))
+			# drei winzige Glitchlings lugen unter dem Lüfter hervor
+			for k in 3:
+				var ex := x - 11 + k * 11
+				var bob := 1 if sin(t * 3.0 + k * 2.0) > 0 else 0
+				var ey := g - 5 - bob
+				draw_circle(Vector2(ex, ey + 1), 5.0, Color("#120D24"))
+				draw_circle(Vector2(ex, ey + 1), 4.0, [Color("#C9B8FF"), Color("#6EE7C5"), Color("#FFD84D")][k])
+				var blink := fmod(t + k * 0.9, 3.0) < 0.12
+				draw_rect(Rect2(ex - 2, ey, 1, 1 if blink else 2), Color("#120D24"))
+				draw_rect(Rect2(ex + 1, ey, 1, 1 if blink else 2), Color("#120D24"))
+		"kernspeicher":
+			# Turm aus gestapelten Chips mit Statuslichtern
+			for k in 6:
+				var yy := g - 8 - k * 7
+				draw_rect(Rect2(x - 12, yy, 24, 6), Color("#2E2840"))
+				draw_rect(Rect2(x - 11, yy + 1, 22, 4), Color("#4A4458"))
+				var on := fmod(t * 1.5 + k * 0.4, 2.0) < 1.2
+				draw_rect(Rect2(x + 7, yy + 2, 2, 2), (Color("#FFC83D") if k % 2 else Color("#4CC3F0")) if on else Color("#2E2840"))
+			if fmod(t, 0.9) < 0.1:
+				draw_line(Vector2(x - 12, g - 30), Vector2(x - 18, g - 34), Color("#FFE98A"), 1.0)
 
 
 ## Blubbernde Quelle/Moorloch: flache Ellipse, Blasen, Dampfschwaden

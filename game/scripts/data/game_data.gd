@@ -64,6 +64,88 @@ const CHIPS := {
 	"Konter": {"cat": "Schild", "el": "Neutral", "dmg": 35, "cd": 4.0, "rar": "Selten", "desc": "Blockt einen Treffer in den nächsten 1,5 s und schlägt mit 35 zurück."},
 }
 
+## ---------- Verbesserte Chips (30.09.2026) ----------
+## „Glutball+“ ist die verbesserte Fassung von „Glutball“: +30 % Schaden (auf 5 gerundet), 20 % kürzere Ladezeit.
+## Chips ohne Schaden (Schilde, Heilung …) laden schneller und wirken 30 % stärker (k).
+const UP_DMG := 1.3
+const UP_CD := 0.8
+static var _up_cache := {}
+
+
+## Werte eines Chips aus dem Deck (auch verbesserte „Name+“)
+static func chip(id: String) -> Dictionary:
+	if not id.ends_with("+"):
+		return CHIPS[id]
+	if not _up_cache.has(id):
+		var b: Dictionary = CHIPS[id.trim_suffix("+")]
+		var d := b.duplicate()
+		if int(b.dmg) > 0:
+			d.dmg = maxi(int(b.dmg) + 5, roundi(b.dmg * UP_DMG / 5.0) * 5)
+			d.k = float(d.dmg) / float(b.dmg)
+		else:
+			d.k = UP_DMG
+		d.cd = snappedf(b.cd * UP_CD, 0.1)
+		d.up = true
+		_up_cache[id] = d
+	return _up_cache[id]
+
+
+static func base_chip(id: String) -> String:
+	return id.trim_suffix("+")
+
+
+static func is_upgraded(id: String) -> bool:
+	return id.ends_with("+")
+
+
+## Kurzbeschreibung der Verbesserung, z. B. „45 → 60 Schaden, 3,0 → 2,4 s“
+static func upgrade_text(id: String) -> String:
+	var b: Dictionary = CHIPS[base_chip(id)]
+	var u := chip(base_chip(id) + "+")
+	var cd := "%.1f > %.1f s" % [b.cd, u.cd]
+	if int(b.dmg) > 0:
+		return ("%d > %d Schaden, " % [b.dmg, u.dmg]) + cd.replace(".", ",")
+	return "30 %% stärker, " + cd.replace(".", ",")
+
+
+## ---------- Synergien (Anzeige in Chipwahl und Händler) ----------
+## Tags: was ein Chip auslöst. PAYOFFS: welcher Tag einen Chip besonders stark macht.
+const CHIP_TAGS := {
+	"Glutball": ["brand"], "Funkenregen": ["brand"], "Hitzeschild": ["brand"], "Glutklinge": ["brand", "reihe"], "Feuersbrunst": ["brand"],
+	"Virusspritzer": ["gift"], "Sporenfalle": ["gift"],
+	"Eisfeld": ["kaelte"], "Strudel": ["kaelte"], "Tsunami": ["kaelte"], "Kurzschluss": ["kaelte"], "Blackout": ["kaelte"], "Magnetfeld": ["kaelte"],
+	"Byteschlag": ["reihe"], "Laserschuss": ["reihe"], "Flutwelle": ["reihe"], "Debugger": ["reihe"],
+	"Blitzlanze": ["spalte"],
+}
+const PAYOFFS := {"Feuersbrunst": "brand", "Datenfresser": "gift", "Seuche": "gift", "Frostsplitter": "kaelte",
+	"Wurmloch": "reihe", "Magnetfeld": "spalte"}
+const MODULE_TAGS := {"ueberhitzer": "brand", "giftkapsel": "gift", "kaeltekern": "kaelte"}
+const PASSIVE_TAGS := {"Giftdrüsen": ["gift", "brand"], "Giftbaut": ["gift"], "Schwebegas": ["gift"]}
+
+
+## Passt der Chip zu Deck, Modulen oder Passiv? Gibt z. B. „Kombo mit Feuersbrunst“ zurück, sonst "".
+static func synergy(chip_id: String, deck: Array, modules: Array, passive: String) -> String:
+	var b := base_chip(chip_id)
+	var tags: Array = CHIP_TAGS.get(b, [])
+	var need: String = PAYOFFS.get(b, "")
+	for c in deck:
+		var cb := base_chip(c)
+		if cb == b:
+			continue
+		if need != "" and CHIP_TAGS.get(cb, []).has(need):
+			return "Kombo mit " + cb
+		var cneed: String = PAYOFFS.get(cb, "")
+		if cneed != "" and tags.has(cneed):
+			return "Kombo mit " + cb
+	for m in modules:
+		if MODULE_TAGS.has(m) and (tags.has(MODULE_TAGS[m]) or need == MODULE_TAGS[m]):
+			return "Kombo mit " + MODULES[m].name
+	for t in PASSIVE_TAGS.get(passive, []):
+		if tags.has(t) or need == t:
+			return "Kombo mit " + passive
+	return ""
+
+
 const FOES := [
 	{"name": "Bugsy", "el": "Virus", "hp": 70, "move": 1.4, "atk": 2.4, "dmg": 10, "pat": ["row"], "spr": "bug", "loot": 10, "boss": false, "tele": false},
 	{"name": "Glitchmotte", "el": "Elektro", "hp": 60, "move": 1.0, "atk": 2.0, "dmg": 14, "pat": ["cell"], "spr": "moth", "loot": 10, "boss": false, "tele": true},
@@ -496,6 +578,29 @@ const MODULES := {
 	"saugbit": {"name": "Saugbit", "rar": "Episch", "pic": "heart", "col": "#C77DFF", "desc": "Heilt 1 HP pro 10 Schaden, den du austeilst."},
 	"echochip": {"name": "Echochip", "rar": "Episch", "pic": "gear", "col": "#FF8FD8", "desc": "Jeder 4. Chip wird doppelt ausgelöst."},
 }
+## Station-Ausbau (30.09.2026): dauerhafte Verbesserungen für Fragmente. costs = Preis je Stufe.
+const STATION_UPGRADES := [
+	{"id": "werkbank", "name": "Werkbank", "costs": [120, 260], "desc": "Jeder Run startet mit %d verbesserten Chip(s)."},
+	{"id": "vorrat", "name": "Vorratslager", "costs": [100, 200, 350], "desc": "Jeder Run startet mit +%d max. HP."},
+	{"id": "modulschacht", "name": "Modulschacht", "costs": [220, 420], "desc": "Jeder Run startet mit einem Modul (Stufe 2: auch seltene und epische)."},
+	{"id": "filter", "name": "Fragmentfilter", "costs": [150, 300], "desc": "+%d %% Fragmente aus Kämpfen."},
+	{"id": "brutwaermer", "name": "Brutwärmer", "costs": [180], "desc": "Eier schlüpfen einen Run früher (mindestens nach 1 Run)."},
+	{"id": "nestplatz", "name": "Nest-Erweiterung", "costs": [150], "desc": "Ein vierter Platz im Brutnest."},
+]
+
+
+## Wirkung eines Ausbaus auf Stufe lv (1-basiert) als Text
+static func upgrade_desc(u: Dictionary, lv: int) -> String:
+	match u.id:
+		"werkbank":
+			return u.desc % lv
+		"vorrat":
+			return u.desc % (10 * lv)
+		"filter":
+			return u.desc % (15 * lv)
+	return u.desc
+
+
 const MODULE_PRICE := {"Gewöhnlich": 45, "Selten": 70, "Episch": 100}
 const MODULE_WEIGHT_ELITE := {"Gewöhnlich": 3, "Selten": 4, "Episch": 2}
 ## Piktogramme 6×6 für Modul-Symbole

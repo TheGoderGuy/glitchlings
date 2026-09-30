@@ -17,6 +17,7 @@ const HAND_Y := 310
 const HAND_X := 42
 const HEAL_AFTER_FIGHT := 10
 const GUARD_HEAL := 0.3   # Wächter besiegt: +30 % der max. HP
+const GLITCH_WEIGHT := {"Gewöhnlich": 0, "Selten": 1, "Episch": 3}   # Chipwahl nach einer Glitch-Elite
 const BABY_SCALE := 1     # Babys (32 px) im Kampf in Originalgröße, damit die Evolution sichtbar wächst
 
 enum Mode { FIGHT, PAUSE, EVOLVE, PICK, INTRO }
@@ -81,7 +82,7 @@ func _animate_event(ev: String) -> void:
 			p_lunge = LUNGE
 			if ev != "chip":
 				muzzle = 0.09
-				muzzle_col = GameData.EL[GameData.CHIPS[st.last_chip].el] if st.last_chip != "" else Color.WHITE
+				muzzle_col = GameData.EL[GameData.chip(st.last_chip).el] if st.last_chip != "" else Color.WHITE
 		"hit", "hit_big":
 			e_knock = KNOCK * (1.5 if ev == "hit_big" else 1.0)
 		"hurt":
@@ -129,10 +130,15 @@ func _fight_over() -> void:
 	if node_type == "guard":
 		heal_amt += roundi(run.max_hp * GUARD_HEAL)
 	heal_info = run.heal(heal_amt)
-	choices = run.roll_pick(RunState.ELITE_WEIGHT if node_type in ["elite", "guard"] else GameData.RARITY_WEIGHT)
-	# Elite- und Wächter-Belohnung: ein neues Modul
-	new_module = ""
+	var weights: Dictionary = GameData.RARITY_WEIGHT
 	if node_type in ["elite", "guard"]:
+		weights = RunState.ELITE_WEIGHT
+	elif node_type == "glitch":
+		weights = GLITCH_WEIGHT
+	choices = run.roll_pick(weights)
+	# Elite-, Glitch-Elite- und Wächter-Belohnung: ein neues Modul
+	new_module = ""
+	if node_type in ["elite", "glitch", "guard"]:
 		new_module = run.roll_module(GameData.MODULE_WEIGHT_ELITE)
 		run.add_module(new_module)
 	pick_idx = 1
@@ -532,6 +538,8 @@ func _draw_actors() -> void:
 		var tint := Color.WHITE
 		if st.boss_phase() == 3 and sin(anim_t * 14.0) > 0.4:
 			tint = Color("#FF9DB3")
+		elif st.def.get("glitch", false):
+			tint = Color("#FF9DF0") if fmod(anim_t, 0.9) < 0.12 else Color("#E8B0FF")
 		elif st.def.get("elite", false):
 			tint = Color(1.0, 0.78, 0.72)
 		tint.a = fade
@@ -674,7 +682,7 @@ func _draw_hand() -> void:
 		if s.chip == "":
 			_box(r, GameData.COL.bg2, GameData.COL.line)
 			continue
-		var ch: Dictionary = GameData.CHIPS[s.chip]
+		var ch: Dictionary = GameData.chip(s.chip)
 		var el: Color = GameData.EL[ch.el]
 		var ready: bool = s.rem <= 0
 		_box(r, GameData.COL.panel if ready else GameData.COL.bg2, el if ready else GameData.COL.line)
@@ -729,7 +737,11 @@ func _draw_pick() -> void:
 	var es := run.evo_status()
 	var r := Rect2(40, 30, 560, 300)
 	_panel(r)
-	var head_txt := "Wächter besiegt! Ebene %d ist frei." % (run.map.level + 2) if node_type == "guard" else "Sieg!"
+	var head_txt := "Sieg!"
+	if node_type == "guard":
+		head_txt = "Wächter besiegt! Ebene %d ist frei." % (run.map.level + 2)
+	elif node_type == "glitch":
+		head_txt = "Glitch-Elite besiegt! Epische Beute!"
 	_text(r.position + Vector2(0, 30), head_txt, 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	var line := "%s ist defragmentiert. +%d Fragmente" % [st.def.name, st.loot_gained if st.loot_gained > 0 else st.def.loot]
 	if heal_info > 0:
@@ -758,6 +770,11 @@ func _draw_pick() -> void:
 		var stats: String = ch.cat + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %.1fs" % ch.cd
 		_text(c.position + Vector2(0, 52), stats, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		draw_multiline_string(font(), c.position + Vector2(8, 70), ch.desc, HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, 8, 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		# Synergie mit Deck, Modulen oder Passiv
+		var combo := GameData.synergy(k, run.deck, run.modules, run.mon.passive)
+		if combo != "":
+			var pulse := 0.75 + 0.25 * sin(anim_t * 5.0 + i)
+			_text(Vector2(c.position.x, c.end.y - 19), combo + "!", 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
 		# Wirkung auf die Evolution
 		var tag := ""
 		var tag_col: Color = GameData.COL.muted

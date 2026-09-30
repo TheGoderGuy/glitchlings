@@ -118,6 +118,8 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 			status = "Boss! Sie verschleimt Felder und streut Glitch-Sporen. Und jeder Treffer heilt sie!"
 		else:
 			status = "Boss! Ab der Hälfte seiner HP schickt er Bitmilben. Tritt drauf, bevor sie platzen!"
+	elif def.get("glitch", false):
+		status = "Glitch-Elite! Korrumpiert und gefährlich – dafür wartet eine epische Belohnung."
 	elif def.get("elite", false):
 		status = "Elite-Gegner: mehr HP, trifft härter."
 	elif run.fights_won == 0:
@@ -190,10 +192,10 @@ func use_slot(i: int) -> void:
 		return
 	s.queued = false
 	var id: String = s.chip
-	var ch: Dictionary = GameData.CHIPS[id]
+	var ch: Dictionary = GameData.chip(id)
 	run.praeg[ch.el] = run.praeg.get(ch.el, 0) + (2 if run.has_mod("prisma") and ch.el != "Neutral" else 1)
 	run.chips_used += 1
-	if id == "Eisfeld":
+	if GameData.base_chip(id) == "Eisfeld":
 		run.eis += 1
 	# Hamstern (Kekso-Linie): Chip kommt gleich wieder statt auf den Ablagestapel
 	if mon.passive in ["Hamstern", "Winterschlaf"] and rng.randf() < 0.25:
@@ -204,7 +206,7 @@ func use_slot(i: int) -> void:
 	last_chip = id
 	var nx := _draw_one()
 	s.chip = nx
-	s.max = (GameData.CHIPS[nx].cd if nx != "" else 1.0) * (0.85 if run.has_mod("schnelllader") else 1.0)
+	s.max = (GameData.chip(nx).cd if nx != "" else 1.0) * (0.85 if run.has_mod("schnelllader") else 1.0)
 	s.rem = s.max
 	_apply_chip(id)
 	# Echochip: jeder 4. Chip wird ein zweites Mal ausgelöst
@@ -312,23 +314,25 @@ func _special_hit(S: Dictionary, last: bool, d: int) -> void:
 # ---------- Chips ----------
 
 func _apply_chip(id: String) -> void:
-	var ch: Dictionary = GameData.CHIPS[id]
+	var ch: Dictionary = GameData.chip(id)
 	var el: String = ch.el
-	events.append(_chip_sound(id))
-	match id:
+	var base := GameData.base_chip(id)
+	var k: float = ch.get("k", 1.0)   # verbesserte Chips: auch feste Werte (Heilung, Nebentreffer) stärker
+	events.append(_chip_sound(base))
+	match base:
 		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Datenfresser", "Kurzschluss", "Frostsplitter", "Parasit":
-			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 11.0, "el": el, "dmg": ch.dmg, "id": id})
+			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 11.0, "el": el, "dmg": ch.dmg, "id": base})
 		"Doppelklick":
-			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": el, "dmg": ch.dmg, "id": id})
-			delayed.append({"t": 0.15, "fn": _second_click, "mark": false})
+			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": el, "dmg": ch.dmg, "id": base})
+			delayed.append({"t": 0.15, "fn": _second_click.bind(int(ch.dmg)), "mark": false})
 		"Neustart":
-			var h2 := run.heal(15)
+			var h2 := run.heal(roundi(15 * k))
 			float_at(p.c, p.r, "Neustart! +%d" % h2, GameData.COL.mint)
 			for s in hand:
 				if s.chip != "":
 					disc.append(s.chip)
 				s.chip = _draw_one()
-				s.max = GameData.CHIPS[s.chip].cd if s.chip != "" else 1.0
+				s.max = GameData.chip(s.chip).cd if s.chip != "" else 1.0
 				s.rem = 0.0
 				s.queued = false
 		"Funkenregen":
@@ -336,7 +340,7 @@ func _apply_chip(id: String) -> void:
 				var fc := rng.randi_range(0, 2)
 				var fr := rng.randi_range(0, 2)
 				delayed.append({"t": 0.1 * i, "fn": fx_cell.bind(3 + fc, fr, GameData.EL.Feuer, 0.3), "mark": false})
-			delayed.append({"t": 0.3, "fn": _funkenregen, "mark": false})
+			delayed.append({"t": 0.3, "fn": _funkenregen.bind(k), "mark": false})
 		"Hitzeschild":
 			heat = 4.0
 			float_at(p.c, p.r, "Hitzeschild", GameData.EL.Feuer)
@@ -379,7 +383,7 @@ func _apply_chip(id: String) -> void:
 				fx_cell(3 + c, p.r, GameData.EL[el], 0.25)
 			if e.r == p.r and e.c <= 1:
 				hit_enemy(ch.dmg, el)
-				if id == "Glutklinge":
+				if base == "Glutklinge":
 					e.burn = maxi(e.burn, 2)
 			else:
 				_miss()
@@ -388,9 +392,9 @@ func _apply_chip(id: String) -> void:
 				for r in 3:
 					fx_cell(3 + c, r, GameData.EL[el], 0.4)
 			burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[el], 24)
-			var fire_bonus: bool = id == "Feuersbrunst" and e.burn > 0
+			var fire_bonus: bool = base == "Feuersbrunst" and e.burn > 0
 			hit_enemy(ch.dmg * (2 if fire_bonus else 1), el)
-			if id == "Feuersbrunst":
+			if base == "Feuersbrunst":
 				e.burn = maxi(e.burn, 4)
 			else:
 				e.frozen = maxf(e.frozen, 1.5)
@@ -405,10 +409,10 @@ func _apply_chip(id: String) -> void:
 			else:
 				_miss()
 		"Kopierschutz", "Konter":
-			shield = 6.0 if id == "Kopierschutz" else 1.5
+			shield = 6.0 if base == "Kopierschutz" else 1.5
 			counter = ch.dmg
 			counter_el = el
-			float_at(p.c, p.r, id, GameData.EL[el])
+			float_at(p.c, p.r, base, GameData.EL[el])
 		"Geschützturm":
 			bots.append({"t": 8.0, "tick": 1.5, "kind": "turret"})
 			float_at(p.c, p.r, "Geschützturm", GameData.EL.Code)
@@ -426,8 +430,8 @@ func _apply_chip(id: String) -> void:
 		"Kettenblitz":
 			burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Elektro, 10)
 			hit_enemy(ch.dmg, el)
-			for k in 2:
-				delayed.append({"t": 0.25 * (k + 1), "fn": _chain_hit, "mark": false})
+			for i in 2:
+				delayed.append({"t": 0.25 * (i + 1), "fn": _chain_hit.bind(k), "mark": false})
 		"Ladungsfeld":
 			sp = minf(100.0, sp + 25.0)
 			float_at(p.c, p.r, "Signatur +25 %", GameData.EL.Elektro)
@@ -454,16 +458,16 @@ func _apply_chip(id: String) -> void:
 			float_at(p.c, p.r, "Sprungbereit", GameData.COL.mint)
 		"Glutball":
 			proj.append({"lob": true, "fx": p.c + 0.5, "fr": p.r, "tx": 3 + p.c + 0.5, "tr": p.r, "t": 0.0, "dur": 0.3,
-				"el": "Feuer", "land": _land_glutball.bind(p.c, p.r)})
+				"el": "Feuer", "land": _land_glutball.bind(p.c, p.r, k)})
 		"Flammenwelle":
 			var col: int = e.c
 			marks.append({"col": col, "t": 0.4, "max": 0.4, "color": GameData.EL.Feuer})
-			delayed.append({"t": 0.4, "fn": _flammenwelle.bind(col), "mark": false})
+			delayed.append({"t": 0.4, "fn": _flammenwelle.bind(col, k), "mark": false})
 		"Firewall":
 			shield = 4.0
 			float_at(p.c, p.r, "Firewall", GameData.EL.Code)
 		"Blubberschild":
-			bubble = 30
+			bubble = roundi(30 * k)
 			bubble_t = 5.0
 			float_at(p.c, p.r, "Blase", GameData.EL.Wasser)
 		"Bug-Mine":
@@ -476,12 +480,12 @@ func _apply_chip(id: String) -> void:
 			fx_cell(3 + e.c, e.r, GameData.EL.Wasser, 0.4)
 			float_at(3 + e.c, e.r, "Eingefroren", GameData.EL.Wasser)
 		"Heilpatch":
-			var h: int = mini(25, run.max_hp - run.hp)
+			var h: int = mini(roundi(25 * k), run.max_hp - run.hp)
 			run.hp += h
 			float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
 			burst(p.c + 0.5, p.r + 0.5, GameData.EL.Elektro, 10)
 		"Blitzcursor":
-			delayed.append({"t": 0.5, "fn": _blitz, "mark": true})
+			delayed.append({"t": 0.5, "fn": _blitz.bind(k), "mark": true})
 		"Mini-Bot":
 			bots.append({"t": 6.0, "tick": 1.0})
 			float_at(p.c, p.r, "Mini-Bot", GameData.EL.Code)
@@ -509,19 +513,19 @@ func _chip_sound(id: String) -> String:
 	return "chip"
 
 
-func _chain_hit() -> void:
+func _chain_hit(k := 1.0) -> void:
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Elektro, 8)
-	hit_enemy(10, "Elektro")
+	hit_enemy(roundi(10 * k), "Elektro")
 
 
-func _second_click() -> void:
-	proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": "Neutral", "dmg": 12, "id": "Doppelklick"})
+func _second_click(d := 12) -> void:
+	proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": "Neutral", "dmg": d, "id": "Doppelklick"})
 
 
-func _funkenregen() -> void:
+func _funkenregen(k := 1.0) -> void:
 	fx_cell(3 + e.c, e.r, GameData.EL.Feuer, 0.4)
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Feuer, 12)
-	hit_enemy(25, "Feuer")
+	hit_enemy(roundi(25 * k), "Feuer")
 	if not over:
 		e.burn = maxi(e.burn, 3)
 
@@ -530,7 +534,7 @@ func _miss() -> void:
 	float_at(3 + e.c, e.r, "verfehlt", GameData.COL.muted)
 
 
-func _land_glutball(col: int, row: int) -> void:
+func _land_glutball(col: int, row: int, k := 1.0) -> void:
 	fx_cell(3 + col, row, GameData.EL.Feuer, 0.4)
 	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 		var c: int = col + d.x
@@ -540,27 +544,27 @@ func _land_glutball(col: int, row: int) -> void:
 	burst(3 + col + 0.5, row + 0.5, GameData.EL.Feuer, 16)
 	var dist: int = absi(e.c - col) + absi(e.r - row)
 	if dist == 0:
-		hit_enemy(45, "Feuer")
+		hit_enemy(roundi(45 * k), "Feuer")
 		e.burn = 3
 	elif dist == 1:
-		hit_enemy(20, "Feuer")
+		hit_enemy(roundi(20 * k), "Feuer")
 		e.burn = 3
 	else:
 		_miss()
 
 
-func _flammenwelle(col: int) -> void:
+func _flammenwelle(col: int, k := 1.0) -> void:
 	for r in 3:
 		fx_cell(3 + col, r, GameData.EL.Feuer, 0.3)
 	if e.c == col:
-		hit_enemy(25, "Feuer")
+		hit_enemy(roundi(25 * k), "Feuer")
 	else:
 		_miss()
 
 
-func _blitz() -> void:
+func _blitz(k := 1.0) -> void:
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Elektro, 12)
-	hit_enemy(20, "Elektro")
+	hit_enemy(roundi(20 * k), "Elektro")
 
 
 # ---------- Treffer ----------
@@ -706,7 +710,7 @@ func _win() -> void:
 	over = true
 	outcome = "won"
 	events.append("win")
-	loot_gained = roundi(def.loot * (1.3 if run.has_mod("sammler") else 1.0))
+	loot_gained = roundi(def.loot * (1.3 if run.has_mod("sammler") else 1.0) * run.loot_mult)
 	run.frag += loot_gained
 	run.fights_won += 1
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 24)

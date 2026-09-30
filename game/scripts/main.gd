@@ -96,6 +96,7 @@ func start_run(monster_id: int, zone := "wiesen", seed_value := -1) -> void:
 	run = RunState.from_monster(SaveGame.monster(monster_id), seed_value, zone)
 	run.difficulty = Settings.difficulty if Settings.difficulty < 3 or SaveGame.game_cleared() else 2
 	run.tutorial = not SaveGame.data.get("tutorial_done", false)
+	run.apply_station(SaveGame.data.get("upgrades", {}))
 	show_map()
 
 
@@ -112,7 +113,7 @@ func show_map() -> void:
 
 func _enter_node() -> void:
 	var node := run.current_node()
-	if node.type in ["fight", "elite", "guard", "boss"]:
+	if node.type in ["fight", "elite", "glitch", "guard", "boss"]:
 		var b := BattleScene.instantiate()
 		var foe: Dictionary = run.foe_for(node) if foe_override < 0 else GameData.FOES[foe_override].duplicate()
 		b.setup(run, foe, node.type)
@@ -205,6 +206,8 @@ func _screenshot(shot: Dictionary) -> void:
 	foe_override = shot.get("foe", -1)
 	for m in shot.get("mods", []):
 		run.add_module(m)
+	for c in shot.get("deck", []):
+		run.deck.append(c)
 	if mode in ["map", "pick"] and not shot.has("form"):
 		run.praeg = {"Elektro": 6, "Code": 1, "Feuer": 2, "Neutral": 9}
 	if shot.has("form"):
@@ -223,11 +226,14 @@ func _screenshot(shot: Dictionary) -> void:
 		"ending":
 			show_ending([shot.get("form", "Aurorlynx")], show_title)
 			current.seek(shot.get("t", 0.0))
-		"station", "nest", "dex", "hatch", "lab", "fusion":
+		"station", "nest", "dex", "hatch", "lab", "fusion", "upgrade":
+			if mode == "upgrade":
+				SaveGame.data.frag = 240
+				SaveGame.data.upgrades = {"vorrat": 1, "werkbank": 1}
 			if mode == "hatch":
 				SaveGame.data.nest[0].runs_left = 0
 			show_station()
-			current.tab = {"station": 0, "nest": 1, "lab": 2, "dex": 3, "hatch": 0, "fusion": 2}[mode]
+			current.tab = {"station": 0, "nest": 1, "lab": 2, "dex": 3, "hatch": 0, "fusion": 2, "upgrade": 4}[mode]
 			if mode == "lab":
 				current.fuse_sel = [int(SaveGame.team()[1].id), int(SaveGame.team()[2].id)]
 				current.sel = SaveGame.team().size()
@@ -244,6 +250,8 @@ func _screenshot(shot: Dictionary) -> void:
 			if mode == "station":
 				current.sel = int(shot.get("t", 0.0))
 		"map", "mappause":
+			if shot.has("glitchnode"):
+				run.map.floors[run.floor_idx + 1][0].type = "glitch"
 			show_map()
 			current.paused = mode == "mappause"
 		"event", "rest", "shop":
@@ -252,6 +260,8 @@ func _screenshot(shot: Dictionary) -> void:
 			if shot.has("event"):
 				run.current_node().event = shot.event
 			_enter_node()
+			if shot.has("choose"):
+				current._choose(shot.choose)
 		"fight", "pick", "pause", "evolve", "tutorial", "bossintro":
 			run.tutorial = mode == "tutorial"
 			run.enter(run.next_choices()[0])
@@ -284,6 +294,8 @@ func _screenshot(shot: Dictionary) -> void:
 			if mode == "pick":
 				current.show_pick_for_screenshot()
 				current.new_module = shot.get("newmod", "")
+				if shot.has("choices"):
+					current.choices = Array(shot.choices)
 				run.add_module(current.new_module)
 			elif mode == "pause":
 				current.show_pause_for_screenshot()

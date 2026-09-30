@@ -53,6 +53,7 @@ func _ready() -> void:
 	test_badger_raccoon()
 	test_guards()
 	test_run_save()
+	test_progression()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -297,7 +298,7 @@ func test_all_chips_run() -> void:
 	check(n == GameData.CHIPS.size() and n >= 27, "Alle %d Chips laufen fehlerfrei" % n)
 	var per_el := {}
 	for chip in GameData.CHIPS:
-		per_el[GameData.CHIPS[chip].el] = per_el.get(GameData.CHIPS[chip].el, 0) + 1
+		per_el[GameData.chip(chip).el] = per_el.get(GameData.chip(chip).el, 0) + 1
 	check(per_el.values().all(func(v): return v >= 4), "Jedes Element hat mindestens 4 Chips %s" % [per_el])
 
 
@@ -319,12 +320,12 @@ func test_new_events() -> void:
 		for o in Rooms.event_options(run, key):
 			if o.label == "" or o.desc == "":
 				all_ok = false
-	check(all_ok and Rooms.EVENTS.size() == 17, "17 Ereignisse, alle Optionen beschriftet")
+	check(all_ok and Rooms.EVENTS.size() == 26, "26 Ereignisse, alle Optionen beschriftet")
 	# Zonen-Ereignisse
 	var zv := Rooms.events_for_zone("vulkan")
 	var zs := Rooms.events_for_zone("sumpf")
 	var zw := Rooms.events_for_zone("wiesen")
-	check(zv.has("schmiede") and not zv.has("irrlicht") and not zv.has("beeren") and zv.has("backup") and zv.size() == 10 and zs.size() == 10 and zw.size() == 9,
+	check(zv.has("schmiede") and not zv.has("irrlicht") and not zv.has("beeren") and zv.has("backup") and zv.size() == 12 and zs.size() == 12 and zw.size() == 11,
 		"Ereignisse je Zone: Wiesen %d, Vulkan %d, Sümpfe %d (6 überall + eigene)" % [zw.size(), zv.size(), zs.size()])
 	var rz := RunState.new("Pixmiez", 5)
 	rz.map = ZoneMap.generate(rz.rng, "sumpf")
@@ -619,7 +620,7 @@ func test_zone2() -> void:
 			if ch.is_empty():
 				break
 			var node := run3.enter(ch[0])
-			if node.type in ["fight", "elite", "guard", "boss"]:
+			if node.type in ["fight", "elite", "glitch", "guard", "boss"]:
 				var s := BattleState.new(run3, run3.foe_for(node))
 				var t := 0.0
 				while not s.over and t < 180.0:
@@ -700,7 +701,7 @@ func test_zone3() -> void:
 			if ch.is_empty():
 				break
 			var node := run3.enter(ch[0])
-			if node.type in ["fight", "elite", "guard", "boss"]:
+			if node.type in ["fight", "elite", "glitch", "guard", "boss"]:
 				var s := BattleState.new(run3, run3.foe_for(node))
 				var t := 0.0
 				while not s.over and t < 180.0:
@@ -1055,7 +1056,7 @@ func test_simulated_runs() -> void:
 			if ch.is_empty():
 				break
 			var node := run.enter(ch[run.rng.randi_range(0, ch.size() - 1)])
-			if node.type in ["fight", "elite", "guard", "boss"]:
+			if node.type in ["fight", "elite", "glitch", "guard", "boss"]:
 				var st := BattleState.new(run, run.foe_for(node))
 				var t := 0.0
 				while not st.over and t < 180.0:
@@ -1119,6 +1120,10 @@ func _auto_room(run: RunState, node: Dictionary) -> void:
 				res = Rooms.rest_apply(run, o.id)
 		if res == "remove":
 			run.remove_chip(run.deck[0])
+		elif res == "upgrade":
+			run.upgrade_chip(run.upgradable()[0])
+		elif res == "copy":
+			run.deck.append(run.deck[0])
 		return
 
 
@@ -1337,7 +1342,7 @@ func test_finale() -> void:
 			if ch.is_empty():
 				break
 			var node := rr.enter(ch[0])
-			if node.type in ["fight", "elite", "guard", "boss"]:
+			if node.type in ["fight", "elite", "glitch", "guard", "boss"]:
 				var s := BattleState.new(rr, rr.foe_for(node))
 				var tt := 0.0
 				while not s.over and tt < 240.0:
@@ -1470,7 +1475,7 @@ func test_modules() -> void:
 	var always := true
 	for n in 40:
 		var ch := rs.roll_pick({"Gewöhnlich": 1, "Selten": 0, "Episch": 0})
-		if ch.all(func(x): return GameData.CHIPS[x].rar == "Gewöhnlich"):
+		if ch.all(func(x): return GameData.chip(x).rar == "Gewöhnlich"):
 			always = false
 	check(always, "Suchalgorithmus: immer mindestens ein seltener/epischer Chip")
 	# Händler: Modul im Angebot, Rabattchip
@@ -1763,3 +1768,106 @@ func test_run_save() -> void:
 	check(r2.rng.randi() == run.rng.randi(), "Run fortsetzen: Zufall läuft gleich weiter")
 	SaveGame.record_run(r2, false)
 	check(not SaveGame.has_run(), "Nach dem Run ist nichts mehr fortzusetzen")
+
+
+## Chips verbessern, Synergien, Glitch-Elite, neue Ereignisse, Station-Ausbau (30.09.2026)
+func test_progression() -> void:
+	# Verbesserte Chips
+	var g := GameData.chip("Glutball+")
+	check(g.dmg == 60 and absf(g.cd - 2.4) < 0.01 and g.up and GameData.chip("Pixelstrahl+").dmg == 25, "Glutball+: 60 Schaden, 2,4 s · Pixelstrahl+: 25")
+	check(GameData.upgrade_text("Glutball") == "45 > 60 Schaden, 3,0 > 2,4 s", "Verbesserung wird verständlich beschrieben (%s)" % GameData.upgrade_text("Glutball"))
+	var ok := true
+	for c in GameData.CHIPS:
+		var run := RunState.new("Pixmiez", 3)
+		var st := BattleState.new(run, GameData.FOES[3])
+		st.e.hp = 9999
+		st.e.max = 9999
+		st.hand[0].chip = c + "+"
+		st.hand[0].rem = 0.0
+		st.use_slot(0)
+		step(st, 1.5)
+		if GameData.chip(c + "+").cd > GameData.CHIPS[c].cd * 0.85 or not st.disc.has(c + "+"):
+			ok = false
+	check(ok, "Alle %d verbesserten Chips laufen fehlerfrei und laden schneller" % GameData.CHIPS.size())
+	var rh := RunState.new("Pixmiez", 4)
+	rh.hp = 10
+	var sh := BattleState.new(rh, GameData.FOES[0])
+	sh.hand[0].chip = "Heilpatch+"
+	sh.hand[0].rem = 0.0
+	sh.use_slot(0)
+	check(rh.hp == 10 + 33, "Heilpatch+ heilt 33 statt 25 (HP %d)" % rh.hp)
+	var ru := RunState.new("Pixmiez", 5)
+	var n0 := ru.deck.count("Pixelstrahl")
+	check(Rooms.rest_apply(ru, "upgrade") == "upgrade" and ru.upgrade_chip("Pixelstrahl") == "Pixelstrahl+" and ru.deck.count("Pixelstrahl") == n0 - 1 and ru.deck.has("Pixelstrahl+"), "Rastplatz: Chip verbessern ersetzt eine Kopie durch Pixelstrahl+")
+	check(not ru.upgradable().has("Pixelstrahl+") and ru.upgradable().has("Pixelstrahl") == (n0 > 1), "Verbesserte Chips lassen sich nicht noch einmal verbessern")
+	var node := {"type": "shop"}
+	ru.frag = 100
+	Rooms.shop_init(ru, node)
+	var up_opt: Array = Rooms.shop_options(ru, node).filter(func(o): return o.id == "upgrade")
+	check(up_opt.size() == 1 and up_opt[0].enabled and Rooms.shop_apply(ru, node, "upgrade") == "upgrade" and ru.frag == 100 - Rooms.PRICE_UPGRADE, "Händler: Chip verbessern für %d Fragmente" % Rooms.PRICE_UPGRADE)
+	check(not Rooms.shop_options(ru, node).filter(func(o): return o.id == "upgrade")[0].enabled, "Händler: Verbessern nur einmal pro Besuch")
+	# Synergien
+	check(GameData.synergy("Glutball", ["Pixelstrahl", "Feuersbrunst"], [], "Katzenreflex") == "Kombo mit Feuersbrunst", "Synergie: Glutball passt zu Feuersbrunst im Deck")
+	check(GameData.synergy("Datenfresser", ["Virusspritzer+"], [], "") == "Kombo mit Virusspritzer", "Synergie: Datenfresser passt zu Gift (auch verbessert)")
+	check(GameData.synergy("Eisfeld", [], ["kaeltekern"], "").contains("Kältekern") and GameData.synergy("Sporenfalle", [], [], "Giftdrüsen") == "Kombo mit Giftdrüsen", "Synergie: Module und Passive")
+	check(GameData.synergy("Pixelstrahl", ["Feuersbrunst", "Seuche"], ["ueberhitzer"], "Giftdrüsen") == "", "Keine Synergie ohne Grund")
+	# Glitch-Elite
+	var glitch_n := 0
+	var early_glitch := false
+	for sv in 60:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = sv
+		for lv in 3:
+			var m := ZoneMap.generate(rng, "wiesen", lv)
+			for f in m.floors.size():
+				for n in m.floors[f]:
+					if n.type == "glitch":
+						glitch_n += 1
+						if lv * ZoneMap.FLOORS + f < 4:
+							early_glitch = true
+	check(glitch_n > 10 and not early_glitch, "Glitch-Elite erscheint (%d×), aber nie in den ersten Etagen" % glitch_n)
+	var rg := RunState.new("Pixmiez", 6)
+	var ge := rg.foe_for({"type": "glitch"})
+	var el := rg.foe_for({"type": "elite"})
+	var gbase: Dictionary = GameData.FOES.filter(func(x): return ge.name.ends_with(x.name))[0]
+	check(ge.name.begins_with("Glitch-") and ge.glitch and ge.hp > roundi(gbase.hp * 1.6) and ge.loot > el.loot, "Glitch-Elite: stärker als Elite, mehr Fragmente (%s %d HP)" % [ge.name, ge.hp])
+	# Neue Ereignisse: alle Optionen funktionieren
+	var ev_ok := true
+	var keys := ["werkbank", "pusteblumen", "obsidian", "glutkaefer", "wrack", "gluehwuermer", "logbuch", "nestbewohner", "kernspeicher"]
+	for key in keys:
+		for o in Rooms.event_options(RunState.new("Pixmiez", 7), key):
+			var re := RunState.new("Pixmiez", 7)
+			re.hp = 60
+			re.frag = 50
+			var res := Rooms.event_apply(re, key, o.id)
+			if res == "" or res == "Du gehst weiter." or re.hp <= 0:
+				ev_ok = false
+				printerr("    %s/%s: %s" % [key, o.id, res])
+	check(ev_ok, "9 neue Ereignisse: alle Optionen haben eine Wirkung")
+	var zones_ok := true
+	for z in GameData.ZONE_ORDER:
+		var own: Array = Rooms.EVENTS.keys().filter(func(k): return Rooms.EVENTS[k].get("zone", "") == z)
+		if own.size() < 3:
+			zones_ok = false
+	check(zones_ok and Rooms.events_for_zone("kern").has("logbuch"), "Jede Zone hat eigene Ereignisse, der NEST-Kern jetzt auch (Lore)")
+	var rw := RunState.new("Pixmiez", 8)
+	check(Rooms.event_apply(rw, "wrack", "dive").contains("+") and rw.deck.filter(func(c): return GameData.is_upgraded(c)).size() == 2, "Versunkenes Wrack verbessert zwei Chips")
+	# Station-Ausbau
+	SaveGame.persist = false
+	SaveGame.new_game("Pixmiez")
+	SaveGame.data.frag = 300
+	check(SaveGame.upgrade_cost("vorrat") == 100 and SaveGame.buy_upgrade("vorrat") and SaveGame.frag() == 200 and SaveGame.upgrade_level("vorrat") == 1, "Ausbau kaufen kostet Fragmente und hebt die Stufe")
+	SaveGame.data.frag = 10
+	check(not SaveGame.buy_upgrade("werkbank") and SaveGame.upgrade_level("werkbank") == 0, "Ohne genug Fragmente kein Ausbau")
+	SaveGame.data.upgrades = {"vorrat": 2, "werkbank": 2, "modulschacht": 1, "filter": 1, "nestplatz": 1, "brutwaermer": 1}
+	var rs := RunState.from_monster(SaveGame.team()[0], 9)
+	var hp0: int = rs.max_hp
+	rs.apply_station(SaveGame.data.upgrades)
+	var ups: int = rs.deck.filter(func(c): return GameData.is_upgraded(c)).size()
+	check(rs.max_hp == hp0 + 20 and rs.hp == rs.max_hp and ups == 2 and rs.modules.size() == 1 and absf(rs.loot_mult - 1.15) < 0.001, "Station-Ausbau wirkt im Run: +20 HP, 2 verbesserte Chips, 1 Modul, +15 %% Fragmente")
+	check(SaveGame.upgrade_cost("nestplatz") == -1 and SaveGame.nest_slots() == 4, "Nest-Erweiterung: 4 Plätze")
+	SaveGame.data.nest = []
+	var rng2 := RandomNumberGenerator.new()
+	var egg := SaveGame.add_egg("Selten", rng2)
+	var egg2 := SaveGame.add_egg("Gewöhnlich", rng2)
+	check(int(egg.runs_left) == 1 and int(egg2.runs_left) == 1, "Brutwärmer: Eier schlüpfen einen Run früher (mindestens 1)")

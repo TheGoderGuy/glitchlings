@@ -6,13 +6,15 @@ extends RefCounted
 
 const FLOORS := 5   # Etagen je Ebene (ohne Wächter/Boss)
 const LEVELS := 3   # Ebenen je Zone
+const GLITCH_CHANCE := 0.4   # Anteil der Elite-Knoten, die als Glitch-Elite erscheinen (ab Etage 5 der Zone)
 
 const TYPE_NAMES := {
-	"fight": "Kampf", "elite": "Elite", "event": "Ereignis", "rest": "Rastplatz", "shop": "Datenhändler", "guard": "Wächter", "boss": "Boss",
+	"fight": "Kampf", "elite": "Elite", "glitch": "Glitch-Elite", "event": "Ereignis", "rest": "Rastplatz", "shop": "Datenhändler", "guard": "Wächter", "boss": "Boss",
 }
 const TYPE_DESC := {
 	"fight": "Ein korrumpierter Glitchling. Belohnung: Chipwahl und Fragmente.",
 	"elite": "Ein besonders starker Gegner. Belohnung: seltenere Chips und viele Fragmente.",
+	"glitch": "Riskant! Ein korrumpierter Elite-Gegner, noch stärker. Belohnung: epische Chips, ein Modul und sehr viele Fragmente.",
 	"event": "Irgendetwas passiert hier. Überraschung!",
 	"rest": "Ausruhen oder dein Deck ausdünnen.",
 	"shop": "Tausche Fragmente gegen Chips, Reparaturen und mehr.",
@@ -67,6 +69,9 @@ static func _roll_type(rng: RandomNumberGenerator, f: int, n_floors := FLOORS, l
 	for k in w:
 		roll -= w[k]
 		if roll <= 0:
+			# Riskante Route: ab Etage 5 der Zone ist manche Elite korrumpiert
+			if k == "elite" and g >= 4 and rng.randf() < GLITCH_CHANCE:
+				return "glitch"
 			return k
 	return "fight"
 

@@ -14,6 +14,7 @@ const BOSS_Y := 62.0
 const ICONS := {
 	"fight": ["......##.", ".....###.", "....###..", "#..###...", ".####....", "..##.....", ".####....", "##..#....", "#........"],
 	"elite": ["#.......#", "##.....##", ".#######.", "##.###.##", "#..#.#..#", "#########", ".#.#.#.#.", "..#####..", "........."],
+	"glitch": ["#.......#", "##..#..##", ".###.###.", "##.###.##", "#..#.#..#", "###.####.", ".#.#.#.#.", "..###.##.", "........."],
 	"rest": [".##...##.", "####.####", "#########", "#########", ".#######.", "..#####..", "...###...", "....#....", "........."],
 	"event": ["..#####..", ".##...##.", ".......##", "......##.", "....##...", "....##...", ".........", "....##...", "....##..."],
 	"shop": ["..#####..", ".#..#..#.", "#..###..#", "#.#.#...#", "#..###..#", "#...#.#.#", "#..###..#", ".#..#..#.", "..#####.."],
@@ -21,7 +22,7 @@ const ICONS := {
 	"boss": ["#...#...#", "##.###.##", "#########", "#########", "#.#.#.#.#", "#########", ".........", ".........", "........."],
 }
 const ICON_COL := {
-	"fight": Color("#FF7A93"), "elite": Color("#FFC83D"), "rest": Color("#6EE7C5"),
+	"fight": Color("#FF7A93"), "elite": Color("#FFC83D"), "glitch": Color("#FF4FD8"), "rest": Color("#6EE7C5"),
 	"event": Color("#C77DFF"), "shop": Color("#58D68D"), "guard": Color("#FF9A3D"), "boss": Color("#FF5470"),
 }
 
@@ -30,6 +31,8 @@ var sel := 0
 var paused := false
 var pause_idx := 0
 var level_t := 0.0    # Einblendung „Ebene X“ beim Betreten einer neuen Ebene
+## Kurze Namen für die Legende (die Pixelschrift ist breit)
+const LEGEND := {"fight": "Kampf", "elite": "Elite", "glitch": "Glitch", "event": "Ereignis", "rest": "Rast", "shop": "Händler", "guard": "Wächter", "boss": "Boss"}
 const PAUSE_ITEMS := ["Weiter", "Speichern und beenden", "Aufgeben"]
 
 
@@ -146,7 +149,8 @@ func _draw() -> void:
 			var fill: Color = GameData.COL.panel if (visited or selectable) else GameData.COL.bg2
 			_box(r, fill, border)
 			var ic := Color(col, 0.35 if past else (1.0 if (visited or selectable or n.type in ["boss", "guard"]) else 0.6))
-			_icon(ICONS[n.type], r.get_center(), 2 if n.type in ["boss", "guard"] else 1, ic)
+			var jit := Vector2(1, 0) if n.type == "glitch" and fmod(anim_t + f * 0.37, 1.1) < 0.1 else Vector2.ZERO
+			_icon(ICONS[n.type], r.get_center() + jit, 2 if n.type in ["boss", "guard"] else 1, ic)
 			if here:
 				_marker(p + Vector2(0, -size / 2.0 - 5))
 	if run.floor_idx < 0:
@@ -213,12 +217,12 @@ func _draw_side_panels(target: Vector2i) -> void:
 	# Legende zweispaltig
 	var G := Rect2(W - 158, 262, 150, 74)
 	_box(G, Color(GameData.COL.bg2, 0.9), GameData.COL.line)
-	var types := ["fight", "elite", "event", "rest", "shop", "guard", "boss"]
+	var types := ["fight", "elite", "glitch", "event", "rest", "shop", "guard", "boss"]
 	for i in types.size():
 		var gx := G.position.x + 12 + (i % 2) * 72
 		var gy := G.position.y + 15 + (i / 2) * 16
 		_icon(ICONS[types[i]], Vector2(gx, gy - 3), 1, ICON_COL[types[i]])
-		_text(Vector2(gx + 10, gy), ZoneMap.TYPE_NAMES[types[i]].substr(0, 8), 8, GameData.COL.muted)
+		_text(Vector2(gx + 10, gy), LEGEND[types[i]], 8, GameData.COL.muted)
 
 
 ## Positionsmarker: kleiner hüpfender Pfeil in Mint

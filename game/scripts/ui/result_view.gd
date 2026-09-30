@@ -47,7 +47,7 @@ func _draw() -> void:
 	var lines: Array = []
 	lines.append(["+%d Prägung für %s" % [run.chips_used, run.form], GameData.COL.mint])
 	if summary.get("evolved", false):
-		lines.append(["Entwicklung gespeichert: %s → %s" % [run.start_form, run.form], GameData.EL[run.form_el()]])
+		lines.append(["Entwicklung gespeichert: %s > %s" % [run.start_form, run.form], GameData.EL[run.form_el()]])
 	for f in summary.get("new_dex", []):
 		lines.append(["Neu im Monsterdex: %s" % f, GameData.COL.sun])
 	if summary.get("unlocked", "") != "":

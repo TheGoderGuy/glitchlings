@@ -10,6 +10,7 @@ const MIN_DECK := 5
 const PRICE := {"Gewöhnlich": 25, "Selten": 40, "Episch": 60}
 const PRICE_REPAIR := 20
 const PRICE_REMOVE := 35
+const PRICE_UPGRADE := 45
 ## Prägung, die ein Element-Ereignis schenkt (zählt wie gespielte Element-Chips)
 const EVENT_PRAEG := 3
 
@@ -84,6 +85,43 @@ const EVENTS := {
 		"title": "Quak-Orakel", "zone": "sumpf",
 		"text": "Eine uralte Kröte sitzt auf einem Seerosenblatt aus Pixeln. Sie soll alles über Evolutionen wissen.",
 	},
+	# ---------- Erweiterung 30.09.2026: je 2 pro Zone, 3 Lore-Ereignisse im NEST-Kern ----------
+	"werkbank": {
+		"title": "Alte Werkbank", "zone": "wiesen",
+		"text": "Unter einem Datenbaum steht eine verlassene Werkbank. Das Werkzeug liegt noch ordentlich sortiert da.",
+	},
+	"pusteblumen": {
+		"title": "Pusteblumenfeld", "zone": "wiesen",
+		"text": "Ein ganzes Feld digitaler Pusteblumen. Jeder Windhauch trägt kleine leuchtende Bits davon.",
+	},
+	"obsidian": {
+		"title": "Obsidianspiegel", "zone": "vulkan",
+		"text": "Ein Spiegel aus schwarzem Vulkanglas. Darin sieht dein Glitchling stärker aus, als es sich gerade fühlt.",
+	},
+	"glutkaefer": {
+		"title": "Glutkäfer-Nest", "zone": "vulkan",
+		"text": "Zwischen schlafenden Glutkäfern glitzern Fragmente. Ein falscher Schritt, und das Nest wacht auf.",
+	},
+	"wrack": {
+		"title": "Versunkenes Wrack", "zone": "sumpf",
+		"text": "Ein altes Server-Gehäuse ragt schief aus dem Moor. Drinnen blinken noch ein paar Lämpchen.",
+	},
+	"gluehwuermer": {
+		"title": "Glühwürmchen-Schwarm", "zone": "sumpf",
+		"text": "Tausende Glühwürmchen tanzen über dem Wasser und summen im Takt einer Melodie, die du fast kennst.",
+	},
+	"logbuch": {
+		"title": "Server-Logbuch", "zone": "kern",
+		"text": "Ein Terminal zeigt die letzten Einträge vor dem Absturz: Fehler 0x0 … Fehler 0x0 … Ein einziger Fehler hat sich immer wieder selbst kopiert.",
+	},
+	"nestbewohner": {
+		"title": "Versteckte Glitchlings", "zone": "kern",
+		"text": "Hinter einem Lüfter kauern drei winzige Glitchlings. Sie sind nie geflohen und haben den Kern die ganze Zeit bewacht.",
+	},
+	"kernspeicher": {
+		"title": "Kernspeicher", "zone": "kern",
+		"text": "Ein Speicherturm voller alter Chips, die seit dem Absturz hier liegen. Manche sind beschädigt, andere perfekt erhalten.",
+	},
 }
 
 
@@ -93,6 +131,7 @@ static func rest_options(run: RunState) -> Array:
 	var h := roundi(run.max_hp * REST_HEAL)
 	return [
 		{"id": "heal", "label": "Ausruhen", "desc": "Heilt %d HP." % h, "enabled": run.hp < run.max_hp},
+		{"id": "upgrade", "label": "Chip verbessern", "desc": "Ein Chip wird stärker und lädt schneller (z. B. Glutball > Glutball+).", "enabled": not run.upgradable().is_empty()},
 		{"id": "remove", "label": "Deck ausdünnen", "desc": "Entferne einen Chip aus deinem Deck.", "enabled": run.deck.size() > MIN_DECK},
 	]
 
@@ -103,6 +142,8 @@ static func rest_apply(run: RunState, id: String) -> String:
 			return "%s ruht sich aus: +%d HP." % [run.species, run.heal(roundi(run.max_hp * REST_HEAL))]
 		"remove":
 			return "remove"
+		"upgrade":
+			return "upgrade"
 	return ""
 
 
@@ -146,7 +187,7 @@ static func event_options(run: RunState, key: String) -> Array:
 				{"id": "wave", "label": "Winken", "desc": "Deine Signatur-Leiste startet im nächsten Kampf halb voll.", "enabled": true},
 			]
 		"update":
-			var commons: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
+			var commons: Array = run.deck.filter(func(c): return GameData.chip(c).rar == "Gewöhnlich")
 			return [
 				{"id": "install", "label": "Aufrüsten lassen", "desc": "Ein zufälliger gewöhnlicher Chip wird zu einem seltenen.", "enabled": not commons.is_empty()},
 				{"id": "later", "label": "Ablehnen", "desc": "Die Drohne lässt zum Abschied 10 Fragmente da.", "enabled": true},
@@ -172,7 +213,7 @@ static func event_options(run: RunState, key: String) -> Array:
 				{"id": "scrap", "label": "Ausschlachten", "desc": "+25 Fragmente.", "enabled": true},
 			]
 		"schmiede":
-			var commons2: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
+			var commons2: Array = run.deck.filter(func(c): return GameData.chip(c).rar == "Gewöhnlich")
 			return [
 				{"id": "forge", "label": "Schmieden (−10 HP)", "desc": "Ein zufälliger gewöhnlicher Chip wird zu einem epischen.", "enabled": not commons2.is_empty() and run.hp > 10},
 				{"id": "slag", "label": "Schlacke verkaufen", "desc": "+15 Fragmente.", "enabled": true},
@@ -212,6 +253,51 @@ static func event_options(run: RunState, key: String) -> Array:
 				{"id": "offer", "label": "Opfergabe (20)", "desc": "Ein zufälliger epischer Chip.", "enabled": run.frag >= 20},
 				{"id": "listen", "label": "Zuhören", "desc": "+%d Wasser-Prägung, und das Orakel verrät deinen Weg." % EVENT_PRAEG, "enabled": true},
 			]
+		"werkbank":
+			return [
+				{"id": "tinker", "label": "Chip verbessern", "desc": "Wähle einen Chip, der stärker wird und schneller lädt.", "enabled": not run.upgradable().is_empty()},
+				{"id": "sell", "label": "Werkzeug verkaufen", "desc": "+20 Fragmente.", "enabled": true},
+			]
+		"pusteblumen":
+			return [
+				{"id": "blow", "label": "Kräftig pusten", "desc": "Die Bits fliegen davon – und einer deiner Chips wird zufällig verbessert.", "enabled": not run.upgradable().is_empty()},
+				{"id": "walk", "label": "Hindurchlaufen", "desc": "+15 HP.", "enabled": run.hp < run.max_hp},
+			]
+		"obsidian":
+			return [
+				{"id": "look", "label": "Hineinsehen", "desc": "+8 max. HP.", "enabled": true},
+				{"id": "smash", "label": "Zerschlagen (−10 HP)", "desc": "+35 Fragmente.", "enabled": run.hp > 10},
+			]
+		"glutkaefer":
+			return [
+				{"id": "sneak", "label": "Leise sammeln", "desc": "Meist +40 Fragmente. Wacht das Nest auf: −15 HP.", "enabled": run.hp > 15},
+				{"id": "take", "label": "Einen Käfer mitnehmen", "desc": "Funkenregen (Selten) kommt in dein Deck.", "enabled": true},
+			]
+		"wrack":
+			return [
+				{"id": "dive", "label": "Tauchen (−10 HP)", "desc": "Zwei zufällige Chips deines Decks werden verbessert.", "enabled": run.hp > 10 and not run.upgradable().is_empty()},
+				{"id": "search", "label": "Außen absuchen", "desc": "+20 Fragmente.", "enabled": true},
+			]
+		"gluehwuermer":
+			return [
+				{"id": "dance", "label": "Mittanzen", "desc": "Heilt 30 %% deiner max. HP (%d)." % roundi(run.max_hp * 0.3), "enabled": run.hp < run.max_hp},
+				{"id": "catch", "label": "Einfangen", "desc": "Ladungsfeld ins Deck und +%d Elektro-Prägung." % EVENT_PRAEG, "enabled": true},
+			]
+		"logbuch":
+			return [
+				{"id": "read", "label": "Weiterlesen", "desc": "+%d Code-Prägung. Vielleicht verstehst du, wie alles begann." % EVENT_PRAEG, "enabled": true},
+				{"id": "free", "label": "Speicher freigeben", "desc": "+30 Fragmente.", "enabled": true},
+			]
+		"nestbewohner":
+			return [
+				{"id": "cheer", "label": "Mut zusprechen", "desc": "+20 HP. Im nächsten Kampf startet die Signatur-Leiste halb voll.", "enabled": true},
+				{"id": "guide", "label": "Nach dem Weg fragen", "desc": "Sie kennen eine Abkürzung: Der nächste Gegner startet mit 25 % weniger HP.", "enabled": not run.foe_weak},
+			]
+		"kernspeicher":
+			return [
+				{"id": "repair", "label": "Chip reparieren", "desc": "Wähle einen Chip, der stärker wird und schneller lädt.", "enabled": not run.upgradable().is_empty()},
+				{"id": "salvage", "label": "Bergen (−12 HP)", "desc": "Ein zufälliger epischer Chip.", "enabled": run.hp > 12},
+			]
 	return []
 
 
@@ -245,7 +331,7 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 			run.sp_bonus = true
 			return "Der Glitchling winkt zurück. Du fühlst dich motiviert!"
 		["update", "install"]:
-			var commons: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
+			var commons: Array = run.deck.filter(func(c): return GameData.chip(c).rar == "Gewöhnlich")
 			var old: String = commons[run.rng.randi_range(0, commons.size() - 1)]
 			var neu := run.random_chip("Selten")
 			run.deck.erase(old)
@@ -280,7 +366,7 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 			run.frag += 25
 			return "Du zerlegst die Kapsel: 25 Fragmente."
 		["schmiede", "forge"]:
-			var commons: Array = run.deck.filter(func(c): return GameData.CHIPS[c].rar == "Gewöhnlich")
+			var commons: Array = run.deck.filter(func(c): return GameData.chip(c).rar == "Gewöhnlich")
 			var old: String = commons[run.rng.randi_range(0, commons.size() - 1)]
 			var neu := run.random_chip("Episch")
 			run.deck.erase(old)
@@ -348,6 +434,62 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 			if es.leader != "":
 				return msg + " „Dein Weg führt zu %s.“" % es.leader
 			return msg + " „Dein Weg ist noch offen.“"
+		["werkbank", "tinker"], ["kernspeicher", "repair"]:
+			return "upgrade"
+		["werkbank", "sell"]:
+			run.frag += 20
+			return "Ein vorbeiziehender Händler-Bot zahlt 20 Fragmente für das Werkzeug."
+		["pusteblumen", "blow"]:
+			var up := run.upgrade_random(1)
+			return "Die Bits wirbeln um deine Chips: %s!" % up[0] if not up.is_empty() else "Die Bits fliegen davon."
+		["pusteblumen", "walk"]:
+			return "Die weichen Blüten kitzeln: +%d HP." % run.heal(15)
+		["obsidian", "look"]:
+			run.max_hp += 8
+			run.hp += 8
+			return "%s richtet sich auf und sieht sich selbst in die Augen: +8 max. HP." % run.species
+		["obsidian", "smash"]:
+			run.hp -= 10
+			run.frag += 35
+			return "Klirr! Die Splitter sind wertvoll: +35 Fragmente, aber −10 HP."
+		["glutkaefer", "sneak"]:
+			if run.rng.randf() < 0.65:
+				run.frag += 40
+				return "Auf Zehenspitzen sammelst du 40 Fragmente ein. Die Käfer schnarchen weiter."
+			run.hp -= 15
+			run.frag += 15
+			return "Ein Käfer wacht auf und zwickt! −15 HP, aber immerhin 15 Fragmente."
+		["glutkaefer", "take"]:
+			run.deck.append("Funkenregen")
+			return "Der kleine Käfer glüht zufrieden: Funkenregen kommt in dein Deck."
+		["wrack", "dive"]:
+			run.hp -= 10
+			var up2 := run.upgrade_random(2)
+			return "Im Wrack findest du Ersatzteile: %s (−10 HP)." % ", ".join(up2)
+		["wrack", "search"]:
+			run.frag += 20
+			return "Außen am Gehäuse klemmen 20 Fragmente."
+		["gluehwuermer", "dance"]:
+			return "Du tanzt mit den Glühwürmchen, bis alle Sorgen verschwinden: +%d HP." % run.heal(roundi(run.max_hp * 0.3))
+		["gluehwuermer", "catch"]:
+			run.deck.append("Ladungsfeld")
+			return _imprint(run, "Elektro", "Die Glühwürmchen summen in einem Chip weiter: Ladungsfeld kommt in dein Deck.")
+		["logbuch", "read"]:
+			return _imprint(run, "Code", "Ganz unten steht: „Fehler 0x0 hat sich selbst einen Namen gegeben: Ur-Glitch.“")
+		["logbuch", "free"]:
+			run.frag += 30
+			return "Du löschst die Fehlermeldungen. Übrig bleiben 30 Fragmente."
+		["nestbewohner", "cheer"]:
+			run.sp_bonus = true
+			return "Die drei piepsen dir hinterher: „Hol unseren NEST zurück, Operator!“ +%d HP." % run.heal(20)
+		["nestbewohner", "guide"]:
+			run.foe_weak = true
+			return "Sie zeigen dir einen Lüftungsschacht. Der nächste Gegner wird überrascht."
+		["kernspeicher", "salvage"]:
+			run.hp -= 12
+			var c := run.random_chip("Episch")
+			run.deck.append(c)
+			return "Zwischen Kurzschlüssen ziehst du %s heraus (−12 HP)." % c
 	return "Du gehst weiter."
 
 
@@ -358,6 +500,11 @@ static func _imprint(run: RunState, el: String, text: String) -> String:
 
 
 # ---------- Datenhändler ----------
+
+static func _combo_suffix(run: RunState, chip: String) -> String:
+	var s := GameData.synergy(chip, run.deck, run.modules, run.mon.passive)
+	return "" if s == "" else " (%s!)" % s
+
 
 ## Preis nach Rabattchip-Modul
 static func price(run: RunState, base: int) -> int:
@@ -374,7 +521,7 @@ static func shop_init(run: RunState, node: Dictionary) -> void:
 	var m := run.roll_module({"Gewöhnlich": 4, "Selten": 3, "Episch": 1})
 	if m != "":
 		offers.append({"module": m, "price": GameData.MODULE_PRICE[GameData.MODULES[m].rar], "sold": false})
-	node.shop = {"offers": offers, "repair": false, "remove": false}
+	node.shop = {"offers": offers, "repair": false, "remove": false, "upgrade": false}
 
 
 static func shop_options(run: RunState, node: Dictionary) -> Array:
@@ -389,11 +536,14 @@ static func shop_options(run: RunState, node: Dictionary) -> Array:
 			continue
 		var ch: Dictionary = GameData.CHIPS[o.chip]
 		out.append({"id": "buy_%d" % i, "label": "%s (%d)" % [o.chip, pr] if not o.sold else "%s – verkauft" % o.chip,
-			"desc": "%s · %s: %s" % [ch.el, ch.rar, ch.desc], "enabled": not o.sold and run.frag >= pr, "chip": o.chip})
+			"desc": "%s · %s: %s%s" % [ch.el, ch.rar, ch.desc, _combo_suffix(run, o.chip)], "enabled": not o.sold and run.frag >= pr, "chip": o.chip})
 	var p_rep := price(run, PRICE_REPAIR)
 	var p_rem := price(run, PRICE_REMOVE)
 	out.append({"id": "repair", "label": "Reparatur (%d)" % p_rep, "desc": "Heilt 25 HP. Einmal pro Besuch.",
 		"enabled": not node.shop.repair and run.frag >= p_rep and run.hp < run.max_hp})
+	var p_up := price(run, PRICE_UPGRADE)
+	out.append({"id": "upgrade", "label": "Chip verbessern (%d)" % p_up, "desc": "Ein Chip deiner Wahl wird stärker und lädt schneller. Einmal pro Besuch.",
+		"enabled": not node.shop.get("upgrade", false) and run.frag >= p_up and not run.upgradable().is_empty()})
 	out.append({"id": "remove", "label": "Chip entfernen (%d)" % p_rem, "desc": "Entferne einen Chip aus deinem Deck. Einmal pro Besuch.",
 		"enabled": not node.shop.remove and run.frag >= p_rem and run.deck.size() > MIN_DECK})
 	return out
@@ -418,4 +568,8 @@ static func shop_apply(run: RunState, node: Dictionary, id: String) -> String:
 			run.frag -= price(run, PRICE_REMOVE)
 			node.shop.remove = true
 			return "remove"
+		"upgrade":
+			run.frag -= price(run, PRICE_UPGRADE)
+			node.shop.upgrade = true
+			return "upgrade"
 	return ""

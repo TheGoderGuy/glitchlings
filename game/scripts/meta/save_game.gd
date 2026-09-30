@@ -74,6 +74,37 @@ func save_game() -> void:
 	f.store_string(JSON.stringify(data, "\t"))
 
 
+# ---------- Station-Ausbau ----------
+
+func upgrade_level(id: String) -> int:
+	return int(data.get("upgrades", {}).get(id, 0))
+
+
+func nest_slots() -> int:
+	return NEST_SLOTS + upgrade_level("nestplatz")
+
+
+## Preis der nächsten Stufe (-1 = schon ganz ausgebaut)
+func upgrade_cost(id: String) -> int:
+	for u in GameData.STATION_UPGRADES:
+		if u.id == id:
+			var lv := upgrade_level(id)
+			return -1 if lv >= u.costs.size() else int(u.costs[lv])
+	return -1
+
+
+func buy_upgrade(id: String) -> bool:
+	var cost := upgrade_cost(id)
+	if cost < 0 or frag() < cost:
+		return false
+	data.frag = frag() - cost
+	if not data.has("upgrades"):
+		data.upgrades = {}
+	data.upgrades[id] = upgrade_level(id) + 1
+	save_game()
+	return true
+
+
 ## Laufender Run (wird auf der Karte gespeichert, damit man später weiterspielen kann)
 func has_run() -> bool:
 	return data.get("run", {}) is Dictionary and not data.get("run", {}).is_empty()
@@ -144,10 +175,11 @@ func nest() -> Array:
 
 
 func add_egg(rarity: String, rng: RandomNumberGenerator) -> Dictionary:
-	if nest().size() >= NEST_SLOTS:
+	if nest().size() >= nest_slots():
 		return {}
 	var pool: Array = egg_pool(rarity)
-	var egg := {"rarity": rarity, "species": pool[rng.randi_range(0, pool.size() - 1)], "runs_left": EGG_RUNS[rarity]}
+	var runs := maxi(1, int(EGG_RUNS[rarity]) - upgrade_level("brutwaermer"))
+	var egg := {"rarity": rarity, "species": pool[rng.randi_range(0, pool.size() - 1)], "runs_left": runs}
 	data.nest.append(egg)
 	return egg
 

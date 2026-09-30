@@ -83,6 +83,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Glitchlinge überarbeitet (29.09.2026): Brummbit Gift-Linie (Pilzbrumm/Sporenpranke/Myzelgrizz), Lumi Wasser-Linie (Perlhopp/Gischthase/Lunaflut), Pixmiez ohne Feuer-Linie, Leviamander/Tracko/Gigaquak/Kekso neu, Fusionen Wolperling, Schlummerbit, Pustebacke statt Dampfbyte/Glyphel, Brummbit braun, Gigaquak Titan, 74 Formen, Spielstand-Übertragung – `vault/05 Produktion/Glitchlinge-Überarbeitung.md`
 - [x] Dachs (Buddli: Feuer/Elektro) und Waschbär (Maskli: Wasser/Virus) als neue Linien bis Ultra, Passive Furchtlos/Langfinger, 88 Formen, 223 Tests – `vault/05 Produktion/Dachs und Waschbär.md`
 - [x] Ebenen + Wächter (30.09.2026): Zonen 3 Ebenen × 5 Etagen (Kern 2), 7 Wächter (Sprungschreck, Dornwurz, Schlackwurm, Magmaskorp, Schnappkelch, Schlickkrake, Skolopendrox), Boss-Phasen mit neuen Mustern, goldene Großangriffe (ausweichen = Überlastet), Wächtermusik, Run speichern/fortsetzen, 239 Tests – `vault/05 Produktion/Ebenen und Wächter.md`
+- [x] Deckbau + Station-Ausbau (30.09.2026): verbesserte Chips (`Name+`, Rast/Händler/Ereignisse), Synergie-Hinweise in der Chipwahl, Glitch-Elite (riskante Route), 9 neue Ereignisse (26, NEST-Kern mit Lore), Station-Reiter „Ausbau“ (6 Ausbauten), 261 Tests – `vault/05 Produktion/Deckbau und Station-Ausbau.md`
 - [x] Idle-Animationen: Test mit 6 Figuren, 10 Bilder/s (`tools/sprites/node/anim_frames.js`) · [ ] alle Figuren animieren
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo

@@ -34,6 +34,14 @@ static func args() -> Dictionary:
 			shot.level = int(a.substr(8))
 		elif a.begins_with("--special="):
 			shot.special = float(a.substr(10))
+		elif a.begins_with("--choose="):
+			shot.choose = a.substr(9)
+		elif a.begins_with("--choices="):
+			shot.choices = a.substr(10).split(",")
+		elif a.begins_with("--deck="):
+			shot.deck = a.substr(7).split(",")
+		elif a == "--glitchnode":
+			shot.glitchnode = true
 		elif a == "--guard":
 			shot.guard = true
 		elif a == "--pops":

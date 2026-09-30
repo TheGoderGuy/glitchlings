@@ -4,8 +4,8 @@ extends PixelCanvas
 signal start_run(monster_id: int, zone: String)
 signal to_title
 
-enum Tab { TEAM, NEST, LAB, DEX }
-const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex"]
+enum Tab { TEAM, NEST, LAB, DEX, UPGRADE }
+const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex", "Ausbau"]
 ## Nach Linien: Baby → Rookies → Champions → Ultras, am Ende die Fusionen
 const DEX_ORDER := [
 	"Pixmiez", "Firewallo", "Virulina", "Prismiez", "Bollwerkatz", "Toxipanth", "Prismalynx", "Bastionkatz", "Venomynx", "Aurorlynx",
@@ -34,6 +34,7 @@ var fuse_sel: Array = []     # IDs der gewählten Labor-Monster (max. 2)
 var fuse_msg := ""
 var fusion := {}             # laufende Fusions-Szene
 var zone_idx := 0            # gewählte Zone im Team-Reiter
+var up_msg := ""             # Rückmeldung im Ausbau-Reiter
 
 
 func _ready() -> void:
@@ -80,11 +81,13 @@ func _process(delta: float) -> void:
 		queue_redraw()
 		return
 	if Input.is_action_just_pressed("tab_next"):
-		tab = ((tab + 1) % 4) as Tab
+		tab = ((tab + 1) % TAB_NAMES.size()) as Tab
+		up_msg = ""
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("tab_prev"):
-		tab = ((tab + 3) % 4) as Tab
+		tab = ((tab + TAB_NAMES.size() - 1) % TAB_NAMES.size()) as Tab
+		up_msg = ""
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
@@ -136,6 +139,20 @@ func _process(delta: float) -> void:
 					else:
 						fuse_msg = "Wähle zuerst zwei Monster aus."
 						Sfx.play("back")
+			Tab.UPGRADE:
+				_nav_v(GameData.STATION_UPGRADES.size())
+				if Input.is_action_just_pressed("confirm"):
+					var u: Dictionary = GameData.STATION_UPGRADES[sel]
+					var cost := SaveGame.upgrade_cost(u.id)
+					if cost < 0:
+						up_msg = "%s ist schon ganz ausgebaut." % u.name
+						Sfx.play("back")
+					elif SaveGame.buy_upgrade(u.id):
+						up_msg = "%s ausgebaut: Stufe %d!" % [u.name, SaveGame.upgrade_level(u.id)]
+						Sfx.play("evolve", 0.0)
+					else:
+						up_msg = "Dafür fehlen noch %d Fragmente." % (cost - SaveGame.frag())
+						Sfx.play("back")
 			Tab.DEX:
 				var n := DEX_ORDER.size()
 				if Input.is_action_just_pressed("move_right"):
@@ -179,6 +196,8 @@ func _draw() -> void:
 			_draw_lab()
 		Tab.DEX:
 			_draw_dex()
+		Tab.UPGRADE:
+			_draw_upgrades()
 	var pad: bool = InputSetup.pad
 	var hint := "%s/%s Reiter   %s zurück zum Titel" % ["LB" if pad else "Q", "RB" if pad else "E", "B" if pad else "Esc"]
 	_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
@@ -199,7 +218,7 @@ func _draw_tabs() -> void:
 		_text(Vector2(r.position.x, r.position.y + 13), TAB_NAMES[i], 8, GameData.COL.ink if active else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, w, true, active)
 		x += w + 4
 	var st: Dictionary = SaveGame.data.get("stats", {})
-	_text(Vector2(0, 21), "Fragmente %d · Dex %d/%d " % [SaveGame.frag(), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
+	_text(Vector2(0, 36), "Fragmente %d · Dex %d/%d " % [SaveGame.frag(), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
 
 
 func _draw_team() -> void:
@@ -258,14 +277,47 @@ func _draw_team() -> void:
 	_text(Vector2(R.position.x, R.end.y - 12), "%s Mit %s losziehen" % ["A" if pad else "Enter", form], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 
 
+func _draw_upgrades() -> void:
+	var R := Rect2(40, 40, 560, 296)
+	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
+	_text(Vector2(R.position.x, R.position.y + 22), "Station-Ausbau", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	_text(Vector2(R.position.x, R.position.y + 38), "Fragmente aus deinen Runs machen die Station dauerhaft besser. Du hast %d." % SaveGame.frag(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	var ups: Array = GameData.STATION_UPGRADES
+	for i in ups.size():
+		var u: Dictionary = ups[i]
+		var lv := SaveGame.upgrade_level(u.id)
+		var maxlv: int = u.costs.size()
+		var cost := SaveGame.upgrade_cost(u.id)
+		var active := i == sel
+		var r := Rect2(R.position.x + 20, R.position.y + 50 + i * 36, R.size.x - 40, 32)
+		_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
+		_text(Vector2(r.position.x + 10, r.position.y + 13), u.name, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+		# Stufen als Kästchen
+		for k in maxlv:
+			var pr := Rect2(r.position.x + 130 + k * 12, r.position.y + 6, 8, 8)
+			draw_rect(pr, GameData.COL.mint if k < lv else GameData.COL.dark)
+			draw_rect(pr, GameData.COL.line, false, 1.0)
+		var desc: String = GameData.upgrade_desc(u, lv) if cost < 0 else GameData.upgrade_desc(u, lv + 1)
+		var prefix := "Jetzt: " if cost < 0 else ("Nächste Stufe: " if lv > 0 else "")
+		_text(Vector2(r.position.x + 10, r.position.y + 26), prefix + desc, 8, GameData.COL.muted)
+		var price_txt := "ganz ausgebaut" if cost < 0 else "%d Fragmente" % cost
+		var pcol: Color = GameData.COL.mint if cost < 0 else (GameData.COL.sun if SaveGame.frag() >= cost else Color(GameData.COL.coral, 0.9))
+		_text(Vector2(r.position.x, r.position.y + 13), price_txt, 8, pcol, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 10, true, true)
+	var foot := up_msg if up_msg != "" else "%s ausbauen" % ("A" if InputSetup.pad else "Enter")
+	_text(Vector2(R.position.x, R.end.y - 10), foot, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+
+
 func _draw_nest() -> void:
 	var R := Rect2(40, 40, 560, 296)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
 	_text(Vector2(R.position.x, R.position.y + 22), "Brutnest", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 	_text(Vector2(R.position.x, R.position.y + 38), "Eier gibt es nach Runs mit mindestens %d gewonnenen Kämpfen, seltenere nach einem Boss-Sieg." % SaveGame.EGG_MIN_WINS, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 	var eggs := SaveGame.nest()
-	for i in SaveGame.NEST_SLOTS:
-		var r := Rect2(R.position.x + 40 + i * 170, R.position.y + 64, 140, 180)
+	var slots := SaveGame.nest_slots()
+	var sw := 140.0 if slots <= 3 else 116.0
+	var gap := 170.0 if slots <= 3 else 128.0
+	for i in slots:
+		var r := Rect2(R.get_center().x - (gap * (slots - 1) + sw) / 2.0 + i * gap, R.position.y + 64, sw, 180)
 		_box(r, GameData.COL.bg2, GameData.COL.line)
 		if i >= eggs.size():
 			_text(Vector2(r.position.x, r.get_center().y), "leer", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)

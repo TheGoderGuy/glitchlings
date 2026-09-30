@@ -34,6 +34,7 @@ var floor_idx := -1       # -1 = noch vor der ersten Etage der Ebene
 var pos := -1
 var path: Array = []      # besuchte Knoten als Vector2i(etage, index)
 var rng := RandomNumberGenerator.new()
+var loot_mult := 1.0      # Fragmentfilter (Station-Ausbau)
 var difficulty := 1       # 0 Entspannt, 1 Normal, 2 Knackig, 3 Korrumpiert (nach dem Ende, aus den Optionen)
 
 const DIFF_HP := [0.8, 1.0, 1.25, 1.5]
@@ -252,11 +253,11 @@ func _base_foe(node: Dictionary) -> Dictionary:
 		var guards: Array = Z.guards
 		return GameData.FOES[guards[mini(map.level, guards.size() - 1)]].duplicate(true)
 	var g := zone_floor()
-	var pool: Array = Z.elite if node.type == "elite" else (Z.early if g < 2 else Z.late)
+	var pool: Array = Z.elite if node.type in ["elite", "glitch"] else (Z.early if g < 2 else Z.late)
 	var base: Dictionary = GameData.FOES[pool[rng.randi_range(0, pool.size() - 1)]]
 	var d := base.duplicate()
 	d.hp = roundi(base.hp * (1.0 + 0.05 * g) * Z.hp_mult)
-	d.elite = node.type == "elite"
+	d.elite = node.type in ["elite", "glitch"]
 	if d.elite:
 		d.name = "Elite-" + base.name
 		d.hp = roundi(d.hp * 1.6)
@@ -264,6 +265,13 @@ func _base_foe(node: Dictionary) -> Dictionary:
 		d.atk = base.atk * 0.85
 		d.move = base.move * 0.85
 		d.loot = base.loot * 2 + 5
+	# Glitch-Elite: riskante Route mit epischer Belohnung
+	if node.type == "glitch":
+		d.name = "Glitch-" + base.name
+		d.hp = roundi(d.hp * 1.35)
+		d.dmg += 3
+		d.loot = roundi(d.loot * 1.5)
+		d.glitch = true
 	return d
 
 
@@ -328,6 +336,54 @@ func heal(n: int) -> int:
 	return h
 
 
+## Station-Ausbau zu Beginn des Runs anwenden ({id: Stufe}, siehe GameData.STATION_UPGRADES)
+func apply_station(levels: Dictionary) -> void:
+	var hp_bonus := 10 * int(levels.get("vorrat", 0))
+	max_hp += hp_bonus
+	hp += hp_bonus
+	# Werkbank: verbesserte Start-Chips, bevorzugt Angriffe
+	for i in int(levels.get("werkbank", 0)):
+		var pool: Array = upgradable().filter(func(c): return int(GameData.chip(c).dmg) > 0)
+		if pool.is_empty():
+			pool = upgradable()
+		if pool.is_empty():
+			break
+		upgrade_chip(pool[rng.randi_range(0, pool.size() - 1)])
+	var ms := int(levels.get("modulschacht", 0))
+	if ms > 0:
+		add_module(roll_module({"Gewöhnlich": 1, "Selten": 0, "Episch": 0} if ms == 1 else {"Gewöhnlich": 3, "Selten": 3, "Episch": 1}))
+	loot_mult = 1.0 + 0.15 * int(levels.get("filter", 0))
+
+
+## Chips im Deck, die sich noch verbessern lassen (jeder Name einmal)
+func upgradable() -> Array:
+	var out: Array = []
+	for c in deck:
+		if not GameData.is_upgraded(c) and not out.has(c):
+			out.append(c)
+	return out
+
+
+## Eine Kopie des Chips wird zur verbesserten Fassung („Glutball“ → „Glutball+“)
+func upgrade_chip(chip: String) -> String:
+	var i := deck.find(chip)
+	if i < 0 or GameData.is_upgraded(chip):
+		return ""
+	deck[i] = chip + "+"
+	return deck[i]
+
+
+## n zufällige verschiedene Chips verbessern; gibt die neuen Namen zurück
+func upgrade_random(n: int) -> Array:
+	var out: Array = []
+	for j in n:
+		var pool := upgradable()
+		if pool.is_empty():
+			break
+		out.append(upgrade_chip(pool[rng.randi_range(0, pool.size() - 1)]))
+	return out
+
+
 func remove_chip(chip: String) -> void:
 	deck.erase(chip)
 
@@ -346,7 +402,7 @@ func to_dict() -> Dictionary:
 		"forms_seen": forms_seen.duplicate(), "tutorial": tutorial, "last_foe": last_foe,
 		"elapsed_ms": Time.get_ticks_msec() - start_ms, "chips_used": chips_used, "fights_won": fights_won,
 		"sp_bonus": sp_bonus, "foe_weak": foe_weak, "seen_events": seen_events.duplicate(),
-		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty,
+		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty, "loot_mult": loot_mult,
 		"zone": map.zone, "level": map.level, "floors": map.floors.duplicate(true),
 		"floor_idx": floor_idx, "pos": pos, "path": p,
 		# 64-Bit-Werte als Text, JSON-Zahlen sind nur Gleitkomma
@@ -380,6 +436,7 @@ static func from_dict(d: Dictionary) -> RunState:
 	r.modules = Array(d.modules)
 	r.backup_used = bool(d.backup_used)
 	r.difficulty = int(d.difficulty)
+	r.loot_mult = float(d.get("loot_mult", 1.0))
 	var m := ZoneMap.new()
 	m.zone = d.zone
 	m.zone_name = GameData.ZONES[m.zone].name
