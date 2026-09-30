@@ -16,6 +16,7 @@ const CARD_H := 44
 const HAND_Y := 310
 const HAND_X := 42
 const HEAL_AFTER_FIGHT := 10
+const GUARD_HEAL := 0.3   # Wächter besiegt: +30 % der max. HP
 const BABY_SCALE := 1     # Babys (32 px) im Kampf in Originalgröße, damit die Evolution sichtbar wächst
 
 enum Mode { FIGHT, PAUSE, EVOLVE, PICK, INTRO }
@@ -63,8 +64,8 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 	if run.tutorial and run.fights_won == 0 and type == "fight":
 		tut = Tutorial.new()
 		st.status = ""
-	if type == "boss":
-		# Boss-Intro: erst Stille und Warnung, die Bossmusik setzt mit der Enthüllung ein
+	if type in ["boss", "guard"]:
+		# Boss-/Wächter-Intro: erst Stille und Warnung, die Bossmusik setzt mit der Enthüllung ein
 		Music.stop()
 		_set_mode(Mode.INTRO)
 	else:
@@ -123,11 +124,15 @@ func _fight_over() -> void:
 			_set_mode(Mode.EVOLVE)
 			Sfx.play("charge", 0.0)
 			return
-	heal_info = run.heal(HEAL_AFTER_FIGHT + (8 if run.has_mod("lebensbit") else 0))
-	choices = run.roll_pick(RunState.ELITE_WEIGHT if node_type == "elite" else GameData.RARITY_WEIGHT)
-	# Elite-Belohnung: ein neues Modul
+	# Wächter: zusätzlich 30 % der max. HP als Verschnaufpause vor der nächsten Ebene
+	var heal_amt := HEAL_AFTER_FIGHT + (8 if run.has_mod("lebensbit") else 0)
+	if node_type == "guard":
+		heal_amt += roundi(run.max_hp * GUARD_HEAL)
+	heal_info = run.heal(heal_amt)
+	choices = run.roll_pick(RunState.ELITE_WEIGHT if node_type in ["elite", "guard"] else GameData.RARITY_WEIGHT)
+	# Elite- und Wächter-Belohnung: ein neues Modul
 	new_module = ""
-	if node_type == "elite":
+	if node_type in ["elite", "guard"]:
 		new_module = run.roll_module(GameData.MODULE_WEIGHT_ELITE)
 		run.add_module(new_module)
 	pick_idx = 1
@@ -277,7 +282,7 @@ func _draw() -> void:
 		_draw_background()
 		return
 	var zbg: String = GameData.ZONES[run.map.zone].bg
-	_draw_zone(zbg + "_boss" if st.def.boss else zbg)
+	_draw_zone(zbg + "_boss" if st.def.boss and not st.def.get("guard", false) else zbg)
 	if st == null:
 		return
 	if mode == Mode.EVOLVE:
@@ -378,8 +383,17 @@ func _draw_arena_overlays() -> void:
 	for w in st.warns:
 		var k: float = 1.0 - w.t / w.max
 		var a := 0.5 + 0.4 * k * (0.6 + 0.4 * sin(anim_t * 28.0))
+		var big: bool = w.get("big", false)
 		for cell in w.cells:
 			var rect := cell_rect(cell.x, cell.y)
+			if big:
+				# Großangriff: goldenes Feld mit pulsierendem Rahmen, kurz vor dem Einschlag weiß
+				var gold := Color("#FFB23D").lerp(Color.WHITE, clampf((k - 0.75) * 3.0, 0.0, 0.7))
+				draw_rect(rect, Color(gold, 0.35 + 0.35 * k))
+				var bw := 2 if sin(anim_t * (14.0 + 20.0 * k)) > 0 else 3
+				draw_rect(rect, gold, false, bw)
+				_text(rect.position + Vector2(0, 26), "!!", 16, Color(1, 1, 1, minf(1.0, 0.5 + k)), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true, true)
+				continue
 			draw_rect(rect, Color(GameData.COL.coral, a))
 			_text(rect.position + Vector2(0, 26), "!", 16, Color(1, 1, 1, minf(1.0, 0.4 + k)), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true, true)
 	for hz in st.hazards:
@@ -640,7 +654,7 @@ func _draw_hud() -> void:
 		tx -= 3
 	# Raum + Hinweis
 	var kind: String = ZoneMap.TYPE_NAMES[node_type]
-	_text(Vector2(0, 20), "%s · Etage %d · %s" % [run.map.zone_name, run.floor_idx + 1, kind], 8, GameData.COL.sun if node_type != "fight" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	_text(Vector2(0, 20), "Ebene %d · Etage %d · %s" % [run.map.level + 1, run.floor_idx + 1, kind], 8, GameData.COL.sun if node_type != "fight" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if st.status != "" and st.t < 6.0:
 		_text(Vector2(0, 76), st.status, 8, Color(GameData.COL.sun, clampf(6.0 - st.t, 0.0, 1.0)), HORIZONTAL_ALIGNMENT_CENTER, W)
 
@@ -715,7 +729,8 @@ func _draw_pick() -> void:
 	var es := run.evo_status()
 	var r := Rect2(40, 30, 560, 300)
 	_panel(r)
-	_text(r.position + Vector2(0, 30), "Sieg!", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	var head_txt := "Wächter besiegt! Ebene %d ist frei." % (run.map.level + 2) if node_type == "guard" else "Sieg!"
+	_text(r.position + Vector2(0, 30), head_txt, 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	var line := "%s ist defragmentiert. +%d Fragmente" % [st.def.name, st.loot_gained if st.loot_gained > 0 else st.def.loot]
 	if heal_info > 0:
 		line += ", +%d HP" % heal_info
@@ -914,7 +929,9 @@ func _process_intro(_delta: float) -> void:
 
 
 func _boss_track() -> String:
-	return "finale" if st.def.get("final", false) else "boss"
+	if st.def.get("final", false):
+		return "finale"
+	return "guard" if st.def.get("guard", false) else "boss"
 
 
 func _start_boss_fight() -> void:
@@ -972,7 +989,8 @@ func _draw_boss_intro() -> void:
 		for i in range(-2, 30):
 			var x0 := i * 24.0 + sh
 			draw_colored_polygon(PackedVector2Array([Vector2(x0, y + 4), Vector2(x0 + 12, y + 4), Vector2(x0 + 4, y + bh - 4), Vector2(x0 - 8, y + bh - 4)]), Color("#FF5470", 0.85))
-		var txt := "  WARNUNG  ·  BOSS  ·  WARNUNG  ·  BOSS  ·  WARNUNG  ·  BOSS  ·  WARNUNG  ·  BOSS"
+		var who := "WÄCHTER" if def.get("guard", false) else "BOSS"
+		var txt := "  WARNUNG  ·  %s  ·  WARNUNG  ·  %s  ·  WARNUNG  ·  %s  ·  WARNUNG  ·  %s" % [who, who, who, who]
 		var tx := -fmod(anim_t * 80.0, 200.0) if top else -200.0 + fmod(anim_t * 80.0, 200.0)
 		_text(Vector2(tx, y + bh / 2.0 + 4), txt, 8, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	# Weißer Blitz bei der Enthüllung
@@ -993,7 +1011,7 @@ func _draw_boss_intro() -> void:
 		draw_string(f, Vector2(nx, 136), name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color.WHITE)
 		if t > INTRO_REVEAL + 0.45:
 			var tk := clampf((t - INTRO_REVEAL - 0.45) / 0.3, 0.0, 1.0)
-			_text(Vector2(nx, 156), def.get("title", "Herrscher dieser Zone"), 8, Color(el.lightened(0.3), tk), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+			_text(Vector2(nx, 156), def.get("title", "Herrscher dieser Zone") if not def.get("guard", false) else "Wächter der Ebene %d · %s" % [run.map.level + 1, def.get("title", "")], 8, Color(el.lightened(0.3), tk), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 			_text(Vector2(nx, 172), "%s · %d HP" % [def.el, def.hp], 8, Color(GameData.COL.muted, tk))
 	_text(Vector2(0, H - 34), "%s überspringen" % ("A" if InputSetup.pad else "Enter"), 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 12)
 

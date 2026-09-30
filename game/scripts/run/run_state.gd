@@ -29,8 +29,8 @@ var foe_weak := false     # nächster Gegner startet mit 25 % weniger HP (Ereign
 var seen_events: Array = []
 var modules: Array = []   # Module (GameData.MODULES) für diesen Run
 var backup_used := false  # Backup-Kern schon verbraucht?
-var map: ZoneMap
-var floor_idx := -1       # -1 = noch vor der ersten Etage
+var map: ZoneMap          # Karte der aktuellen Ebene (map.level)
+var floor_idx := -1       # -1 = noch vor der ersten Etage der Ebene
 var pos := -1
 var path: Array = []      # besuchte Knoten als Vector2i(etage, index)
 var rng := RandomNumberGenerator.new()
@@ -213,6 +213,24 @@ func current_node() -> Dictionary:
 	return map.node(floor_idx, pos) if floor_idx >= 0 else {}
 
 
+## Etage über die ganze Zone gezählt (0-basiert; Wächter/Boss zählen als eigene Etage)
+func zone_floor() -> int:
+	return map.level * map.boss_floor() + maxi(floor_idx, 0)
+
+
+## Anzahl Etagen der ganzen Zone (ohne Wächter und Boss)
+func zone_floors() -> int:
+	return map.levels * map.boss_floor()
+
+
+## Nach dem Sieg über einen Wächter: Karte der nächsten Ebene
+func next_level() -> void:
+	map = ZoneMap.generate(rng, map.zone, map.level + 1)
+	floor_idx = -1
+	pos = -1
+	path = []
+
+
 ## Gegnerwerte für einen Kampfknoten; wird mit jeder Etage etwas zäher.
 func foe_for(node: Dictionary) -> Dictionary:
 	return _apply_difficulty(_base_foe(node))
@@ -229,11 +247,15 @@ func _apply_difficulty(d: Dictionary) -> Dictionary:
 func _base_foe(node: Dictionary) -> Dictionary:
 	var Z: Dictionary = GameData.ZONES[map.zone]
 	if node.type == "boss":
-		return GameData.FOES[Z.boss].duplicate()
-	var pool: Array = Z.elite if node.type == "elite" else (Z.early if floor_idx < 2 else Z.late)
+		return GameData.FOES[Z.boss].duplicate(true)
+	if node.type == "guard":
+		var guards: Array = Z.guards
+		return GameData.FOES[guards[mini(map.level, guards.size() - 1)]].duplicate(true)
+	var g := zone_floor()
+	var pool: Array = Z.elite if node.type == "elite" else (Z.early if g < 2 else Z.late)
 	var base: Dictionary = GameData.FOES[pool[rng.randi_range(0, pool.size() - 1)]]
 	var d := base.duplicate()
-	d.hp = roundi(base.hp * (1.0 + 0.07 * floor_idx) * Z.hp_mult)
+	d.hp = roundi(base.hp * (1.0 + 0.05 * g) * Z.hp_mult)
 	d.elite = node.type == "elite"
 	if d.elite:
 		d.name = "Elite-" + base.name
@@ -308,3 +330,82 @@ func heal(n: int) -> int:
 
 func remove_chip(chip: String) -> void:
 	deck.erase(chip)
+
+
+# ---------- Speichern (Run fortsetzen) ----------
+
+## Run als JSON-taugliches Dictionary (wird auf der Karte in den Spielstand geschrieben)
+func to_dict() -> Dictionary:
+	var p: Array = []
+	for v in path:
+		p.append([v.x, v.y])
+	return {
+		"species": species, "form": form, "stage": stage, "eis": eis, "max_hp": max_hp, "hp": hp,
+		"deck": deck.duplicate(), "frag": frag, "praeg": praeg.duplicate(), "monster_id": monster_id,
+		"start_form": start_form, "base_chips": base_chips, "base_praeg": base_praeg.duplicate(),
+		"forms_seen": forms_seen.duplicate(), "tutorial": tutorial, "last_foe": last_foe,
+		"elapsed_ms": Time.get_ticks_msec() - start_ms, "chips_used": chips_used, "fights_won": fights_won,
+		"sp_bonus": sp_bonus, "foe_weak": foe_weak, "seen_events": seen_events.duplicate(),
+		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty,
+		"zone": map.zone, "level": map.level, "floors": map.floors.duplicate(true),
+		"floor_idx": floor_idx, "pos": pos, "path": p,
+		# 64-Bit-Werte als Text, JSON-Zahlen sind nur Gleitkomma
+		"rng_seed": str(rng.seed), "rng_state": str(rng.state),
+	}
+
+
+static func from_dict(d: Dictionary) -> RunState:
+	var r := RunState.new(String(d.species))
+	r.form = d.form
+	r.stage = int(d.stage)
+	r.eis = int(d.eis)
+	r.max_hp = int(d.max_hp)
+	r.hp = int(d.hp)
+	r.deck = Array(d.deck)
+	r.frag = int(d.frag)
+	r.praeg = _int_dict(d.praeg)
+	r.monster_id = int(d.monster_id)
+	r.start_form = d.start_form
+	r.base_chips = int(d.base_chips)
+	r.base_praeg = _int_dict(d.base_praeg)
+	r.forms_seen = Array(d.forms_seen)
+	r.tutorial = bool(d.tutorial)
+	r.last_foe = d.last_foe
+	r.start_ms = Time.get_ticks_msec() - int(d.elapsed_ms)
+	r.chips_used = int(d.chips_used)
+	r.fights_won = int(d.fights_won)
+	r.sp_bonus = bool(d.sp_bonus)
+	r.foe_weak = bool(d.foe_weak)
+	r.seen_events = Array(d.seen_events)
+	r.modules = Array(d.modules)
+	r.backup_used = bool(d.backup_used)
+	r.difficulty = int(d.difficulty)
+	var m := ZoneMap.new()
+	m.zone = d.zone
+	m.zone_name = GameData.ZONES[m.zone].name
+	m.level = int(d.level)
+	m.levels = GameData.ZONES[m.zone].get("levels", ZoneMap.LEVELS)
+	for row in d.floors:
+		var out: Array = []
+		for n in row:
+			var node: Dictionary = n.duplicate(true)
+			node.x = float(n.x)
+			node.next = Array(n.next).map(func(v): return int(v))
+			out.append(node)
+		m.floors.append(out)
+	r.map = m
+	r.floor_idx = int(d.floor_idx)
+	r.pos = int(d.pos)
+	r.path = []
+	for v in d.path:
+		r.path.append(Vector2i(int(v[0]), int(v[1])))
+	r.rng.seed = String(d.rng_seed).to_int()
+	r.rng.state = String(d.rng_state).to_int()
+	return r
+
+
+static func _int_dict(src: Dictionary) -> Dictionary:
+	var out := {}
+	for k in src:
+		out[k] = int(src[k])
+	return out

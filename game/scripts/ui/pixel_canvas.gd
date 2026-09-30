@@ -91,7 +91,9 @@ const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "wurm": "bytewurm_64"
 	"kaefer": "chiffrekaefer_64", "wespe": "datenwespe_64", "raupe": "raupe_64",
 	"milbe": "milbe_64", "assel": "assel_64", "falter": "falter_64", "skarab": "skarab_96",
 	"muecke": "muecke_64", "schnecke": "panzerschnecke_64", "bluete": "glitchbluete_64", "koenigin": "schwarmkoenigin_96",
-	"drohne": "kerndrohne_64", "spinne": "glitchspinne_64", "urglitch": "urglitch_96"}
+	"drohne": "kerndrohne_64", "spinne": "glitchspinne_64", "urglitch": "urglitch_96",
+	"sprungschreck": "sprungschreck_80", "dornwurz": "dornwurz_80", "schlackwurm": "schlackwurm_80", "magmaskorp": "magmaskorp_80",
+	"schnappkelch": "schnappkelch_80", "schlickkrake": "schlickkrake_80", "skolopendrox": "skolopendrox_80"}
 static var _sprites := {}
 const IDLE_FPS := 10.0  # Bilder pro Sekunde der Idle-Animationen (Produzent: 10 sieht am besten aus)
 

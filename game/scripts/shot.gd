@@ -30,6 +30,12 @@ static func args() -> Dictionary:
 			shot.mods = a.substr(7).split(",")
 		elif a.begins_with("--newmod="):
 			shot.newmod = a.substr(9)
+		elif a.begins_with("--level="):
+			shot.level = int(a.substr(8))
+		elif a.begins_with("--special="):
+			shot.special = float(a.substr(10))
+		elif a == "--guard":
+			shot.guard = true
 		elif a == "--pops":
 			shot.pops = true
 		elif a == "--lava":

@@ -323,5 +323,28 @@
  "Virocyon_96": {
   "crop": "70,40,89,57",
   "blink": "71,48,77,53"
+ },
+ "sprungschreck_80": {
+  "crop": "52,32,72,52",
+  "blink": "60,40,65,45",
+  "dim": true
+ },
+ "schlickkrake_80": {
+  "crop": "40,26,60,46",
+  "blink": "49,34,53,40",
+  "dim": true,
+  "hi": true
+ },
+ "skolopendrox_80": {
+  "crop": "52,6,76,26",
+  "blink": "57,14,62,19;65,12,71,17",
+  "dim": true,
+  "hi": true
+ },
+ "dornwurz_80": {
+  "crop": "28,22,58,44",
+  "blink": "36,30,49,36",
+  "dim": true,
+  "hi": true
  }
 }

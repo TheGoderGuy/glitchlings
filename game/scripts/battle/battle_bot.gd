@@ -26,11 +26,10 @@ func act(st: BattleState) -> void:
 	var dirs := [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
 	if st.p.cd <= 0 and st.pend_move == null:
 		if danger.has(here):
-			for d in dirs:
-				var n: Vector2i = here + d
-				if _inside(n) and not danger.has(n):
-					st.move_player(d.x, d.y)
-					break
+			# Breitensuche zum nächsten sicheren Feld (Großangriffe lassen oft nur ein Feld frei)
+			var d := _escape(here, danger)
+			if d != Vector2i.ZERO:
+				st.move_player(d.x, d.y)
 		elif not st.pops.is_empty():
 			var q: Dictionary = st.pops[0]
 			var d := _step_towards(here, Vector2i(q.c, q.r))
@@ -51,6 +50,22 @@ func act(st: BattleState) -> void:
 		st.use_slot(i)
 	if st.sp >= 100:
 		st.use_special()
+
+
+static func _escape(from: Vector2i, danger: Dictionary) -> Vector2i:
+	var dirs := [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
+	var first := {from: Vector2i.ZERO}
+	var queue: Array = [from]
+	while not queue.is_empty():
+		var c: Vector2i = queue.pop_front()
+		if c != from and not danger.has(c):
+			return first[c]
+		for d in dirs:
+			var n: Vector2i = c + d
+			if _inside(n) and not first.has(n):
+				first[n] = d if c == from else first[c]
+				queue.append(n)
+	return Vector2i.ZERO
 
 
 static func _inside(n: Vector2i) -> bool:

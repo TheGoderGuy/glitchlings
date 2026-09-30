@@ -2,7 +2,7 @@ extends Node
 ## Ablauf des Spiels: Titel → Karte → Knoten (Kampf/Raum) → Karte … → Boss → Ergebnis.
 ##
 ## Screenshot-Modus (Argumente nach „--“):
-##   --shot=<pfad.png> --mode=title|options|starter|map|event|rest|shop|fight|pick|pause|result [--floor=N] [--sim=S] [--mon=Art] [--form=Form] [--t=S] [--pad]
+##   --shot=<pfad.png> --mode=title|options|starter|map|event|rest|shop|fight|pick|pause|result [--floor=N] [--level=N] [--guard] [--special=S] [--sim=S] [--mon=Art] [--form=Form] [--t=S] [--pad]
 
 const TitleScreen := preload("res://scripts/ui/title.gd")
 const StarterScreen := preload("res://scripts/ui/starter_view.gd")
@@ -42,9 +42,12 @@ func show_title() -> void:
 	_swap(t)
 
 
-## Erster Start: Opening-Szene, dann Starter wählen; sonst direkt in die Station
+## Erster Start: Opening-Szene, dann Starter wählen; sonst direkt in die Station (oder in den gespeicherten Run)
 func _from_title() -> void:
-	if SaveGame.has_save():
+	if SaveGame.has_run():
+		run = SaveGame.load_run()
+		show_map()
+	elif SaveGame.has_save():
 		show_station()
 	else:
 		show_opening(func():
@@ -101,12 +104,15 @@ func show_map() -> void:
 	m.setup(run)
 	m.node_chosen.connect(_enter_node)
 	m.gave_up.connect(show_result.bind(false))
+	m.save_quit.connect(show_title)
 	_swap(m)
+	# Stand auf der Karte sichern: nach dem Beenden geht es hier weiter
+	SaveGame.save_run(run)
 
 
 func _enter_node() -> void:
 	var node := run.current_node()
-	if node.type in ["fight", "elite", "boss"]:
+	if node.type in ["fight", "elite", "guard", "boss"]:
 		var b := BattleScene.instantiate()
 		var foe: Dictionary = run.foe_for(node) if foe_override < 0 else GameData.FOES[foe_override].duplicate()
 		b.setup(run, foe, node.type)
@@ -128,6 +134,10 @@ func _battle_finished(won: bool) -> void:
 		show_ending([run.form], show_result.bind(true))
 	elif run.current_node().type == "boss":
 		show_result(true)
+	elif run.current_node().type == "guard":
+		# Wächter besiegt: weiter auf die nächste Ebene
+		run.next_level()
+		show_map()
 	else:
 		show_map()
 
@@ -185,8 +195,8 @@ func _screenshot(shot: Dictionary) -> void:
 	_demo_save()
 	var mode: String = shot.get("mode", "title")
 	run = RunState.new(shot.get("mon", "Pixmiez"), 7)
-	if shot.has("zone"):
-		run.map = ZoneMap.generate(run.rng, shot.zone)
+	if shot.has("zone") or shot.has("level"):
+		run.map = ZoneMap.generate(run.rng, shot.get("zone", "wiesen"), shot.get("level", 0))
 	# auf der Karte bis zur gewünschten Etage vorlaufen (immer erster Weg)
 	var floors: int = shot.get("floor", 0)
 	for f in floors:
@@ -233,8 +243,9 @@ func _screenshot(shot: Dictionary) -> void:
 			current.t_in = 1.0
 			if mode == "station":
 				current.sel = int(shot.get("t", 0.0))
-		"map":
+		"map", "mappause":
 			show_map()
+			current.paused = mode == "mappause"
 		"event", "rest", "shop":
 			run.enter(run.next_choices()[0])
 			run.current_node().type = mode
@@ -245,7 +256,7 @@ func _screenshot(shot: Dictionary) -> void:
 			run.tutorial = mode == "tutorial"
 			run.enter(run.next_choices()[0])
 			if floors >= run.map.boss_floor() - 1:
-				run.current_node().type = "boss"
+				run.current_node().type = "guard" if shot.has("guard") else "boss"
 			elif run.current_node().type != "elite":
 				run.current_node().type = "fight"
 			_enter_node()
@@ -256,6 +267,11 @@ func _screenshot(shot: Dictionary) -> void:
 				await Shot.save(self, shot.path)
 				return
 			current.simulate(shot.get("sim", 2.0))
+			if shot.has("special"):
+				# Großangriff auslösen und bis kurz vor dem Einschlag vorspulen
+				current.st.start_special()
+				current.st.update(shot.special)
+				current.st.events.clear()
 			if shot.has("pops"):
 				var pk: String = "spore" if run.map.zone == "sumpf" else "milbe"
 				current.st.pops.append({"c": 0, "r": 0, "t": 2.5, "max": 3.0, "kind": pk})

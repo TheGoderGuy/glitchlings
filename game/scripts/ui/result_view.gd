@@ -33,7 +33,7 @@ func _draw() -> void:
 	_text(r.position + Vector2(0, 30), "Zone gesäubert!" if won else "Run beendet", 16, GameData.COL.sun if won else GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	var sub := "%s ist defragmentiert. %s ist wieder sicher." % [GameData.FOES[GameData.ZONES[run.map.zone].boss].name, run.map.zone_name] if won else "%s braucht eine Pause. Alles Gelernte bleibt!" % run.form
 	_text(r.position + Vector2(0, 48), sub, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-	_text(r.position + Vector2(0, 64), "Etage %d/%d · Kämpfe %d · Chips %d · Fragmente %d" % [maxi(0, run.floor_idx + 1), run.map.floors.size(), run.fights_won, run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	_text(r.position + Vector2(0, 64), "Ebene %d/%d · Etage %d/%d · Kämpfe %d · Chips %d · Fragmente %d" % [run.map.level + 1, run.map.levels, maxi(0, run.floor_idx + 1), run.map.floors.size(), run.fights_won, run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	# Monster links
 	var cx := r.position.x + 84
 	draw_rect(Rect2(cx - 40, r.position.y + 176, 80, 5), Color(0.05, 0.02, 0.12, 0.4))

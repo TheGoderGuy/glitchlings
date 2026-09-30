@@ -68,6 +68,13 @@ var steal_count := 0   # Langfinger (Waschbär): jeder 4. Treffer lädt einen Ch
 var counter := 0       # Konter/Kopierschutz: Schaden, der beim Blocken zurückgeht
 var counter_el := "Neutral"
 var dodge_t := 0.0     # Sprungantrieb: nächster Treffer wird ausgewichen
+# Großangriffe von Wächtern und Bossen: goldene Warnfelder mit langer Vorwarnung.
+# Wer allen Feldern eines Großangriffs ausweicht, überlastet den Gegner (kurz betäubt, Signatur-Leiste +15).
+const SPECIAL_WARN := 1.4
+const SPECIAL_EVERY := 11.0
+var sp_left := 0       # ausstehende Warnfelder des laufenden Großangriffs
+var sp_fail := false   # Spieler wurde vom laufenden Großangriff getroffen
+var sp_dodged := 0     # komplett ausgewichene Großangriffe (Statistik/Tests)
 
 
 ## foe: Gegnerwerte wie in GameData.FOES (für Karten-Knoten per RunState.foe_for skaliert).
@@ -78,7 +85,8 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	def = foe.duplicate() if foe.is_read_only() else foe   # Ur-Glitch ändert def.el während des Kampfs
 	p = {"c": 1, "r": 1, "cd": 0.0, "flash": 0.0}
 	e = {"c": 1, "r": 1, "hp": def.hp, "max": def.hp, "move_t": def.move, "atk_t": def.atk * 0.8,
-		"pi": 0, "frozen": 0.0, "slow": 0.0, "flash": 0.0, "burn": 0, "poison": 0, "dot_t": 1.0, "pop_t": 1.5}
+		"pi": 0, "frozen": 0.0, "slow": 0.0, "flash": 0.0, "burn": 0, "poison": 0, "dot_t": 1.0, "pop_t": 1.5,
+		"phase": 1, "sp_t": def.get("sp_first", 5.0), "sp_i": 0}
 	draw_pile = _shuffle(run.deck)
 	for i in 3:
 		hand.append({"chip": _draw_one(), "rem": 0.0, "max": 1.0, "queued": false})
@@ -99,7 +107,9 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 		run.foe_weak = false
 		e.hp = roundi(e.hp * 0.75)
 		float_at(3 + e.c, e.r, "Geschwächt!", GameData.COL.sun)
-	if def.boss:
+	if def.get("guard", false):
+		status = "Wächter! Goldene Felder kündigen einen Großangriff an. Weichst du ganz aus, ist er kurz überlastet."
+	elif def.boss:
 		if def.get("minion", "pop") == "lava":
 			status = "Boss! Ab der Hälfte seiner HP setzt er Felder in Brand. Runter von der Lava!"
 		elif def.get("minion", "pop") == "shift":
@@ -907,6 +917,9 @@ func _update_logic(dt: float) -> void:
 
 	# Gegner-KI (Strudel: halbe Geschwindigkeit)
 	var phase := boss_phase()
+	if phase > e.phase:
+		e.phase = phase
+		_phase_change(phase)
 	var edt := dt
 	if e.slow > 0:
 		e.slow -= dt
@@ -923,11 +936,16 @@ func _update_logic(dt: float) -> void:
 			if shift_t <= 0:
 				shift_t = SHIFT_TIME * (0.7 if phase == 3 else 1.0)
 				_shift_element()
+		if special_ready(phase):
+			e.sp_t -= edt
+			if e.sp_t <= 0:
+				e.sp_t = def.get("sp_every", SPECIAL_EVERY) * (0.7 if phase == 3 else 1.0)
+				start_special()
 		e.atk_t -= edt
 		if e.atk_t <= 0:
 			e.atk_t = 1.5 if phase == 3 else def.atk
 			_enemy_attack()
-		if phase >= 2:
+		if phase >= 2 and def.get("minion", "pop") != "none":
 			e.pop_t -= dt
 			if e.pop_t <= 0:
 				e.pop_t = 4.0
@@ -965,9 +983,16 @@ func _update_logic(dt: float) -> void:
 				continue
 			var hit := false
 			for cell in w.cells:
-				fx_cell(cell.x, cell.y, GameData.COL.coral, 0.25)
+				fx_cell(cell.x, cell.y, Color("#FFB23D") if w.get("big", false) else GameData.COL.coral, 0.25)
 				if cell.x == p.c and cell.y == p.r:
 					hit = true
+			if w.get("big", false):
+				shake = maxf(shake, 4.0)
+				sp_left -= 1
+				if hit:
+					sp_fail = true
+				elif sp_left <= 0 and not sp_fail:
+					_special_dodged()
 			if hit:
 				var dealt := hurt_player(w.dmg)
 				if over:
@@ -1054,7 +1079,13 @@ func _move_enemy() -> void:
 
 
 func _enemy_attack() -> void:
-	var kind: String = def.pat[e.pi % def.pat.size()]
+	var pat: Array = def.pat
+	var phase := boss_phase()
+	if phase >= 3 and def.has("phase3"):
+		pat = def.phase3
+	elif phase >= 2 and def.has("phase2"):
+		pat = def.phase2
+	var kind: String = pat[e.pi % pat.size()]
 	e.pi += 1
 	var cells: Array = []
 	var warn := WARN_TIME
@@ -1129,4 +1160,137 @@ func _spawn_pop() -> void:
 	var kind := "spore" if run.map.zone == "sumpf" else "milbe"
 	if def.get("shift", false):
 		kind = "milbe" if def.el == "Code" else "spore"
+	kind = def.get("pop_kind", kind)
 	pops.append({"c": cell.x, "r": cell.y, "t": 3.0, "max": 3.0, "kind": kind})
+
+
+# ---------- Phasen und Großangriffe (Wächter & Bosse) ----------
+
+## Phase 2 (unter 50 % HP): neue Angriffsmuster, Bosse beginnen mit Großangriffen.
+## Phase 3 (unter 20 %): schneller, Großangriffe öfter und im Wechsel.
+func _phase_change(phase: int) -> void:
+	e.pi = 0
+	shake = maxf(shake, 7.0)
+	events.append("phase")
+	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 26)
+	var col := Color("#FF5470")
+	if phase == 2:
+		banner = {"text": "Phase 2!", "color": col, "t": 1.1, "max": 1.1}
+		status = "%s wird wütend: neue Angriffe!" % def.name
+		if not def.get("guard", false) and special_ready(phase):
+			e.sp_t = 2.5
+	else:
+		banner = {"text": "Letzte Phase!", "color": col, "t": 1.1, "max": 1.1}
+		status = "%s ist fast besiegt – und wird rasend schnell!" % def.name
+		e.sp_t = minf(e.sp_t, 3.0)
+
+
+func special_ready(phase: int) -> bool:
+	if not def.has("specials") or def.specials.is_empty():
+		return false
+	return def.get("guard", false) or phase >= 2
+
+
+## Löst den nächsten Großangriff aus (Bosse: in Phase 2 nur der erste, ab Phase 3 alle im Wechsel).
+func start_special() -> void:
+	if not def.has("specials"):
+		return
+	var list: Array = def.specials
+	var n := list.size() if (def.get("guard", false) or boss_phase() >= 3) else 1
+	var spec: Dictionary = list[e.sp_i % n]
+	e.sp_i += 1
+	sp_fail = false
+	sp_left = 0
+	var dmg := roundi(def.dmg * 1.6)
+	var warn: float = SPECIAL_WARN + def.get("warn_bonus", 0.0)
+	if mon.passive in ["Eulenblick", "Mischwesen"]:
+		warn += 0.3
+	banner = {"text": spec.name + "!", "color": Color("#FFB23D"), "t": 1.3, "max": 1.3}
+	status = "Großangriff: %s! Weich allen goldenen Feldern aus." % spec.name
+	events.append("alarm")
+	shake = maxf(shake, 3.0)
+	var total := warn
+	match spec.shape:
+		"x":
+			_sp_warn(_cells_where(func(c, r): return c == r or c + r == 2), warn, dmg)
+		"ring":
+			_sp_warn(_cells_where(func(c, r): return not (c == 1 and r == 1)), warn, dmg)
+		"checker":
+			var par := (int(p.c) + int(p.r)) % 2
+			_sp_warn(_cells_where(func(c, r): return (c + r) % 2 == par), warn, dmg)
+		"safe1":
+			# nur ein sicheres Feld (nie das, auf dem der Spieler gerade steht)
+			var here := Vector2i(p.c, p.r)
+			var opts := _cells_where(func(c, r): return Vector2i(c, r) != here)
+			var safe: Vector2i = opts[rng.randi_range(0, opts.size() - 1)]
+			total = warn + 0.3
+			_sp_warn(_cells_where(func(c, r): return Vector2i(c, r) != safe), total, dmg)
+		"pull":
+			# Fangschlund: zieht den Spieler in die vordere Spalte und schnappt dort zu
+			p.c = 2
+			pend_move = null
+			float_at(p.c, p.r, "Gezogen!", GameData.EL[def.el])
+			events.append("move")
+			_sp_warn(_cells_where(func(c, r): return c == 2), warn, dmg)
+		"pincer":
+			# Scherenzange: erst die äußeren Reihen, dann die Mitte
+			_sp_warn(_cells_where(func(c, r): return r != 1), warn, dmg)
+			_sp_later(warn, func(): return _cells_where(func(c, r): return r == 1), 0.8, dmg)
+			total = warn + 0.8
+		"tentacle":
+			# Tentakelwirbel: erst die äußeren Spalten, dann die Mitte
+			_sp_warn(_cells_where(func(c, r): return c != 1), warn, dmg)
+			_sp_later(warn, func(): return _cells_where(func(c, r): return c == 1), 0.8, dmg)
+			total = warn + 0.8
+		"sweep":
+			# Reihe für Reihe von oben nach unten (oder umgekehrt)
+			var down := rng.randf() < 0.5
+			for i in 3:
+				var row := i if down else 2 - i
+				if i == 0:
+					_sp_warn(_cells_where(func(c, r): return r == row), warn, dmg)
+				else:
+					_sp_later(0.55 * i, func(): return _cells_where(func(c, r): return r == row), warn, dmg)
+			total = warn + 1.1
+		"chase":
+			# Hatz: drei Einschläge, die dem Spieler folgen
+			var d2 := roundi(def.dmg * 1.2)
+			_sp_warn([Vector2i(p.c, p.r)], 0.8, d2)
+			for i in range(1, 3):
+				_sp_later(0.65 * i, func(): return [Vector2i(p.c, p.r)], 0.8, d2)
+			total = 0.65 * 2 + 0.8
+	# Normale Angriffe pausieren, solange der Großangriff läuft
+	e.atk_t = maxf(e.atk_t, total + 0.8)
+
+
+func _cells_where(f: Callable) -> Array:
+	var out: Array = []
+	for r in 3:
+		for c in 3:
+			if f.call(c, r):
+				out.append(Vector2i(c, r))
+	return out
+
+
+func _sp_warn(cells: Array, warn: float, dmg: int, count := true) -> void:
+	if count:
+		sp_left += 1
+	events.append("warn")
+	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": dmg, "lava": false, "big": true})
+
+
+## Warnfeld mit Verzögerung; die Felder werden erst dann bestimmt (z. B. dort, wo der Spieler gerade steht)
+func _sp_later(delay: float, cells_fn: Callable, warn: float, dmg: int) -> void:
+	sp_left += 1
+	delayed.append({"t": delay, "fn": func(): _sp_warn(cells_fn.call(), warn, dmg, false)})
+
+
+func _special_dodged() -> void:
+	sp_dodged += 1
+	e.frozen = maxf(e.frozen, 2.0)
+	e.flash = 0.3
+	sp = minf(100.0, sp + 15.0)
+	events.append("overload")
+	float_at(3 + e.c, e.r, "Überlastet!", GameData.COL.sun)
+	banner = {"text": "Ausgewichen!", "color": GameData.COL.mint, "t": 0.9, "max": 0.9}
+	status = "Perfekt ausgewichen! %s ist kurz überlastet – jetzt angreifen!" % def.name

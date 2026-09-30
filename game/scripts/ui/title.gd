@@ -14,7 +14,12 @@ var reset_armed := false
 
 
 func _main_items() -> Array:
-	return ["Spielen" if SaveGame.has_save() else "Neues Spiel", "Optionen", "Beenden"]
+	var play := "Neues Spiel"
+	if SaveGame.has_run():
+		play = "Run fortsetzen"
+	elif SaveGame.has_save():
+		play = "Spielen"
+	return [play, "Optionen", "Beenden"]
 
 
 func _option_items() -> Array:

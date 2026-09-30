@@ -127,6 +127,33 @@ const TRACKS := {
 				"C#6 - - - E6 - - - A6 - - - . . . ."]},
 		],
 	},
+	# ---------- Ebenen-Wächter (30.09.2026): treibend, E-Moll, eigenständig neben der Bossmusik ----------
+	"guard": {
+		"bpm": 172, "loud": 0.21, "lead": "lead_sq", "bass": "octave8", "arp": "arp16", "stabs": "x..x...x..x.x...", "drums": "guard", "counter": "brass",
+		"sections": [
+			{"name": "intro", "chords": ["Em", "F"], "melody": [
+				"E5 . E5 . G5 . E5 . F5 . . . E5 . D5 .",
+				"E5 - - - - - - - B4 - - - D5 - F5 -"]},
+			{"name": "A", "chords": ["Em", "C", "D", "B", "Em", "C", "Am", "B"], "melody": [
+				"E5 - - - B5 - - - A5 - G5 - F#5 - E5 -",
+				"G5 - - - E5 - - - C5 - E5 - G5 - C6 -",
+				"A5 - - - F#5 - - - D5 - F#5 - A5 - D6 -",
+				"B5 - - - - - - - D#5 - F#5 - B5 - A5 -",
+				"G5 - - - E5 - G5 - B5 - - - E6 - - -",
+				"E6 - - - D6 - C6 - G5 - - - C6 - - -",
+				"A5 - - - C6 - - - E6 - - - D6 - C6 -",
+				"B5 - - - - - - - D#6 - - - F#6 - - -"]},
+			{"name": "B", "chords": ["C", "D", "Em", "Em", "Am", "B", "C", "B"], "melody": [
+				"E6 - - - D6 - C6 - G5 - - - C6 - - -",
+				"F#6 - - - E6 - D6 - A5 - - - D6 - - -",
+				"G6 - - - - - - - E6 - - - B5 - - -",
+				"G5 - B5 - E6 - G6 - B6 - - - - - - -",
+				"A6 - - - G6 - E6 - C6 - - - A5 - - -",
+				"B5 - D#6 - F#6 - - - A6 - - - F#6 - D#6 -",
+				"E6 - - - G6 - - - C6 - - - E6 - - -",
+				"D#6 - - - F#6 - - - B6 - - - . . . ."]},
+		],
+	},
 	# ---------- Opening ----------
 	"intro": {
 		"bpm": 80, "loud": 0.16, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings",
@@ -332,6 +359,7 @@ const DRUMS := {
 	"map": {"k": "x.......x.......", "s": "....x.......x...", "h": "..x...x...x...x.", "vol": 0.55},
 	"title": {"k": "x.......x.x.....", "s": "....x.......x...", "h": "x.x.x.x.x.x.x.x.", "vol": 0.7},
 	"boss": {"k": "x..x..x.x..x..x.", "s": "....x.......x...", "h": "xxxxxxxxxxxxxxxx", "t": "x.......x.......", "vol": 1.0},
+	"guard": {"k": "x.x...x.x.x...x.", "s": "....x..x....x...", "h": "x.xxx.xxx.xxx.xx", "t": "x.......x.....x.", "vol": 1.0},
 	"none": {"k": "................", "s": "................", "h": "................", "vol": 0.0},
 	# Vulkan: schwere Pauken · Sumpf: hüpfender Shuffle
 	"vulkan_map": {"k": "x.......x.......", "s": "............x...", "h": "..x...x...x...x.", "t": "x.....x...x.....", "vol": 0.6},

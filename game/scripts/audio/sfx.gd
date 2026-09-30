@@ -41,6 +41,10 @@ func _ready() -> void:
 	_def("strike", [["noise", 600, 2400, 0.07, 0.16]])
 	_def("charge", [["saw", 120, 900, 1.5, 0.18]])
 	_def("shift", [["noise", 400, 3000, 0.12, 0.3], ["sq", 200, 800, 0.1, 0.2], ["sq", 800, 300, 0.12, 0.2]])
+	# Großangriff angekündigt (Sirene), Großangriff komplett ausgewichen (Überlastung), Boss-Phasenwechsel (Brüllen)
+	_def("alarm", [["sq", 880, 620, 0.16, 0.16], ["sq", 880, 620, 0.16, 0.16], ["sq", 880, 620, 0.2, 0.16]])
+	_def("overload", [["noise", 5000, 1200, 0.1, 0.3], ["sq", 1400, 200, 0.25, 0.2], ["tri", 1800, 2400, 0.12, 0.2]])
+	_def("phase", [["noise", 300, 1500, 0.2, 0.4], ["saw", 90, 60, 0.4, 0.3]])
 	_def("lose", [["tri", 392, 392, 0.14, 0.3], ["tri", 330, 330, 0.14, 0.3], ["tri", 262, 262, 0.14, 0.3], ["tri", 196, 150, 0.4, 0.3]])
 
 

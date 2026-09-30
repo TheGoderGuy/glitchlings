@@ -5,6 +5,8 @@ tags: [produktion, gameplay, steam]
 
 Ein Run führt über eine verzweigte Karte durch eine Zone (zuerst **Cache-Wiesen**). Umsetzung: `game/scripts/run/`.
 
+> **Seit 30.09.2026:** 3 Ebenen × 5 Etagen mit Wächtern dazwischen, siehe [[Ebenen und Wächter]]. Der Abschnitt unten beschreibt den ursprünglichen Aufbau.
+
 ## Aufbau
 - **7 Etagen + Boss**, pro Etage 2–4 Knoten (Etage 1: 3). Wege kreuzen sich nie, jeder Knoten ist erreichbar.
 - Etage 1: nur Kämpfe. Letzte Etage vor dem Boss: nur Rastplätze.

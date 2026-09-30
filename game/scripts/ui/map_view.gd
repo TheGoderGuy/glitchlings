@@ -3,6 +3,7 @@ extends PixelCanvas
 
 signal node_chosen
 signal gave_up
+signal save_quit
 
 const MAP_X0 := 180.0
 const MAP_W := 280.0
@@ -16,22 +17,27 @@ const ICONS := {
 	"rest": [".##...##.", "####.####", "#########", "#########", ".#######.", "..#####..", "...###...", "....#....", "........."],
 	"event": ["..#####..", ".##...##.", ".......##", "......##.", "....##...", "....##...", ".........", "....##...", "....##..."],
 	"shop": ["..#####..", ".#..#..#.", "#..###..#", "#.#.#...#", "#..###..#", "#...#.#.#", "#..###..#", ".#..#..#.", "..#####.."],
+	"guard": ["#########", "#.......#", "#.#####.#", "#.#...#.#", "#.#.#.#.#", "#...#...#", ".#.....#.", "..#...#..", "...###..."],
 	"boss": ["#...#...#", "##.###.##", "#########", "#########", "#.#.#.#.#", "#########", ".........", ".........", "........."],
 }
 const ICON_COL := {
 	"fight": Color("#FF7A93"), "elite": Color("#FFC83D"), "rest": Color("#6EE7C5"),
-	"event": Color("#C77DFF"), "shop": Color("#58D68D"), "boss": Color("#FF5470"),
+	"event": Color("#C77DFF"), "shop": Color("#58D68D"), "guard": Color("#FF9A3D"), "boss": Color("#FF5470"),
 }
 
 var run: RunState
 var sel := 0
 var paused := false
 var pause_idx := 0
+var level_t := 0.0    # Einblendung „Ebene X“ beim Betreten einer neuen Ebene
+const PAUSE_ITEMS := ["Weiter", "Speichern und beenden", "Aufgeben"]
 
 
 func setup(run_state: RunState) -> void:
 	run = run_state
 	Music.play(Music.zone_key("map", run.map.zone))
+	if run.floor_idx < 0:
+		level_t = 2.2
 	var ch := run.next_choices()
 	# Standardauswahl: der Knoten, der am nächsten an der aktuellen Position liegt
 	sel = 0
@@ -47,17 +53,25 @@ func setup(run_state: RunState) -> void:
 
 func _process(delta: float) -> void:
 	anim_t += delta
+	level_t = maxf(0.0, level_t - delta)
 	if paused:
 		if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("back"):
 			paused = false
 			Sfx.play("back")
-		elif Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down"):
-			pause_idx = 1 - pause_idx
+		elif Input.is_action_just_pressed("move_up"):
+			pause_idx = (pause_idx + PAUSE_ITEMS.size() - 1) % PAUSE_ITEMS.size()
+			Sfx.play("select")
+		elif Input.is_action_just_pressed("move_down"):
+			pause_idx = (pause_idx + 1) % PAUSE_ITEMS.size()
 			Sfx.play("select")
 		elif Input.is_action_just_pressed("confirm"):
 			Sfx.play("confirm")
 			if pause_idx == 0:
 				paused = false
+			elif pause_idx == 1:
+				# Der Run ist beim Betreten der Karte schon gespeichert
+				set_process(false)
+				save_quit.emit()
 			else:
 				set_process(false)
 				gave_up.emit()
@@ -95,6 +109,7 @@ func _draw() -> void:
 	var ch := run.next_choices()
 	var target := Vector2i(run.floor_idx + 1, ch[sel]) if not ch.is_empty() else Vector2i(-9, -9)
 	_text(Vector2(0, 22), m.zone_name.to_upper(), 16, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	_text(Vector2(0, 34), "Ebene %d von %d" % [m.level + 1, m.levels], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 	# Wege
 	for f in m.floors.size() - 1:
@@ -123,31 +138,37 @@ func _draw() -> void:
 			var chosen: bool = Vector2i(f, i) == target
 			var col: Color = ICON_COL[n.type]
 			var past: bool = f <= run.floor_idx and not visited
-			var size := 26 if n.type == "boss" else 18
+			var size := 26 if n.type in ["boss", "guard"] else 18
 			var r := Rect2(p - Vector2(size, size) / 2, Vector2(size, size))
 			if chosen:
 				r = r.grow(2 if sin(anim_t * 8.0) > 0 else 1)
 			var border: Color = GameData.COL.sun if chosen else (GameData.COL.mint if here else (col.darkened(0.3) if selectable else GameData.COL.line))
 			var fill: Color = GameData.COL.panel if (visited or selectable) else GameData.COL.bg2
 			_box(r, fill, border)
-			var ic := Color(col, 0.35 if past else (1.0 if (visited or selectable or n.type == "boss") else 0.6))
-			_icon(ICONS[n.type], r.get_center(), 2 if n.type == "boss" else 1, ic)
+			var ic := Color(col, 0.35 if past else (1.0 if (visited or selectable or n.type in ["boss", "guard"]) else 0.6))
+			_icon(ICONS[n.type], r.get_center(), 2 if n.type in ["boss", "guard"] else 1, ic)
 			if here:
 				_marker(p + Vector2(0, -size / 2.0 - 5))
 	if run.floor_idx < 0:
 		_marker(Vector2(node_pos(0, ch[sel]).x, H - 16))
 
 	_draw_side_panels(target)
+	if level_t > 0 and m.level > 0:
+		# Neue Ebene: kurzes Einblenden in der Mitte
+		var a := minf(1.0, level_t / 0.5)
+		draw_rect(Rect2(0, 150, W, 50), Color(GameData.COL.dark, 0.75 * a))
+		_text(Vector2(0, 180), "EBENE %d" % (m.level + 1), 24, Color(GameData.COL.sun, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 194), "Der Wächter ist besiegt. Der Weg führt tiefer hinein.", 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_CENTER, W)
 	if paused:
 		_dim()
-		var pr := Rect2(60, 40, 520, 280)
+		var pr := Rect2(60, 30, 520, 300)
 		_box(pr, GameData.COL.panel, GameData.COL.line)
 		_text(pr.position + Vector2(0, 28), "Pause", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, pr.size.x, true, true)
 		_text(Vector2(pr.position.x + 20, pr.position.y + 46), "Dein Deck (%d)" % run.deck.size(), 8, GameData.COL.muted)
 		_draw_deck_list(run.deck, pr.position.x + 20, pr.position.y + 66, 220, 10)
 		_text(Vector2(pr.position.x + 270, pr.position.y + 46), "Module (%d)" % run.modules.size(), 8, GameData.COL.muted)
 		_draw_module_list(run.modules, pr.position.x + 270, pr.position.y + 58, 230, 4)
-		_menu(["Weiter", "Aufgeben"], pause_idx, pr.get_center().x, pr.end.y - 50, 160)
+		_menu(PAUSE_ITEMS, pause_idx, pr.get_center().x, pr.end.y - 66, 200)
 
 
 func _draw_side_panels(target: Vector2i) -> void:
@@ -162,7 +183,7 @@ func _draw_side_panels(target: Vector2i) -> void:
 	_text(Vector2(L.position.x + 8, y), GameData.STAGE_NAMES[run.stage], 8, GameData.EL[run.form_el()], HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
 	_bar(Rect2(L.position.x + 8, y + 6, L.size.x - 16, 9), float(run.hp) / run.max_hp, GameData.COL.mint)
 	var rows := [["HP", "%d/%d" % [run.hp, run.max_hp], GameData.COL.ink], ["Fragmente", str(run.frag), GameData.COL.sun],
-		["Deck", "%d Chips" % run.deck.size(), GameData.COL.ink], ["Etage", "%d/%d" % [maxi(0, run.floor_idx + 1), run.map.floors.size()], GameData.COL.ink]]
+		["Deck", "%d Chips" % run.deck.size(), GameData.COL.ink], ["Ebene · Etage", "%d/%d · %d/%d" % [run.map.level + 1, run.map.levels, maxi(0, run.floor_idx + 1), run.map.floors.size()], GameData.COL.ink]]
 	y += 27
 	for row in rows:
 		_text(Vector2(L.position.x + 8, y), row[0], 8, GameData.COL.muted)
@@ -190,12 +211,12 @@ func _draw_side_panels(target: Vector2i) -> void:
 	if not run.modules.is_empty():
 		_draw_module_row(run.modules, W - 154, 248, 9)
 	# Legende zweispaltig
-	var G := Rect2(W - 158, 268, 150, 66)
+	var G := Rect2(W - 158, 262, 150, 74)
 	_box(G, Color(GameData.COL.bg2, 0.9), GameData.COL.line)
-	var types := ["fight", "elite", "event", "rest", "shop", "boss"]
+	var types := ["fight", "elite", "event", "rest", "shop", "guard", "boss"]
 	for i in types.size():
 		var gx := G.position.x + 12 + (i % 2) * 72
-		var gy := G.position.y + 16 + (i / 2) * 19
+		var gy := G.position.y + 15 + (i / 2) * 16
 		_icon(ICONS[types[i]], Vector2(gx, gy - 3), 1, ICON_COL[types[i]])
 		_text(Vector2(gx + 10, gy), ZoneMap.TYPE_NAMES[types[i]].substr(0, 8), 8, GameData.COL.muted)
 

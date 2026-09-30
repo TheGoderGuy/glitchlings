@@ -74,6 +74,22 @@ func save_game() -> void:
 	f.store_string(JSON.stringify(data, "\t"))
 
 
+## Laufender Run (wird auf der Karte gespeichert, damit man später weiterspielen kann)
+func has_run() -> bool:
+	return data.get("run", {}) is Dictionary and not data.get("run", {}).is_empty()
+
+
+func save_run(run: RunState) -> void:
+	if run.monster_id < 0 or monster(run.monster_id).is_empty():
+		return
+	data["run"] = run.to_dict()
+	save_game()
+
+
+func load_run() -> RunState:
+	return RunState.from_dict(data.run)
+
+
 func reset() -> void:
 	data = {}
 	if persist and FileAccess.file_exists(path):
@@ -165,6 +181,7 @@ func hatch_next() -> Dictionary:
 
 ## Überträgt das Ergebnis eines Runs auf den Spielstand und gibt eine Zusammenfassung zurück.
 func record_run(run: RunState, won: bool) -> Dictionary:
+	data.erase("run")   # der Run ist vorbei, nichts mehr fortzusetzen
 	var sum := {"evolved": run.form != run.start_form, "form": run.form, "egg": {}, "nest_full": false, "hatch_ready": 0, "new_dex": []}
 	var m := monster(run.monster_id)
 	if not m.is_empty():
@@ -236,7 +253,7 @@ func _log_run(run: RunState, won: bool) -> void:
 		f.seek_end()
 	var dur := (Time.get_ticks_msec() - run.start_ms) / 1000.0
 	var cols := [Time.get_datetime_string_from_system(), ProjectSettings.get_setting("application/config/version", "0.1"),
-		run.species, run.form, run.map.zone, "sieg" if won else "niederlage", run.floor_idx + 1, run.fights_won,
+		run.species, run.form, run.map.zone, "sieg" if won else "niederlage", run.zone_floor() + 1, run.fights_won,
 		run.chips_used, "%.0f" % dur, ["entspannt", "normal", "knackig", "korrumpiert"][run.difficulty], run.last_foe]
 	f.store_line(";".join(cols.map(func(c): return str(c))))
 

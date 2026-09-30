@@ -51,6 +51,8 @@ func _ready() -> void:
 	test_chip_texts()
 	test_form_migration()
 	test_badger_raccoon()
+	test_guards()
+	test_run_save()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -366,7 +368,7 @@ func test_difficulty() -> void:
 		var f := run.foe_for(node)
 		hp.append(f.hp)
 		dmg.append(f.dmg)
-	check(hp[0] < hp[1] and hp[1] < hp[2] and hp[1] == 320, "Schwierigkeit skaliert Boss-HP %s" % [hp])
+	check(hp[0] < hp[1] and hp[1] < hp[2] and hp[1] == GameData.FOES[3].hp, "Schwierigkeit skaliert Boss-HP %s" % [hp])
 	check(dmg[0] < dmg[1] and dmg[1] < dmg[2], "Schwierigkeit skaliert Schaden %s" % [dmg])
 	var run2 := RunState.new("Pixmiez", 1)
 	run2.difficulty = 0
@@ -404,7 +406,7 @@ func test_new_foes() -> void:
 	for f in GameData.FOES:
 		if not ResourceLoader.exists("res://assets/sprites/%s.png" % PixelCanvas.SPRITE_FILES[f.spr]):
 			sprites_ok = false
-	check(sprites_ok and GameData.FOES.size() == 18, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
+	check(sprites_ok and GameData.FOES.size() == 25, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
 	# Jeder Gegner lässt sich mit dem Autopilot besiegen
 	var all_end := true
 	for i in GameData.FOES.size():
@@ -558,7 +560,7 @@ func test_zone2() -> void:
 	var r2 := RunState.from_monster(SaveGame.team()[0], 2, "vulkan")
 	check(r2.map.zone == "vulkan" and r2.map.zone_name == "Firewall-Vulkan", "Run im Firewall-Vulkan")
 	var boss := r2.foe_for({"type": "boss"})
-	check(boss.name == "Glutkernskarabäus" and boss.hp == 420, "Boss im Vulkan: Glutkernskarabäus")
+	check(boss.name == "Glutkernskarabäus" and boss.hp == GameData.FOES[10].hp, "Boss im Vulkan: Glutkernskarabäus")
 	r2.enter(r2.next_choices()[0])
 	var f := r2.foe_for({"type": "fight"})
 	var base: Dictionary = GameData.FOES.filter(func(x): return x.name == f.name)[0]
@@ -617,7 +619,7 @@ func test_zone2() -> void:
 			if ch.is_empty():
 				break
 			var node := run3.enter(ch[0])
-			if node.type in ["fight", "elite", "boss"]:
+			if node.type in ["fight", "elite", "guard", "boss"]:
 				var s := BattleState.new(run3, run3.foe_for(node))
 				var t := 0.0
 				while not s.over and t < 180.0:
@@ -632,6 +634,10 @@ func test_zone2() -> void:
 				if node.type == "boss":
 					wins += 1
 					break
+				if node.type == "guard":
+					run3.next_level()
+					run3.heal(roundi(run3.max_hp * 0.3))
+					run3.add_module(run3.roll_module())
 				run3.heal(10)
 	check(stuck == 0, "Vulkan-Runs: kein Kampf hängt")
 	print("  info    Vulkan-Autopilot: %d/12 Runs gewonnen" % wins)
@@ -694,7 +700,7 @@ func test_zone3() -> void:
 			if ch.is_empty():
 				break
 			var node := run3.enter(ch[0])
-			if node.type in ["fight", "elite", "boss"]:
+			if node.type in ["fight", "elite", "guard", "boss"]:
 				var s := BattleState.new(run3, run3.foe_for(node))
 				var t := 0.0
 				while not s.over and t < 180.0:
@@ -709,6 +715,10 @@ func test_zone3() -> void:
 				if node.type == "boss":
 					wins += 1
 					break
+				if node.type == "guard":
+					run3.next_level()
+					run3.heal(roundi(run3.max_hp * 0.3))
+					run3.add_module(run3.roll_module())
 				run3.heal(10)
 	check(stuck == 0, "Sumpf-Runs: kein Kampf hängt")
 	print("  info    Sumpf-Autopilot: %d/9 Runs gewonnen" % wins)
@@ -843,7 +853,7 @@ func test_all_specials() -> void:
 			expected += roundi(d * GameData.mult(S.el, "Virus"))
 		if S.has("replay"):
 			expected += roundi(30 * GameData.mult(S.el, "Virus"))  # ohne letzten Chip: 30 Schaden
-		var dealt: int = 320 - st.e.hp
+		var dealt: int = st.e.max - st.e.hp
 		# Brand/Gift ticken in 1,2 s höchstens einmal mit
 		if dealt < expected or dealt > expected + 9:
 			ok = false
@@ -884,7 +894,7 @@ func test_new_lines() -> void:
 	st5.e.frozen = 99.0
 	st5.e.poison = 1
 	step(st5, 1.05)
-	check(st5.e.hp == 320 - 6, "Giftdrüsen: Gift wirkt 50 %% stärker (HP %d)" % st5.e.hp)
+	check(st5.e.hp == GameData.FOES[3].hp - 6, "Giftdrüsen: Gift wirkt 50 %% stärker (HP %d)" % st5.e.hp)
 	var hamster := 0
 	for i in 40:
 		var st6 := BattleState.new(RunState.new("Kekso", i), GameData.FOES[0])
@@ -949,11 +959,12 @@ func test_map() -> void:
 	for seed_value in 50:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = seed_value
-		var m := ZoneMap.generate(rng)
-		if m.floors.size() != ZoneMap.FLOORS + 1 or m.floors[-1][0].type != "boss":
+		var m := ZoneMap.generate(rng, "wiesen", seed_value % 3)
+		var top: String = "boss" if seed_value % 3 == 2 else "guard"
+		if m.floors.size() != ZoneMap.FLOORS + 1 or m.floors[-1][0].type != top:
 			ok_types = false
 		for n in m.floors[0]:
-			if n.type != "fight":
+			if n.type != "fight" and m.level == 0:
 				ok_types = false
 		for n in m.floors[ZoneMap.FLOORS - 1]:
 			if n.type != "rest":
@@ -973,7 +984,7 @@ func test_map() -> void:
 								ok_cross = false
 			if incoming.size() != m.floors[f + 1].size():
 				ok_reach = false
-	check(ok_types, "Karte: Etage 1 nur Kämpfe, letzte Etage Rast, oben Boss")
+	check(ok_types, "Karte: 5 Etagen je Ebene, Ebene 1 beginnt mit Kämpfen, letzte Etage Rast, oben Wächter bzw. Boss")
 	check(ok_edges, "Karte: jeder Knoten hat einen Weg nach oben")
 	check(ok_reach, "Karte: jeder Knoten ist erreichbar")
 	check(ok_cross, "Karte: Wege kreuzen sich nicht")
@@ -1019,9 +1030,9 @@ func test_elite_scaling() -> void:
 	var elite := run.foe_for({"type": "elite"})
 	check(elite.elite and elite.name.begins_with("Elite-"), "Elite-Gegner ist markiert")
 	var base: Dictionary = GameData.FOES.filter(func(f): return f.name == normal.name)[0]
-	check(normal.hp == roundi(base.hp * 1.14), "Normale Gegner: +7 %% HP pro Etage (%s %d → %d)" % [base.name, base.hp, normal.hp])
+	check(normal.hp == roundi(base.hp * 1.10), "Normale Gegner: +5 %% HP pro Etage (%s %d → %d)" % [base.name, base.hp, normal.hp])
 	var boss := run.foe_for({"type": "boss"})
-	check(boss.boss and boss.hp == 320, "Boss hat seine festen Werte")
+	check(boss.boss and boss.hp == GameData.FOES[3].hp, "Boss hat seine festen Werte")
 
 
 ## Komplette Runs über die Karte mit Autopilot: jeder Kampf muss enden, Siegquote als Balancing-Hinweis.
@@ -1044,7 +1055,7 @@ func test_simulated_runs() -> void:
 			if ch.is_empty():
 				break
 			var node := run.enter(ch[run.rng.randi_range(0, ch.size() - 1)])
-			if node.type in ["fight", "elite", "boss"]:
+			if node.type in ["fight", "elite", "guard", "boss"]:
 				var st := BattleState.new(run, run.foe_for(node))
 				var t := 0.0
 				while not st.over and t < 180.0:
@@ -1064,6 +1075,10 @@ func test_simulated_runs() -> void:
 				if node.type == "boss":
 					won = true
 					break
+				if node.type == "guard":
+					run.next_level()
+					run.heal(roundi(run.max_hp * 0.3))
+					run.add_module(run.roll_module())
 				run.try_evolve()
 				run.heal(10)
 				run.deck.append(run.roll_choices()[0])
@@ -1144,7 +1159,7 @@ func test_music() -> void:
 	for k in PixelCanvas.SPRITE_FILES:
 		if not ResourceLoader.exists("res://assets/sprites/%s_blink.png" % PixelCanvas.SPRITE_FILES[k]):
 			foe_no_blink.append(k)
-	check(foe_no_blink == ["bluete"], "Alle Gegner mit Augen blinzeln (ohne: %s)" % ", ".join(foe_no_blink))
+	check(foe_no_blink == ["bluete", "schlackwurm", "magmaskorp", "schnappkelch"], "Alle Gegner mit Augen blinzeln (ohne: %s)" % ", ".join(foe_no_blink))
 	# Karte spielt nach einem Kampf weiter statt neu zu beginnen
 	Music.play("map")
 	await get_tree().create_timer(0.6).timeout
@@ -1254,7 +1269,11 @@ func test_finale() -> void:
 	var Z: Dictionary = GameData.ZONES.kern
 	var rk := RunState.new("Pixmiez", 21)
 	rk.map = ZoneMap.generate(rk.rng, "kern")
-	check(rk.map.floors.size() == 5 and rk.map.floors[-1][0].type == "boss" and rk.map.floors[3].all(func(n): return n.type == "rest"), "NEST-Kern: 4 Etagen + Boss, Rast vor dem Ur-Glitch")
+	check(rk.map.levels == 2 and rk.map.floors.size() == 6 and rk.map.floors[-1][0].type == "guard", "NEST-Kern: 2 Ebenen, erst der Wächter")
+	rk.next_level()
+	rk.heal(roundi(rk.max_hp * 0.3))
+	rk.add_module(rk.roll_module())
+	check(rk.map.level == 1 and rk.map.floors[-1][0].type == "boss" and rk.map.floors[4].all(func(n): return n.type == "rest"), "NEST-Kern Ebene 2: Rast vor dem Ur-Glitch")
 	check(GameData.ZONE_ORDER[-1] == "kern" and Z.unlock == "sumpf", "NEST-Kern wird nach den Viren-Sümpfen frei")
 	var boss := rk.foe_for({"type": "boss"})
 	check(boss.name == "Ur-Glitch" and boss.get("final", false), "Endboss: Ur-Glitch (%d HP)" % boss.hp)
@@ -1318,7 +1337,7 @@ func test_finale() -> void:
 			if ch.is_empty():
 				break
 			var node := rr.enter(ch[0])
-			if node.type in ["fight", "elite", "boss"]:
+			if node.type in ["fight", "elite", "guard", "boss"]:
 				var s := BattleState.new(rr, rr.foe_for(node))
 				var tt := 0.0
 				while not s.over and tt < 240.0:
@@ -1333,6 +1352,10 @@ func test_finale() -> void:
 				if node.type == "boss":
 					kwins += 1
 					break
+				if node.type == "guard":
+					rr.next_level()
+					rr.heal(roundi(rr.max_hp * 0.3))
+					rr.add_module(rr.roll_module())
 				rr.heal(10)
 	check(kstuck == 0, "Kern-Runs: kein Kampf hängt")
 	print("  info    Kern-Autopilot (Champions): %d/9 Runs gewonnen" % kwins)
@@ -1616,3 +1639,127 @@ func test_badger_raccoon() -> void:
 		sm.hit_enemy(5, "Neutral")
 	check(sm.hand.any(func(s): return s.rem == 0.0), "Langfinger: der 4. Treffer lädt einen Chip sofort")
 	check(SaveGame.egg_pool("Selten").has("Maskli") and SaveGame.egg_pool("Episch").has("Buddli"), "Dachs und Waschbär schlüpfen aus Eiern")
+
+
+## Ebenen-Wächter, Boss-Phasen und Großangriffe (30.09.2026)
+func test_guards() -> void:
+	# Jede Zone: Wächter je Ebene außer der letzten, oben der Boss
+	var ok := true
+	for z in GameData.ZONE_ORDER:
+		var r := RunState.new("Pixmiez", 3)
+		r.map = ZoneMap.generate(r.rng, z)
+		for lv in r.map.levels:
+			var top: Dictionary = r.map.floors[-1][0]
+			var foe := r.foe_for(top)
+			if lv < r.map.levels - 1:
+				if top.type != "guard" or not foe.get("guard", false) or foe.name != GameData.FOES[GameData.ZONES[z].guards[lv]].name:
+					ok = false
+				r.next_level()
+			elif top.type != "boss" or foe.get("guard", false):
+				ok = false
+		if r.map.level != r.map.levels - 1 or r.floor_idx != -1:
+			ok = false
+	check(ok, "Jede Zone: Wächter am Ende von Ebene 1 und 2, Boss am Ende der letzten Ebene")
+	var rs := RunState.new("Pixmiez", 4)
+	rs.next_level()
+	rs.enter(rs.next_choices()[0])
+	rs.enter(rs.next_choices()[0])
+	check(rs.zone_floor() == 6, "Etagen werden über die Ebenen weitergezählt (%d)" % rs.zone_floor())
+	# Großangriff: komplett ausweichen überlastet den Wächter
+	var run := RunState.new("Pixmiez", 5)
+	var st := BattleState.new(run, run.foe_for({"type": "guard"}))
+	st.reflex = 0
+	check(st.def.name == "Sprungschreck" and st.special_ready(1), "Wächter der Wiesen: Sprungschreck, Großangriff ab Phase 1")
+	var bot := BattleBot.new(0.0)
+	st.e.atk_t = 99.0
+	st.start_special()
+	var hp0: int = run.hp
+	for i in 240:
+		bot.act(st)
+		st.update(1.0 / 60.0)
+		st.e.atk_t = 99.0
+	check(st.sp_dodged == 1 and run.hp == hp0 and st.e.frozen > 0, "Hüpfjagd ausgewichen: Wächter überlastet (betäubt)")
+	# Getroffen: keine Überlastung
+	var st2 := BattleState.new(RunState.new("Pixmiez", 6), GameData.FOES[18])
+	st2.reflex = 0
+	st2.e.atk_t = 99.0
+	st2.start_special()
+	step(st2, 3.0)
+	check(st2.sp_dodged == 0 and st2.run.hp < st2.run.max_hp, "Stehenbleiben: Großangriff trifft, keine Überlastung")
+	# Alle Großangriffe lassen sich ausweichen (perfekter Bot), keiner bleibt hängen
+	var shapes_ok := true
+	var names: Array = []
+	for fi in GameData.FOES.size():
+		var F: Dictionary = GameData.FOES[fi]
+		if not F.has("specials"):
+			continue
+		for k in F.specials.size():
+			var r3 := RunState.new("Pixmiez", 10 + k)
+			var s3 := BattleState.new(r3, F)
+			s3.reflex = 0
+			s3.e.hp = s3.e.max / 10   # Phase 3: alle Großangriffe im Wechsel
+			s3.min_e_hp = 1           # der Bot darf ihn währenddessen nicht besiegen
+			s3.e.phase = 3
+			s3.e.sp_i = k
+			s3.e.atk_t = 99.0
+			s3.pops.clear()
+			s3.start_special()
+			var b := BattleBot.new(0.0)
+			var h0: int = r3.hp
+			for i in 300:
+				b.act(s3)
+				s3.update(1.0 / 60.0)
+				s3.e.atk_t = 99.0
+				s3.e.sp_t = 99.0
+				s3.e.pop_t = 99.0
+				s3.hazards.clear()
+			if s3.sp_dodged != 1 or r3.hp != h0 or s3.sp_left != 0:
+				shapes_ok = false
+				names.append("%s/%s" % [F.name, F.specials[k].name])
+	check(shapes_ok, "Alle Großangriffe sind ausweichbar %s" % [names])
+	# Phasen: neues Muster ab Phase 2, Bosse starten dann ihre Großangriffe
+	var r4 := RunState.new("Pixmiez", 7)
+	var s4 := BattleState.new(r4, GameData.FOES[3])
+	check(not s4.special_ready(1) and s4.special_ready(2), "Boss: Großangriffe erst ab Phase 2")
+	s4.e.hp = s4.e.max / 2 - 1
+	s4.e.atk_t = 0.01
+	step(s4, 0.05)
+	check(s4.e.phase == 2 and s4.banner.text == "Phase 2!" and s4.e.sp_t <= 2.5, "Boss unter 50 %: Phase 2 mit Banner")
+	var kinds := {}
+	for i in 3:
+		s4.warns.clear()
+		s4.e.atk_t = 0.01
+		s4.e.sp_t = 99.0
+		step(s4, 0.05)
+		kinds[s4.warns.size()] = true
+	check(s4.def.phase2 == ["row", "cross", "col"] and s4.e.pi >= 3, "Kernelmantis greift in Phase 2 mit neuem Muster an")
+	# Wächter-Sieg: nächste Ebene
+	var r5 := RunState.new("Pixmiez", 8)
+	var lv0: int = r5.map.level
+	r5.next_level()
+	check(r5.map.level == lv0 + 1 and r5.floor_idx == -1 and r5.path.is_empty() and r5.next_choices().size() == r5.map.floors[0].size(), "Nach dem Wächter: neue Karte, Start unten")
+
+
+## Run speichern und fortsetzen
+func test_run_save() -> void:
+	SaveGame.persist = false
+	SaveGame.new_game("Funkling")
+	var run := RunState.from_monster(SaveGame.team()[0], 9, "vulkan")
+	run.enter(run.next_choices()[0])
+	run.enter(run.next_choices()[0])
+	run.deck.append("Glutball")
+	run.praeg = {"Feuer": 7, "Neutral": 3}
+	run.add_module("verstaerker")
+	run.hp = 42
+	run.frag = 77
+	SaveGame.save_run(run)
+	check(SaveGame.has_run(), "Run wird auf der Karte gespeichert")
+	var json := JSON.stringify(SaveGame.data)
+	SaveGame.data = JSON.parse_string(json)   # wie nach einem Neustart: Zahlen kommen als Gleitkomma zurück
+	var r2 := SaveGame.load_run()
+	check(r2.map.zone == "vulkan" and r2.floor_idx == 1 and r2.path == run.path and r2.hp == 42 and r2.frag == 77
+		and r2.deck == run.deck and r2.praeg == {"Feuer": 7, "Neutral": 3} and r2.has_mod("verstaerker"), "Run fortsetzen: Karte, Position, HP, Deck, Prägung und Module")
+	check(r2.next_choices() == run.next_choices() and r2.current_node().type == run.current_node().type, "Run fortsetzen: gleiche Wege auf der Karte")
+	check(r2.rng.randi() == run.rng.randi(), "Run fortsetzen: Zufall läuft gleich weiter")
+	SaveGame.record_run(r2, false)
+	check(not SaveGame.has_run(), "Nach dem Run ist nichts mehr fortzusetzen")
