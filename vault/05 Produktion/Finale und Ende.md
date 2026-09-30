@@ -24,13 +24,24 @@ Entscheidung Produzent: **kurze Finalzone + Ur-Glitch als Endboss + Ende mit Abs
 - Ab halber HP Diener **passend zum Element**: Feuer → Lava, Virus → Schleim, Code → Bitmilben, sonst Glitch-Sporen.
 - Eigenes Boss-Intro mit Glitch-Streifen und eigene Musik **„finale“** (e-Moll, 184 BPM).
 
-## Ende (`ending_view.gd`, ca. 55 s, überspringbar)
-1. Terminal wie im Opening: „Ur-Glitch … defragmentiert · Korruption: 0 % · NEST-Server … Neustart · Bewohner … zurück · Status: alles friedlich“
-2. Rückkehr: Pixelspuren fliegen herein und werden wieder zu den sechs Babys (umgekehrte Flucht aus dem Opening)
-3. Dein Team (aktuelles Monster + Team, bis 5) mit Pixel-Konfetti – „Danke, Operator.“
-4. Abspann mit Parade von Ultras am unteren Rand
-5. „ENDE“ – Hinweis auf die neue Schwierigkeit
-- Musik **„ending“**: das Thema aus dem Opening, jetzt hell mit Blech und Schlagzeug.
+## Ende (`ending_view.gd`, Kino-Ende seit 30.09.2026, ca. 69 s, überspringbar)
+Spiegelt das Kino-Intro (`vault/05 Produktion/Opening-Szene.md`): Kinobalken, Kamerafahrt, taktgenaue Musik. Gemeinsame Werkzeuge (Welt, Turm, Korruption, Zimmer, Kinobalken) liegen in `scripts/ui/cinema_canvas.gd`.
+
+| # | Bild | Dauer | Text | Musik / Ton |
+|---|---|---|---|---|
+| 1 | **Zerspringen**: Der Ur-Glitch zittert, Risse wachsen, er zerbricht in Pixelsplitter, die zu Licht verglühen (Schockwelle, Weißblitz) | 3 s | – | Stille nach der Bossmusik, Treffer, Überlastung |
+| 2 | **Neustart**: Terminal wie im Opening („Ur-Glitch ... defragmentiert · Korruption: 0 %“ …) | 6 s | (Terminal) | Ticks |
+| 3 | **Heilung**: Kamerafahrt rückwärts vom Kern-Turm zu den Wiesen, eine helle Welle frisst die rote Korruption, dahinter sprießen Datenblumen | 10 s | „Der Fehler war gelöscht …“ | Weltthema aus dem Opening (C-Dur) |
+| 4 | **Heimkehr**: 8 Lichtspuren kommen aus den Fluchtrichtungen des Openings zurück und werden wieder Babys, am Ende hüpfen alle | 7,5 s | „Aus allen Geräten kehrten …“ | Blech, Schlagzeug |
+| 5 | **Dein Team**: Kamera fährt hoch, Morgenlicht, Konfetti-Ausbruch | 7,5 s | „Und mittendrin: dein Team …“ | Hauptthema mit Gegenstimme |
+| 6 | **Zimmer am Morgen**: Regenbogen statt Gewitter, dein Glitchling sitzt neben der Eierschale auf dem Desktop, der Mauszeiger streichelt es, ein Herz steigt auf | 7,5 s | „Der Sturm ist vorbei …“ | ruhig |
+| 7 | **Title Drop**: GLITCHLINGS, diesmal mit goldenem Glanz statt rotem Riss, „Der NEST ist wieder online.“ | 5 s | – | Schlag + Akkord |
+| 8 | **Abspann** (kurz, 2 Karten): „Ein Spiel von TheGoderGuy“ mit allen Rollen in zwei Zeilen; dann PixelLab, Schriften (OFL), Godot, Dank. Unten läuft die Ultra-Parade | 15 s | – | Thema aus `intro` |
+| 9 | **ENDE**: Hinweis auf „Korrumpiert“, dein Glitchling, daneben wackelt ein neues Ei | 7,5 s | – | Schlussakkord |
+
+- Musik **„ending“** (96 BPM, One-Shot, 24 Takte = 60 s ab Bild 3). Beim Weiterblättern springt sie mit (`Music.seek`). Test prüft, dass Takte und Bilder zusammenpassen.
+- Name im Abspann: `CREATOR` in `ending_view.gd`, Rollen in `ROLES`, zweite Karte in `THANKS`.
+- Screenshot: `--mode=ending --t=<Sekunde> [--form=…]`; Video: `godot --path game --write-movie build/Glitchlings_Ende.avi --fixed-fps 30 -- --play=ending`
 - Danach die normale Auswertung („Der NEST ist gerettet!“), dann die Station. Titel zeigt „* NEST gerettet *“.
 
 ## Nach dem Ende
@@ -38,6 +49,6 @@ Entscheidung Produzent: **kurze Finalzone + Ur-Glitch als Endboss + Ende mit Abs
 - **Schwierigkeit „Korrumpiert“** (Optionen, erst nach dem Ende wählbar): Gegner-HP ×1,5, Schaden ×1,4, Warnungen 0,15 s kürzer, **Fragmente ×1,5**.
 
 ## Offen
-- [x] Abspann: überall TheGoderGuy (Ein Spiel von, Idee und Produktion, Game Design, Programmierung, Pixel-Art-Regie, Musik und Sound); Name steht als `CREATOR` in `ending_view.gd`.
+- [x] Abspann (30.09.2026 gekürzt): eine Karte „Ein Spiel von TheGoderGuy“ mit allen Rollen, eine Karte mit Werkzeugen und Dank.
 - Eigene Ereignisse im NEST-Kern (z. B. Erinnerungsfragmente des NEST mit Lore).
 - Autopilot gewinnt fast immer – echtes Anspielen nötig, ob der Ur-Glitch fordernd genug ist.

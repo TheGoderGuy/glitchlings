@@ -1380,7 +1380,16 @@ func test_finale() -> void:
 	add_child(ev)
 	ev.seek(total - 0.3)
 	await get_tree().create_timer(0.6).timeout
-	check(ended[0] and total > 40.0 and total < 70.0, "Ende-Szene mit Abspann (%.0f s) läuft durch" % total)
+	check(ended[0] and total > 40.0 and total < 80.0, "Ende-Szene mit Abspann (%.0f s) läuft durch" % total)
+	# Kino-Ende: Musik "ending" ist taktgenau so lang wie die Bilder ab der Heilung
+	var bars := 0
+	for sec in MusicSynth.TRACKS["ending"].sections:
+		bars += sec.chords.size()
+	var from_heal := 0.0
+	for i in range(ev.MUSIC_FROM, ev.PANELS.size()):
+		from_heal += ev.PANELS[i].dur
+	check(absf(bars * 4 * 60.0 / MusicSynth.TRACKS["ending"].bpm - from_heal) < 0.01 and ev.PANELS[ev.MUSIC_FROM].id == "heal",
+		"Ende-Musik passt taktgenau zu den Bildern (%d Takte = %.1f s)" % [bars, from_heal])
 	ev.queue_free()
 	Music.stop()
 

@@ -353,27 +353,42 @@ const TRACKS := {
 				"D#6 - - - F#6 - - - B6 - - - . . . ."]},
 		],
 	},
+	# ---------- Kino-Ende (30.09.2026): läuft einmal durch, Abschnitte = Bilder des Endes (96 BPM, 1 Takt = 2,5 s) ----------
+	# Heilung 4 Takte · Heimkehr 3 · Team 3 · Zimmer 3 · Titel 2 · Abspann 6 · Ende 3
 	"ending": {
-		"bpm": 92, "loud": 0.18, "lead": "brass", "bass": "half", "arp": "arp8", "stabs": "", "drums": "title", "counter": "strings",
+		"bpm": 96, "loud": 0.17, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings", "oneshot": true,
 		"sections": [
-			{"name": "A", "chords": ["Bb", "C", "F", "Dm", "Bb", "C", "F", "F"], "melody": [
+			{"name": "heal", "chords": ["C", "Am", "F", "G"], "fill": false, "melody": [
+				"E5 - - - G5 - - - C6 - - - B5 - G5 -",
+				"A5 - - - - - - - E5 - - - C5 - - -",
+				"F5 - - - A5 - - - C6 - - - F6 - E6 -",
+				"D6 - - - - - - - B5 - - - G5 - - -"]},
+			{"name": "return", "chords": ["F", "Bb", "C"], "lead": "brass", "bass": "octave8", "arp": "arp16", "stabs": "x..x..x.........", "drums": "map", "melody": [
+				"F5 . F5 . A5 . F5 . C6 - - - Bb5 - A5 -",
+				"Bb5 - - - F5 - - - D5 - F5 - Bb5 - D6 -",
+				"C6 - - - - - - - E5 - G5 - C6 - E6 -"]},
+			{"name": "B", "chords": ["F", "C", "Dm"], "lead": "brass", "drums": "title", "melody": [
+				"A5 - - - C6 - - - F6 - - - E6 - C6 -",
+				"E6 - - - D6 - C6 - G5 - - - C6 - - -",
+				"D6 - - - F6 - - - A6 - - - F6 - D6 -"]},
+			{"name": "room", "chords": ["Bb", "F", "C"], "fill": false, "melody": [
+				"D5 - - - F5 - - - Bb5 - - - A5 - G5 -",
+				"A5 - - - - - - - F5 - - - C5 - - -",
+				"E5 - - - G5 - - - C6 - - - . . . ."]},
+			{"name": "title", "chords": ["F", "F"], "lead": "brass", "drums": "hit", "fill": false, "melody": [
+				"F5 - - - A5 - - - C6 - - - - - - -",
+				"F6 - - - - - - - - - - - - - - -"]},
+			{"name": "B", "chords": ["Bb", "C", "F", "Dm", "Bb", "C"], "lead": "brass", "drums": "title", "melody": [
 				"D5 - - - F5 - - - Bb5 - - - A5 - G5 -",
 				"E5 - - - G5 - - - C6 - - - Bb5 - A5 -",
 				"A5 - - - - - - - F5 - - - C5 - F5 -",
 				"D5 - - - - - - - . . . . A4 - D5 -",
 				"F5 - - - Bb5 - - - D6 - - - C6 - Bb5 -",
-				"A5 - - - G5 - - - E5 - - - G5 - - -",
-				"F5 - - - - - - - - - - - . . . .",
-				". . . . . . . . C5 - D5 - E5 - - -"]},
-			{"name": "B", "chords": ["F", "C", "Dm", "Bb", "F", "C", "Bb", "C"], "melody": [
-				"A5 - - - C6 - - - F6 - - - E6 - C6 -",
-				"E6 - - - D6 - C6 - G5 - - - C6 - - -",
-				"D6 - - - F6 - - - A6 - - - F6 - D6 -",
-				"D6 - - - C6 - Bb5 - F5 - - - Bb5 - - -",
-				"A5 - - - C6 - - - F6 - - - E6 - F6 -",
-				"G6 - - - E6 - C6 - G5 - - - C6 - - -",
-				"Bb5 - - - D6 - - - F6 - - - D6 - Bb5 -",
-				"C6 - - - - - - - E6 - - - G6 - - -"]},
+				"A5 - - - G5 - - - E5 - - - G5 - - -"]},
+			{"name": "end", "chords": ["F", "Bb", "F"], "lead": "brass", "drums": "hit", "fill": false, "melody": [
+				"A5 - - - - - - - F5 - - - C5 - F5 -",
+				"D6 - - - - - - - Bb5 - - - F5 - - -",
+				"F5 - - - - - - - - - - - - - - -"]},
 		],
 	},
 }
