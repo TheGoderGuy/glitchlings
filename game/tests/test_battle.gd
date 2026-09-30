@@ -170,11 +170,11 @@ func test_queue() -> void:
 	st.hand[0].chip = "Pixelstrahl"
 	st.use_slot(0)
 	check(st.hand[0].rem > 0, "Nachgezogener Chip muss laden")
-	st.use_slot(0)
-	check(st.hand[0].queued, "Ladenden Chip vormerken")
 	var before: int = st.run.chips_used
+	st.use_slot(0)
+	check(st.hand[0].deny > 0, "Ladender Chip: Drücken wird nur angezeigt (blinkt)")
 	step(st, 5.0)
-	check(st.run.chips_used == before + 1, "Vorgemerkter Chip feuert automatisch")
+	check(st.run.chips_used == before, "Ladender Chip wird nicht vorgemerkt und feuert nicht von selbst")
 
 
 func test_glutball() -> void:

@@ -698,8 +698,9 @@ func _draw_hand() -> void:
 			_text(r.position + Vector2(8, 33), "bereit", 8, el, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 14)
 		else:
 			_bar(Rect2(r.position + Vector2(6, r.size.y - 8), Vector2(r.size.x - 12, 5)), 1.0 - s.rem / s.max, el.darkened(0.2))
-			if s.queued:
-				_text(r.position + Vector2(8, 33), "gemerkt", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 14)
+		# zu früh gedrückt: roter Rahmen blinkt kurz
+		if s.get("deny", 0.0) > 0 and fmod(s.deny, 0.1) < 0.06:
+			draw_rect(r, GameData.COL.coral, false, 2.0)
 	# Signatur-Attacke
 	var R := Rect2(HAND_X + 3 * (CARD_W + 6), HAND_Y, 130, CARD_H)
 	var full := st.sp >= 100

@@ -89,7 +89,7 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 		"phase": 1, "sp_t": def.get("sp_first", 5.0), "sp_i": 0}
 	draw_pile = _shuffle(run.deck)
 	for i in 3:
-		hand.append({"chip": _draw_one(), "rem": 0.0, "max": 1.0, "queued": false})
+		hand.append({"chip": _draw_one(), "rem": 0.0, "max": 1.0, "deny": 0.0})
 	if mon.passive == "Katzenreflex":
 		reflex = 2 if run.stage >= 3 else 1
 	if mon.passive == "Wolkendecke":
@@ -187,10 +187,10 @@ func use_slot(i: int) -> void:
 	var s: Dictionary = hand[i]
 	if s.chip == "":
 		return
+	# Noch am Laden: nichts passiert (kein Vormerken mehr, 30.09.2026), die Karte blinkt nur kurz rot
 	if s.rem > 0:
-		s.queued = not s.queued
+		s.deny = 0.25
 		return
-	s.queued = false
 	var id: String = s.chip
 	var ch: Dictionary = GameData.chip(id)
 	run.praeg[ch.el] = run.praeg.get(ch.el, 0) + (2 if run.has_mod("prisma") and ch.el != "Neutral" else 1)
@@ -334,7 +334,6 @@ func _apply_chip(id: String) -> void:
 				s.chip = _draw_one()
 				s.max = GameData.chip(s.chip).cd if s.chip != "" else 1.0
 				s.rem = 0.0
-				s.queued = false
 		"Funkenregen":
 			for i in 3:
 				var fc := rng.randi_range(0, 2)
@@ -808,12 +807,6 @@ func _update_logic(dt: float) -> void:
 	for s in hand:
 		if s.rem > 0:
 			s.rem = maxf(0.0, s.rem - dt * rate)
-	for i in 3:
-		var s: Dictionary = hand[i]
-		if s.queued and s.chip != "" and s.rem <= 0:
-			use_slot(i)
-			if over:
-				return
 	if pend_move != null and p.cd <= 0:
 		var m: Vector2i = pend_move
 		pend_move = null
@@ -1032,6 +1025,9 @@ func _update_logic(dt: float) -> void:
 
 func _update_fx(dt: float) -> void:
 	hurt = maxf(0.0, hurt - dt)
+	for s in hand:
+		if s.get("deny", 0.0) > 0:
+			s.deny = maxf(0.0, s.deny - dt)
 	p.flash = maxf(0.0, p.flash - dt)
 	e.flash = maxf(0.0, e.flash - dt)
 	shake = maxf(0.0, shake - dt * 30.0)

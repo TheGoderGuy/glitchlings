@@ -107,6 +107,7 @@ func _process(delta: float) -> void:
 					_choose(opt.id)
 		State.REMOVE:
 			_nav(remove_list.size() + 1)   # letzte Zeile: „Zurück“
+			_nav_cols(remove_list.size() + 1)
 			if Input.is_action_just_pressed("back") or (Input.is_action_just_pressed("confirm") and sel >= remove_list.size()):
 				Sfx.play("back")
 				_cancel_choose()
@@ -143,6 +144,19 @@ func _nav(n: int) -> void:
 		Sfx.play("select")
 	if Input.is_action_just_pressed("move_down"):
 		sel = (sel + 1) % n
+		Sfx.play("select")
+
+
+## Chip-Liste mit zwei Spalten (ab 11 Einträgen): links/rechts springt in die Nachbarspalte, gleiche Zeile
+func _nav_cols(n: int) -> void:
+	if n <= 10:
+		return
+	var per_col := ceili(n / 2.0)
+	if Input.is_action_just_pressed("move_right") and sel < per_col:
+		sel = mini(sel + per_col, n - 1)
+		Sfx.play("select")
+	elif Input.is_action_just_pressed("move_left") and sel >= per_col:
+		sel -= per_col
 		Sfx.play("select")
 
 
