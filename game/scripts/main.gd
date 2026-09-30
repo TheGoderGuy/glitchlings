@@ -22,7 +22,11 @@ var foe_override := -1   # nur für Screenshots
 func _ready() -> void:
 	PixelCanvas.preload_all()
 	var shot := Shot.args()
-	if shot.is_empty():
+	# Nur das Intro abspielen und beenden (Video-Aufnahme: godot --write-movie intro.avi -- --play=opening)
+	if OS.get_cmdline_user_args().has("--play=opening"):
+		SaveGame.persist = false
+		show_opening(get_tree().quit)
+	elif shot.is_empty():
 		show_title()
 	else:
 		_screenshot(shot)

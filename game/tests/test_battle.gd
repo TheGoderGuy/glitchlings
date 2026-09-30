@@ -1205,7 +1205,7 @@ func test_opening() -> void:
 	var total := 0.0
 	for p in o.PANELS:
 		total += p.dur
-	check(o.PANELS.size() == 5 and total >= 25.0 and total <= 45.0, "Opening: 5 Bilder, %.0f s lang" % total)
+	check(o.PANELS.size() == 8 and total >= 45.0 and total <= 65.0, "Opening: 8 Bilder (Kino-Intro), %.0f s lang" % total)
 	var ended := [false]
 	o.finished.connect(func(): ended[0] = true)
 	add_child(o)

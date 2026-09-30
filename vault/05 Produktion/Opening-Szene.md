@@ -1,23 +1,39 @@
 ---
 tags: [produktion, story, godot]
 ---
-# Opening-Szene
+# Opening-Szene (Kino-Intro)
 
-Läuft beim **neuen Spiel** (kein Spielstand) vor der Starterwahl, ca. 35 s, jederzeit überspringbar (Esc/Start), Enter/A zeigt den Text sofort bzw. blättert weiter. In den Optionen: **„Intro ansehen“**. Code: `game/scripts/ui/opening_view.gd`, Screenshot: `--mode=opening --t=<Sekunde>`.
+Läuft beim **neuen Spiel** (kein Spielstand) vor der Starterwahl, **ca. 56 s**, jederzeit überspringbar (Esc/Start). Enter/A zeigt den Text sofort bzw. blättert weiter, die Musik springt dabei mit. In den Optionen: **„Intro ansehen“**.
 
-Die Geschichte folgt [[Welt & Lore]], angepasst an den PC: Das Ei landet auf dem **Desktop** statt auf dem Homescreen.
+- Code: `game/scripts/ui/opening_view.gd`
+- Screenshot: `--mode=opening --t=<Sekunde>`
+- Video-Aufnahme: `godot --path game --write-movie build/Glitchlings_Intro.avi --fixed-fps 30 -- --play=opening`
 
-| # | Bild | Text | Ton |
-|---|---|---|---|
-| 1 | Terminal: NEST fährt hoch (Zonen, 4.096 Bewohner, „alles friedlich“) | (Terminal tippt) | Ticks |
-| 2 | Warnung „Datenkorruption“, dann SYSTEMABSTURZ mit Störstreifen, Bildschirmwackeln | Eines Tages stürzte der NEST ab. | Warnton, Einschlag |
-| 3 | Cache-Wiesen: sechs Baby-Glitchlings stehen im Gras, lösen sich nacheinander in Pixelspuren auf; danach flackern Bug, Glitchmotte, Spamlet auf | … flohen in alle Geräte … Zurück blieben wilde, korrupte Daten. | Intro-Musik beginnt |
-| 4 | Nachts im Zimmer: Fenster mit Mond, Monitor mit Desktop; ein Ei fällt aus einem Datenspalt auf den Desktop, der Mauszeiger wandert hin | Eines Nachts landet etwas auf deinem Desktop … | Plopp |
-| 5 | Nahaufnahme: Ei wackelt, bekommt drei Risse, Lichtstrahlen, weißer Blitz → Starterwahl blendet aus dem Weiß ein | Du bist jetzt Operator. … bring den NEST zurück ins Netz. | Ticks, Aufladen |
+**30.09.2026 zum Kino-Intro ausgebaut** (vorher 5 Bilder, ca. 35 s; die erste Fassung kam als „mega“ an).
 
-**Musik:** `intro` (MusicSynth, 80 BPM, Flöte + Glockenspiel + Streicher, ohne Schlagzeug): 8 Takte wehmütig in d-Moll, 8 Takte hoffnungsvoll in F-Dur. Läuft in der Starterwahl weiter.
+## Kino-Mittel
+- Kinobalken (40 px), die im Kaltstart hereinfahren. Bildunterschriften stehen im unteren Balken.
+- Dunkle Ränder (Vignette), Kamerafahrt mit Vordergrund-Parallax, Bildwackeln bei Treffern.
+- Farbversatz (Cyan/Magenta), Glitch-Blöcke, Bildrisse, Röhrenmonitor-Abschaltung.
+- Musik **`opening`** (96 BPM, 1 Takt = 2,5 s) läuft **taktgenau** zu den Bildern und spielt einmal durch (One-Shot). Ab dem Zimmer übernimmt `intro`, das in der Starterwahl weiterläuft.
 
-**Offen / Ideen:**
-- Bilder sind mit einfachen Formen gezeichnet; Zimmer und Ei-Nahaufnahme könnten später als PixelLab-Illustrationen kommen.
-- Auswahl in der Starterwahl als „drei Signale aus dem Ei“ inszenieren?
-- Eigener Sound für das Schlüpfen / die Risse.
+## Ablauf
+| # | Bild | Dauer | Text | Musik / Ton |
+|---|---|---|---|---|
+| 1 | Kaltstart: schwarz, blinkender Cursor, dann tippt das Terminal den NEST hoch (inklusive NEST-Kern) | 6 s | (Terminal) | Ticks, keine Musik |
+| 2 | **Kamerafahrt** über den NEST: Cache-Wiesen, Vulkan, Sümpfe, am Ende der Kern-Turm. 13 Glitchlinge mit Idle-Animation, Datenfunken im Vordergrund | 10 s | „Tief im Netz lag der NEST …“ | ruhig, Flöte + Glockenspiel (C-Dur) |
+| 3 | **Der Fehler**: Das Turm-Leuchtfeuer flackert rot, hinter dem Turm steigt der **Ur-Glitch als Silhouette** auf (nur Umriss und glühende Augen). Rote Korruption frisst sich ins Bild, die Glitchlinge zittern | 7,5 s | „Doch im Kern erwachte ein Fehler …“ | Blech in a-Moll, Pauken bauen auf, Warntöne |
+| 4 | **Absturz**: Weißblitz, SYSTEMABSTURZ mit Farbversatz, dann schrumpft das Bild wie ein alter Röhrenmonitor zu einer Linie und einem Punkt | 2,5 s | – | ein Schlag, dann Stille |
+| 5 | **Flucht**: 8 Glitchlinge sammeln sich und schießen als Lichtspuren in alle Richtungen davon; danach tauchen Bugsy, Bytewurm, Glitchmotte und Glitchspinne auf | 7,5 s | „Die Glitchlings flohen …“ | treibend mit Schlagzeug, Wusch je Flucht |
+| 6 | **Title Drop**: GLITCHLINGS schlägt mit Weißblitz, Schockwelle und Funken ein. „Brüten. Fusionieren. Prägen.“ Später läuft ein roter Riss über das Logo | 5 s | – | Hauptthema (Blech + Streicher) |
+| 7 | **Gewitternacht**: Zimmer, Regen am Fenster, Doppelblitz, langsamer Kameraschwenk. Ein Ei fällt aus einem Datenspalt auf den Desktop, der Mauszeiger wandert hin | 8,5 s | „In einer stürmischen Nacht …“ | `intro` beginnt, Donner, Plopp |
+| 8 | **Das Ei**: Herzschlag-Pulsen (doppelt, immer schneller), drei Risse, Lichtstrahlen, Weißblende zur Starterwahl | 9 s | „Du bist jetzt Operator …“ | Herzschlag-Ticks, Risse, Aufladen |
+
+## Technik
+- `MusicSynth`: Abschnitte können jetzt Lead, Bass, Begleitung, Stabs und Schlagzeug überschreiben (`"drums": "timp_build"` usw.). Akkord `"-"` bedeutet stiller Takt, `"oneshot": true` heißt keine Schleife und der Ausklang bleibt erhalten.
+- `Music.seek()`: Beim Weiterblättern springt die Musik an die passende Stelle.
+- Die Augen des Ur-Glitch werden aus seinem Sprite gelesen (helle Pixel im Augenbereich) und in der Silhouette rot nachgezeichnet.
+
+## Ideen
+- Gemalte Schlüsselbilder (PixelLab) für Panorama oder Zimmer wären möglich; aktuell ist alles prozedural gezeichnet.
+- Die Starterwahl könnte als „drei Signale aus dem Ei“ inszeniert werden.

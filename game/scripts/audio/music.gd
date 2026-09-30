@@ -5,7 +5,7 @@ extends Node
 
 const RESUME := ["map", "title"]
 ## Einblendzeit je Stück: Kämpfe starten knackig, die Karte blendet weich ein
-const FADE_IN := {"map": 1.2, "title": 1.0, "battle": 0.05, "boss": 0.05, "guard": 0.05, "victory": 0.02, "intro": 2.0, "finale": 0.05, "ending": 1.5}
+const FADE_IN := {"map": 1.2, "title": 1.0, "battle": 0.05, "boss": 0.05, "guard": 0.05, "opening": 0.02, "victory": 0.02, "intro": 2.0, "finale": 0.05, "ending": 1.5}
 const FADE_OUT := 0.45
 
 var players: Array[AudioStreamPlayer] = []
@@ -55,7 +55,9 @@ func play(key: String) -> void:
 	var neu := players[active]
 	var stream: AudioStreamWAV = load(path)
 	# Schleife in Frames; neue Stereo-Stücke spielen das Intro nur einmal, danach A+B in Schleife
-	stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	# One-Shot-Stücke (Kino-Intro) laufen einmal durch
+	var oneshot: bool = MusicSynth.TRACKS.has(key) and MusicSynth.TRACKS[key].get("oneshot", false)
+	stream.loop_mode = AudioStreamWAV.LOOP_DISABLED if oneshot else AudioStreamWAV.LOOP_FORWARD
 	stream.loop_end = roundi(stream.get_length() * stream.mix_rate)
 	stream.loop_begin = MusicSynth.intro_frames(key) if stream.stereo and MusicSynth.TRACKS.has(key) else 0
 	neu.stream = stream
@@ -70,6 +72,12 @@ func play(key: String) -> void:
 		tween.tween_property(neu, "volume_db", 0.0, fade_in).set_trans(Tween.TRANS_SINE)
 	tween.tween_property(old, "volume_db", -80.0, FADE_OUT).set_trans(Tween.TRANS_SINE)
 	tween.chain().tween_callback(_stop_if_inactive.bind(old))
+
+
+## Im laufenden Stück springen (Intro: beim Weiterblättern bleibt die Musik synchron)
+func seek(pos: float) -> void:
+	if current != "" and players[active].playing:
+		players[active].seek(maxf(0.0, pos))
 
 
 func stop() -> void:

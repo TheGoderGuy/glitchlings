@@ -154,6 +154,31 @@ const TRACKS := {
 				"D#6 - - - F#6 - - - B6 - - - . . . ."]},
 		],
 	},
+	# ---------- Kino-Intro (30.09.2026): läuft einmal durch, Abschnitte = Bilder des Intros ----------
+	# Welt 4 Takte (10 s) · Fehler 3 Takte (7,5 s) · Absturz 1 Takt (2,5 s) · Flucht 3 Takte (7,5 s) · Titel 2 Takte (5 s)
+	"opening": {
+		"bpm": 96, "loud": 0.15, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings", "oneshot": true,
+		"sections": [
+			{"name": "world", "chords": ["C", "Am", "F", "G"], "fill": false, "melody": [
+				"E5 - - - G5 - - - C6 - - - B5 - G5 -",
+				"A5 - - - - - - - E5 - - - C5 - - -",
+				"F5 - - - A5 - - - C6 - - - A5 - F5 -",
+				"G5 - - - - - - - D5 - - - . . . ."]},
+			{"name": "corrupt", "chords": ["Am", "Bb", "E"], "lead": "brass", "arp": "none", "drums": "timp_build", "melody": [
+				"A4 - - - - - - - C5 - - - B4 - - -",
+				"Bb4 - - - - - - - A4 - - - F4 - - -",
+				"E4 - - - - - - - G#4 - - - B4 - D5 -"]},
+			{"name": "crash", "chords": ["-"], "drums": "hit", "fill": false, "melody": [
+				". . . . . . . . . . . . . . . ."]},
+			{"name": "flight", "chords": ["Dm", "Bb", "C"], "lead": "brass", "bass": "octave8", "arp": "arp16", "stabs": "x..x..x.........", "drums": "battle", "melody": [
+				"D5 . D5 . F5 . D5 . A5 - - - G5 - F5 -",
+				"F5 - - - D5 - - - Bb4 - D5 - F5 - Bb5 -",
+				"C6 - - - Bb5 - A5 - G5 - E5 - C5 - E5 -"]},
+			{"name": "B", "chords": ["F", "C"], "lead": "brass", "arp": "arp8", "drums": "title", "fill": false, "melody": [
+				"F5 - - - A5 - - - C6 - - - - - - -",
+				"C6 - - - - - - - - - - - - - - -"]},
+		],
+	},
 	# ---------- Opening ----------
 	"intro": {
 		"bpm": 80, "loud": 0.16, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings",
@@ -360,6 +385,9 @@ const DRUMS := {
 	"title": {"k": "x.......x.x.....", "s": "....x.......x...", "h": "x.x.x.x.x.x.x.x.", "vol": 0.7},
 	"boss": {"k": "x..x..x.x..x..x.", "s": "....x.......x...", "h": "xxxxxxxxxxxxxxxx", "t": "x.......x.......", "vol": 1.0},
 	"guard": {"k": "x.x...x.x.x...x.", "s": "....x..x....x...", "h": "x.xxx.xxx.xxx.xx", "t": "x.......x.....x.", "vol": 1.0},
+	# Kino-Intro: Pauken, die sich aufbauen · ein einzelner Schlag (Absturz)
+	"timp_build": {"k": "x.......x.......", "s": "................", "h": "................", "t": "x...x...x.x.x.xx", "vol": 0.9},
+	"hit": {"k": "x...............", "s": "................", "h": "................", "t": "x...............", "vol": 1.0},
 	"none": {"k": "................", "s": "................", "h": "................", "vol": 0.0},
 	# Vulkan: schwere Pauken · Sumpf: hüpfender Shuffle
 	"vulkan_map": {"k": "x.......x.......", "s": "............x...", "h": "..x...x...x...x.", "t": "x.....x...x.....", "vol": 0.6},
@@ -435,11 +463,18 @@ func _render(key: String) -> AudioStreamWAV:
 	for sec in tr.sections:
 		var bars: int = sec.chords.size()
 		var is_intro: bool = sec.name == "intro"
+		# Abschnitte können Lead, Bass, Begleitung, Stabs und Schlagzeug überschreiben (Kino-Intro)
+		var lead: String = sec.get("lead", tr.lead)
+		var bass: String = sec.get("bass", tr.bass)
+		var arp: String = sec.get("arp", tr.arp)
+		var stabs: String = sec.get("stabs", tr.stabs)
+		var drums: String = sec.get("drums", tr.drums)
+		var fill_end: bool = sec.get("fill", true)
 		# Melodie (über Taktgrenzen gebunden)
 		var notes := _parse_melody(" ".join(sec.melody), t, step)
 		for nt in notes:
-			_lead(tr.lead, nt.t, nt.d, nt.m, 0.9)
-			if tr.lead == "brass":
+			_lead(lead, nt.t, nt.d, nt.m, 0.9)
+			if lead == "brass":
 				_glock(nt.t, nt.d, nt.m + 12, 0.18, 0.3)
 		# Gegenstimme im B-Teil
 		if sec.name == "B":
@@ -454,15 +489,17 @@ func _render(key: String) -> AudioStreamWAV:
 		for b in bars:
 			var tb := t + b * bar
 			var ch: String = sec.chords[b]
-			_pad(ch, tb, bar, 0.45 if tr.bass == "octave8" else 0.4)
-			_bass_bar(tr.bass, ch, tb, step)
-			_arp_bar(tr.arp, ch, tb, step)
-			if tr.stabs != "" and (is_intro or b % 2 == 0):
-				_stabs(tr.stabs, ch, tb, step)
-			_drum_bar(tr.drums, tb, step, b == bars - 1, b == 0)
+			if ch != "-":   # "-" = stiller Takt (nur Schlagzeug)
+				_pad(ch, tb, bar, 0.45 if bass == "octave8" else 0.4)
+				_bass_bar(bass, ch, tb, step)
+				_arp_bar(arp, ch, tb, step)
+				if stabs != "" and (is_intro or b % 2 == 0):
+					_stabs(stabs, ch, tb, step)
+			_drum_bar(drums, tb, step, fill_end and b == bars - 1, b == 0)
 		t += bars * bar
 	_echo(tr.bpm)
-	return _to_wav(key, int(total_bars * bar * RATE))
+	# One-Shot-Stücke (Kino-Intro) laufen einmal durch und behalten ihren Ausklang
+	return _to_wav(key, L.size() if tr.get("oneshot", false) else int(total_bars * bar * RATE))
 
 
 func _parse_melody(s: String, t0: float, step: float) -> Array:
@@ -867,7 +904,7 @@ func _echo(bpm: float) -> void:
 func _to_wav(key: String, loop_len: int) -> AudioStreamWAV:
 	# Ausklang über das Schleifenende hinaus an den Schleifenanfang zurückfalten (nahtlose Schleife)
 	var lb := intro_frames(key)
-	for i in range(loop_len, L.size()):
+	for i in range(loop_len, L.size() if not TRACKS[key].get("oneshot", false) else loop_len):
 		var j := lb + (i - loop_len)
 		if j < loop_len:
 			L[j] += L[i]
@@ -888,7 +925,7 @@ func _to_wav(key: String, loop_len: int) -> AudioStreamWAV:
 	wav.mix_rate = RATE
 	wav.stereo = true
 	wav.data = data
-	wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	wav.loop_mode = AudioStreamWAV.LOOP_DISABLED if TRACKS[key].get("oneshot", false) else AudioStreamWAV.LOOP_FORWARD
 	wav.loop_begin = lb
 	wav.loop_end = loop_len
 	return wav
