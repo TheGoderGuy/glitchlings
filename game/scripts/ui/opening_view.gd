@@ -277,11 +277,13 @@ func _draw_world(cam: float, corrupt: float, silhouette := 0.0) -> void:
 		var rx: float = r[1] - cam
 		if rx < -60 or rx > W + 60:
 			continue
-		var fy := GROUND - (40.0 + sin(anim_t * 2.0 + rx) * 4.0 if r[3] else 0.0)
+		# Schweben und Animation an der Weltposition festmachen, nicht an der Bildschirmposition (sonst zappelt es beim Kameraschwenk)
+		var wx: float = r[1]
+		var fy := GROUND - (40.0 + roundf(sin(anim_t * 2.0 + wx) * 4.0) if r[3] else 0.0)
 		var jit := Vector2.ZERO
 		if corrupt > 0.3:
-			jit.x = roundf(sin(anim_t * 40.0 + rx) * corrupt * 2.0)   # zittern vor Angst
-		_draw_sprite(r[0], rx + jit.x, fy, false, {"scale": r[2]})
+			jit.x = roundf(sin(anim_t * 40.0 + wx) * corrupt * 2.0)   # zittern vor Angst
+		_draw_sprite(r[0], rx + jit.x, fy, false, {"scale": r[2], "phase": wx * 0.037})
 	# Vordergrund-Parallax: Datenfunken, die schneller vorbeiziehen
 	for i in 26:
 		var px := fmod(i * 97.0 - cam * 1.35, W + 40.0)
@@ -420,7 +422,7 @@ func _draw_flight() -> void:
 		var k := clampf((t - start) / 0.7, 0.0, 1.0)
 		var pos := home + dir * 620.0 * k * k
 		if k < 0.25:
-			_draw_sprite(FLEE[i], pos.x, pos.y, dir.x < 0, {"scale": 2, "mod": Color(1, 1, 1, appear * (1.0 - k * 4.0))})
+			_draw_sprite(FLEE[i], pos.x, pos.y, dir.x < 0, {"scale": 2, "phase": i * 1.7, "mod": Color(1, 1, 1, appear * (1.0 - k * 4.0))})
 		if k > 0.0 and k < 1.0:
 			# Lichtspur: Kopf hell, Schweif verblasst
 			var col: Color = cols[i]

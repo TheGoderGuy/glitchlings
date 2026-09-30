@@ -200,7 +200,7 @@ static func sprite(key: String) -> Dictionary:
 
 
 ## Spieler-Babys (32 px) werden verdoppelt, ab Rookie 1 Kunstpixel = 1 Pixel.
-## opts: scale, bob, flash, blink, mod, clip_top, anim (false = Idle-Animation aus)
+## opts: scale, bob, flash, blink, mod, clip_top, anim (false = Idle-Animation aus), phase (fester Animationsversatz)
 ## Hat ein Sprite Idle-Frames, laufen sie statt Wippen und Blinzeln (Phase je Position versetzt).
 func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {}) -> void:
 	var s := sprite(key)
@@ -212,7 +212,9 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 	var left := roundi(cx - size / 2.0)
 	var tex: Texture2D = s.flash if opts.get("flash", false) else (s.blink if opts.get("blink", false) else s.tex)
 	if animated and not opts.get("flash", false):
-		var fi: int = int(anim_t * IDLE_FPS + absf(cx) * 0.037) % s.idle.size()
+		# Versatz je Figur, damit nicht alle im Gleichtakt atmen – unabhängig von der Position, sonst springt die
+		# Animation beim Bewegen (Kampf) oder bei Kameraschwenks (Intro); "phase" setzt ihn ausdrücklich
+		var fi: int = int(anim_t * IDLE_FPS + opts.get("phase", float(absi(key.hash()) % 60) * 0.1)) % s.idle.size()
 		tex = s.idle[fi]
 	var mod: Color = opts.get("mod", Color.WHITE)
 	if flip:
