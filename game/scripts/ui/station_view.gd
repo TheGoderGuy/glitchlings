@@ -47,7 +47,7 @@ const GUIDE := [
 	[2, "tab", "Labor", "Hier verschmelzen zwei Glitchlinge zu einer seltenen Fusion. Die Rezepte sind geheim, aber Gerüchte helfen dir."],
 	[3, "tab", "Monsterdex", "Alle Formen, die du entdeckt hast. Wie sich ein Glitchling entwickelt, bestimmen die Chips, die du im Kampf spielst!"],
 	[4, "tab", "Ausbau", "Fragmente aus deinen Runs machen die Station dauerhaft stärker: mehr HP, verbesserte Start-Chips, ein vierter Nestplatz …"],
-	[0, "team", "Los geht's!", "Wähle ein Glitchling und drücke %s. Diese Hilfe öffnest du jederzeit wieder mit %s."],
+	[0, "team", "Los geht's!", "Wähle ein Glitchling und drücke %s. Diese Hilfe öffnest du jederzeit wieder mit %s, das Kampf-Handbuch mit %s (auch im Pause-Menü)."],
 ]
 
 
@@ -76,6 +76,9 @@ func _check_hatch() -> void:
 func _process(delta: float) -> void:
 	anim_t += delta
 	t_in += delta
+	if handbook != null:
+		queue_redraw()
+		return
 	if not fusion.is_empty():
 		hatch_t += delta
 		if hatch_t - delta < HATCH_REVEAL and hatch_t >= HATCH_REVEAL:
@@ -112,6 +115,8 @@ func _process(delta: float) -> void:
 		guide = 0
 		tab = Tab.TEAM
 		Sfx.play("select")
+	elif Input.is_action_just_pressed("handbook"):
+		open_handbook()
 	elif Input.is_action_just_pressed("tab_next"):
 		tab = ((tab + 1) % TAB_NAMES.size()) as Tab
 		up_msg = ""
@@ -226,7 +231,7 @@ func _draw() -> void:
 		Tab.UPGRADE:
 			_draw_upgrades()
 	var pad: bool = InputSetup.pad
-	var hint := "%s/%s Reiter   %s Hilfe   %s zurück zum Titel" % [InputSetup.btn("LB") if pad else "Q", InputSetup.btn("RB") if pad else "E", InputSetup.btn("Y") if pad else "Leertaste", InputSetup.btn("B") if pad else "Esc"]
+	var hint := "%s/%s Reiter   %s Hilfe   %s Handbuch   %s Titel" % [InputSetup.btn("LB") if pad else "Q", InputSetup.btn("RB") if pad else "E", InputSetup.btn("Y") if pad else "Leertaste", InputSetup.btn("Back") if pad else "H", InputSetup.btn("B") if pad else "Esc"]
 	_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if zone_pick:
 		_draw_zone_pick()
@@ -465,7 +470,7 @@ func _draw_guide() -> void:
 		1:
 			txt = txt % key_ok
 		6:
-			txt = txt % [key_ok, key_help]
+			txt = txt % [key_ok, key_help, InputSetup.btn("Back") if pad else "H"]
 	var B := Rect2(196, 214 if g[1] != "team" else 200, 420, 110)
 	_box(B, Color(GameData.COL.panel, 0.97), GameData.COL.sun)
 	_text(Vector2(B.position.x + 14, B.position.y + 20), g[2], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)

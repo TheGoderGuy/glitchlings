@@ -28,7 +28,7 @@ const INTRO_FADE := 0.5
 
 const EVO_REVEAL := 1.8   # Sekunden bis zur Enthüllung der neuen Form
 
-const PAUSE_ITEMS := ["Weiter", "Aufgeben"]
+const PAUSE_ITEMS := ["Weiter", "Handbuch", "Aufgeben"]
 
 var run: RunState
 var st: BattleState
@@ -161,6 +161,9 @@ func _set_mode(m: Mode) -> void:
 
 func _process(delta: float) -> void:
 	anim_t += delta
+	if handbook != null:
+		queue_redraw()
+		return
 	mode_t += delta
 	if mode == Mode.EVOLVE:
 		if mode_t - delta < EVO_REVEAL and mode_t >= EVO_REVEAL:
@@ -184,13 +187,20 @@ func _process(delta: float) -> void:
 			if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("back"):
 				Sfx.play("back")
 				_set_mode(Mode.FIGHT)
-			elif Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down"):
-				pause_idx = 1 - pause_idx
+			elif Input.is_action_just_pressed("move_up"):
+				pause_idx = (pause_idx + PAUSE_ITEMS.size() - 1) % PAUSE_ITEMS.size()
 				Sfx.play("select")
+			elif Input.is_action_just_pressed("move_down"):
+				pause_idx = (pause_idx + 1) % PAUSE_ITEMS.size()
+				Sfx.play("select")
+			elif Input.is_action_just_pressed("handbook"):
+				open_handbook()
 			elif Input.is_action_just_pressed("confirm"):
 				Sfx.play("confirm")
 				if pause_idx == 0:
 					_set_mode(Mode.FIGHT)
+				elif pause_idx == 1:
+					open_handbook()
 				else:
 					set_process(false)
 					gave_up.emit()
@@ -216,6 +226,12 @@ func _process_fight(delta: float) -> void:
 			_set_mode(Mode.PAUSE)
 			pause_idx = 0
 			Sfx.play("select")
+			return
+		if Input.is_action_just_pressed("handbook"):
+			# Handbuch mitten im Kampf: Kampf pausiert
+			_set_mode(Mode.PAUSE)
+			pause_idx = 1
+			open_handbook()
 			return
 		if Input.is_action_just_pressed("move_left"):
 			st.move_player(-1, 0)
@@ -731,7 +747,7 @@ func _draw_pause() -> void:
 	_text(Vector2(r.position.x + 270, r.position.y + 46), "Module (%d)" % run.modules.size(), 8, GameData.COL.muted)
 	_draw_module_list(run.modules, r.position.x + 270, r.position.y + 58, 230, 4)
 	_text(Vector2(r.position.x + 20, r.end.y - 62), "Ziehstapel %d · Abwurf %d" % [st.draw_pile.size(), st.disc.size()], 8, GameData.COL.muted)
-	_menu(PAUSE_ITEMS, pause_idx, r.get_center().x, r.end.y - 50, 160)
+	_menu(PAUSE_ITEMS, pause_idx, r.get_center().x, r.end.y - 72, 160)
 
 
 func _draw_pick() -> void:

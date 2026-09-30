@@ -17,6 +17,19 @@ static var _fonts := {}
 
 var anim_t := 0.0
 var off := Vector2.ZERO
+var handbook: Node = null   # offenes Kampf-Handbuch (Überlagerung), solange es offen ist, pausiert der Bildschirm
+
+
+## Kampf-Handbuch über diesem Bildschirm öffnen (Pause-Menüs, H / Select)
+func open_handbook() -> void:
+	if handbook != null:
+		return
+	var hb: Node = load("res://scripts/ui/handbook_view.gd").new()
+	handbook = hb
+	hb.closed.connect(func():
+		hb.queue_free()
+		handbook = null)
+	add_child(hb)
 
 
 ## Schrift für eine Code-Größe: unter 16 die Fließtext-Schrift, ab 16 Silkscreen

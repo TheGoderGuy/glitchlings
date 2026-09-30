@@ -19,7 +19,7 @@ func _main_items() -> Array:
 		play = "Run fortsetzen"
 	elif SaveGame.has_save():
 		play = "Spielen"
-	return [play, "Optionen", "Beenden"]
+	return [play, "Kampf-Handbuch", "Optionen", "Beenden"]
 
 
 func _option_items() -> Array:
@@ -51,6 +51,9 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	anim_t += delta
+	if handbook != null:
+		queue_redraw()
+		return
 	# gelegentliches Glitch-Zucken im Logo
 	glitch_t -= delta
 	if glitch_t <= 0:
@@ -72,9 +75,11 @@ func _process(delta: float) -> void:
 				0:
 					start_run.emit()
 				1:
+					open_handbook()
+				2:
 					page = Page.OPTIONS
 					sel = 0
-				2:
+				3:
 					get_tree().quit()
 	else:
 		var dir := 0
@@ -85,7 +90,7 @@ func _process(delta: float) -> void:
 		if Input.is_action_just_pressed("back") or (sel == 10 and Input.is_action_just_pressed("confirm")):
 			Sfx.play("back")
 			page = Page.MAIN
-			sel = 1
+			sel = 2
 			Settings.save_settings()
 			reset_armed = false
 		elif sel == 8 and Input.is_action_just_pressed("confirm"):
@@ -164,7 +169,7 @@ func _draw() -> void:
 	_draw_sprite("moth", 530, 250, true, {"bob": bob, "mod": Color(1, 1, 1, 0.55)})
 
 	if page == Page.MAIN:
-		_menu(_main_items(), sel, W / 2.0, 258, 180)
+		_menu(_main_items(), sel, W / 2.0, 250, 180)
 	else:
 		_dim()
 		var r := Rect2(150, 40, 340, 290)

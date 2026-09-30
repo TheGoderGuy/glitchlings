@@ -24,9 +24,12 @@ Grafik, Musik und Balancing sind vorläufig. Deine ehrliche Meinung hilft uns se
   Menü                Enter / Esc           A / B       (PS: ✕ / ○)
   Reiter wechseln     Q / E                 LB / RB     (PS: L1 / R1)
   Hilfe (Station)     Leertaste             Y           (PS: △)
+  Kampf-Handbuch      H                     Back/Ansicht (PS: Share)
 
 Der erste Kampf erklärt dir alles Schritt für Schritt. Beim ersten Besuch der Station
 zeigt dir eine kurze Führung, was wo zu finden ist (später jederzeit mit der Hilfe-Taste).
+Wie der Kampf genau funktioniert (Elemente, Zustände, Entwicklung …), steht im
+Kampf-Handbuch: im Titelmenü, im Pause-Menü oder jederzeit mit H.
 
 
 3. WAS WIR UNS WÜNSCHEN

@@ -58,6 +58,7 @@ func _ready() -> void:
 	test_ps_buttons()
 	test_sprite_colors()
 	test_station_guide()
+	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -1954,3 +1955,31 @@ func test_station_guide() -> void:
 	SaveGame.data.cleared = ["wiesen"]
 	check(sv2._default_zone() == 1, "Zonenwahl: springt zur nächsten noch nicht geschafften Zone")
 	sv2.queue_free()
+
+
+## Kampf-Handbuch (30.09.2026)
+func test_handbook() -> void:
+	var HB: GDScript = load("res://scripts/ui/handbook_view.gd")
+	var hb = HB.new()
+	check(hb.PAGES.size() == 8, "Handbuch: 8 Seiten")
+	# Alle Seitentexte passen in den Textbereich (306 px breit, ~250 px hoch)
+	var ok := true
+	var f := PixelCanvas.font()
+	for i in hb.PAGES.size():
+		var hgt: float = f.get_multiline_string_size(hb.page_text(i), HORIZONTAL_ALIGNMENT_LEFT, 306, PixelCanvas.tsz(8), -1, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND).y
+		if hgt > 250.0 or hb.page_text(i).contains("{"):
+			ok = false
+			printerr("    Seite %d: %.0f px" % [i + 1, hgt])
+	check(ok, "Handbuch: alle Texte passen und alle Tasten-Platzhalter sind ersetzt")
+	check(InputMap.has_action("handbook") and not InputMap.action_get_events("pause").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_BACK), "Handbuch-Taste H / Select, Select pausiert nicht mehr doppelt")
+	# Öffnen und Schließen über einen Bildschirm
+	var TS: GDScript = load("res://scripts/ui/title.gd")
+	var ts = TS.new()
+	add_child(ts)
+	ts.open_handbook()
+	var opened: bool = ts.handbook != null
+	ts.handbook.close()
+	await get_tree().process_frame
+	check(opened and ts.handbook == null, "Handbuch öffnet sich über dem Titel und schließt wieder")
+	ts.queue_free()
+	hb.free()

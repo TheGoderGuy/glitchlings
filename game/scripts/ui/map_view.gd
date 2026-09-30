@@ -34,7 +34,7 @@ var level_t := 0.0    # Einblendung „Ebene X“ beim Betreten einer neuen Eben
 var tip := false      # Erklärung der Zonenkarte beim allerersten Run
 ## Kurze Namen für die Legende (die Pixelschrift ist breit)
 const LEGEND := {"fight": "Kampf", "elite": "Elite", "glitch": "Glitch", "event": "Ereignis", "rest": "Rast", "shop": "Händler", "guard": "Wächter", "boss": "Boss"}
-const PAUSE_ITEMS := ["Weiter", "Speichern und beenden", "Aufgeben"]
+const PAUSE_ITEMS := ["Weiter", "Handbuch", "Speichern und beenden", "Aufgeben"]
 
 
 func setup(run_state: RunState) -> void:
@@ -58,6 +58,9 @@ func setup(run_state: RunState) -> void:
 
 func _process(delta: float) -> void:
 	anim_t += delta
+	if handbook != null:
+		queue_redraw()
+		return
 	level_t = maxf(0.0, level_t - delta)
 	if tip:
 		if Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("back"):
@@ -82,6 +85,8 @@ func _process(delta: float) -> void:
 			if pause_idx == 0:
 				paused = false
 			elif pause_idx == 1:
+				open_handbook()
+			elif pause_idx == 2:
 				# Der Run ist beim Betreten der Karte schon gespeichert
 				set_process(false)
 				save_quit.emit()
@@ -91,7 +96,9 @@ func _process(delta: float) -> void:
 		queue_redraw()
 		return
 	var ch := run.next_choices()
-	if Input.is_action_just_pressed("pause"):
+	if Input.is_action_just_pressed("handbook"):
+		open_handbook()
+	elif Input.is_action_just_pressed("pause"):
 		paused = true
 		pause_idx = 0
 		Sfx.play("select")
@@ -184,7 +191,7 @@ func _draw() -> void:
 		_draw_deck_list(run.deck, pr.position.x + 20, pr.position.y + 66, 220, 10)
 		_text(Vector2(pr.position.x + 270, pr.position.y + 46), "Module (%d)" % run.modules.size(), 8, GameData.COL.muted)
 		_draw_module_list(run.modules, pr.position.x + 270, pr.position.y + 58, 230, 4)
-		_menu(PAUSE_ITEMS, pause_idx, pr.get_center().x, pr.end.y - 66, 200)
+		_menu(PAUSE_ITEMS, pause_idx, pr.get_center().x, pr.end.y - 88, 200)
 
 
 func _draw_side_panels(target: Vector2i) -> void:
@@ -221,7 +228,7 @@ func _draw_side_panels(target: Vector2i) -> void:
 		_text(R.position + Vector2(30, 18), ZoneMap.TYPE_NAMES[n.type], 8, ICON_COL[n.type], HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 		draw_multiline_string(font(), R.position + Vector2(8, 40), ZoneMap.TYPE_DESC[n.type], HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 16, tsz(8), 8, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	var pad: bool = InputSetup.pad
-	var hint := "< > Weg wählen\n%s betreten\n%s Pause, Deck, Module" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("Start") if pad else "Esc"]
+	var hint := "< > Weg wählen\n%s betreten\n%s Pause, Deck, Module\n%s Handbuch" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("Start") if pad else "Esc", InputSetup.btn("Back") if pad else "H"]
 	draw_multiline_string(font(), Vector2(W - 150, 214), hint, HORIZONTAL_ALIGNMENT_LEFT, 140, tsz(8), 4, GameData.COL.muted)
 	# Module dieses Runs (Details in der Pause)
 	if not run.modules.is_empty():

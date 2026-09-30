@@ -220,6 +220,14 @@ func _screenshot(shot: Dictionary) -> void:
 		run.form = shot.form
 		run.stage = GameData.FORMS[run.form].stage
 	match mode:
+		"handbook":
+			show_title()
+			current.open_handbook()
+			current.handbook.page = int(shot.get("t", 0.0))
+			current.handbook.t_in = 1.0
+			await get_tree().process_frame
+			current.handbook.set_process(false)
+			current.handbook.queue_redraw()
 		"title", "options":
 			show_title()
 			if mode == "options":

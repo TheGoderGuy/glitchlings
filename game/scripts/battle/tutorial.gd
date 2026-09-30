@@ -80,5 +80,5 @@ func texts(pad: bool) -> Array:
 		Step.SPECIAL:
 			return ["Signatur-Attacke", "Deine Leiste ist voll! Drück %s für die Signatur-Attacke." % (InputSetup.btn("Y") if pad else "die Leertaste")]
 		Step.FREE:
-			return ["Super gemacht!", "Chips laden nach dem Einsatz nach. Jetzt besiege den Gegner!"]
+			return ["Super gemacht!", "Chips laden nach dem Einsatz nach. Jetzt besiege den Gegner! Alles Weitere erklärt das Handbuch (Pause oder %s)." % (InputSetup.btn("Back") if pad else "H")]
 	return []

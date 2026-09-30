@@ -26,3 +26,6 @@ Der Produzent wollte vor der Weitergabe ein kleines Tutorial, „was wo zu finde
 - **Karten-Tipp** beim allerersten Run: Wege wählen, Legende, Wächter und Ebenen, Pause mit Deck.
 - LIESMICH überarbeitet: Intro überspringen, Run starten, Ebenen und Wächter, speichern und beenden, Controller-Symbole.
 - Version 0.3 in `project.godot` und in den Export-Einstellungen.
+- **Kampf-Handbuch** (8 Seiten mit gezeichneten Beispielen): Spielfeld, Chips, Ausweichen (rote und goldene Felder, Lava), Elemente (Kreislauf, ×1,5 / ×0,75), Zustände und Kombos, Signatur und Passiv, Entwicklung (12/35/80, 2 Vorsprung), Nach dem Kampf (Chipwahl, Fragmente, Elite, Glitch-Elite, Wächter, Boss-Phasen).
+  - Erreichbar über das Titelmenü, das Pause-Menü in Kampf und Karte, die Station und jederzeit mit H bzw. Back/Share. Das Kampf-Tutorial verweist am Ende darauf.
+  - Der Select-Knopf pausiert nicht mehr, er öffnet das Handbuch (Pause bleibt auf Start).
