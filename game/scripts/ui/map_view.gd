@@ -31,6 +31,7 @@ var sel := 0
 var paused := false
 var pause_idx := 0
 var level_t := 0.0    # Einblendung „Ebene X“ beim Betreten einer neuen Ebene
+var tip := false      # Erklärung der Zonenkarte beim allerersten Run
 ## Kurze Namen für die Legende (die Pixelschrift ist breit)
 const LEGEND := {"fight": "Kampf", "elite": "Elite", "glitch": "Glitch", "event": "Ereignis", "rest": "Rast", "shop": "Händler", "guard": "Wächter", "boss": "Boss"}
 const PAUSE_ITEMS := ["Weiter", "Speichern und beenden", "Aufgeben"]
@@ -41,6 +42,7 @@ func setup(run_state: RunState) -> void:
 	Music.play(Music.zone_key("map", run.map.zone))
 	if run.floor_idx < 0:
 		level_t = 2.2
+	tip = run.floor_idx < 0 and run.map.level == 0 and not SaveGame.data.get("map_tip_done", false)
 	var ch := run.next_choices()
 	# Standardauswahl: der Knoten, der am nächsten an der aktuellen Position liegt
 	sel = 0
@@ -57,6 +59,14 @@ func setup(run_state: RunState) -> void:
 func _process(delta: float) -> void:
 	anim_t += delta
 	level_t = maxf(0.0, level_t - delta)
+	if tip:
+		if Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("back"):
+			tip = false
+			Sfx.play("confirm")
+			SaveGame.data["map_tip_done"] = true
+			SaveGame.save_game()
+		queue_redraw()
+		return
 	if paused:
 		if Input.is_action_just_pressed("pause") or Input.is_action_just_pressed("back"):
 			paused = false
@@ -163,6 +173,8 @@ func _draw() -> void:
 		draw_rect(Rect2(0, 150, W, 50), Color(GameData.COL.dark, 0.75 * a))
 		_text(Vector2(0, 180), "EBENE %d" % (m.level + 1), 24, Color(GameData.COL.sun, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		_text(Vector2(0, 194), "Der Wächter ist besiegt. Der Weg führt tiefer hinein.", 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_CENTER, W)
+	if tip:
+		_draw_tip()
 	if paused:
 		_dim()
 		var pr := Rect2(60, 30, 520, 300)
@@ -223,6 +235,27 @@ func _draw_side_panels(target: Vector2i) -> void:
 		var gy := G.position.y + 15 + (i / 2) * 16
 		_icon(ICONS[types[i]], Vector2(gx, gy - 3), 1, ICON_COL[types[i]])
 		_text(Vector2(gx + 10, gy), LEGEND[types[i]], 8, GameData.COL.muted)
+
+
+## Erklärung beim ersten Run: Wege, Knoten, Ebenen, Wächter
+func _draw_tip() -> void:
+	var B := Rect2(150, 62, 340, 222)
+	_box(B, Color(GameData.COL.panel, 0.97), GameData.COL.sun)
+	_text(Vector2(B.position.x, B.position.y + 22), "Die Zonenkarte", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, true)
+	var pad: bool = InputSetup.pad
+	var lines := [
+		"Wähle mit < > deinen Weg und betritt den nächsten Knoten mit %s. Es geht immer nach oben." % (InputSetup.btn("A") if pad else "Enter"),
+		"Kampf, Elite, Ereignis, Rast, Händler: Was die Symbole bedeuten, steht rechts unten in der Legende.",
+		"Oben wartet ein Wächter. Besiegst du ihn, geht es auf die nächste Ebene. Nach der letzten Ebene kommt der Boss der Zone.",
+		"Mit %s siehst du jederzeit dein Deck und deine Module." % (InputSetup.btn("Start") if pad else "Esc"),
+	]
+	var y := B.position.y + 44
+	for l in lines:
+		draw_rect(Rect2(B.position.x + 16, y - 7, 4, 4), GameData.COL.mint)
+		var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
+		draw_multiline_string(font(), Vector2(B.position.x + 26, y), l, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 42, tsz(8), 3, GameData.COL.ink, wrap)
+		y += font().get_multiline_string_size(l, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 42, tsz(8), 3, wrap).y + 10
+	_text(Vector2(B.position.x, B.end.y - 10), "%s los geht's" % (InputSetup.btn("A") if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, true)
 
 
 ## Positionsmarker: kleiner hüpfender Pfeil in Mint

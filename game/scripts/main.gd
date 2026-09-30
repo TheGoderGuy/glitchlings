@@ -255,6 +255,11 @@ func _screenshot(shot: Dictionary) -> void:
 			current.t_in = 1.0
 			if mode == "station":
 				current.sel = int(shot.get("t", 0.0))
+			current.guide = shot.get("guide", -1)
+			if current.guide >= 0:
+				current.tab = current.GUIDE[current.guide][0]
+			if shot.has("zones"):
+				current.zone_pick = true
 		"map", "mappause":
 			if shot.has("glitchnode"):
 				run.map.floors[run.floor_idx + 1][0].type = "glitch"

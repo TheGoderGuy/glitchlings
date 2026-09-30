@@ -18,3 +18,11 @@ Ergebnisse hier eintragen (je Tester eine Zeile), Ziele aus der [[Prototyp-Spezi
 
 | Tester | Runs | Zweiter Run? | Spaß | Frust | Lieblingsmonster |
 |---|---|---|---|---|---|
+
+## Version 0.3 (30.09.2026): Orientierung für Tester
+Der Produzent wollte vor der Weitergabe ein kleines Tutorial, „was wo zu finden ist“, und eine sichtbare Zonenwahl.
+- **Zonenwahl-Bildschirm**: Nach Enter im Team-Reiter öffnet sich „Wohin geht die Reise?“ mit allen 4 Zonen als Karten. Jede zeigt Landschaft, Gefahrenstufe, Aufbau (Ebenen/Wächter) und Beschreibung mit Element-Tipp. Der Boss erscheint erst, wenn die Zone geschafft ist. Gesperrte Zonen haben ein Schloss und den Hinweis, wie man sie freischaltet. Vorher war die Zone nur eine kleine Zeile „< Cache-Wiesen >“ im Team-Reiter.
+- **Station-Führung** (7 Schritte): beim ersten Besuch automatisch, danach mit Leertaste bzw. Y/△. Sie hebt jeweils Reiter oder Teamliste hervor: Team, Brutnest, Labor, Monsterdex, Ausbau, „Los geht's“.
+- **Karten-Tipp** beim allerersten Run: Wege wählen, Legende, Wächter und Ebenen, Pause mit Deck.
+- LIESMICH überarbeitet: Intro überspringen, Run starten, Ebenen und Wächter, speichern und beenden, Controller-Symbole.
+- Version 0.3 in `project.godot` und in den Export-Einstellungen.

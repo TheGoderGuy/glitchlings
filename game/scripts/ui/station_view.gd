@@ -33,13 +33,33 @@ var hatch_egg := {}
 var fuse_sel: Array = []     # IDs der gewählten Labor-Monster (max. 2)
 var fuse_msg := ""
 var fusion := {}             # laufende Fusions-Szene
-var zone_idx := 0            # gewählte Zone im Team-Reiter
 var up_msg := ""             # Rückmeldung im Ausbau-Reiter
+var zone_pick := false       # Zonenwahl offen (nach Enter im Team-Reiter)
+var zone_sel := 0            # gewählte Zone (Index in GameData.ZONE_ORDER)
+var zone_msg := ""
+var guide := -1              # Schritt der Station-Führung (-1 = aus)
+
+## Station-Führung: [Reiter, hervorgehobener Bereich, Titel, Text] – %s wird durch Tasten ersetzt
+const GUIDE := [
+	[0, "tabs", "Willkommen in der Station!", "Hier ist dein Zuhause zwischen den Runs. Mit %s wechselst du die Reiter oben."],
+	[0, "team", "Team", "Das sind deine Glitchlinge. Wähle eins aus und drücke %s – dann suchst du dir eine Zone für den Run aus."],
+	[1, "tab", "Brutnest", "Nach jedem Run mit mindestens zwei Siegen bekommst du ein Ei. Es schlüpft nach ein paar Runs – so wächst dein Team."],
+	[2, "tab", "Labor", "Hier verschmelzen zwei Glitchlinge zu einer seltenen Fusion. Die Rezepte sind geheim, aber Gerüchte helfen dir."],
+	[3, "tab", "Monsterdex", "Alle Formen, die du entdeckt hast. Wie sich ein Glitchling entwickelt, bestimmen die Chips, die du im Kampf spielst!"],
+	[4, "tab", "Ausbau", "Fragmente aus deinen Runs machen die Station dauerhaft stärker: mehr HP, verbesserte Start-Chips, ein vierter Nestplatz …"],
+	[0, "team", "Los geht's!", "Wähle ein Glitchling und drücke %s. Diese Hilfe öffnest du jederzeit wieder mit %s."],
+]
 
 
 func _ready() -> void:
 	Music.play("title")
 	_check_hatch()
+	# Erster Besuch: kurze Führung durch die Reiter (nach dem Schlüpfen)
+	if not SaveGame.data.get("station_guide_done", false):
+		guide = 0
+		tab = Tab.TEAM
+	# Zonenwahl startet bei der vordersten freigeschalteten, noch nicht geschafften Zone
+	zone_sel = _default_zone()
 
 
 func _check_hatch() -> void:
@@ -80,7 +100,19 @@ func _process(delta: float) -> void:
 	if t_in < 0.2:
 		queue_redraw()
 		return
-	if Input.is_action_just_pressed("tab_next"):
+	if guide >= 0:
+		_process_guide()
+		queue_redraw()
+		return
+	if zone_pick:
+		_process_zone_pick()
+		queue_redraw()
+		return
+	if Input.is_action_just_pressed("special"):
+		guide = 0
+		tab = Tab.TEAM
+		Sfx.play("select")
+	elif Input.is_action_just_pressed("tab_next"):
 		tab = ((tab + 1) % TAB_NAMES.size()) as Tab
 		up_msg = ""
 		sel = 0
@@ -99,17 +131,12 @@ func _process(delta: float) -> void:
 			Tab.TEAM:
 				var n := SaveGame.team().size()
 				_nav_v(n)
-				var zones := SaveGame.unlocked_zones()
-				if zones.size() > 1 and Input.is_action_just_pressed("move_right"):
-					zone_idx = (zone_idx + 1) % zones.size()
-					Sfx.play("select")
-				elif zones.size() > 1 and Input.is_action_just_pressed("move_left"):
-					zone_idx = (zone_idx + zones.size() - 1) % zones.size()
-					Sfx.play("select")
 				if Input.is_action_just_pressed("confirm") and n > 0:
+					# weiter zur Zonenwahl
 					Sfx.play("confirm")
-					set_process(false)
-					start_run.emit(int(SaveGame.team()[sel].id), zones[zone_idx % zones.size()])
+					zone_pick = true
+					zone_msg = ""
+					t_in = 0.0
 			Tab.LAB:
 				var n := SaveGame.team().size() + 1   # letzte Zeile: „Fusionieren“
 				_nav_v(n)
@@ -199,8 +226,12 @@ func _draw() -> void:
 		Tab.UPGRADE:
 			_draw_upgrades()
 	var pad: bool = InputSetup.pad
-	var hint := "%s/%s Reiter   %s zurück zum Titel" % [InputSetup.btn("LB") if pad else "Q", InputSetup.btn("RB") if pad else "E", InputSetup.btn("B") if pad else "Esc"]
+	var hint := "%s/%s Reiter   %s Hilfe   %s zurück zum Titel" % [InputSetup.btn("LB") if pad else "Q", InputSetup.btn("RB") if pad else "E", InputSetup.btn("Y") if pad else "Leertaste", InputSetup.btn("B") if pad else "Esc"]
 	_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	if zone_pick:
+		_draw_zone_pick()
+	if guide >= 0 and hatch.is_empty():
+		_draw_guide()
 	if not hatch.is_empty():
 		_draw_hatch()
 	if not fusion.is_empty():
@@ -271,10 +302,176 @@ func _draw_team() -> void:
 	_draw_evo(probe.evo_status(), x, y + 4, w)
 	var pad: bool = InputSetup.pad
 	var zones := SaveGame.unlocked_zones()
-	var zname: String = GameData.ZONES[zones[zone_idx % zones.size()]].name
-	var arrows := zones.size() > 1
-	_text(Vector2(R.position.x, R.end.y - 26), ("< %s >" if arrows else "%s") % zname, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
-	_text(Vector2(R.position.x, R.end.y - 12), "%s Mit %s losziehen" % [InputSetup.btn("A") if pad else "Enter", form], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	_text(Vector2(R.position.x, R.end.y - 26), "%d von %d Zonen frei" % [zones.size(), GameData.ZONE_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	var pulse := 0.75 + 0.25 * sin(anim_t * 4.0)
+	_text(Vector2(R.position.x, R.end.y - 12), "%s Mit %s eine Zone wählen" % [InputSetup.btn("A") if pad else "Enter", form], 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+
+
+# ---------- Zonenwahl ----------
+
+func _default_zone() -> int:
+	var best := 0
+	for i in GameData.ZONE_ORDER.size():
+		var z: String = GameData.ZONE_ORDER[i]
+		if SaveGame.zone_unlocked(z):
+			best = i
+			if not SaveGame.data.get("cleared", []).has(z):
+				return i
+	return best
+
+
+func _process_zone_pick() -> void:
+	var n: int = GameData.ZONE_ORDER.size()
+	if Input.is_action_just_pressed("move_right"):
+		zone_sel = (zone_sel + 1) % n
+		zone_msg = ""
+		Sfx.play("select")
+	elif Input.is_action_just_pressed("move_left"):
+		zone_sel = (zone_sel + n - 1) % n
+		zone_msg = ""
+		Sfx.play("select")
+	elif Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
+		zone_pick = false
+		Sfx.play("back")
+	elif Input.is_action_just_pressed("confirm"):
+		var z: String = GameData.ZONE_ORDER[zone_sel]
+		if not SaveGame.zone_unlocked(z):
+			zone_msg = "Noch gesperrt: Besiege zuerst den Boss der Zone davor."
+			Sfx.play("back")
+			return
+		Sfx.play("confirm")
+		zone_pick = false
+		set_process(false)
+		start_run.emit(int(SaveGame.team()[sel].id), z)
+
+
+## Aufbau einer Zone als Text, z. B. „3 Ebenen · 2 Wächter“ (der Boss steht darunter)
+static func zone_layout(z: String) -> String:
+	var Z: Dictionary = GameData.ZONES[z]
+	var lv: int = Z.get("levels", ZoneMap.LEVELS)
+	return "%d Ebenen · %d Wächter" % [lv, lv - 1]
+
+
+func _draw_zone_pick() -> void:
+	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.97))
+	var form: String = SaveGame.team()[sel].form
+	_text(Vector2(0, 30), "Wohin geht die Reise?", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	_text(Vector2(0, 46), "Mit %s durch eine Zone des NEST. Jede Zone hat ihre eigenen Gegner, Ereignisse und Musik." % form, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	var n: int = GameData.ZONE_ORDER.size()
+	var cw := 146.0
+	var gap := 8.0
+	var x0 := (W - n * cw - (n - 1) * gap) / 2.0
+	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
+	for i in n:
+		var z: String = GameData.ZONE_ORDER[i]
+		var Z: Dictionary = GameData.ZONES[z]
+		var open := SaveGame.zone_unlocked(z)
+		var done: bool = SaveGame.data.get("cleared", []).has(z)
+		var active := i == zone_sel
+		var r := Rect2(x0 + i * (cw + gap), 60 - (4 if active else 0), cw, 236)
+		_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
+		# Landschaft als Ausschnitt der Zonen-Kulisse (1:1, nicht skaliert)
+		var img := Rect2(r.position.x + 4, r.position.y + 4, cw - 8, 78)
+		draw_texture_rect_region(zone_texture(Z.bg), img, Rect2(250, 196, img.size.x, img.size.y), Color(1, 1, 1, 1.0 if open else 0.3))
+		_text(Vector2(r.position.x + 8, r.position.y + 16), "Zone %d" % (i + 1), 8, Color.WHITE)
+		if open:
+			var tag := "Geschafft!" if done else "Neu!"
+			_text(Vector2(r.position.x, r.position.y + 16), tag, 8, GameData.COL.mint if done else GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, cw - 8, true, true)
+		else:
+			_draw_lock(img.get_center())
+		_text(Vector2(r.position.x, r.position.y + 98), Z.name, 8, GameData.COL.ink if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw, true, true)
+		# Gefahr: 1–4 Kästchen
+		for k in n:
+			draw_rect(Rect2(r.get_center().x - 22 + k * 12, r.position.y + 106, 8, 5), GameData.COL.coral if k <= i else GameData.COL.dark)
+		_text(Vector2(r.position.x, r.position.y + 124), zone_layout(z), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
+		var desc: String = Z.desc if open else "Gesperrt. Besiege den Boss von %s, um diese Zone freizuschalten." % GameData.ZONES[Z.unlock].name
+		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 142), desc, HORIZONTAL_ALIGNMENT_CENTER, cw - 16, tsz(8), 5, GameData.COL.ink if open else GameData.COL.muted, wrap)
+		var boss: String = GameData.FOES[Z.boss].name if done else "???"
+		_text(Vector2(r.position.x, r.end.y - 10), ("Endboss: " if Z.get("final", false) else "Boss: ") + boss, 8, GameData.COL.coral if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
+	var pad: bool = InputSetup.pad
+	var foot := zone_msg if zone_msg != "" else "< > Zone wählen   %s losziehen   %s zurück" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"]
+	_text(Vector2(0, 322), foot, 8, GameData.COL.coral if zone_msg != "" else GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+
+
+func _draw_lock(c: Vector2) -> void:
+	draw_arc(c + Vector2(0, -6), 7.0, PI, TAU, 12, GameData.COL.ink, 3.0)
+	draw_rect(Rect2(c.x - 10, c.y - 6, 20, 16), GameData.COL.dark)
+	draw_rect(Rect2(c.x - 9, c.y - 5, 18, 14), GameData.COL.muted)
+	draw_rect(Rect2(c.x - 1, c.y, 2, 5), GameData.COL.dark)
+
+
+# ---------- Station-Führung ----------
+
+func _process_guide() -> void:
+	if Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
+		_end_guide()
+		Sfx.play("back")
+	elif Input.is_action_just_pressed("confirm"):
+		guide += 1
+		Sfx.play("confirm")
+		if guide >= GUIDE.size():
+			_end_guide()
+		else:
+			tab = GUIDE[guide][0] as Tab
+			sel = 0
+
+
+func _end_guide() -> void:
+	guide = -1
+	tab = Tab.TEAM
+	sel = 0
+	SaveGame.data["station_guide_done"] = true
+	SaveGame.save_game()
+
+
+## Rechteck eines Reiters oben (wie in _draw_tabs)
+func _tab_rect(i: int) -> Rect2:
+	var x := 150.0
+	for k in TAB_NAMES.size():
+		var w := text_width(TAB_NAMES[k], 8, true) + 20
+		if k == i:
+			return Rect2(x, 8, w, 18)
+		x += w + 4
+	return Rect2()
+
+
+func _draw_guide() -> void:
+	var g: Array = GUIDE[guide]
+	var pad: bool = InputSetup.pad
+	var hl := Rect2()
+	match g[1]:
+		"tabs":
+			hl = _tab_rect(0).merge(_tab_rect(TAB_NAMES.size() - 1))
+		"tab":
+			hl = _tab_rect(g[0])
+		"team":
+			hl = Rect2(8, 34, 170, 306)
+	# alles außer dem hervorgehobenen Bereich abdunkeln
+	var dim := Color(GameData.COL.dark, 0.6)
+	draw_rect(Rect2(0, 0, W, hl.position.y), dim)
+	draw_rect(Rect2(0, hl.end.y, W, H - hl.end.y), dim)
+	draw_rect(Rect2(0, hl.position.y, hl.position.x, hl.size.y), dim)
+	draw_rect(Rect2(hl.end.x, hl.position.y, W - hl.end.x, hl.size.y), dim)
+	var pulse := 0.6 + 0.4 * sin(anim_t * 6.0)
+	draw_rect(hl.grow(2), Color(GameData.COL.sun, pulse), false, 2.0)
+	# Textkasten
+	var keys_tabs := "%s/%s" % [InputSetup.btn("LB"), InputSetup.btn("RB")] if pad else "Q/E"
+	var key_ok: String = InputSetup.btn("A") if pad else "Enter"
+	var key_help: String = InputSetup.btn("Y") if pad else "der Leertaste"
+	var txt: String = g[3]
+	match guide:
+		0:
+			txt = txt % keys_tabs
+		1:
+			txt = txt % key_ok
+		6:
+			txt = txt % [key_ok, key_help]
+	var B := Rect2(196, 214 if g[1] != "team" else 200, 420, 110)
+	_box(B, Color(GameData.COL.panel, 0.97), GameData.COL.sun)
+	_text(Vector2(B.position.x + 14, B.position.y + 20), g[2], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	_text(Vector2(B.position.x, B.position.y + 20), "%d/%d" % [guide + 1, GUIDE.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, B.size.x - 14)
+	draw_multiline_string(font(), Vector2(B.position.x + 14, B.position.y + 40), txt, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 28, tsz(8), 4, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	_text(Vector2(B.position.x, B.end.y - 10), "%s weiter   %s überspringen" % [key_ok, InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, B.size.x - 14)
 
 
 func _draw_upgrades() -> void:

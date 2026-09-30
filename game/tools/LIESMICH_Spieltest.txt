@@ -1,4 +1,4 @@
-GLITCHLINGS – Spieltest-Version 0.2
+GLITCHLINGS – Spieltest-Version 0.3
 ===================================
 
 Danke, dass du Glitchlings testest! Das Spiel ist noch in Entwicklung.
@@ -22,20 +22,22 @@ Grafik, Musik und Balancing sind vorläufig. Deine ehrliche Meinung hilft uns se
   Signatur-Attacke    Leertaste             Y / RT      (PS: △ / R2)
   Pause + Deck        Esc                   Start
   Menü                Enter / Esc           A / B       (PS: ✕ / ○)
-  Reiter wechseln     Q / E                 LB / RB
+  Reiter wechseln     Q / E                 LB / RB     (PS: L1 / R1)
+  Hilfe (Station)     Leertaste             Y           (PS: △)
 
-Der erste Kampf erklärt dir alles Schritt für Schritt.
+Der erste Kampf erklärt dir alles Schritt für Schritt. Beim ersten Besuch der Station
+zeigt dir eine kurze Führung, was wo zu finden ist (später jederzeit mit der Hilfe-Taste).
 
 
 3. WAS WIR UNS WÜNSCHEN
 -----------------------
-- Spiel ca. 30 Minuten, gern 3–5 Runs.
+- Spiel gern 30–60 Minuten. Ein Run durch eine Zone dauert etwa 25–35 Minuten.
 - Danach: Titelbildschirm -> Optionen -> "Spieltest-Log öffnen".
   Schick uns die Datei "spieltest_log.csv" aus dem Ordner, der sich öffnet.
   Darin steht nur: welches Monster, welche Zone, gewonnen/verloren, wie weit, wie lange.
   Keine persönlichen Daten, nichts wird automatisch ins Internet geschickt.
 - Und beantworte kurz diese Fragen:
-  1. War die Steuerung nach dem ersten Kampf klar?
+  1. War die Steuerung nach dem ersten Kampf klar? Hast du dich in der Station zurechtgefunden?
   2. Hast du freiwillig einen zweiten Run gestartet? Warum (nicht)?
   3. Was hat am meisten Spaß gemacht?
   4. Was war frustrierend oder unklar?
@@ -44,6 +46,11 @@ Der erste Kampf erklärt dir alles Schritt für Schritt.
 
 4. GUT ZU WISSEN
 ----------------
+- Das Intro lässt sich mit Esc / Start überspringen.
+- Run starten: In der Station ein Glitchling wählen und bestätigen, dann die Zone aussuchen.
+  Neue Zonen schaltest du frei, indem du den Boss der vorherigen Zone besiegst.
+- Ein Run durch eine Zone hat 3 Ebenen. Oben auf jeder Ebene wartet ein Wächter, am Ende der Boss.
+- Du kannst auf der Karte jederzeit beenden (Pause -> "Speichern und beenden") und später weiterspielen.
 - Der Spielstand wird automatisch gespeichert.
 - Neu anfangen: Optionen -> "Spielstand löschen" (zweimal bestätigen).
 - In den Optionen gibt es Lautstärke, Musik, Vollbild, Schwierigkeit und Bildschirmwackeln.

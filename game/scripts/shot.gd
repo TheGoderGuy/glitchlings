@@ -42,6 +42,10 @@ static func args() -> Dictionary:
 			shot.deck = a.substr(7).split(",")
 		elif a.begins_with("--font="):
 			shot.font = a.substr(7)
+		elif a.begins_with("--guide="):
+			shot.guide = int(a.substr(8))
+		elif a == "--zones":
+			shot.zones = true
 		elif a == "--glitchnode":
 			shot.glitchnode = true
 		elif a == "--guard":

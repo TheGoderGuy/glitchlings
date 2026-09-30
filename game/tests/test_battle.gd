@@ -57,6 +57,7 @@ func _ready() -> void:
 	test_shop_cancel()
 	test_ps_buttons()
 	test_sprite_colors()
+	test_station_guide()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -1933,3 +1934,23 @@ func test_sprite_colors() -> void:
 		if cols.size() > 32:
 			bad.append("%s:%d" % [spr, cols.size()])
 	check(bad.is_empty(), "Alle %d Sprites höchstens 32 Farben (inkl. Blinzeln und Idle) %s" % [files.size(), bad])
+
+
+## Station-Führung und Zonenwahl (30.09.2026)
+func test_station_guide() -> void:
+	SaveGame.persist = false
+	SaveGame.new_game("Pixmiez")
+	var SV: GDScript = load("res://scripts/ui/station_view.gd")
+	var sv = SV.new()
+	add_child(sv)
+	check(sv.guide == 0 and sv.GUIDE.size() == 7, "Station: beim ersten Besuch startet die Führung (7 Schritte)")
+	sv._end_guide()
+	check(sv.guide == -1 and SaveGame.data.get("station_guide_done", false), "Station: Führung merkt sich, dass sie gezeigt wurde")
+	sv.queue_free()
+	var sv2 = SV.new()
+	add_child(sv2)
+	check(sv2.guide == -1, "Station: beim zweiten Besuch keine Führung mehr")
+	check(sv2.zone_sel == 0 and SV.zone_layout("wiesen") == "3 Ebenen · 2 Wächter" and SV.zone_layout("kern") == "2 Ebenen · 1 Wächter", "Zonenwahl: startet bei der ersten offenen Zone, zeigt den Aufbau")
+	SaveGame.data.cleared = ["wiesen"]
+	check(sv2._default_zone() == 1, "Zonenwahl: springt zur nächsten noch nicht geschafften Zone")
+	sv2.queue_free()

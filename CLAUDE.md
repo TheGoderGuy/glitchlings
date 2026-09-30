@@ -88,6 +88,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Deckbau + Station-Ausbau (30.09.2026): verbesserte Chips (`Name+`, Rast/Händler/Ereignisse), Synergie-Hinweise in der Chipwahl, Glitch-Elite (riskante Route), 9 neue Ereignisse (26, NEST-Kern mit Lore), Station-Reiter „Ausbau“ (6 Ausbauten), 261 Tests – `vault/05 Produktion/Deckbau und Station-Ausbau.md`
 - [x] Schrift (30.09.2026): Fließtext jetzt **Pixeloid Sans** (9 px, Kleinbuchstaben, OFL), Überschriften/Logo bleiben Silkscreen; alle Bildschirme geprüft (Händler, Station, Labor angepasst)
 - [x] Kino-Intro (30.09.2026): 8 Bilder, ca. 56 s – Kaltstart, Kamerafahrt über den NEST, Ur-Glitch als Silhouette, Absturz (Röhre geht aus), Flucht als Lichtspuren, Title Drop, Gewitternacht, Ei mit Herzschlag; Kinobalken, taktgenaue Musik `opening` (One-Shot), Video per `--write-movie … -- --play=opening` – `vault/05 Produktion/Opening-Szene.md`
+- [x] Tester-Orientierung v0.3 (30.09.2026): Zonenwahl-Bildschirm (4 Zonen als Karten, gesperrt/geschafft), Station-Führung (7 Schritte, Hilfe-Taste Leertaste/Y), Karten-Tipp beim ersten Run, LIESMICH aktualisiert, 270 Tests – `vault/05 Produktion/Externer Spieltest.md`
 - [x] Idle-Animationen: **alle 113 Figuren** (30.09.2026), 6 Bilder, 10 Bilder/s (`tools/sprites/node/anim_frames.js`, entfernt jetzt auch mitgemalte Hintergründe) – `vault/05 Produktion/Idle-Animationen.md`
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo
