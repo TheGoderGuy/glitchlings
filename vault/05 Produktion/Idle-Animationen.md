@@ -25,6 +25,10 @@ Jede Animation wurde auf einem Kontaktbogen (7 Rohbilder) geprüft. Typische Pro
 
 Bewusst behalten, weil es zur Figur passt: Hüpfbyte quakt mit offenem Maul, Virulurch lässt die Zunge schnellen, die Kerndrohne „blinzelt“ mit der Linse, der Ur-Glitch hat weiße Glitch-Störungen, die Glutraupe „atmet“ ihre Glut.
 
+## Farben aufgeräumt (30.09.2026)
+- 68 Sprites korrigiert: 35 Grundbilder hatten mehr als 32 Farben (Virulurch 74, Bugsy 66, Spukatz und Virulina 51 …), bei 33 weiteren brachte das Blinzel-Bild (abgedunkelte Augen) Zusatzfarben mit.
+- Werkzeug `tools/sprites/node/fix_colors.js [--dry]`: reduziert das Grundbild (reduce32), färbt Blinzel-Bild und Idle-Frames mit derselben Zuordnung um, Zusatzfarben gehen auf die nächste Palettenfarbe. Optisch kaum ein Unterschied, alle Blinzler bleiben sichtbar.
+- Test `test_sprite_colors` prüft jetzt bei jedem Lauf: höchstens 32 Farben je Sprite inklusive Blinzeln und Idle.
+
 ## Offen
-- Einige ältere Sprites haben mehr als 32 Farben (z. B. Virulurch 74, Spukatz 51, Virulina 51, Prismiez 46, Bollwerkatz 44, Toxmolch 41). Das stammt aus der Zeit vor dem `holes.js`-Fix. Aufräumen: Grundbild mit `reduce32.js` reduzieren, dann `anim_frames.js` und das Blinzel-Bild neu erzeugen. Die Rohframes liegen noch im Scratchpad.
 - Angriffsanimationen (Ausholen der Gegner) sind noch nicht umgesetzt.

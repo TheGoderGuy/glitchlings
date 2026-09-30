@@ -56,6 +56,7 @@ func _ready() -> void:
 	test_progression()
 	test_shop_cancel()
 	test_ps_buttons()
+	test_sprite_colors()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -1902,3 +1903,33 @@ func test_ps_buttons() -> void:
 	InputSetup.pad_style = old
 	var ff := PixelCanvas._ps_font()
 	check(ok_ps and ok_x and ff.has_char(0xE000) and ff.has_char(0xE003) and PixelCanvas.font().fallbacks.has(ff), "PS-Controller: ✕ ○ □ △ als eigene Pixel-Symbole, L1/R1/Options")
+
+
+## Stilregel: jedes Sprite höchstens 32 Farben – Grundbild, Blinzel-Bild und Idle-Frames zusammen (30.09.2026)
+func test_sprite_colors() -> void:
+	var files := {}
+	for f in GameData.FORMS:
+		files[GameData.FORMS[f].spr] = true
+	for k in PixelCanvas.SPRITE_FILES:
+		files[PixelCanvas.SPRITE_FILES[k]] = true
+	var bad: Array = []
+	for spr in files:
+		var paths: Array = ["res://assets/sprites/%s.png" % spr, "res://assets/sprites/%s_blink.png" % spr]
+		for i in 6:
+			paths.append("res://assets/sprites/anim/%s_idle_%d.png" % [spr, i])
+		var cols := {}
+		for p in paths:
+			if not ResourceLoader.exists(p):
+				continue
+			var tex: Texture2D = load(p)
+			var img := tex.get_image()
+			if img.is_compressed():
+				img.decompress()
+			img.convert(Image.FORMAT_RGBA8)
+			var d := img.get_data()
+			for i in range(0, d.size(), 4):
+				if d[i + 3] > 0:
+					cols[(d[i] << 16) | (d[i + 1] << 8) | d[i + 2]] = true
+		if cols.size() > 32:
+			bad.append("%s:%d" % [spr, cols.size()])
+	check(bad.is_empty(), "Alle %d Sprites höchstens 32 Farben (inkl. Blinzeln und Idle) %s" % [files.size(), bad])

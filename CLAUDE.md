@@ -39,7 +39,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 2. **Stil wächst mit der Stufe:** Baby & Rookie niedlich, Champion Übergang, Ultra cool (Rüstung, Leuchtlinien, mehrere Schweife).
 3. **Größenstaffel nach Digimon-UP-Niveau:** Baby 32×32, Rookie 64×64, Champion 80×80, Ultra 96×96.
    Referenz: Digimon UP (Bandai Namco, 2026) – Rookie-Sprites aus Screenshot gemessen ca. 60–80 px hoch (≈ 64er-Leinwand).
-4. **Sprite-Regeln:** Licht von oben links, Kontur fast schwarz (seit 27.09.2026), max. 32 Farben pro Sprite, Dithering nur an Übergängen,
+4. **Sprite-Regeln:** Licht von oben links, Kontur fast schwarz (seit 27.09.2026), max. 32 Farben pro Sprite (inkl. Blinzel-Bild und Idle-Frames, per Test geprüft; Aufräumen mit `tools/sprites/node/fix_colors.js`), Dithering nur an Übergängen,
    nur ganzzahlig skalieren, im Kampf ab Rookie ca. 1 CSS-Pixel pro Kunstpixel, Füße stehen auf der Plattform.
 5. **Premium statt F2P (28.09.2026):** Einmalkauf auf Steam (Richtpreis 15–20 €), **keine Werbung, kein Battle Pass,
    keine Ei-Ziehungen, keine Echtzeit-Timer** (Brüten/Expeditionen an Spielfortschritt koppeln). Motivation durch
