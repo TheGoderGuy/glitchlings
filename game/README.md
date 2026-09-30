@@ -10,8 +10,8 @@ Godot 4.7, GDScript, Renderer „Compatibility“, Basisauflösung 640×360 (gan
 | | Tastatur | Controller (Xbox) |
 |---|---|---|
 | Bewegen | WASD / Pfeile | Steuerkreuz / linker Stick |
-| Chip 1 / 2 / 3 | J / K / L | X / Y / B |
-| Signatur-Attacke | Leertaste | A / RT |
+| Chip 1 / 2 / 3 | J / K / L | X / A / B (PS: □ / ✕ / ○) |
+| Signatur-Attacke | Leertaste | Y / RT (PS: △ / R2) |
 | Pause + Deck | Esc / Tab | Start |
 | Menü: bestätigen / zurück | Enter / Esc | A / B |
 

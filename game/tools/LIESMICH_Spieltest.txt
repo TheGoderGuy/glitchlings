@@ -18,10 +18,10 @@ Grafik, Musik und Balancing sind vorläufig. Deine ehrliche Meinung hilft uns se
 ------------
                       Tastatur              Controller
   Bewegen             WASD / Pfeiltasten    Steuerkreuz / linker Stick
-  Chip 1 / 2 / 3      J / K / L             X / Y / B
-  Signatur-Attacke    Leertaste             A
+  Chip 1 / 2 / 3      J / K / L             X / A / B   (PS: □ / ✕ / ○)
+  Signatur-Attacke    Leertaste             Y / RT      (PS: △ / R2)
   Pause + Deck        Esc                   Start
-  Menü                Enter / Esc           A / B
+  Menü                Enter / Esc           A / B       (PS: ✕ / ○)
   Reiter wechseln     Q / E                 LB / RB
 
 Der erste Kampf erklärt dir alles Schritt für Schritt.

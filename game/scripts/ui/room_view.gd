@@ -94,7 +94,11 @@ func _process(delta: float) -> void:
 		State.MENU:
 			var o := _options()
 			_nav(o.size())
-			if Input.is_action_just_pressed("confirm"):
+			# Zurück-Taste verlässt Händler und Rastplatz (wie „Weitergehen“)
+			if Input.is_action_just_pressed("back") and type != "event":
+				Sfx.play("back")
+				_choose("leave")
+			elif Input.is_action_just_pressed("confirm"):
 				var opt: Dictionary = o[sel]
 				if not opt.enabled:
 					Sfx.play("back")
@@ -102,8 +106,11 @@ func _process(delta: float) -> void:
 					Sfx.play("confirm")
 					_choose(opt.id)
 		State.REMOVE:
-			_nav(remove_list.size())
-			if Input.is_action_just_pressed("confirm"):
+			_nav(remove_list.size() + 1)   # letzte Zeile: „Zurück“
+			if Input.is_action_just_pressed("back") or (Input.is_action_just_pressed("confirm") and sel >= remove_list.size()):
+				Sfx.play("back")
+				_cancel_choose()
+			elif Input.is_action_just_pressed("confirm"):
 				Sfx.play("confirm")
 				var chip: String = remove_list[sel]
 				if choose_mode == "upgrade":
@@ -173,6 +180,15 @@ func _choose(id: String) -> void:
 	_show_message(result, type != "shop")
 
 
+## Auswahl abbrechen: zurück ins Menü; beim Händler gibt es die Fragmente zurück
+func _cancel_choose() -> void:
+	if type == "shop" and choose_mode in ["upgrade", "remove"]:
+		run.frag += Rooms.price(run, Rooms.PRICE_UPGRADE if choose_mode == "upgrade" else Rooms.PRICE_REMOVE)
+		node.shop[choose_mode] = false
+	_set_state(State.MENU)
+	sel = _first_enabled()
+
+
 func _show_message(text: String, done: bool) -> void:
 	message = text
 	done_after_message = done
@@ -215,14 +231,18 @@ func _draw() -> void:
 				var cu: String = remove_list[sel]
 				_text(Vector2(r.position.x, r.end.y - 14), "%s > %s+: %s" % [cu, cu, GameData.upgrade_text(cu)], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 			# bis 10 Einträge einspaltig, sonst zweispaltig
-			var cols := 1 if remove_list.size() <= 10 else 2
+			var n := remove_list.size() + 1   # inkl. „Zurück“
+			var cols := 1 if n <= 10 else 2
 			var cw := 280.0 if cols == 1 else 200.0
 			var x0 := r.get_center().x - (cw * cols + 10 * (cols - 1)) / 2.0
-			var per_col := ceili(remove_list.size() / float(cols))
-			for i in remove_list.size():
-				var c: String = remove_list[i]
+			var per_col := ceili(n / float(cols))
+			for i in n:
 				var cx := x0 + (i / per_col) * (cw + 10)
 				var cy := r.position.y + 68 + (i % per_col) * 20
+				if i == remove_list.size():
+					_option_row(Rect2(cx, cy, cw, 16), "Zurück", i == sel, true)
+					continue
+				var c: String = remove_list[i]
 				_option_row(Rect2(cx, cy, cw, 16), "%d× %s" % [run.deck.count(c), c], i == sel, true, GameData.EL[GameData.chip(c).el])
 		State.MESSAGE:
 			draw_multiline_string(font(), r.position + Vector2(24, 120), message, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 5, GameData.COL.ink, wrap)

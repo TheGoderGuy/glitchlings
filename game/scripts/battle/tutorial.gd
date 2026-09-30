@@ -78,7 +78,7 @@ func texts(pad: bool) -> Array:
 		Step.DODGE:
 			return ["Ausweichen (%d/2)" % dodges, "Rote Felder mit „!“ werden gleich getroffen. Geh rechtzeitig runter!"]
 		Step.SPECIAL:
-			return ["Signatur-Attacke", "Deine Leiste ist voll! Drück %s für die Signatur-Attacke." % ("A" if pad else "die Leertaste")]
+			return ["Signatur-Attacke", "Deine Leiste ist voll! Drück %s für die Signatur-Attacke." % ("Y" if pad else "die Leertaste")]
 		Step.FREE:
 			return ["Super gemacht!", "Chips laden nach dem Einsatz nach. Jetzt besiege den Gegner!"]
 	return []

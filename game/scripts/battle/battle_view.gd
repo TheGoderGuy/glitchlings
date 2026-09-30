@@ -276,7 +276,7 @@ func feet_y(r: float) -> float:
 
 
 func _glyph_chip(i: int) -> String:
-	return ["X", "Y", "B"][i] if InputSetup.pad else ["J", "K", "L"][i]
+	return ["X", "A", "B"][i] if InputSetup.pad else ["J", "K", "L"][i]
 
 
 # ---------- Zeichnen ----------
@@ -707,7 +707,7 @@ func _draw_hand() -> void:
 	var sel: Color = GameData.EL[S.el]
 	var pulse := full and sin(anim_t * 8.0) > 0
 	_box(R, GameData.COL.panel if full else GameData.COL.bg2, GameData.COL.sun if pulse else GameData.COL.line)
-	var glyph := "A" if InputSetup.pad else "Leer"
+	var glyph := "Y" if InputSetup.pad else "Leer"
 	var g2 := Rect2(R.position + Vector2(6, 5), Vector2(text_width(glyph, 8, true) + 8, 14))
 	_box(g2, GameData.COL.dark, GameData.COL.sun if full else GameData.COL.line)
 	_text(g2.position + Vector2(1, 11), glyph, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g2.size.x, false, true)

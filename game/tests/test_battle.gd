@@ -54,6 +54,7 @@ func _ready() -> void:
 	test_guards()
 	test_run_save()
 	test_progression()
+	test_shop_cancel()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -1871,3 +1872,20 @@ func test_progression() -> void:
 	var egg := SaveGame.add_egg("Selten", rng2)
 	var egg2 := SaveGame.add_egg("Gewöhnlich", rng2)
 	check(int(egg.runs_left) == 1 and int(egg2.runs_left) == 1, "Brutwärmer: Eier schlüpfen einen Run früher (mindestens 1)")
+
+
+## Händler: Chip-Auswahl abbrechen gibt die Fragmente zurück (30.09.2026)
+func test_shop_cancel() -> void:
+	var run := RunState.new("Pixmiez", 11)
+	run.enter(run.next_choices()[0])
+	run.current_node().type = "shop"
+	run.frag = 100
+	var rv = load("res://scripts/ui/room_view.gd").new()
+	rv.setup(run)
+	rv._choose("upgrade")
+	var charged: bool = run.frag == 100 - Rooms.PRICE_UPGRADE
+	rv._cancel_choose()
+	check(charged and run.frag == 100 and not rv.node.shop.upgrade and rv.state == rv.State.MENU, "Händler: Verbessern abbrechen gibt die Fragmente zurück")
+	check(InputMap.action_get_events("chip_2").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_A)
+		and InputMap.action_get_events("special").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_Y), "Controller: Chip 2 auf A (PS ✕), Signatur auf Y (PS △)")
+	rv.free()
