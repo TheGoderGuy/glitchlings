@@ -87,7 +87,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Ebenen + Wächter (30.09.2026): Zonen 3 Ebenen × 5 Etagen (Kern 2), 7 Wächter (Sprungschreck, Dornwurz, Schlackwurm, Magmaskorp, Schnappkelch, Schlickkrake, Skolopendrox), Boss-Phasen mit neuen Mustern, goldene Großangriffe (ausweichen = Überlastet), Wächtermusik, Run speichern/fortsetzen, 239 Tests – `vault/05 Produktion/Ebenen und Wächter.md`
 - [x] Deckbau + Station-Ausbau (30.09.2026): verbesserte Chips (`Name+`, Rast/Händler/Ereignisse), Synergie-Hinweise in der Chipwahl, Glitch-Elite (riskante Route), 9 neue Ereignisse (26, NEST-Kern mit Lore), Station-Reiter „Ausbau“ (6 Ausbauten), 261 Tests – `vault/05 Produktion/Deckbau und Station-Ausbau.md`
 - [x] Schrift (30.09.2026): Fließtext jetzt **Pixeloid Sans** (9 px, Kleinbuchstaben, OFL), Überschriften/Logo bleiben Silkscreen; alle Bildschirme geprüft (Händler, Station, Labor angepasst)
-- [x] Idle-Animationen: Test mit 6 Figuren, 10 Bilder/s (`tools/sprites/node/anim_frames.js`) · [ ] alle Figuren animieren
+- [x] Idle-Animationen: **alle 113 Figuren** (30.09.2026), 6 Bilder, 10 Bilder/s (`tools/sprites/node/anim_frames.js`, entfernt jetzt auch mitgemalte Hintergründe) – `vault/05 Produktion/Idle-Animationen.md`
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo
 
@@ -110,7 +110,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Champions für die übrigen Nicht-Code-Rookies (Godot, 29.09.2026) · [x] Ultras (Godot, 29.09.2026)
 - [x] Station-Leben: Bindung/Pflege + Expeditionen (`vault/05 Produktion/Station-Leben.md`)
 - [x] Champions der übrigen Linien · [x] Ultras (Godot)
-- [ ] Angriffsanimationen / Idle-Animationen
+- [ ] Angriffsanimationen (Idle fertig)
 - [ ] Prototyp mit 5–10 externen Testern spielen lassen, Ergebnisse ins Playtest-Log (`vault/05 Produktion/Prototyp-Spezifikation.md`)
 
 ## Arbeitsweise mit PixelLab (sobald verbunden)
