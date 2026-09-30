@@ -59,6 +59,6 @@ func _draw() -> void:
 		var dirs: Array = m.evo.keys()
 		_text(Vector2(r.position.x + 10, r.position.y + 248), "Wird: " + " / ".join(dirs), 8, GameData.COL.muted)
 	var pad: bool = InputSetup.pad
-	_text(Vector2(0, H - 12), "< > wählen    %s los geht's    %s zurück" % ["A" if pad else "Enter", "B" if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	_text(Vector2(0, H - 12), "< > wählen    %s los geht's    %s zurück" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	if from_white and t_in < 0.8:
 		draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 1.0 - t_in / 0.8))

@@ -21,7 +21,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 ## Aktueller Stand
 - **Kampf:** 3×3-Raster pro Seite, Echtzeit, 15 Chips (Godot: 27), 3 Gegner + Boss (Prototyp: Pop-Up-Tyrann; Godot: Kernelmantis), Run = 3 Kämpfe + Boss, nach jedem Kampf 1-aus-3-Chipwahl.
   Godot: **kein Vormerken** ladender Chips mehr (30.09.2026, Produzent: zu früh gedrückt = hinderlich) – die Karte blinkt nur rot.
-  Godot-Controller (30.09.2026): Chips X/A/B (PS □/✕/○), Signatur Y/RT (PS △/R2), Menü A/B – vom Produzenten so gewünscht (vorher Signatur auf A).
+  Godot-Controller (30.09.2026): Chips X/A/B (PS □/✕/○), Signatur Y/RT (PS △/R2), Menü A/B – vom Produzenten so gewünscht (vorher Signatur auf A). PS-Controller werden erkannt (Name/Sony-ID) und zeigen eigene Pixel-Symbole ✕○□△ (PUA U+E000–E003, `InputSetup.btn()`), L1/R1/Options.
   Steuerung: Wischen / Feld antippen (Direktsprung), WASD + J/K/L, ladende Chips vormerken, Leertaste = Signatur-Attacke. Deck-Ansicht pausiert, „Als Nächstes“ zeigt den nächsten Chip.
 - **Station (Meta):** Team (mit ♥-Bindung und Pflege-Ansicht), Brutnest (Echtzeit-Eier, simulierte Werbung halbiert Restzeit 1×/Ei), Expeditionen (5 Element-Zonen, Echtzeit), Labor (versteckte Fusionsrezepte, Fehlversuche kostenlos + Gerücht), Monsterdex. Speicherstand in localStorage (`glitchlings-proto-v1`).
 - **Monster:** 45 im Monsterdex. Spielbare Babys: Pixmiez (Katze), Funkling (Welpe), Tröpfel (Axolotl), Kekso (Hamster), Lumi (Hase), Quakli (Frosch), Molchi (Salamander), Brummbit (Bär, Tank), Kauzbit (Robo-Eule) + 4 Fusionen.
@@ -127,7 +127,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - Nutzungsrechte von PixelLab für kommerzielle Nutzung vor dem Launch prüfen lassen.
 
 ## Qualitätsregeln für Änderungen am Prototyp
-- Godot-Text: im Code nur die Größen 8 / 16 / 24 verwenden. `_text()` bildet 8 automatisch auf die Pixeloid-Rastergröße ab; bei direkten `draw_multiline_string`/`draw_string`-Aufrufen `tsz(8)` und `font(bold, größe)` benutzen. Kein „→“ o. Ä. (fehlt in den Pixelschriften), stattdessen „>“.
+- Godot-Text: im Code nur die Größen 8 / 16 / 24 verwenden. `_text()` bildet 8 automatisch auf die Pixeloid-Rastergröße ab; bei direkten `draw_multiline_string`/`draw_string`-Aufrufen `tsz(8)` und `font(bold, größe)` benutzen. Kein „→“ o. Ä. (fehlt in den Pixelschriften), stattdessen „>“. Controller-Tasten in Hinweisen immer über `InputSetup.btn("A")` usw.
 - Godot: Texturen **nie erst in `_draw()` laden** (bleiben im ersten Bild weiß) – `preload` oder `PixelCanvas.sprite()` (alles wird in `main._ready` vorgeladen).
 - Godot (`game/`): nach jeder Änderung **zuerst `--headless --import` auf SCRIPT ERROR prüfen** (ein Parse-Fehler in main.gd lässt das Spiel leer hängen!), dann Godot-Tests, bei Grafikänderungen per `--shot` einen Screenshot rendern – immer mit `timeout 60 … --quit-after 900`, damit nichts hängen bleibt. Godot-Exe: `~/AppData/Local/Microsoft/WinGet/Packages/GodotEngine*/Godot_*_console.exe`.
 - Godot-Tests dürfen **nie** den echten Spielstand oder das echte Spieltest-Log schreiben: `test_battle.gd` leitet in `_ready` `SaveGame.path` und `SaveGame.log_path` auf `user://test_*`-Dateien um (29.09.2026 hatte ein Test den echten Stand verändert). Diese Umleitung nie entfernen; neue Testfunktionen, die speichern, brauchen sonst nichts Zusätzliches.

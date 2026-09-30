@@ -260,7 +260,7 @@ func _draw() -> void:
 				_option_row(Rect2(cx, cy, cw, 16), "%d× %s" % [run.deck.count(c), c], i == sel, true, GameData.EL[GameData.chip(c).el])
 		State.MESSAGE:
 			draw_multiline_string(font(), r.position + Vector2(24, 120), message, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 5, GameData.COL.ink, wrap)
-			_text(Vector2(r.position.x, r.end.y - 20), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+			_text(Vector2(r.position.x, r.end.y - 20), "%s weiter" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 
 
 func _option_row(r: Rect2, label: String, active: bool, enabled: bool, mark := Color.TRANSPARENT) -> void:

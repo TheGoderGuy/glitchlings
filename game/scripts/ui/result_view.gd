@@ -87,4 +87,4 @@ func _draw() -> void:
 		_text(Vector2(bx, by + 8), str(n), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, 200)
 		col += 1
 	var pad: bool = InputSetup.pad
-	_text(Vector2(r.position.x, r.end.y - 12), "%s Zur Station" % ("A" if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	_text(Vector2(r.position.x, r.end.y - 12), "%s Zur Station" % (InputSetup.btn("A") if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)

@@ -199,7 +199,7 @@ func _draw() -> void:
 		Tab.UPGRADE:
 			_draw_upgrades()
 	var pad: bool = InputSetup.pad
-	var hint := "%s/%s Reiter   %s zurück zum Titel" % ["LB" if pad else "Q", "RB" if pad else "E", "B" if pad else "Esc"]
+	var hint := "%s/%s Reiter   %s zurück zum Titel" % [InputSetup.btn("LB") if pad else "Q", InputSetup.btn("RB") if pad else "E", InputSetup.btn("B") if pad else "Esc"]
 	_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if not hatch.is_empty():
 		_draw_hatch()
@@ -274,7 +274,7 @@ func _draw_team() -> void:
 	var zname: String = GameData.ZONES[zones[zone_idx % zones.size()]].name
 	var arrows := zones.size() > 1
 	_text(Vector2(R.position.x, R.end.y - 26), ("< %s >" if arrows else "%s") % zname, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
-	_text(Vector2(R.position.x, R.end.y - 12), "%s Mit %s losziehen" % ["A" if pad else "Enter", form], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	_text(Vector2(R.position.x, R.end.y - 12), "%s Mit %s losziehen" % [InputSetup.btn("A") if pad else "Enter", form], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 
 
 func _draw_upgrades() -> void:
@@ -303,7 +303,7 @@ func _draw_upgrades() -> void:
 		var price_txt := "ganz ausgebaut" if cost < 0 else "%d Fragmente" % cost
 		var pcol: Color = GameData.COL.mint if cost < 0 else (GameData.COL.sun if SaveGame.frag() >= cost else Color(GameData.COL.coral, 0.9))
 		_text(Vector2(r.position.x, r.position.y + 13), price_txt, 8, pcol, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 10, true, true)
-	var foot := up_msg if up_msg != "" else "%s ausbauen" % ("A" if InputSetup.pad else "Enter")
+	var foot := up_msg if up_msg != "" else "%s ausbauen" % (InputSetup.btn("A") if InputSetup.pad else "Enter")
 	_text(Vector2(R.position.x, R.end.y - 10), foot, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 
 
@@ -445,7 +445,7 @@ func _draw_fusion() -> void:
 		_text(Vector2(0, 246), "Signatur: %s – %s" % [S.name, S.desc], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 		_text(Vector2(0, 262), "Passiv: %s" % GameData.MONS[f].passive_desc, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k2 > 0.6:
-			_text(Vector2(0, 296), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, 296), "%s weiter" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_egg(rarity: String, feet: Vector2, scale: int) -> void:
@@ -486,4 +486,4 @@ func _draw_hatch() -> void:
 			_text(Vector2(0, 88), "Neu im Monsterdex!", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		_text(Vector2(0, 250), "%s kommt in dein Team." % sp, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k > 0.6:
-			_text(Vector2(0, 290), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, 290), "%s weiter" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)

@@ -142,7 +142,7 @@ func _draw() -> void:
 		a = (t - (p.dur - FADE)) / FADE
 	if a > 0.0:
 		draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, clampf(a, 0.0, 1.0)))
-	var hint := "%s: weiter · %s: überspringen" % (["A", "Start"] if InputSetup.pad else ["Enter", "Esc"])
+	var hint := "%s: weiter · %s: überspringen" % ([InputSetup.btn("A"), InputSetup.btn("Start")] if InputSetup.pad else ["Enter", "Esc"])
 	_text(Vector2(0, 14), hint, 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 10)
 
 

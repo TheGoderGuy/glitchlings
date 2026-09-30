@@ -276,7 +276,7 @@ func feet_y(r: float) -> float:
 
 
 func _glyph_chip(i: int) -> String:
-	return ["X", "A", "B"][i] if InputSetup.pad else ["J", "K", "L"][i]
+	return InputSetup.btn(["X", "A", "B"][i]) if InputSetup.pad else ["J", "K", "L"][i]
 
 
 # ---------- Zeichnen ----------
@@ -675,7 +675,7 @@ func _hud_sub(name: String, full: String, short: String, w: float) -> String:
 func _draw_hand() -> void:
 	var nx := st.next_chip()
 	_text(Vector2(HAND_X, 302), "Als Nächstes: " + (nx if nx != "" else "–"), 8, GameData.COL.muted)
-	_text(Vector2(HAND_X, 302), ("Start" if InputSetup.pad else "Esc") + ": Pause", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 130)
+	_text(Vector2(HAND_X, 302), (InputSetup.btn("Start") if InputSetup.pad else "Esc") + ": Pause", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 130)
 	for i in 3:
 		var s: Dictionary = st.hand[i]
 		var r := Rect2(HAND_X + i * (CARD_W + 6), HAND_Y, CARD_W, CARD_H)
@@ -708,7 +708,7 @@ func _draw_hand() -> void:
 	var sel: Color = GameData.EL[S.el]
 	var pulse := full and sin(anim_t * 8.0) > 0
 	_box(R, GameData.COL.panel if full else GameData.COL.bg2, GameData.COL.sun if pulse else GameData.COL.line)
-	var glyph := "Y" if InputSetup.pad else "Leer"
+	var glyph := InputSetup.btn("Y") if InputSetup.pad else "Leer"
 	var g2 := Rect2(R.position + Vector2(6, 5), Vector2(text_width(glyph, 8, true) + 8, 14))
 	_box(g2, GameData.COL.dark, GameData.COL.sun if full else GameData.COL.line)
 	_text(g2.position + Vector2(1, 11), glyph, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g2.size.x, false, true)
@@ -798,7 +798,7 @@ func _draw_pick() -> void:
 		evo_line = " · Element-Chips %d/%d · %s" % [mini(int(es.total), int(es.need)), int(es.need), lead]
 	_text(Vector2(r.position.x, r.end.y - 36), "Deck: %d Chips · Fragmente: %d%s" % [run.deck.size(), run.frag, evo_line], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	var pad: bool = InputSetup.pad
-	_text(Vector2(r.position.x, r.end.y - 16), "< > wählen   %s nehmen   %s überspringen" % ["A" if pad else "Enter", "B" if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	_text(Vector2(r.position.x, r.end.y - 16), "< > wählen   %s nehmen   %s überspringen" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 
 
 func _draw_evolve() -> void:
@@ -833,7 +833,7 @@ func _draw_evolve() -> void:
 		_text(Vector2(0, 256), "Neue Signatur: " + S.name, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		_text(Vector2(0, 270), S.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k > 0.6:
-			_text(Vector2(0, 300), "%s weiter" % ("A" if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, 300), "%s weiter" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_tutorial() -> void:
@@ -1031,7 +1031,7 @@ func _draw_boss_intro() -> void:
 			var tk := clampf((t - INTRO_REVEAL - 0.45) / 0.3, 0.0, 1.0)
 			_text(Vector2(nx, 156), def.get("title", "Herrscher dieser Zone") if not def.get("guard", false) else "Wächter der Ebene %d · %s" % [run.map.level + 1, def.get("title", "")], 8, Color(el.lightened(0.3), tk), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 			_text(Vector2(nx, 172), "%s · %d HP" % [def.el, def.hp], 8, Color(GameData.COL.muted, tk))
-	_text(Vector2(0, H - 34), "%s überspringen" % ("A" if InputSetup.pad else "Enter"), 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 12)
+	_text(Vector2(0, H - 34), "%s überspringen" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 12)
 
 
 func show_intro_for_screenshot(t: float) -> void:

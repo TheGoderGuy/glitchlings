@@ -52,6 +52,9 @@ static func args() -> Dictionary:
 			shot.lava = true
 		elif a == "--pad":
 			shot.pad = true
+		elif a == "--ps":
+			shot.pad = true
+			shot.ps = true
 	return shot if shot.has("path") else {}
 
 

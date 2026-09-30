@@ -74,11 +74,11 @@ func texts(pad: bool) -> Array:
 		Step.MOVE:
 			return ["Bewegen (%d/3)" % mini(moves, 3), "Beweg dich mit %s über deine blauen Felder." % ("dem Steuerkreuz oder dem linken Stick" if pad else "WASD oder den Pfeiltasten")]
 		Step.CHIP:
-			return ["Chip spielen", "Drück %s: Pixelstrahl fliegt über deine Reihe. Stell dich in die Reihe des Gegners!" % ("X" if pad else "J")]
+			return ["Chip spielen", "Drück %s: Pixelstrahl fliegt über deine Reihe. Stell dich in die Reihe des Gegners!" % (InputSetup.btn("X") if pad else "J")]
 		Step.DODGE:
 			return ["Ausweichen (%d/2)" % dodges, "Rote Felder mit „!“ werden gleich getroffen. Geh rechtzeitig runter!"]
 		Step.SPECIAL:
-			return ["Signatur-Attacke", "Deine Leiste ist voll! Drück %s für die Signatur-Attacke." % ("Y" if pad else "die Leertaste")]
+			return ["Signatur-Attacke", "Deine Leiste ist voll! Drück %s für die Signatur-Attacke." % (InputSetup.btn("Y") if pad else "die Leertaste")]
 		Step.FREE:
 			return ["Super gemacht!", "Chips laden nach dem Einsatz nach. Jetzt besiege den Gegner!"]
 	return []

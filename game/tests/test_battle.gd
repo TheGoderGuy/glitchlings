@@ -55,6 +55,7 @@ func _ready() -> void:
 	test_run_save()
 	test_progression()
 	test_shop_cancel()
+	test_ps_buttons()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
 	get_tree().quit(1 if fails > 0 else 0)
@@ -1889,3 +1890,15 @@ func test_shop_cancel() -> void:
 	check(InputMap.action_get_events("chip_2").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_A)
 		and InputMap.action_get_events("special").any(func(e): return e is InputEventJoypadButton and e.button_index == JOY_BUTTON_Y), "Controller: Chip 2 auf A (PS ✕), Signatur auf Y (PS △)")
 	rv.free()
+
+
+## PlayStation-Tastensymbole (30.09.2026)
+func test_ps_buttons() -> void:
+	var old: String = InputSetup.pad_style
+	InputSetup.pad_style = "ps"
+	var ok_ps: bool = InputSetup.btn("A") == "" and InputSetup.btn("Y") == "" and InputSetup.btn("LB") == "L1" and InputSetup.btn("Start") == "Options"
+	InputSetup.pad_style = "xbox"
+	var ok_x: bool = InputSetup.btn("A") == "A" and InputSetup.btn("LB") == "LB"
+	InputSetup.pad_style = old
+	var ff := PixelCanvas._ps_font()
+	check(ok_ps and ok_x and ff.has_char(0xE000) and ff.has_char(0xE003) and PixelCanvas.font().fallbacks.has(ff), "PS-Controller: ✕ ○ □ △ als eigene Pixel-Symbole, L1/R1/Options")

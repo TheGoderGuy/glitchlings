@@ -4,6 +4,13 @@ extends Node
 
 ## true, wenn zuletzt ein Controller benutzt wurde (für Tastensymbole)
 var pad := false
+## "xbox" oder "ps" – bestimmt die Tastennamen in den Hinweisen (btn)
+var pad_style := "xbox"
+
+## PlayStation-Namen der Xbox-Tasten (✕ ○ □ △ zeichnet PixelCanvas als eigene Pixel-Symbole)
+## Die Symbole liegen auf eigenen Zeichencodes (Private Use Area U+E000–E003), damit immer unsere Pixel-Symbole erscheinen
+const PS_NAMES := {"A": "", "B": "", "X": "", "Y": "", "LB": "L1", "RB": "R1", "RT": "R2", "Start": "Options", "Back": "Share"}
+const SONY_VENDOR := 1356   # 0x054C
 
 
 func _ready() -> void:
@@ -13,8 +20,28 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if event is InputEventJoypadButton or (event is InputEventJoypadMotion and absf(event.axis_value) > 0.5):
 		pad = true
+		pad_style = style_for(event.device)
 	elif event is InputEventKey or event is InputEventMouseButton:
 		pad = false
+
+
+## Tastenname für Hinweise: „A“ am Xbox-Controller, „✕“ am PlayStation-Controller
+func btn(xbox_name: String) -> String:
+	return PS_NAMES.get(xbox_name, xbox_name) if pad_style == "ps" else xbox_name
+
+
+## Erkennt PlayStation-Controller am Namen oder an der Sony-Hersteller-ID
+static func style_for(device: int) -> String:
+	var name := Input.get_joy_name(device).to_lower()
+	for k in ["ps3", "ps4", "ps5", "dualsense", "dualshock", "playstation", "sony"]:
+		if name.contains(k):
+			return "ps"
+	if name == "wireless controller":   # so meldet Windows den DualShock 4 und den DualSense oft
+		return "ps"
+	var info := Input.get_joy_info(device)
+	if int(info.get("vendor_id", 0)) == SONY_VENDOR:
+		return "ps"
+	return "xbox"
 
 
 static func setup() -> void:

@@ -39,7 +39,50 @@ static func _load_font(path: String) -> FontFile:
 	f.hinting = TextServer.HINTING_NONE
 	f.subpixel_positioning = TextServer.SUBPIXEL_POSITIONING_DISABLED
 	f.multichannel_signed_distance_field = false
+	if not path.contains("Silkscreen"):
+		f.fallbacks = [_ps_font()]
 	return f
+
+
+## PlayStation-Symbole ✕ ○ □ △ als kleine Bitmap-Schrift im 9-px-Raster (kräftige 2-px-Linien, damit ○ nicht wie „O“ aussieht).
+## Zeichencodes U+E000–E003 (Private Use Area), siehe InputSetup.PS_NAMES.
+const PS_GLYPHS := {
+	0xE000: ["##...##", "###.###", ".#####.", "..###..", ".#####.", "###.###", "##...##"],
+	0xE001: ["..###..", ".##.##.", "##...##", "##...##", "##...##", ".##.##.", "..###.."],
+	0xE002: ["#######", "#######", "##...##", "##...##", "##...##", "#######", "#######"],
+	0xE003: ["...#...", "..###..", "..#.#..", ".##.##.", ".#...#.", "##...##", "#######"],
+}
+static var _ps_font_cache: FontFile
+
+
+static func _ps_font() -> FontFile:
+	if _ps_font_cache != null:
+		return _ps_font_cache
+	var px := 9
+	var ff := FontFile.new()
+	ff.antialiasing = TextServer.FONT_ANTIALIASING_NONE
+	ff.fixed_size = px
+	ff.fixed_size_scale_mode = TextServer.FIXED_SIZE_SCALE_INTEGER_ONLY
+	var img := Image.create(8 * PS_GLYPHS.size(), 8, false, Image.FORMAT_RGBA8)
+	var sz := Vector2i(px, 0)
+	var i := 0
+	for cp in PS_GLYPHS:
+		var rows: Array = PS_GLYPHS[cp]
+		for y in rows.size():
+			for x in rows[y].length():
+				if rows[y][x] == "#":
+					img.set_pixel(i * 8 + x, y, Color.WHITE)
+		ff.set_glyph_advance(0, px, cp, Vector2(9, 0))
+		ff.set_glyph_offset(0, sz, cp, Vector2(1, -7))
+		ff.set_glyph_size(0, sz, cp, Vector2(7, 7))
+		ff.set_glyph_uv_rect(0, sz, cp, Rect2(i * 8, 0, 7, 7))
+		ff.set_glyph_texture_idx(0, sz, cp, 0)
+		i += 1
+	ff.set_texture_image(0, sz, 0, img)
+	ff.set_cache_ascent(0, px, 8)
+	ff.set_cache_descent(0, px, 2)
+	_ps_font_cache = ff
+	return ff
 
 
 static func text_width(s: String, size := 8, bold := false) -> float:

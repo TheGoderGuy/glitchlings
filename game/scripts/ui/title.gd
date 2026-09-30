@@ -177,7 +177,7 @@ func _draw() -> void:
 				dd += "  (Nach dem Ende gibt es eine vierte Stufe.)"
 			_text(Vector2(0, r.end.y + 14), dd, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 	var pad: bool = InputSetup.pad
-	var hint := ("Steuerkreuz wählen · A bestätigen · B zurück" if pad else "Pfeile wählen · Enter bestätigen · Esc zurück")
+	var hint := ("Steuerkreuz wählen · %s bestätigen · %s zurück" % [InputSetup.btn("A"), InputSetup.btn("B")] if pad else "Pfeile wählen · Enter bestätigen · Esc zurück")
 	_text(Vector2(0, H - 10), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	_text(Vector2(0, H - 10), "v%s " % ProjectSettings.get_setting("application/config/version", "0.2"), 8, Color(GameData.COL.muted, 0.6), HORIZONTAL_ALIGNMENT_RIGHT, W)
 
