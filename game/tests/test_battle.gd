@@ -119,7 +119,28 @@ func test_data() -> void:
 
 func test_hand() -> void:
 	var st := fresh()
-	check(st.hand.size() == 3 and st.draw_pile.size() == 5, "3 Chips auf der Hand, 5 im Stapel")
+	check(st.hand.size() == 3 and st.pile_count() == 5, "3 Chips auf der Hand, 5 im Stapel")
+	# Rollen-Slots: jeder Slot hält einen Chip seiner Rolle (Pixmiez: Angriff, Firewall, Heilpatch)
+	check(GameData.role(st.hand[0].chip) == 0 and st.hand[1].chip == "Firewall" and st.hand[2].chip == "Heilpatch", "Slots: Angriff, Schutz, Hilfe")
+	# Der einzige Schutz-Chip kommt nach dem Neumischen zurück, mit Strafzeit
+	var stx := fresh()
+	stx.use_slot(1)
+	check(stx.hand[1].chip == "Firewall" and stx.hand[1].shuf and is_equal_approx(stx.hand[1].max, GameData.CHIPS.Firewall.cd + BattleState.RESHUFFLE), "Leerer Slot-Stapel: neu mischen kostet %.0f s extra" % BattleState.RESHUFFLE)
+	# Startdecks: alle Linien haben jede Rolle mindestens einmal
+	var roles_ok := true
+	for m in GameData.MONS:
+		var rs := [0, 0, 0]
+		for c in GameData.MONS[m].deck:
+			rs[GameData.role(c)] += 1
+		if rs.has(0):
+			roles_ok = false
+	check(roles_ok, "Jedes Startdeck hat Angriff, Schutz und Hilfe")
+	check(GameData.chip_short("Pixelstrahl") == "20" and GameData.chip_short("Firewall") == "Schild 4 s" and GameData.chip_short("Konter") == "Konter 35" and GameData.chip_short("Heilpatch+").begins_with("Heilt"), "Kurzwirkung auf den Karten")
+	var all_cards := true
+	for c in GameData.CHIPS:
+		if not GameData.CHIP_CARD.has(c):
+			all_cards = false
+	check(all_cards, "Jeder Chip hat ein Kartenbild (Trefferbild oder Symbol)")
 	check(st.hand.all(func(s): return s.rem == 0.0), "Starthand ist sofort bereit")
 
 
@@ -752,7 +773,10 @@ func test_tutorial() -> void:
 	for k in 40:
 		st.update(1.0 / 60.0)
 		tut.update(st, 1.0 / 60.0)
-	check(tut.step == Tutorial.Step.DODGE, "Tutorial: Treffer mit dem Chip → Ausweichen üben")
+	check(tut.step == Tutorial.Step.SLOTS and st.hand[1].rem == 0.0, "Tutorial: Treffer mit dem Chip → Schutz und Hilfe ausprobieren")
+	st.use_slot(1)
+	tut.update(st, 1.0 / 60.0)
+	check(tut.step == Tutorial.Step.DODGE, "Tutorial: Schutz-Chip gespielt → Ausweichen üben")
 	st.e.frozen = 0.0
 	var bot := BattleBot.new(0.0)
 	var t := 0.0
@@ -909,7 +933,7 @@ func test_new_lines() -> void:
 		var st6 := BattleState.new(RunState.new("Kekso", i), GameData.FOES[0])
 		st6.e.frozen = 99.0
 		play(st6, "Pixelstrahl")
-		if st6.draw_pile.has("Pixelstrahl") and st6.disc.is_empty():
+		if st6.piles[0].has("Pixelstrahl") and st6.discs[0].is_empty():
 			hamster += 1
 	check(hamster > 3 and hamster < 20, "Hamstern: etwa jeder 4. Chip kommt zurück (%d/40)" % hamster)
 	# Abbild fängt Treffer ab
@@ -1333,7 +1357,7 @@ func test_boss_intro() -> void:
 	await get_tree().create_timer(1.0).timeout
 	check(bv.mode == bv.Mode.INTRO and run.hp == hp0 and bv.st.warns.is_empty(), "Während des Intros greift der Boss nicht an")
 	await get_tree().create_timer(bv.INTRO_END).timeout
-	check(bv.mode == bv.Mode.FIGHT and Music.current == "boss", "Nach dem Intro startet der Kampf mit Bossmusik")
+	check(bv.mode == bv.Mode.READY and Music.current == "boss", "Nach dem Intro: Bereit-Pause mit Bossmusik")
 	bv.queue_free()
 	# Überspringen
 	var bv2 = load("res://scenes/battle.tscn").instantiate()
@@ -1345,14 +1369,24 @@ func test_boss_intro() -> void:
 	await get_tree().process_frame
 	Input.action_release("confirm")
 	await get_tree().process_frame
-	check(bv2.mode == bv2.Mode.FIGHT, "Boss-Intro lässt sich überspringen")
+	check(bv2.mode == bv2.Mode.READY, "Boss-Intro lässt sich überspringen")
 	bv2.queue_free()
 	# normale Kämpfe haben kein Intro
 	var bv3 = load("res://scenes/battle.tscn").instantiate()
 	add_child(bv3)
 	var r3 := RunState.new("Pixmiez", 5)
 	bv3.setup(r3, r3.foe_for({"type": "fight"}), "fight")
-	check(bv3.mode == bv3.Mode.FIGHT, "Normale Kämpfe starten ohne Intro")
+	check(bv3.mode == bv3.Mode.READY, "Normale Kämpfe starten ohne Intro, mit Bereit-Pause")
+	var hp3: int = bv3.st.e.hp
+	var t3: float = bv3.st.t
+	await get_tree().create_timer(0.5).timeout
+	check(bv3.st.t == t3 and bv3.st.e.hp == hp3, "Während der Bereit-Pause steht der Kampf")
+	await get_tree().process_frame
+	Input.action_press("confirm")
+	await get_tree().process_frame
+	Input.action_release("confirm")
+	await get_tree().process_frame
+	check(bv3.mode == bv3.Mode.FIGHT, "Bestätigen startet den Kampf")
 	bv3.queue_free()
 	Music.stop()
 
@@ -1543,7 +1577,7 @@ func test_modules() -> void:
 	var k := _mod_battle(["prisma", "schnelllader"])
 	k.run.deck = ["Glutball", "Glutball", "Glutball", "Glutball", "Glutball"]
 	k.hand = [{"chip": "Glutball", "rem": 0.0, "max": 1.0, "queued": false}]
-	k.draw_pile = ["Glutball"]
+	k.piles[0] = ["Glutball"]
 	k.use_slot(0)
 	check(int(k.run.praeg.get("Feuer", 0)) == 2 and is_equal_approx(k.hand[0].max, GameData.CHIPS.Glutball.cd * 0.85), "Prisma (doppelte Prägung) und Schnelllader (−15 % Ladezeit)")
 	var l := _mod_battle(["echochip"])
@@ -1552,7 +1586,7 @@ func test_modules() -> void:
 	var effects: Array = []
 	for n in 4:
 		l.hand = [{"chip": "Byteschlag", "rem": 0.0, "max": 1.0, "queued": false}]
-		l.draw_pile = ["Byteschlag"]
+		l.piles[0] = ["Byteschlag"]
 		var before: int = l.e.hp
 		var pb: int = l.proj.size()
 		l.use_slot(0)
@@ -1601,7 +1635,8 @@ func test_modules() -> void:
 ## Neue Chips (29.09.2026): Kombos prüfen
 func _chip(st: BattleState, id: String) -> void:
 	st.hand = [{"chip": id, "rem": 0.0, "max": 1.0, "queued": false}, {"chip": "", "rem": 0.0, "max": 1.0, "queued": false}, {"chip": "", "rem": 0.0, "max": 1.0, "queued": false}]
-	st.draw_pile = [""]
+	st.piles = [[], [], []]
+	st.discs = [[], [], []]
 	st.use_slot(0)
 
 
@@ -1883,7 +1918,7 @@ func test_progression() -> void:
 		st.hand[0].rem = 0.0
 		st.use_slot(0)
 		step(st, 1.5)
-		if GameData.chip(c + "+").cd > GameData.CHIPS[c].cd * 0.85 or not st.disc.has(c + "+"):
+		if GameData.chip(c + "+").cd > GameData.CHIPS[c].cd * 0.85 or not (st.discs[GameData.role(c)].has(c + "+") or st.piles[GameData.role(c)].has(c + "+") or st.hand.any(func(h): return h.chip == c + "+")):
 			ok = false
 	check(ok, "Alle %d verbesserten Chips laufen fehlerfrei und laden schneller" % GameData.CHIPS.size())
 	var rh := RunState.new("Pixmiez", 4)

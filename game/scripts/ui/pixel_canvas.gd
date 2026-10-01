@@ -343,10 +343,12 @@ func _draw_module_list(mods: Array, x: float, y: float, w: float, max_rows := 5)
 		_draw_module_row(mods.slice(max_rows), x, y, 14)
 
 
-## Deckliste, gruppiert: „3× Pixelstrahl … Angriff“
+## Deckliste, nach Slot-Rolle sortiert: „3× Pixelstrahl … Angriff“
 func _draw_deck_list(deck: Array, x: float, y: float, w: float, max_rows := 14) -> void:
 	var counts := {}
-	for k in deck:
+	var sorted := deck.duplicate()
+	sorted.sort_custom(func(a, b): return GameData.role(a) < GameData.role(b) or (GameData.role(a) == GameData.role(b) and a < b))
+	for k in sorted:
 		counts[k] = counts.get(k, 0) + 1
 	var row := 0
 	for k in counts:
@@ -356,7 +358,8 @@ func _draw_deck_list(deck: Array, x: float, y: float, w: float, max_rows := 14) 
 		var el: Color = GameData.EL[GameData.chip(k).el]
 		draw_rect(Rect2(x, y - 7, 7, 7), el)
 		_text(Vector2(x + 14, y), "%d× %s" % [counts[k], T.chip(k)], 8, GameData.COL.sun if GameData.is_upgraded(k) else GameData.COL.ink)
-		_text(Vector2(x + 14, y), GameData.chip(k).cat, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, w - 14)
+		var ro := GameData.role(k)
+		_text(Vector2(x + 14, y), GameData.ROLE_NAMES[ro], 8, Color(GameData.ROLE_COL[ro]), HORIZONTAL_ALIGNMENT_RIGHT, w - 14)
 		y += 14
 		row += 1
 

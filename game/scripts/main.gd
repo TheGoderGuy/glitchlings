@@ -302,7 +302,7 @@ func _screenshot(shot: Dictionary) -> void:
 			_enter_node()
 			if shot.has("choose"):
 				current._choose(shot.choose)
-		"fight", "pick", "pause", "evolve", "tutorial", "bossintro":
+		"fight", "pick", "pause", "evolve", "tutorial", "bossintro", "ready", "chiptip":
 			run.tutorial = mode == "tutorial"
 			run.enter(run.next_choices()[0])
 			if floors >= run.map.boss_floor() - 1:
@@ -316,7 +316,16 @@ func _screenshot(shot: Dictionary) -> void:
 				current.queue_redraw()
 				await Shot.save(self, shot.path)
 				return
+			if mode == "ready":
+				# Bereit-Pause vor dem Kampf
+				current.queue_redraw()
+				await Shot.save(self, shot.path)
+				return
 			current.simulate(shot.get("sim", 2.0))
+			if mode == "chiptip":
+				# Erklärung eines neuen Chips über dem Schutz-Slot (Zeitlupe)
+				current.tip_q = [{"slot": 1, "chip": current.st.hand[1].chip}]
+				current.tip_t = 2.0
 			if shot.has("special"):
 				# Großangriff auslösen und bis kurz vor dem Einschlag vorspulen
 				current.st.start_special()

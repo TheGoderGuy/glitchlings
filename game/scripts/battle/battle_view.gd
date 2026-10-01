@@ -20,7 +20,7 @@ const GUARD_HEAL := 0.3   # Wächter besiegt: +30 % der max. HP
 const GLITCH_WEIGHT := {"Gewöhnlich": 0, "Selten": 1, "Episch": 3}   # Chipwahl nach einer Glitch-Elite
 const BABY_SCALE := 1     # Babys (32 px) im Kampf in Originalgröße, damit die Evolution sichtbar wächst
 
-enum Mode { FIGHT, PAUSE, EVOLVE, PICK, INTRO }
+enum Mode { FIGHT, PAUSE, EVOLVE, PICK, INTRO, READY }
 ## Boss-Intro: Zeitpunkte in Sekunden
 const INTRO_REVEAL := 1.7    # Silhouette wird farbig, Musik setzt ein
 const INTRO_END := 4.2       # danach beginnt der Kampf
@@ -53,6 +53,16 @@ var muzzle := 0.0
 var muzzle_col := Color.WHITE
 var dust: Array = []    # Staubwolken {x, y, t}
 var last_cell := Vector2i(1, 1)
+# Karten-Animation: neue Karte kommt vom Stapel, die gespielte schwebt als Name davon
+var prev_chips := ["", "", ""]
+var card_t := [0.0, 0.0, 0.0]
+var ghosts: Array = []          # {text, x, y, t}
+# Erklärung neuer Chips (einmal pro Chip und Spielstand): Zeitlupe + Hinweis über der Karte
+var tip_q: Array = []           # [{slot, chip}]
+var tip_t := 0.0
+const TIP_TIME := 2.6
+const TIP_SLOW := 0.3
+var skip_ready := false         # Tests/Screenshots: ohne Bereit-Pause starten
 const LUNGE := 0.16
 const KNOCK := 0.14
 
@@ -71,7 +81,9 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 		_set_mode(Mode.INTRO)
 	else:
 		Music.play(Music.zone_key("battle", run.map.zone))
-		_set_mode(Mode.FIGHT)
+		_set_mode(Mode.FIGHT if skip_ready else Mode.READY)
+	for i in 3:
+		prev_chips[i] = st.hand[i].chip
 
 
 # ---------- Ablauf ----------
@@ -180,6 +192,20 @@ func _process(delta: float) -> void:
 		_process_intro(delta)
 		queue_redraw()
 		return
+	if mode == Mode.READY:
+		# Hand lesen, dann mit Bestätigen (oder einer Chip-Taste) loslegen
+		var go := Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("special")
+		for i in 3:
+			go = go or Input.is_action_just_pressed("chip_%d" % (i + 1))
+		if mode_t > 0.3 and go:
+			Sfx.play("confirm")
+			_mark_seen_hand()
+			_set_mode(Mode.FIGHT)
+		elif Input.is_action_just_pressed("pause"):
+			_set_mode(Mode.PAUSE)
+			pause_idx = 0
+		queue_redraw()
+		return
 	match mode:
 		Mode.FIGHT:
 			_process_fight(delta)
@@ -247,10 +273,12 @@ func _process_fight(delta: float) -> void:
 		if Input.is_action_just_pressed("special"):
 			st.use_special()
 	_tick_anims(delta)
+	_track_cards(delta)
+	var dt := delta * (TIP_SLOW if tip_t > 0 else 1.0)
 	if st.freeze > 0:
-		st.freeze -= delta
+		st.freeze -= dt
 	else:
-		st.update(delta)
+		st.update(dt)
 	if tut != null and tut.active():
 		tut.update(st, delta)
 		if tut.just_finished:
@@ -689,34 +717,53 @@ func _hud_sub(name: String, full: String, short: String, w: float) -> String:
 
 
 func _draw_hand() -> void:
-	var nx := st.next_chip()
-	_text(Vector2(HAND_X, 302), T.t("Als Nächstes:") + " " + (T.chip(nx) if nx != "" else "–"), 8, GameData.COL.muted)
-	_text(Vector2(HAND_X, 302), (InputSetup.btn("Start") if InputSetup.pad else "Esc") + ": " + T.t("Pause"), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 130)
+	# Signatur-Karte rechts (Hinweis zur Pause darüber)
+	_text(Vector2(HAND_X + 3 * (CARD_W + 6), 302), (InputSetup.btn("Start") if InputSetup.pad else "Esc") + ": " + T.t("Pause"), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 130)
 	for i in 3:
 		var s: Dictionary = st.hand[i]
-		var r := Rect2(HAND_X + i * (CARD_W + 6), HAND_Y, CARD_W, CARD_H)
+		var rc := Color(GameData.ROLE_COL[i])
+		# Kopfzeile: Rolle links, nächster Chip aus diesem Stapel rechts
+		var x0 := HAND_X + i * (CARD_W + 6)
+		_text(Vector2(x0 + 1, 302), T.t(GameData.ROLE_NAMES[i]), 8, rc, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+		var nx := st.next_chip(i)
+		if nx != "":
+			_text(Vector2(x0, 302), "> " + T.chip(nx), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, CARD_W - 1)
+		# Stapel hinter der Karte (bis zu zwei Kartenrücken)
+		var r := Rect2(x0, HAND_Y, CARD_W, CARD_H)
+		for k in range(mini(st.piles[i].size(), 2), 0, -1):
+			_box(Rect2(r.position + Vector2(2 * k, -2 * k), r.size), GameData.COL.bg2.darkened(0.2 * k), rc.darkened(0.55))
+		# neue Karte gleitet vom Stapel herein
+		var ka: float = card_t[i] / 0.18
+		r.position += Vector2(roundf(4.0 * ka), roundf(-4.0 * ka))
 		if s.chip == "":
 			_box(r, GameData.COL.bg2, GameData.COL.line)
+			draw_multiline_string(font(), r.position + Vector2(8, 18), T.t("Kein %s-Chip im Deck") % T.t(GameData.ROLE_NAMES[i]), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 			continue
 		var ch: Dictionary = GameData.chip(s.chip)
 		var el: Color = GameData.EL[ch.el]
 		var ready: bool = s.rem <= 0
-		_box(r, GameData.COL.panel if ready else GameData.COL.bg2, el if ready else GameData.COL.line)
+		_box(r, GameData.COL.panel if ready else GameData.COL.bg2, rc if ready else GameData.COL.line)
 		draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(3, r.size.y - 2)), el)
 		# Tasten-Symbol
 		var g := Rect2(r.position + Vector2(8, 5), Vector2(15, 14))
-		_box(g, GameData.COL.dark, el if ready else GameData.COL.line)
+		_box(g, GameData.COL.dark, rc if ready else GameData.COL.line)
 		_text(g.position + Vector2(1, 11), _glyph_chip(i), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g.size.x, false, true)
 		_text(r.position + Vector2(29, 16), s.chip, 8, GameData.COL.ink if ready else GameData.COL.muted, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-		var info: String = T.t(ch.cat) + (" %d" % ch.dmg if ch.dmg > 0 else "")
-		_text(r.position + Vector2(8, 33), info, 8, GameData.COL.muted)
+		# Trefferbild oder Symbol oben rechts
+		_draw_chip_icon(s.chip, r.position + Vector2(r.size.x - 17, 5), ready)
+		_text(r.position + Vector2(8, 33), GameData.chip_short(s.chip), 8, GameData.COL.ink if ready else GameData.COL.muted)
 		if ready:
-			_text(r.position + Vector2(8, 33), "bereit", 8, el, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 14)
+			_text(r.position + Vector2(8, 33), "bereit", 8, rc, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 14)
 		else:
 			_bar(Rect2(r.position + Vector2(6, r.size.y - 8), Vector2(r.size.x - 12, 5)), 1.0 - s.rem / s.max, el.darkened(0.2))
+			if s.get("shuf", false) and s.rem > GameData.chip(s.chip).cd:
+				_text(r.position + Vector2(8, 33), "mischt …", 8, rc, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 14)
 		# zu früh gedrückt: roter Rahmen blinkt kurz
 		if s.get("deny", 0.0) > 0 and fmod(s.deny, 0.1) < 0.06:
 			draw_rect(r, GameData.COL.coral, false, 2.0)
+	# gespielte Chips schweben als Name davon
+	for gh in ghosts:
+		_text(Vector2(gh.x, gh.y - (1.0 - gh.t / 0.4) * 14.0), gh.text, 8, Color(GameData.COL.ink, gh.t / 0.4), HORIZONTAL_ALIGNMENT_CENTER, CARD_W, true, true)
 	# Signatur-Attacke
 	var R := Rect2(HAND_X + 3 * (CARD_W + 6), HAND_Y, 130, CARD_H)
 	var full := st.sp >= 100
@@ -724,13 +771,128 @@ func _draw_hand() -> void:
 	var sel: Color = GameData.EL[S.el]
 	var pulse := full and sin(anim_t * 8.0) > 0
 	_box(R, GameData.COL.panel if full else GameData.COL.bg2, GameData.COL.sun if pulse else GameData.COL.line)
-	var glyph := InputSetup.btn("Y") if InputSetup.pad else "Leer"
+	var glyph := InputSetup.btn("Y") if InputSetup.pad else T.t("Leertaste")
 	var g2 := Rect2(R.position + Vector2(6, 5), Vector2(text_width(glyph, 8, true) + 8, 14))
 	_box(g2, GameData.COL.dark, GameData.COL.sun if full else GameData.COL.line)
 	_text(g2.position + Vector2(1, 11), glyph, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g2.size.x, false, true)
 	_text(R.position + Vector2(g2.size.x + 10, 16), "Signatur", 8, GameData.COL.sun if full else GameData.COL.muted)
 	_text(R.position + Vector2(6, 33), S.name, 8, GameData.COL.ink if full else GameData.COL.muted)
 	_bar(Rect2(R.position + Vector2(6, R.size.y - 8), Vector2(R.size.x - 12, 5)), st.sp / 100.0, GameData.COL.sun if full else sel.darkened(0.2))
+	if mode == Mode.READY:
+		_draw_ready()
+	elif tip_t > 0 and not tip_q.is_empty():
+		_draw_chip_tip(tip_q[0].slot, tip_q[0].chip)
+
+
+## Trefferbild (3×3 Gegnerfeld, deine Reihe = Mitte) oder Symbol für Schutz/Hilfe, 12×12 Pixel
+func _draw_chip_icon(id: String, pos: Vector2, bright: bool) -> void:
+	var info: Array = GameData.CHIP_CARD.get(GameData.base_chip(id), ["row", ""])
+	var col: Color = GameData.EL[GameData.chip(id).el]
+	if not bright:
+		col = col.darkened(0.35)
+	var pat: String = info[0]
+	if GameData.PICTOS.has(pat):
+		var pic: Array = GameData.PICTOS[pat]
+		for y in 6:
+			for x in 6:
+				if pic[y][x] == "#":
+					draw_rect(Rect2(pos + Vector2(x * 2, y * 2), Vector2(2, 2)), col)
+		return
+	var hit := {}
+	match pat:
+		"row": hit = {Vector2i(0, 1): 1, Vector2i(1, 1): 1, Vector2i(2, 1): 1}
+		"front": hit = {Vector2i(0, 1): 1, Vector2i(1, 1): 1}
+		"col", "mycol": hit = {Vector2i(1, 0): 1, Vector2i(1, 1): 1, Vector2i(1, 2): 1}
+		"field": for yy in 3:
+			for xx in 3:
+				hit[Vector2i(xx, yy)] = 1
+		"aim", "mine": hit = {Vector2i(1, 1): 1}
+		"blast": hit = {Vector2i(1, 1): 1, Vector2i(0, 1): 2, Vector2i(2, 1): 2, Vector2i(1, 0): 2, Vector2i(1, 2): 2}
+		"pull": hit = {Vector2i(0, 1): 1, Vector2i(2, 1): 2}
+	for y in 3:
+		for x in 3:
+			var c: Color = GameData.COL.dark.lightened(0.15)
+			if hit.has(Vector2i(x, y)):
+				c = col if hit[Vector2i(x, y)] == 1 else col.darkened(0.45)
+			draw_rect(Rect2(pos + Vector2(x * 4, y * 4), Vector2(3, 3)), c)
+	if pat == "mine":
+		draw_rect(Rect2(pos + Vector2(5, 5), Vector2(1, 1)), GameData.COL.dark)
+
+
+## Bereit-Pause vor jedem Kampf: über jeder Karte steht, was sie tut
+func _draw_ready() -> void:
+	draw_rect(Rect2(0, 0, W, 296), Color(GameData.COL.dark, 0.55))
+	var pulse := 0.7 + 0.3 * sin(anim_t * 5.0)
+	_text(Vector2(0, 116), "Bereit?", 24, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	var go := InputSetup.btn("A") if InputSetup.pad else "Enter"
+	_text(Vector2(0, 140), T.t("Lies deine Chips – %s: Los!") % go, 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	for i in 3:
+		if st.hand[i].chip != "":
+			_draw_chip_tip(i, st.hand[i].chip, false)
+	# Signatur
+	var S: Dictionary = run.special()
+	var R := Rect2(HAND_X + 3 * (CARD_W + 6), 230, 130, 64)
+	_box(R, Color(GameData.COL.panel, 0.96), GameData.COL.sun)
+	_text(R.position + Vector2(6, 12), T.t("Signatur-Attacke"), 8, GameData.COL.sun)
+	draw_multiline_string(font(), R.position + Vector2(6, 25), T.t(S.desc), HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 12, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+
+
+## Erklärkasten über der Karte von Slot i (Beschreibung des Chips)
+func _draw_chip_tip(i: int, id: String, is_new := true) -> void:
+	var ch: Dictionary = GameData.chip(id)
+	var rc := Color(GameData.ROLE_COL[i])
+	var R := Rect2(HAND_X + i * (CARD_W + 6), 230, CARD_W, 64)
+	_box(R, Color(GameData.COL.panel, 0.96), rc)
+	var head := (T.t("Neu:") + " " + T.chip(id)) if is_new else T.t(GameData.ROLE_NAMES[i]) + " · " + T.t(ch.el)
+	_text(R.position + Vector2(6, 12), head, 8, rc, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	draw_multiline_string(font(), R.position + Vector2(6, 25), T.t(ch.desc), HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 12, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	# Pfeil zur Karte
+	for k in 4:
+		draw_rect(Rect2(R.get_center().x - 4 + k, R.end.y + k, 9 - k * 2, 1), rc)
+
+
+## Gesehene Chips merken (Erklärung erscheint pro Spielstand nur einmal)
+func _mark_seen_hand() -> void:
+	for s in st.hand:
+		_mark_seen(s.chip)
+
+
+func _mark_seen(id: String) -> void:
+	if id == "" or not SaveGame.persist:
+		return
+	var seen: Array = SaveGame.data.get("seen_chips", [])
+	var b := GameData.base_chip(id)
+	if not seen.has(b):
+		seen.append(b)
+		SaveGame.data["seen_chips"] = seen
+
+
+## Kartenwechsel erkennen: Animation starten, neue Chips einmal erklären
+func _track_cards(delta: float) -> void:
+	for i in 3:
+		card_t[i] = maxf(0.0, card_t[i] - delta)
+		var c: String = st.hand[i].chip
+		if c != prev_chips[i]:
+			if prev_chips[i] != "":
+				ghosts.append({"text": T.chip(prev_chips[i]), "x": HAND_X + i * (CARD_W + 6), "y": HAND_Y + 16, "t": 0.4})
+			card_t[i] = 0.18
+			prev_chips[i] = c
+			var seen: Array = SaveGame.data.get("seen_chips", [])
+			if c != "" and SaveGame.persist and not seen.has(GameData.base_chip(c)):
+				tip_q.append({"slot": i, "chip": c})
+				_mark_seen(c)
+				if tip_t <= 0:
+					tip_t = TIP_TIME
+	for k in range(ghosts.size() - 1, -1, -1):
+		ghosts[k].t -= delta
+		if ghosts[k].t <= 0:
+			ghosts.remove_at(k)
+	if tip_t > 0:
+		tip_t -= delta
+		if tip_t <= 0 and not tip_q.is_empty():
+			tip_q.pop_front()
+			if not tip_q.is_empty():
+				tip_t = TIP_TIME
 
 
 func _panel(r: Rect2) -> void:
@@ -746,7 +908,7 @@ func _draw_pause() -> void:
 	_draw_deck_list(run.deck, r.position.x + 20, r.position.y + 66, 220, 10)
 	_text(Vector2(r.position.x + 270, r.position.y + 46), T.t("Module (%d)") % run.modules.size(), 8, GameData.COL.muted)
 	_draw_module_list(run.modules, r.position.x + 270, r.position.y + 58, 230, 4)
-	_text(Vector2(r.position.x + 20, r.end.y - 62), T.t("Ziehstapel %d · Abwurf %d") % [st.draw_pile.size(), st.disc.size()], 8, GameData.COL.muted)
+	_text(Vector2(r.position.x + 20, r.end.y - 62), T.t("Ziehstapel %d · Abwurf %d") % [st.pile_count(), st.disc_count()], 8, GameData.COL.muted)
 	_menu(PAUSE_ITEMS, pause_idx, r.get_center().x, r.end.y - 72, 160)
 
 
@@ -782,8 +944,11 @@ func _draw_pick() -> void:
 		var c := Rect2(r.position.x + 24 + i * 176, r.position.y + 78 - (4 if sel else 0), 160, 122)
 		_box(c, GameData.COL.panel.lightened(0.08) if sel else GameData.COL.bg2, GameData.COL.sun if sel else el.darkened(0.3))
 		draw_rect(Rect2(c.position + Vector2(1, 1), Vector2(c.size.x - 2, 4)), el)
-		_text(c.position + Vector2(0, 24), k, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
+		_text(c.position + Vector2(0, 26), k, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
+		var ro := GameData.role(k)
 		_text(c.position + Vector2(0, 38), "%s · %s" % [T.t(ch.el), T.t(ch.rar)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
+		# Slot, in den der Chip kommt
+		_text(c.position + Vector2(0, 14), T.t("%s-Slot (%s)") % [T.t(GameData.ROLE_NAMES[ro]), _glyph_chip(ro)], 8, Color(GameData.ROLE_COL[ro]), HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		var stats: String = T.t(ch.cat) + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %ss" % T.dec(ch.cd)
 		_text(c.position + Vector2(0, 52), stats, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		draw_multiline_string(font(), c.position + Vector2(8, 70), T.t(ch.desc), HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
@@ -861,10 +1026,10 @@ func _draw_tutorial() -> void:
 	_box(r, Color(GameData.COL.panel, 0.95), GameData.COL.sun.lerp(GameData.COL.mint, pulse))
 	_text(Vector2(r.position.x + 10, r.position.y + 16), tx[0], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	# Fortschrittspunkte der vier Lernschritte
-	for i in 4:
+	for i in 5:
 		var done: bool = tut.step > i
 		var cur: bool = tut.step == i
-		draw_rect(Rect2(r.end.x - 52 + i * 11, r.position.y + 9, 7, 7), GameData.COL.mint if done else (GameData.COL.sun if cur else GameData.COL.line))
+		draw_rect(Rect2(r.end.x - 63 + i * 11, r.position.y + 9, 7, 7), GameData.COL.mint if done else (GameData.COL.sun if cur else GameData.COL.line))
 	draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 32), T.t(tx[1]), HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 
 
@@ -872,6 +1037,8 @@ func _draw_tutorial() -> void:
 func simulate(seconds: float) -> void:
 	if mode == Mode.INTRO:
 		_start_boss_fight()
+	if mode == Mode.READY:
+		_set_mode(Mode.FIGHT)
 	var bot := BattleBot.new(0.15)
 	var dt := 1.0 / 60.0
 	var steps := 0
@@ -972,7 +1139,7 @@ func _start_boss_fight() -> void:
 	if Music.current != _boss_track():
 		Music.play(_boss_track())
 	st.shake = 0.0
-	_set_mode(Mode.FIGHT)
+	_set_mode(Mode.FIGHT if skip_ready else Mode.READY)
 
 
 func _draw_boss_intro() -> void:

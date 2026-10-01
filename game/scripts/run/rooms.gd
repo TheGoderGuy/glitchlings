@@ -536,7 +536,7 @@ static func shop_options(run: RunState, node: Dictionary) -> Array:
 			continue
 		var ch: Dictionary = GameData.CHIPS[o.chip]
 		out.append({"id": "buy_%d" % i, "label": "%s (%d)" % [T.chip(o.chip), pr] if not o.sold else T.t("%s – verkauft") % T.chip(o.chip),
-			"desc": "%s · %s: %s%s" % [T.t(ch.el), T.t(ch.rar), T.t(ch.desc), _combo_suffix(run, o.chip)], "enabled": not o.sold and run.frag >= pr, "chip": o.chip})
+			"desc": "%s · %s · %s: %s%s" % [T.t(GameData.ROLE_NAMES[GameData.role(o.chip)]), T.t(ch.el), T.t(ch.rar), T.t(ch.desc), _combo_suffix(run, o.chip)], "enabled": not o.sold and run.frag >= pr, "chip": o.chip})
 	var p_rep := price(run, PRICE_REPAIR)
 	var p_rem := price(run, PRICE_REMOVE)
 	out.append({"id": "repair", "label": T.t("Reparatur (%d)") % p_rep, "desc": T.t("Heilt 25 HP. Einmal pro Besuch."),

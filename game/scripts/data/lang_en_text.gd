@@ -349,7 +349,25 @@ const D := {
 	"Das passt zusammen! Dir fehlen aber noch %d Fragmente.": "These belong together! But you need %d more fragments.",
 	"Wähle zwei verschiedene Monster.": "Choose two different monsters.",
 
+	# ---------- Rollen-Slots (01.10.2026) ----------
+	"Schutz": "Defense", "Hilfe": "Support", "Kein %s-Chip im Deck": "No %s chip in your deck", "mischt …": "shuffling …",
+	"Bereit?": "Ready?", "Lies deine Chips – %s: Los!": "Read your chips – %s: Go!", "Neu:": "New:", "%s-Slot (%s)": "%s slot (%s)",
+	"Drück %s für deinen Angriffs-Chip. Die meisten treffen deine Reihe: Stell dich in die Reihe des Gegners!": "Press %s for your attack chip. Most of them hit your row: stand in the enemy's row!",
+	"Schutz und Hilfe": "Defense and Support",
+	"Jeder Slot hat eine Rolle und seinen eigenen Stapel. Probier %s (Schutz) oder %s (Hilfe)!": "Each slot has a role and its own pile. Try %s (defense) or %s (support)!",
+	"Angriff | Schutz | Hilfe": "Attack | Defense | Support", "(keiner)": "(none)",
+	"Das sind deine Chips. Im Kampf hast du drei Slots, jeder mit eigener Rolle und eigenem Stapel. Nach jedem Einsatz kommt der nächste Chip aus diesem Stapel.": "These are your chips. In battle you have three slots, each with its own role and its own pile. After every use, the next chip comes from that pile.",
+	# Kurzwirkungen auf den Karten
+	"Nahkampf": "Melee", "Schild 4 s": "Shield 4 s", "Mine": "Mine", "Laden ×2": "Charge ×2", "Spalte": "Column", "Rückstoß": "Knockback",
+	"Blase 30": "Bubble 30", "Friert 2 s": "Freeze 2 s", "Heilt 25": "Heal 25", "trifft immer": "never misses", "Helfer 6 s": "Helper 6 s",
+	"Lädt Hand": "Charges hand", "Neue Hand": "New hand", "Schild + Brand": "Shield + burn", "Gegner langsam": "Slows enemy",
+	"Ausweichen 3 s": "Evade 3 s", "Stoppt Angriff": "Stops attack", "Zieht heran": "Pulls in", "×2 bei Gift": "×2 if poisoned",
+	"×2 bei Brand": "×2 if burning", "×3 bei Eis": "×3 if frozen", "Friert": "Freezes", "Turm 8 s": "Turret 8 s", "Säubert": "Cleans",
+	"Betäubt 3 s": "Stun 3 s", "Gift ×2": "Poison ×2", "Lebensraub": "Lifesteal", "Weicht aus": "Dodges", "Heilt %d": "Heal %d",
+	"Block + %d": "Block + %d", "Konter %d": "Counter %d", "laden": "charge",
+
 	# ---------- Kampf-Handbuch ----------
+	"Du hast drei Slots ({chips}), jeder mit eigener Rolle: Angriff, Schutz und Hilfe (Heilung und Unterstützung). Jeder Slot zieht aus seinem Teil deines Decks. Nach dem Einsatz kommt der nächste Chip und lädt auf – drückst du zu früh, passiert nichts.\n\nÜber jeder Karte steht, welcher Chip als Nächstes kommt. Ist ein Stapel leer, wird er neu gemischt, das dauert etwas länger.\n\nDas Bild oben rechts auf der Karte zeigt, wo ein Angriff trifft. Verbesserte Chips (z. B. Glutball+) machen mehr Schaden und laden schneller.": "You have three slots ({chips}), each with its own role: attack, defense and support (healing and help). Each slot draws from its part of your deck. After use, the next chip comes in and charges – press too early and nothing happens.\n\nAbove each card you see which chip comes next. When a pile runs out, it's reshuffled, which takes a little longer.\n\nThe picture at the top right of a card shows where an attack hits. Upgraded chips (e.g. Ember Ball+) deal more damage and charge faster.",
 	"KAMPF-HANDBUCH": "BATTLE HANDBOOK", "< > blättern   %s weiter   %s schließen": "< > turn pages   %s next   %s close",
 	"Steuerkreuz oder linker Stick": "D-pad or left stick", "WASD oder Pfeiltasten": "WASD or arrow keys",
 	"du": "You", "Gegner": "Enemy", "Gleiche Reihe = Treffer": "Same row = hit", "Als Nächstes: Byteschlag": "Next: Byte Strike",

@@ -15,9 +15,12 @@ var rng: RandomNumberGenerator
 var t := 0.0
 var p := {}
 var e := {}
-var draw_pile: Array = []
-var disc: Array = []
+## Rollen-Slots (01.10.2026): jeder Slot (0 Angriff, 1 Schutz, 2 Hilfe) hat eigenen Zieh- und Ablagestapel
+var piles: Array = [[], [], []]
+var discs: Array = [[], [], []]
 var hand: Array = []
+const RESHUFFLE := 3.0     # Ist der Stapel eines Slots leer, kostet das Neumischen zusätzliche Ladezeit
+var _reshuffled := false
 var proj: Array = []
 var warns: Array = []
 var mines: Array = []
@@ -87,9 +90,11 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	e = {"c": 1, "r": 1, "hp": def.hp, "max": def.hp, "move_t": def.move, "atk_t": def.atk * 0.8,
 		"pi": 0, "frozen": 0.0, "slow": 0.0, "flash": 0.0, "burn": 0, "poison": 0, "dot_t": 1.0, "pop_t": 1.5,
 		"phase": 1, "sp_t": def.get("sp_first", 5.0), "sp_i": 0}
-	draw_pile = _shuffle(run.deck)
+	for c in run.deck:
+		piles[GameData.role(c)].append(c)
 	for i in 3:
-		hand.append({"chip": _draw_one(), "rem": 0.0, "max": 1.0, "deny": 0.0})
+		piles[i] = _shuffle(piles[i])
+		hand.append({"chip": _draw_one(i), "rem": 0.0, "max": 1.0, "deny": 0.0, "shuf": false})
 	if mon.passive == "Katzenreflex":
 		reflex = 2 if run.stage >= 3 else 1
 	if mon.passive == "Wolkendecke":
@@ -138,17 +143,28 @@ func _shuffle(a: Array) -> Array:
 	return b
 
 
-func _draw_one() -> String:
-	if draw_pile.is_empty():
-		draw_pile = _shuffle(disc)
-		disc.clear()
-	if draw_pile.is_empty():
+## Nächsten Chip für Slot i ziehen; ist sein Stapel leer, wird die Ablage neu gemischt (merkt sich _reshuffled)
+func _draw_one(i: int) -> String:
+	_reshuffled = false
+	if piles[i].is_empty() and not discs[i].is_empty():
+		piles[i] = _shuffle(discs[i])
+		discs[i] = []
+		_reshuffled = true
+	if piles[i].is_empty():
 		return ""
-	return draw_pile.pop_back()
+	return piles[i].pop_back()
 
 
-func next_chip() -> String:
-	return draw_pile.back() if not draw_pile.is_empty() else ""
+func next_chip(i: int) -> String:
+	return piles[i].back() if not piles[i].is_empty() else ""
+
+
+func pile_count() -> int:
+	return piles[0].size() + piles[1].size() + piles[2].size()
+
+
+func disc_count() -> int:
+	return discs[0].size() + discs[1].size() + discs[2].size()
 
 
 # ---------- Eingaben ----------
@@ -198,15 +214,17 @@ func use_slot(i: int) -> void:
 	if GameData.base_chip(id) == "Eisfeld":
 		run.eis += 1
 	# Hamstern (Kekso-Linie): Chip kommt gleich wieder statt auf den Ablagestapel
+	var ro := GameData.role(id)
 	if mon.passive in ["Hamstern", "Winterschlaf"] and rng.randf() < 0.25:
-		draw_pile.append(id)
+		piles[ro].append(id)
 		float_at(p.c, p.r, "Gehamstert!", GameData.EL.Neutral)
 	else:
-		disc.append(id)
+		discs[ro].append(id)
 	last_chip = id
-	var nx := _draw_one()
+	var nx := _draw_one(i)
 	s.chip = nx
-	s.max = (GameData.chip(nx).cd if nx != "" else 1.0) * (0.85 if run.has_mod("schnelllader") else 1.0)
+	s.shuf = _reshuffled
+	s.max = (GameData.chip(nx).cd if nx != "" else 1.0) * (0.85 if run.has_mod("schnelllader") else 1.0) + (RESHUFFLE if _reshuffled else 0.0)
 	s.rem = s.max
 	_apply_chip(id)
 	# Echochip: jeder 4. Chip wird ein zweites Mal ausgelöst
@@ -328,12 +346,14 @@ func _apply_chip(id: String) -> void:
 		"Neustart":
 			var h2 := run.heal(roundi(15 * k))
 			float_at(p.c, p.r, T.t("Neustart! +%d") % h2, GameData.COL.mint)
-			for s in hand:
+			for j in hand.size():
+				var s: Dictionary = hand[j]
 				if s.chip != "":
-					disc.append(s.chip)
-				s.chip = _draw_one()
+					discs[GameData.role(s.chip)].append(s.chip)
+				s.chip = _draw_one(j)
 				s.max = GameData.chip(s.chip).cd if s.chip != "" else 1.0
 				s.rem = 0.0
+				s.shuf = false
 		"Funkenregen":
 			for i in 3:
 				var fc := rng.randi_range(0, 2)

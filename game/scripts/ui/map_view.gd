@@ -32,6 +32,7 @@ var paused := false
 var pause_idx := 0
 var level_t := 0.0    # Einblendung „Ebene X“ beim Betreten einer neuen Ebene
 var tip := false      # Erklärung der Zonenkarte beim allerersten Run
+var deck_tip := false # Deck-Vorstellung (einmal pro Spielstand)
 ## Kurze Namen für die Legende (die Pixelschrift ist breit)
 const LEGEND := {"fight": "Kampf", "elite": "Elite", "glitch": "Glitch", "event": "Ereignis", "rest": "Rast", "shop": "Händler", "guard": "Wächter", "boss": "Boss"}
 const PAUSE_ITEMS := ["Weiter", "Handbuch", "Speichern und beenden", "Aufgeben"]
@@ -43,6 +44,8 @@ func setup(run_state: RunState) -> void:
 	if run.floor_idx < 0:
 		level_t = 2.2
 	tip = run.floor_idx < 0 and run.map.level == 0 and not SaveGame.data.get("map_tip_done", false)
+	# Deck-Vorstellung (01.10.2026): einmal pro Spielstand, auch für alte Spielstände nach dem Slot-Umbau
+	deck_tip = run.floor_idx < 0 and run.map.level == 0 and not SaveGame.data.get("deck_intro_done", false)
 	var ch := run.next_choices()
 	# Standardauswahl: der Knoten, der am nächsten an der aktuellen Position liegt
 	sel = 0
@@ -62,6 +65,14 @@ func _process(delta: float) -> void:
 		queue_redraw()
 		return
 	level_t = maxf(0.0, level_t - delta)
+	if deck_tip:
+		if Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("back"):
+			deck_tip = false
+			Sfx.play("confirm")
+			SaveGame.data["deck_intro_done"] = true
+			SaveGame.save_game()
+		queue_redraw()
+		return
 	if tip:
 		if Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("back"):
 			tip = false
@@ -180,7 +191,9 @@ func _draw() -> void:
 		draw_rect(Rect2(0, 150, W, 50), Color(GameData.COL.dark, 0.75 * a))
 		_text(Vector2(0, 180), T.t("EBENE %d") % (m.level + 1), 24, Color(GameData.COL.sun, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		_text(Vector2(0, 194), "Der Wächter ist besiegt. Der Weg führt tiefer hinein.", 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_CENTER, W)
-	if tip:
+	if deck_tip:
+		_draw_deck_tip()
+	elif tip:
 		_draw_tip()
 	if paused:
 		_dim()
@@ -251,6 +264,36 @@ func _draw_side_panels(target: Vector2i) -> void:
 		var gy := G.position.y + 15 + (i / 2) * 16
 		_icon(ICONS[types[i]], Vector2(gx, gy - 3), 1, ICON_COL[types[i]])
 		_text(Vector2(gx + 10, gy), LEGEND[types[i]], 8, GameData.COL.muted)
+
+
+## Deck-Vorstellung: drei Slots mit Rolle, jeder zieht aus seinem Teil des Decks
+func _draw_deck_tip() -> void:
+	var B := Rect2(40, 40, 560, 288)
+	_box(B, Color(GameData.COL.panel, 0.97), GameData.COL.sun)
+	_text(Vector2(B.position.x, B.position.y + 22), "Dein Deck", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, true)
+	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
+	draw_multiline_string(font(), Vector2(B.position.x + 24, B.position.y + 40), T.t("Das sind deine Chips. Im Kampf hast du drei Slots, jeder mit eigener Rolle und eigenem Stapel. Nach jedem Einsatz kommt der nächste Chip aus diesem Stapel."), HORIZONTAL_ALIGNMENT_CENTER, B.size.x - 48, tsz(8), 3, GameData.COL.ink, wrap)
+	var pad: bool = InputSetup.pad
+	for ro in 3:
+		var cx := B.position.x + 20 + ro * 176
+		var col := Color(GameData.ROLE_COL[ro])
+		var key: String = (InputSetup.btn(["X", "A", "B"][ro]) if pad else ["J", "K", "L"][ro])
+		_box(Rect2(cx, B.position.y + 74, 168, 180), Color(GameData.COL.bg2, 0.9), col.darkened(0.3))
+		_text(Vector2(cx, B.position.y + 90), "%s  [%s]" % [T.t(GameData.ROLE_NAMES[ro]), key], 8, col, HORIZONTAL_ALIGNMENT_CENTER, 168, true, true)
+		var counts := {}
+		for c in run.deck:
+			if GameData.role(c) == ro:
+				counts[c] = counts.get(c, 0) + 1
+		var y := B.position.y + 110
+		if counts.is_empty():
+			_text(Vector2(cx, y), "(keiner)", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 168)
+		for c in counts:
+			if y > B.position.y + 240:
+				break
+			_text(Vector2(cx + 8, y), "%d× %s" % [counts[c], T.chip(c)], 8, GameData.COL.ink)
+			_text(Vector2(cx + 16, y + 12), GameData.chip_short(c), 8, GameData.COL.muted)
+			y += 28
+	_text(Vector2(B.position.x, B.end.y - 12), T.t("%s weiter") % (InputSetup.btn("A") if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, true)
 
 
 ## Erklärung beim ersten Run: Wege, Knoten, Ebenen, Wächter

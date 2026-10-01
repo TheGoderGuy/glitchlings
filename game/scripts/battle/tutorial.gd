@@ -1,9 +1,9 @@
 class_name Tutorial
 extends RefCounted
-## Geführter erster Kampf: Bewegen → Chip spielen → Ausweichen → Signatur-Attacke → frei kämpfen.
+## Geführter erster Kampf: Bewegen → Chip spielen → Schutz/Hilfe → Ausweichen → Signatur-Attacke → frei kämpfen.
 ## Steuert nur, wann der Gegner angreifen darf, und prüft die Fortschritte; die Ansicht zeigt die Texte.
 
-enum Step { MOVE, CHIP, DODGE, SPECIAL, FREE, DONE }
+enum Step { MOVE, CHIP, SLOTS, DODGE, SPECIAL, FREE, DONE }
 
 var step := Step.MOVE
 var moves := 0
@@ -20,7 +20,7 @@ func update(st: BattleState, dt: float) -> void:
 	just_finished = false
 	var pos := Vector2i(st.p.c, st.p.r)
 	# Gegner darf erst beim Ausweichen-Schritt angreifen, stirbt nicht vor dem Ende
-	if step in [Step.MOVE, Step.CHIP, Step.SPECIAL]:
+	if step in [Step.MOVE, Step.CHIP, Step.SLOTS, Step.SPECIAL]:
 		st.e.atk_t = maxf(st.e.atk_t, 1.0)
 		st.e.move_t = maxf(st.e.move_t, 1.0)
 	# Schutz während der Lernschritte (greift direkt in der Kampflogik)
@@ -37,6 +37,12 @@ func update(st: BattleState, dt: float) -> void:
 				last_hits = st.e.max - st.e.hp
 		Step.CHIP:
 			if st.e.max - st.e.hp > last_hits:
+				step = Step.SLOTS
+				# Schutz- und Hilfe-Slot sofort bereit machen
+				for k in [1, 2]:
+					st.hand[k].rem = 0.0
+		Step.SLOTS:
+			if st.last_chip != "" and GameData.role(st.last_chip) > 0:
 				step = Step.DODGE
 				st.e.atk_t = 0.6
 				last_warns = 0
@@ -74,7 +80,9 @@ func texts(pad: bool) -> Array:
 		Step.MOVE:
 			return [T.t("Bewegen (%d/3)") % mini(moves, 3), T.t("Beweg dich mit %s über deine blauen Felder.") % T.t("dem Steuerkreuz oder dem linken Stick" if pad else "WASD oder den Pfeiltasten")]
 		Step.CHIP:
-			return ["Chip spielen", T.t("Drück %s: Pixelstrahl fliegt über deine Reihe. Stell dich in die Reihe des Gegners!") % (InputSetup.btn("X") if pad else "J")]
+			return ["Chip spielen", T.t("Drück %s für deinen Angriffs-Chip. Die meisten treffen deine Reihe: Stell dich in die Reihe des Gegners!") % (InputSetup.btn("X") if pad else "J")]
+		Step.SLOTS:
+			return ["Schutz und Hilfe", T.t("Jeder Slot hat eine Rolle und seinen eigenen Stapel. Probier %s (Schutz) oder %s (Hilfe)!") % [InputSetup.btn("A") if pad else "K", InputSetup.btn("B") if pad else "L"]]
 		Step.DODGE:
 			return [T.t("Ausweichen (%d/2)") % dodges, "Rote Felder mit „!“ werden gleich getroffen. Geh rechtzeitig runter!"]
 		Step.SPECIAL:

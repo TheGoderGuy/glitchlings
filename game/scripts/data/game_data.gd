@@ -67,6 +67,57 @@ const CHIPS := {
 ## ---------- Verbesserte Chips (30.09.2026) ----------
 ## „Glutball+“ ist die verbesserte Fassung von „Glutball“: +30 % Schaden (auf 5 gerundet), 20 % kürzere Ladezeit.
 ## Chips ohne Schaden (Schilde, Heilung …) laden schneller und wirken 30 % stärker (k).
+## ---------- Rollen-Slots (01.10.2026, Spieltest-Feedback) ----------
+## Drei Slots mit fester Rolle: 0 Angriff (J / □), 1 Schutz (K / ✕), 2 Hilfe (L / ○: Heilung und Unterstützung).
+## Jeder Slot zieht aus seinem eigenen Teil des Decks.
+const ROLE_NAMES := ["Angriff", "Schutz", "Hilfe"]
+const ROLE_COL := ["#FF7A93", "#58B7FF", "#6EE7C5"]
+const ROLE_DEF := ["Blubberschild", "Firewall", "Hitzeschild", "Konter", "Kopierschutz", "Nebel", "Sprungantrieb",
+	"Blendgranate", "Blackout", "Eisfeld", "Strudel"]
+const ROLE_SUP := ["Heilpatch", "Neustart", "Defrag", "Ladungsfeld", "Portscan", "Übertakten"]
+
+
+static func role(id: String) -> int:
+	var b := base_chip(id)
+	return 1 if ROLE_DEF.has(b) else (2 if ROLE_SUP.has(b) else 0)
+
+
+## Kartenbild im Kampf: [Trefferbild oder Symbol, Kurzwirkung]. Trefferbilder (3×3 Gegnerfeld):
+## row = deine Reihe, front = vordere zwei Felder deiner Reihe, col = Spalte des Gegners, mycol = deine Spalte,
+## field = ganzes Feld, aim = trifft immer den Gegner, mine = unter dem Gegner, blast = Einschlag mit Rand, pull = zieht heran.
+## Sonst ein Symbol aus PICTOS.
+const CHIP_CARD := {
+	"Pixelstrahl": ["row", ""], "Byteschlag": ["front", "Nahkampf"], "Firewall": ["shield", "Schild 4 s"],
+	"Bug-Mine": ["mine", "Mine"], "Übertakten": ["gear", "Laden ×2"], "Glutball": ["blast", "Brand"],
+	"Flammenwelle": ["col", "Spalte"], "Wasserstrahl": ["row", "Rückstoß"], "Blubberschild": ["shield", "Blase 30"],
+	"Eisfeld": ["snow", "Friert 2 s"], "Heilpatch": ["heart", "Heilt 25"], "Blitzcursor": ["aim", "trifft immer"],
+	"Mini-Bot": ["gear", "Helfer 6 s"], "Virusspritzer": ["row", "Gift"], "Defrag": ["bolt", "Lädt Hand"],
+	"Doppelklick": ["row", "2×"], "Neustart": ["heart", "Neue Hand"], "Funkenregen": ["field", "Brand"],
+	"Hitzeschild": ["shield", "Schild + Brand"], "Laserschuss": ["row", "sofort"], "Portscan": ["eye", "+50 % ×2"],
+	"Strudel": ["arrow", "Gegner langsam"], "Nebel": ["boot", "Ausweichen 3 s"], "Blitzlanze": ["mycol", "Spalte"],
+	"Blendgranate": ["eye", "Stoppt Angriff"], "Wurmloch": ["pull", "Zieht heran"], "Kurzschluss": ["row", "Betäubt"],
+	"Datenfresser": ["row", "×2 bei Gift"], "Glutklinge": ["front", "Brand"], "Feuersbrunst": ["field", "×2 bei Brand"],
+	"Flutwelle": ["row", "Rückstoß"], "Frostsplitter": ["row", "×3 bei Eis"], "Tsunami": ["field", "Friert"],
+	"Kopierschutz": ["shield", ""], "Geschützturm": ["gear", "Turm 8 s"], "Debugger": ["row", "Säubert"],
+	"Kettenblitz": ["aim", "springt"], "Ladungsfeld": ["bolt", "Signatur +25 %"], "Magnetfeld": ["pull", "Betäubt"],
+	"Blackout": ["bolt", "Betäubt 3 s"], "Seuche": ["skull", "Gift ×2"], "Sporenfalle": ["mine", "Gift"],
+	"Parasit": ["row", "Lebensraub"], "Sprungantrieb": ["boot", "Weicht aus"], "Konter": ["shield", ""],
+}
+
+
+## Kurzwirkung für die Karte: „20 · Gift“, „Schild 4 s“, „Heilt 32“ (verbessert)
+static func chip_short(id: String) -> String:
+	var ch := chip(id)
+	var info: Array = CHIP_CARD.get(base_chip(id), ["row", ""])
+	var s := T.t(info[1])
+	if id == "Heilpatch+":
+		s = T.t("Heilt %d") % roundi(25 * float(ch.get("k", 1.0)))
+	if int(ch.dmg) > 0 and role(id) == 0:
+		return str(ch.dmg) + ("" if s == "" else " · " + s)
+	if int(ch.dmg) > 0 and base_chip(id) in ["Konter", "Kopierschutz"]:
+		return T.t("Block + %d") % ch.dmg if base_chip(id) == "Kopierschutz" else T.t("Konter %d") % ch.dmg
+	return s
+
 const UP_DMG := 1.3
 const UP_CD := 0.8
 static var _up_cache := {}
@@ -238,7 +289,7 @@ const MONS := {
 	},
 	"Funkling": {
 		"hp": 80, "move": 0.12, "rech": 1.1, "el": "Feuer", "animal": "Welpe",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Heilpatch", "Glutball", "Laserschuss"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Glutball", "Laserschuss"],
 		"passive": "Übermut", "passive_desc": "Jeder 3. gespielte Chip halbiert die Ladezeit der anderen Chips auf der Hand.",
 		"trait": "Wenig HP, Chips laden 10 % schneller.",
 		"evo": {"Feuer": "Glutbyte", "Code": "Overclocko"},
@@ -253,14 +304,14 @@ const MONS := {
 	# --- Weitere Linien aus dem Prototyp (Phase 3b, 29.09.2026), kommen aus Eiern ---
 	"Kekso": {
 		"hp": 100, "move": 0.12, "rech": 1.0, "el": "Neutral", "animal": "Hamster",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Heilpatch", "Bug-Mine", "Blitzcursor"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Bug-Mine", "Blitzcursor"],
 		"passive": "Hamstern", "passive_desc": "25 % Chance: Ein gespielter Chip wird gehamstert und kommt gleich wieder.",
 		"trait": "Hamstert Chips und legt Minen.",
 		"evo": {"Virus": "Tracko", "Elektro": "Cachy"},
 	},
 	"Lumi": {
 		"hp": 85, "move": 0.1, "rech": 1.05, "el": "Elektro", "animal": "Hase",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Doppelklick", "Byteschlag", "Byteschlag", "Heilpatch", "Blitzcursor", "Wasserstrahl"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Doppelklick", "Byteschlag", "Sprungantrieb", "Heilpatch", "Blitzcursor", "Wasserstrahl"],
 		"passive": "Hasenhaken", "passive_desc": "Bewegt sich doppelt so schnell.",
 		"trait": "Flink. Blitz-Angriffe treffen immer.",
 		"evo": {"Elektro": "Blinki", "Wasser": "Perlhopp"},
@@ -274,7 +325,7 @@ const MONS := {
 	},
 	"Molchi": {
 		"hp": 90, "move": 0.11, "rech": 1.0, "el": "Virus", "animal": "Salamander",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Heilpatch", "Virusspritzer", "Glutball"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Virusspritzer", "Glutball"],
 		"passive": "Giftdrüsen", "passive_desc": "Gift und Brand auf dem Gegner wirken 50 % stärker.",
 		"trait": "Flinker Gift-Salamander.",
 		"evo": {"Virus": "Toxmolch", "Feuer": "Magmolch"},
@@ -288,7 +339,7 @@ const MONS := {
 	},
 	"Kauzbit": {
 		"hp": 90, "move": 0.12, "rech": 1.0, "el": "Code", "animal": "Robo-Eule",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Heilpatch", "Laserschuss", "Glutball"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Laserschuss", "Glutball"],
 		"passive": "Eulenblick", "passive_desc": "Sieht Angriffe früher: Warnungen erscheinen 0,3 s eher.",
 		"trait": "Robo-Eule mit Adleraugen.",
 		"evo": {"Code": "Optikauz", "Feuer": "Raketauz"},
@@ -296,14 +347,14 @@ const MONS := {
 	# --- Neue Linien 29.09.2026: Dachs und Waschbär ---
 	"Buddli": {
 		"hp": 115, "move": 0.15, "rech": 1.0, "el": "Neutral", "animal": "Dachs",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Byteschlag", "Heilpatch", "Glutball", "Blitzcursor"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Sprungantrieb", "Heilpatch", "Glutball", "Blitzcursor"],
 		"passive": "Furchtlos", "passive_desc": "Unter 30 % HP machen Chip-Treffer 50 % mehr Schaden.",
 		"trait": "Zäh und furchtlos. Je knapper es wird, desto härter schlägt es zu.",
 		"evo": {"Feuer": "Glimmdachs", "Elektro": "Zackdachs"},
 	},
 	"Maskli": {
 		"hp": 90, "move": 0.11, "rech": 1.05, "el": "Neutral", "animal": "Waschbär",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Doppelklick", "Byteschlag", "Heilpatch", "Heilpatch", "Wasserstrahl", "Virusspritzer"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Doppelklick", "Byteschlag", "Heilpatch", "Sprungantrieb", "Wasserstrahl", "Virusspritzer"],
 		"passive": "Langfinger", "passive_desc": "Jeder 4. Chip-Treffer klaut Ladung: ein Chip auf der Hand ist sofort bereit.",
 		"trait": "Flinker kleiner Dieb mit Maske.",
 		"evo": {"Wasser": "Plätschbär", "Virus": "Klaubär"},
@@ -335,7 +386,7 @@ const MONS := {
 	},
 	"Spukatz": {
 		"hp": 70, "move": 0.1, "rech": 1.0, "el": "Virus", "animal": "Katze × Frosch", "fusion": true,
-		"deck": ["Virusspritzer", "Virusspritzer", "Bug-Mine", "Bug-Mine", "Blitzcursor", "Pixelstrahl", "Byteschlag", "Blubberschild"],
+		"deck": ["Virusspritzer", "Virusspritzer", "Bug-Mine", "Bug-Mine", "Blitzcursor", "Pixelstrahl", "Heilpatch", "Blubberschild"],
 		"passive": "Spuk", "passive_desc": "Weicht 20 % aller Treffer aus.",
 		"trait": "Fusion. Halb Geist, halb Katze.", "evo": {},
 	},
