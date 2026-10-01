@@ -13,7 +13,7 @@ const SKIP_LINE = /is_action|Sfx\.play|Music\.(play|seek|current)|preload\(|load
 // In beiden Sprachen gleich (Tasten, Formatvorlagen, Eigennamen, Pixelmuster)
 const SAME = new Set(["Start", "Esc", "Enter", "Back", "LB", "RB", "BOSS", "GLITCHLINGS", "TheGoderGuy", "Silkscreen", "Glutball+",
   ", +%d HP", " · %ss", "%s · %d HP", "%s · %s · %d HP", "buy_%d", ".xx.xx.", ".xxxxx.", "..xxx..", "application/config/version",
-  "Language (Sprache): ", "Sprache (Language): "]);
+  "Language (Sprache): ", "Sprache (Language): ", "© 2026 TheGoderGuy"]);
 
 function walk(dir, out) {
   for (const e of fs.readdirSync(dir, { withFileTypes: true })) {

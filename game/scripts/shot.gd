@@ -51,6 +51,8 @@ static func args() -> Dictionary:
 			shot.guide = int(a.substr(8))
 		elif a.begins_with("--lang="):
 			shot.lang = a.substr(7)
+		elif a == "--testbuild":
+			shot.testbuild = true
 		elif a == "--bonus":
 			shot.bonus = true
 		elif a == "--zones":

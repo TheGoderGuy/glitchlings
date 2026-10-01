@@ -15,6 +15,7 @@ func _ready() -> void:
 	Settings.lang = "de"   # Tests prüfen deutsche Texte; Englisch prüft test_english
 	test_scripts_compile()
 	test_english()
+	test_testbuild()
 	test_data()
 	test_hand()
 	test_projectile()
@@ -1212,6 +1213,18 @@ func test_english() -> void:
 	var syn := GameData.synergy("Feuersbrunst", ["Glutball"], [], "")
 	Settings.lang = "de"
 	check(ok and syn == "Combo with Ember Ball" and T.t("Weiter") == "Weiter" and T.dec(2.5) == "2,5", "Sprache umschaltbar: Chips+, Elite-Namen, Kommazahlen, Kombo-Hinweis")
+
+
+## Web-Testfassung: nur Cache-Wiesen und Firewall-Vulkan spielbar
+func test_testbuild() -> void:
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.data = {"cleared": ["wiesen", "vulkan", "sumpf"]}
+	SaveGame.force_test = true
+	var tb := SaveGame.zone_unlocked("vulkan") and not SaveGame.zone_unlocked("sumpf") and not SaveGame.zone_unlocked("kern") 		and SaveGame._newly_unlocked("vulkan") == "" and SaveGame.unlocked_zones() == ["wiesen", "vulkan"]
+	SaveGame.force_test = false
+	var full := SaveGame.zone_unlocked("kern") and SaveGame._newly_unlocked("vulkan") == "sumpf"
+	SaveGame.data = saved
+	check(tb and full, "Testfassung: nur zwei Zonen, keine Freischaltung von Zone 3; normale Fassung unverändert")
 
 
 func test_music() -> void:

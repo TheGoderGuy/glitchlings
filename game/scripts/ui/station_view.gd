@@ -341,7 +341,7 @@ func _process_zone_pick() -> void:
 	elif Input.is_action_just_pressed("confirm"):
 		var z: String = GameData.ZONE_ORDER[zone_sel]
 		if not SaveGame.zone_unlocked(z):
-			zone_msg = "Noch gesperrt: Besiege zuerst den Boss der Zone davor."
+			zone_msg = "Nicht in dieser Testversion enthalten." if not SaveGame.zone_in_build(z) else "Noch gesperrt: Besiege zuerst den Boss der Zone davor."
 			Sfx.play("back")
 			return
 		Sfx.play("confirm")
@@ -390,6 +390,8 @@ func _draw_zone_pick() -> void:
 			draw_rect(Rect2(r.get_center().x - 22 + k * 12, r.position.y + 106, 8, 5), GameData.COL.coral if k <= i else GameData.COL.dark)
 		_text(Vector2(r.position.x, r.position.y + 124), zone_layout(z), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
 		var desc: String = T.t(Z.desc) if open else T.t("Gesperrt. Besiege den Boss von %s, um diese Zone freizuschalten.") % T.t(GameData.ZONES[Z.unlock].name)
+		if not SaveGame.zone_in_build(z):
+			desc = T.t("Nicht in dieser Testversion enthalten. Im fertigen Spiel geht es hier weiter!")
 		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 142), desc, HORIZONTAL_ALIGNMENT_CENTER, cw - 16, tsz(8), 5, GameData.COL.ink if open else GameData.COL.muted, wrap)
 		var boss: String = T.t(GameData.FOES[Z.boss].name) if done else "???"
 		_text(Vector2(r.position.x, r.end.y - 10), T.t("Endboss:" if Z.get("final", false) else "Boss:") + " " + boss, 8, GameData.COL.coral if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)

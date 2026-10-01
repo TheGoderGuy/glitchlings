@@ -19,6 +19,9 @@ func _main_items() -> Array:
 		play = "Run fortsetzen"
 	elif SaveGame.has_save():
 		play = "Spielen"
+	# Im Browser lässt sich das Spiel nicht beenden (Tab schließen)
+	if OS.has_feature("web"):
+		return [play, "Kampf-Handbuch", "Optionen"]
 	return [play, "Kampf-Handbuch", "Optionen", "Beenden"]
 
 
@@ -37,7 +40,7 @@ func _option_items() -> Array:
 		("Test: Alle Zonen frei (erledigt)" if SaveGame.unlocked_zones().size() == GameData.ZONE_ORDER.size() else "Test: Alle Zonen freischalten") if SaveGame.has_save() else "Test: erst Spiel starten",
 		("Test: Monsterdex komplett (erledigt)" if SaveGame.dex_count() >= GameData.FORMS.size() else "Test: Monsterdex komplett") if SaveGame.has_save() else "Test: erst Spiel starten",
 		"Intro ansehen",
-		"Spieltest-Log öffnen",
+		"Spieltest-Log herunterladen" if OS.has_feature("web") else "Spieltest-Log öffnen",
 		"Zurück",
 	]
 
@@ -109,8 +112,11 @@ func _process(delta: float) -> void:
 			else:
 				Sfx.play("back")
 		elif sel == 10 and Input.is_action_just_pressed("confirm"):
-			# Ordner mit spieltest_log.csv öffnen (für Tester)
-			OS.shell_open(SaveGame.log_folder())
+			# Ordner mit spieltest_log.csv öffnen (für Tester), im Browser als Datei herunterladen
+			if OS.has_feature("web"):
+				SaveGame.download_log()
+			else:
+				OS.shell_open(SaveGame.log_folder())
 			Sfx.play("confirm")
 		elif sel == 7 and Input.is_action_just_pressed("confirm"):
 			# Testfunktion für den Produzenten: alle Zonen sofort spielbar
@@ -166,6 +172,10 @@ func _draw() -> void:
 	_text(Vector2(0, 114), "Brüten. Fusionieren. Prägen.", 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if SaveGame.game_cleared():
 		_text(Vector2(0, 128), "* NEST gerettet *", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	# Urheberhinweis, in der Testfassung mit Bitte um Vertraulichkeit
+	_text(Vector2(8, H - 10), "© 2026 TheGoderGuy", 8, Color(GameData.COL.muted, 0.6))
+	if SaveGame.test_build():
+		_text(Vector2(8, 16), "TESTVERSION · bitte nicht weitergeben", 8, GameData.COL.coral, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 
 	# Monster-Bühne
 	var bob := 1 if sin(anim_t * 4.0) > 0 else 0

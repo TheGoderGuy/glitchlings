@@ -294,6 +294,14 @@ func log_folder() -> String:
 	return ProjectSettings.globalize_path("user://")
 
 
+## Im Browser gibt es keinen Ordner: das Log als Datei herunterladen
+func download_log() -> void:
+	if not OS.has_feature("web"):
+		return
+	var txt := FileAccess.get_file_as_string(log_path) if FileAccess.file_exists(log_path) else LOG_HEADER + "\n"
+	JavaScriptBridge.download_buffer(txt.to_utf8_buffer(), "glitchlings_spieltest_log.csv", "text/csv")
+
+
 # ---------- Zonen ----------
 
 ## Ende erreicht (Ur-Glitch besiegt)?
@@ -302,8 +310,24 @@ func game_cleared() -> bool:
 
 
 func zone_unlocked(z: String) -> bool:
+	if not zone_in_build(z):
+		return false
 	var need: String = GameData.ZONES[z].unlock
 	return need == "" or data.get("cleared", []).has(need)
+
+
+## Testfassung (Web-Spieltest, 01.10.2026): nur die ersten zwei Zonen spielbar.
+## Aktiv über das Export-Feature „testbuild“ (Web-Vorlage) oder für Screenshots/Tests über force_test.
+const TEST_ZONES := ["wiesen", "vulkan"]
+var force_test := false
+
+
+func test_build() -> bool:
+	return force_test or OS.has_feature("testbuild")
+
+
+func zone_in_build(z: String) -> bool:
+	return not test_build() or TEST_ZONES.has(z)
 
 
 func unlocked_zones() -> Array:
@@ -327,7 +351,7 @@ func unlock_full_dex() -> void:
 
 func _newly_unlocked(cleared_zone: String) -> String:
 	for z in GameData.ZONE_ORDER:
-		if GameData.ZONES[z].unlock == cleared_zone:
+		if GameData.ZONES[z].unlock == cleared_zone and zone_in_build(z):
 			return z
 	return ""
 

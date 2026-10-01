@@ -21,9 +21,15 @@ var foe_override := -1   # nur für Screenshots
 
 func _ready() -> void:
 	PixelCanvas.preload_all()
+	# Pixel-Art nur ganzzahlig vergrößern; ist das Fenster kleiner als 640×360 (z. B. kleines Browserfenster),
+	# lieber stufenlos verkleinern als abschneiden
+	get_window().size_changed.connect(_fit_scale)
+	_fit_scale()
 	var shot := Shot.args()
 	if shot.has("lang"):
 		Settings.lang = shot.lang   # nur für Screenshots, wird nicht gespeichert
+	if shot.has("testbuild"):
+		SaveGame.force_test = true
 	# Nur Intro bzw. Ende abspielen und beenden (Video-Aufnahme: godot --write-movie intro.avi -- --play=opening / --play=ending)
 	if OS.get_cmdline_user_args().has("--play=opening"):
 		SaveGame.persist = false
@@ -35,6 +41,11 @@ func _ready() -> void:
 		show_title()
 	else:
 		_screenshot(shot)
+
+
+func _fit_scale() -> void:
+	var s := get_window().size
+	get_window().content_scale_stretch = Window.CONTENT_SCALE_STRETCH_INTEGER if s.x >= 640 and s.y >= 360 else Window.CONTENT_SCALE_STRETCH_FRACTIONAL
 
 
 func _swap(node: Node) -> void:
