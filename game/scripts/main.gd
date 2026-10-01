@@ -219,6 +219,11 @@ func _screenshot(shot: Dictionary) -> void:
 		run.deck.append(c)
 	if mode in ["map", "pick"] and not shot.has("form"):
 		run.praeg = {"Elektro": 6, "Code": 1, "Feuer": 2, "Neutral": 9}
+	if shot.has("praeg"):
+		run.praeg = shot.praeg
+	if shot.has("bonus"):
+		run.sp_bonus = true
+		run.foe_weak = true
 	if shot.has("form"):
 		run.form = shot.form
 		run.stage = GameData.FORMS[run.form].stage

@@ -40,10 +40,17 @@ static func args() -> Dictionary:
 			shot.choices = a.substr(10).split(",")
 		elif a.begins_with("--deck="):
 			shot.deck = a.substr(7).split(",")
+		elif a.begins_with("--praeg="):
+			# z. B. --praeg=Elektro:12,Wasser:11 (Evolutionsanzeige testen)
+			shot.praeg = {}
+			for kv in a.substr(8).split(","):
+				shot.praeg[kv.get_slice(":", 0)] = int(kv.get_slice(":", 1))
 		elif a.begins_with("--font="):
 			shot.font = a.substr(7)
 		elif a.begins_with("--guide="):
 			shot.guide = int(a.substr(8))
+		elif a == "--bonus":
+			shot.bonus = true
 		elif a == "--zones":
 			shot.zones = true
 		elif a == "--glitchnode":

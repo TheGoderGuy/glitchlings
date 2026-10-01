@@ -276,8 +276,26 @@ func _draw_evo(s: Dictionary, x: float, y: float, w: float) -> float:
 		draw_multiline_string(font(), Vector2(x, y + 8), "Ohne Wirkung: " + ", ".join(parts), HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 		y += 12 * (1 if text_width("Ohne Wirkung: " + ", ".join(parts)) <= w else 2)
 	var msg: String = "Bereit zur Entwicklung!" if s.ready else s.reason
-	_text(Vector2(x, y + 8), msg, 8, GameData.COL.mint if s.ready else GameData.COL.sun)
-	return y + 12 - y0
+	for line in wrap_lines(msg, w):
+		_text(Vector2(x, y + 8), line, 8, GameData.COL.mint if s.ready else GameData.COL.sun)
+		y += 12
+	return y - y0
+
+
+## Text in Zeilen aufteilen, die höchstens w Pixel breit sind (Umbruch an Leerzeichen)
+static func wrap_lines(s: String, w: float, size := 8) -> Array:
+	var lines: Array = []
+	var cur := ""
+	for word in s.split(" ", false):
+		var test := word if cur == "" else cur + " " + word
+		if cur != "" and text_width(test, size) > w:
+			lines.append(cur)
+			cur = word
+		else:
+			cur = test
+	if cur != "":
+		lines.append(cur)
+	return lines
 
 
 ## Modul-Symbol (14×14): Rahmen in Seltenheitsfarbe, Piktogramm in Modulfarbe

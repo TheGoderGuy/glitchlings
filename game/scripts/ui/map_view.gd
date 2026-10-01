@@ -214,11 +214,20 @@ func _draw_side_panels(target: Vector2i) -> void:
 		y += 12
 	# Evolution: mögliche Richtungen und Stand
 	y += 4
-	_draw_evo(run.evo_status(), L.position.x + 8, y, L.size.x - 16)
+	y += _draw_evo(run.evo_status(), L.position.x + 8, y, L.size.x - 16) + 10
+	# Vorteile für den nächsten Kampf: unter der Evolution, sonst (wenn der Platz fehlt) unter dem Kasten
+	var flags: Array = []
 	if run.sp_bonus:
-		_text(Vector2(L.position.x + 8, L.end.y - 8), "Signatur-Bonus!", 8, GameData.COL.sun)
+		flags.append("Signatur-Bonus!")
 	if run.foe_weak:
-		_text(Vector2(L.position.x + 8, L.end.y - (20 if run.sp_bonus else 8)), "Gegner geschwächt!", 8, GameData.COL.sun)
+		flags.append("Gegner geschwächt!")
+	if not flags.is_empty():
+		if y + 12 * (flags.size() - 1) <= L.end.y - 6:
+			for fl in flags:
+				_text(Vector2(L.position.x + 8, y), fl, 8, GameData.COL.sun)
+				y += 12
+		else:
+			_text(Vector2(L.position.x + 2, L.end.y + 14), " · ".join(flags), 8, GameData.COL.sun)
 	# Rechts: Auswahl
 	var R := Rect2(W - 158, 44, 150, 150)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
