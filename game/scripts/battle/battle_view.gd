@@ -624,7 +624,7 @@ func _draw_effects() -> void:
 		var k: float = b.t / b.max
 		var a := minf(1.0, k * 2.5)
 		draw_rect(Rect2(-off, Vector2(W, H)), Color(b.color, a * 0.15))
-		_text(Vector2(0, 120 - (1.0 - k) * 6), b.text.to_upper(), 24, Color(b.color, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 120 - (1.0 - k) * 6), T.t(b.text).to_upper(), 24, Color(b.color, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_hud() -> void:
@@ -632,7 +632,7 @@ func _draw_hud() -> void:
 	var P := Rect2(8, 8, 200, 34)
 	_box(P, Color(GameData.COL.panel, 0.9), GameData.COL.line)
 	_text(P.position + Vector2(6, 12), run.form, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	_text(P.position + Vector2(6, 12), _hud_sub(run.form, "%s · %s" % [GameData.STAGE_NAMES[run.stage], run.form_el()], GameData.STAGE_NAMES[run.stage], P.size.x - 12), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
+	_text(P.position + Vector2(6, 12), _hud_sub(run.form, "%s · %s" % [T.t(GameData.STAGE_NAMES[run.stage]), T.t(run.form_el())], T.t(GameData.STAGE_NAMES[run.stage]), P.size.x - 12), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
 	_bar(Rect2(P.position + Vector2(6, 18), Vector2(128, 9)), float(run.hp) / run.max_hp, GameData.COL.mint)
 	_text(P.position + Vector2(6, 26), "%d/%d" % [run.hp, run.max_hp], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
 	var buffs: Array = []
@@ -641,7 +641,7 @@ func _draw_hud() -> void:
 	if st.oc > 0:
 		buffs.append(["Übertaktet", GameData.EL.Feuer])
 	if st.scan > 0:
-		buffs.append(["Scan x%d" % st.scan, GameData.EL.Code])
+		buffs.append([T.t("Scan x%d") % st.scan, GameData.EL.Code])
 	if st.mist > 0:
 		buffs.append(["Nebel", GameData.EL.Wasser])
 	var bx := 8.0
@@ -677,21 +677,21 @@ func _draw_hud() -> void:
 		_text(Vector2(tx, 55), tg[0], 8, tg[1], HORIZONTAL_ALIGNMENT_CENTER, w, false)
 		tx -= 3
 	# Raum + Hinweis
-	var kind: String = ZoneMap.TYPE_NAMES[node_type]
-	_text(Vector2(0, 20), "Ebene %d · Etage %d · %s" % [run.map.level + 1, run.floor_idx + 1, kind], 8, GameData.COL.sun if node_type != "fight" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	var kind: String = T.t(ZoneMap.TYPE_NAMES[node_type])
+	_text(Vector2(0, 20), T.t("Ebene %d · Etage %d · %s") % [run.map.level + 1, run.floor_idx + 1, kind], 8, GameData.COL.sun if node_type != "fight" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if st.status != "" and st.t < 6.0:
 		_text(Vector2(0, 76), st.status, 8, Color(GameData.COL.sun, clampf(6.0 - st.t, 0.0, 1.0)), HORIZONTAL_ALIGNMENT_CENTER, W)
 
 
 ## Untertitel im HUD kürzen, wenn er mit einem langen Namen kollidieren würde
 func _hud_sub(name: String, full: String, short: String, w: float) -> String:
-	return full if text_width(name, 8, true) + text_width(full) + 10 <= w else short
+	return full if text_width(T.t(name), 8, true) + text_width(full) + 10 <= w else short
 
 
 func _draw_hand() -> void:
 	var nx := st.next_chip()
-	_text(Vector2(HAND_X, 302), "Als Nächstes: " + (nx if nx != "" else "–"), 8, GameData.COL.muted)
-	_text(Vector2(HAND_X, 302), (InputSetup.btn("Start") if InputSetup.pad else "Esc") + ": Pause", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 130)
+	_text(Vector2(HAND_X, 302), T.t("Als Nächstes:") + " " + (T.chip(nx) if nx != "" else "–"), 8, GameData.COL.muted)
+	_text(Vector2(HAND_X, 302), (InputSetup.btn("Start") if InputSetup.pad else "Esc") + ": " + T.t("Pause"), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 3 * CARD_W + 2 * 6 + 6 + 130)
 	for i in 3:
 		var s: Dictionary = st.hand[i]
 		var r := Rect2(HAND_X + i * (CARD_W + 6), HAND_Y, CARD_W, CARD_H)
@@ -708,7 +708,7 @@ func _draw_hand() -> void:
 		_box(g, GameData.COL.dark, el if ready else GameData.COL.line)
 		_text(g.position + Vector2(1, 11), _glyph_chip(i), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g.size.x, false, true)
 		_text(r.position + Vector2(29, 16), s.chip, 8, GameData.COL.ink if ready else GameData.COL.muted, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-		var info: String = ch.cat + (" %d" % ch.dmg if ch.dmg > 0 else "")
+		var info: String = T.t(ch.cat) + (" %d" % ch.dmg if ch.dmg > 0 else "")
 		_text(r.position + Vector2(8, 33), info, 8, GameData.COL.muted)
 		if ready:
 			_text(r.position + Vector2(8, 33), "bereit", 8, el, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 14)
@@ -744,9 +744,9 @@ func _draw_pause() -> void:
 	_text(r.position + Vector2(0, 28), "Pause", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	_text(Vector2(r.position.x + 20, r.position.y + 46), "Dein Deck", 8, GameData.COL.muted)
 	_draw_deck_list(run.deck, r.position.x + 20, r.position.y + 66, 220, 10)
-	_text(Vector2(r.position.x + 270, r.position.y + 46), "Module (%d)" % run.modules.size(), 8, GameData.COL.muted)
+	_text(Vector2(r.position.x + 270, r.position.y + 46), T.t("Module (%d)") % run.modules.size(), 8, GameData.COL.muted)
 	_draw_module_list(run.modules, r.position.x + 270, r.position.y + 58, 230, 4)
-	_text(Vector2(r.position.x + 20, r.end.y - 62), "Ziehstapel %d · Abwurf %d" % [st.draw_pile.size(), st.disc.size()], 8, GameData.COL.muted)
+	_text(Vector2(r.position.x + 20, r.end.y - 62), T.t("Ziehstapel %d · Abwurf %d") % [st.draw_pile.size(), st.disc.size()], 8, GameData.COL.muted)
 	_menu(PAUSE_ITEMS, pause_idx, r.get_center().x, r.end.y - 72, 160)
 
 
@@ -756,11 +756,11 @@ func _draw_pick() -> void:
 	_panel(r)
 	var head_txt := "Sieg!"
 	if node_type == "guard":
-		head_txt = "Wächter besiegt! Ebene %d ist frei." % (run.map.level + 2)
+		head_txt = T.t("Wächter besiegt! Ebene %d ist frei.") % (run.map.level + 2)
 	elif node_type == "glitch":
 		head_txt = "Glitch-Elite besiegt! Epische Beute!"
 	_text(r.position + Vector2(0, 30), head_txt, 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-	var line := "%s ist defragmentiert. +%d Fragmente" % [st.def.name, st.loot_gained if st.loot_gained > 0 else st.def.loot]
+	var line := T.t("%s ist defragmentiert. +%d Fragmente") % [T.t(st.def.name), st.loot_gained if st.loot_gained > 0 else st.def.loot]
 	if heal_info > 0:
 		line += ", +%d HP" % heal_info
 	_text(r.position + Vector2(0, 48), line + ".", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
@@ -768,7 +768,7 @@ func _draw_pick() -> void:
 	# Elite-Belohnung: neues Modul unter den Karten
 	if new_module != "":
 		var M: Dictionary = GameData.MODULES[new_module]
-		var head: String = "Neues Modul: " + M.name
+		var head: String = T.t("Neues Modul:") + " " + T.t(M.name)
 		var tw := text_width(head, 8, true)
 		var tx := r.get_center().x - tw / 2.0 + 9
 		_draw_module_icon(new_module, Vector2(tx - 20, r.position.y + 213))
@@ -783,38 +783,38 @@ func _draw_pick() -> void:
 		_box(c, GameData.COL.panel.lightened(0.08) if sel else GameData.COL.bg2, GameData.COL.sun if sel else el.darkened(0.3))
 		draw_rect(Rect2(c.position + Vector2(1, 1), Vector2(c.size.x - 2, 4)), el)
 		_text(c.position + Vector2(0, 24), k, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
-		_text(c.position + Vector2(0, 38), "%s · %s" % [ch.el, ch.rar], 8, el, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
-		var stats: String = ch.cat + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %.1fs" % ch.cd
+		_text(c.position + Vector2(0, 38), "%s · %s" % [T.t(ch.el), T.t(ch.rar)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
+		var stats: String = T.t(ch.cat) + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %ss" % T.dec(ch.cd)
 		_text(c.position + Vector2(0, 52), stats, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
-		draw_multiline_string(font(), c.position + Vector2(8, 70), ch.desc, HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), c.position + Vector2(8, 70), T.t(ch.desc), HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 		# Synergie mit Deck, Modulen oder Passiv
 		var combo := GameData.synergy(k, run.deck, run.modules, run.mon.passive)
 		if combo != "":
 			var pulse := 0.75 + 0.25 * sin(anim_t * 5.0 + i)
-			_text(Vector2(c.position.x, c.end.y - 19), combo + "!", 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
+			_text(Vector2(c.position.x, c.end.y - 19), T.t(combo) + "!", 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
 		# Wirkung auf die Evolution
 		var tag := ""
 		var tag_col: Color = GameData.COL.muted
 		if ch.el == "Neutral":
-			tag = "Neutral: prägt nicht"
+			tag = T.t("Neutral: prägt nicht")
 		elif int(es.need) > 0 and run.stage == 1:
 			if run.mon.evo.has(ch.el):
 				var f: String = run.mon.evo[ch.el]
-				tag = "Prägt > %s" % (f if SaveGame.data.get("dex", {}).has(f) else ch.el + "-Form")
+				tag = T.t("Prägt > %s") % (T.t(f) if SaveGame.data.get("dex", {}).has(f) else T.t("%s-Form") % T.t(ch.el))
 				tag_col = el
 			else:
-				tag = "Ohne Wirkung auf %s" % run.form
+				tag = T.t("Ohne Wirkung auf %s") % T.t(run.form)
 		elif int(es.need) > 0:
 			tag = "Zählt zur nächsten Stufe"
 			tag_col = el
 		_text(Vector2(c.position.x, c.end.y - 6), tag, 8, tag_col, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 	var evo_line := ""
 	if int(es.need) > 0:
-		var lead: String = ("Richtung %s" % es.leader) if es.leader != "" else "Richtung offen"
-		evo_line = " · Element-Chips %d/%d · %s" % [mini(int(es.total), int(es.need)), int(es.need), lead]
-	_text(Vector2(r.position.x, r.end.y - 36), "Deck: %d Chips · Fragmente: %d%s" % [run.deck.size(), run.frag, evo_line], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+		var lead: String = (T.t("Richtung %s") % T.t(es.leader)) if es.leader != "" else T.t("Richtung offen")
+		evo_line = T.t(" · Element-Chips %d/%d · %s") % [mini(int(es.total), int(es.need)), int(es.need), lead]
+	_text(Vector2(r.position.x, r.end.y - 36), T.t("Deck: %d Chips · Fragmente: %d%s") % [run.deck.size(), run.frag, evo_line], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	var pad: bool = InputSetup.pad
-	_text(Vector2(r.position.x, r.end.y - 16), "< > wählen   %s nehmen   %s überspringen" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	_text(Vector2(r.position.x, r.end.y - 16), T.t("< > wählen   %s nehmen   %s überspringen") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 
 
 func _draw_evolve() -> void:
@@ -836,20 +836,20 @@ func _draw_evolve() -> void:
 		var show_new := fmod(t * freq, 1.0) > 0.5
 		var key := to if show_new else from
 		_draw_sprite(key, c.x, c.y, false, {"flash": true, "scale": 2 if GameData.FORMS[key].stage == 1 else 1})
-		_text(Vector2(0, 60), "%s entwickelt sich …" % from, 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 60), T.t("%s entwickelt sich …") % T.t(from), 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	else:
 		var k := t - EVO_REVEAL
 		if k < 0.25:
 			draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 1.0 - k / 0.25))
 		var bob := 1 if sin(anim_t * 4.0) > 0 else 0
 		_draw_sprite(to, c.x, c.y, false, {"bob": bob})
-		_text(Vector2(0, 60), "%s ist jetzt %s!" % [from, to], 16, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 60), T.t("%s ist jetzt %s!") % [T.t(from), T.t(to)], 16, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		var S: Dictionary = GameData.SPECIALS[to]
-		_text(Vector2(0, 80), "%s · %s · +10 max. HP" % [GameData.STAGE_NAMES[run.stage], GameData.FORMS[to].el], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
-		_text(Vector2(0, 256), "Neue Signatur: " + S.name, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 80), T.t("%s · %s · +10 max. HP") % [T.t(GameData.STAGE_NAMES[run.stage]), T.t(GameData.FORMS[to].el)], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+		_text(Vector2(0, 256), T.t("Neue Signatur:") + " " + T.t(S.name), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		_text(Vector2(0, 270), S.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k > 0.6:
-			_text(Vector2(0, 300), "%s weiter" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, 300), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_tutorial() -> void:
@@ -865,7 +865,7 @@ func _draw_tutorial() -> void:
 		var done: bool = tut.step > i
 		var cur: bool = tut.step == i
 		draw_rect(Rect2(r.end.x - 52 + i * 11, r.position.y + 9, 7, 7), GameData.COL.mint if done else (GameData.COL.sun if cur else GameData.COL.line))
-	draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 32), tx[1], HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 32), T.t(tx[1]), HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 
 
 ## Für Screenshots/Tests: den Kampf mit Autopilot vorspulen.
@@ -1023,8 +1023,9 @@ func _draw_boss_intro() -> void:
 		for i in range(-2, 30):
 			var x0 := i * 24.0 + sh
 			draw_colored_polygon(PackedVector2Array([Vector2(x0, y + 4), Vector2(x0 + 12, y + 4), Vector2(x0 + 4, y + bh - 4), Vector2(x0 - 8, y + bh - 4)]), Color("#FF5470", 0.85))
-		var who := "WÄCHTER" if def.get("guard", false) else "BOSS"
-		var txt := "  WARNUNG  ·  %s  ·  WARNUNG  ·  %s  ·  WARNUNG  ·  %s  ·  WARNUNG  ·  %s" % [who, who, who, who]
+		var who := T.t("WÄCHTER") if def.get("guard", false) else "BOSS"
+		var wn := T.t("WARNUNG")
+		var txt := "  %s  ·  %s  ·  %s  ·  %s  ·  %s  ·  %s  ·  %s  ·  %s" % [wn, who, wn, who, wn, who, wn, who]
 		var tx := -fmod(anim_t * 80.0, 200.0) if top else -200.0 + fmod(anim_t * 80.0, 200.0)
 		_text(Vector2(tx, y + bh / 2.0 + 4), txt, 8, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	# Weißer Blitz bei der Enthüllung
@@ -1034,7 +1035,7 @@ func _draw_boss_intro() -> void:
 	if t > INTRO_REVEAL + 0.15:
 		var k := clampf((t - INTRO_REVEAL - 0.15) / 0.3, 0.0, 1.0)
 		var nx := lerpf(-260.0, 36.0, 1.0 - pow(1.0 - k, 3.0))
-		var name_s: String = def.name.to_upper()
+		var name_s: String = T.t(def.name).to_upper()
 		var jit := Vector2(randi_range(-2, 2), 0) if fmod(anim_t, 1.3) < 0.08 else Vector2.ZERO
 		var f := font(true, 24)
 		var fs := 24 if text_width(name_s, 24, true) <= 290 else 16
@@ -1045,9 +1046,9 @@ func _draw_boss_intro() -> void:
 		draw_string(f, Vector2(nx, 136), name_s, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color.WHITE)
 		if t > INTRO_REVEAL + 0.45:
 			var tk := clampf((t - INTRO_REVEAL - 0.45) / 0.3, 0.0, 1.0)
-			_text(Vector2(nx, 156), def.get("title", "Herrscher dieser Zone") if not def.get("guard", false) else "Wächter der Ebene %d · %s" % [run.map.level + 1, def.get("title", "")], 8, Color(el.lightened(0.3), tk), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-			_text(Vector2(nx, 172), "%s · %d HP" % [def.el, def.hp], 8, Color(GameData.COL.muted, tk))
-	_text(Vector2(0, H - 34), "%s überspringen" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 12)
+			_text(Vector2(nx, 156), T.t(def.get("title", "Herrscher dieser Zone")) if not def.get("guard", false) else T.t("Wächter der Ebene %d · %s") % [run.map.level + 1, T.t(def.get("title", ""))], 8, Color(el.lightened(0.3), tk), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+			_text(Vector2(nx, 172), "%s · %d HP" % [T.t(def.el), def.hp], 8, Color(GameData.COL.muted, tk))
+	_text(Vector2(0, H - 34), T.t("%s überspringen") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 12)
 
 
 func show_intro_for_screenshot(t: float) -> void:

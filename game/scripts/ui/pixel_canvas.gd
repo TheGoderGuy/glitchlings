@@ -99,10 +99,12 @@ static func _ps_font() -> FontFile:
 
 
 static func text_width(s: String, size := 8, bold := false) -> float:
-	return font(bold, size).get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, tsz(size)).x
+	return font(bold, size).get_string_size(T.t(s), HORIZONTAL_ALIGNMENT_LEFT, -1, tsz(size)).x
 
 
+## Text zeichnen; ist der ganze Text ein Übersetzungsschlüssel, erscheint er in der gewählten Sprache
 func _text(pos: Vector2, s: String, size := 8, color: Color = GameData.COL.ink, align := HORIZONTAL_ALIGNMENT_LEFT, width := -1.0, outline := true, bold := false) -> void:
+	s = T.t(s)
 	var f := font(bold, size)
 	pos = pos.round()
 	if outline:
@@ -261,20 +263,21 @@ func _draw_evo(s: Dictionary, x: float, y: float, w: float) -> float:
 		var lead: bool = d.el == s.leader
 		var col: Color = GameData.EL[d.el]
 		var known: bool = SaveGame.data.get("dex", {}).has(d.form)
-		var label := "%s > %s" % [d.el, d.form if known else "???"]
+		var label := "%s > %s" % [T.t(d.el), T.t(d.form) if known else "???"]
 		_text(Vector2(x, y + 8), label, 8, col if lead else col.darkened(0.25), HORIZONTAL_ALIGNMENT_LEFT, -1, lead, lead)
 		_text(Vector2(x, y + 8), str(d.n), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, w)
 		_bar(Rect2(x, y + 10, w, 3), float(d.n) / maxn, col if lead else col.darkened(0.45))
 		y += 16
 	if s.dirs.is_empty() and s.target != "":
-		_text(Vector2(x, y + 8), "> " + s.target, 8, GameData.COL.ink)
+		_text(Vector2(x, y + 8), "> " + T.t(s.target), 8, GameData.COL.ink)
 		y += 14
 	if not s.other.is_empty():
 		var parts: Array = []
 		for el in s.other:
-			parts.append("%s %d" % [el, s.other[el]])
-		draw_multiline_string(font(), Vector2(x, y + 8), "Ohne Wirkung: " + ", ".join(parts), HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
-		y += 12 * (1 if text_width("Ohne Wirkung: " + ", ".join(parts)) <= w else 2)
+			parts.append("%s %d" % [T.t(el), s.other[el]])
+		var ow := T.t("Ohne Wirkung:") + " " + ", ".join(parts)
+		draw_multiline_string(font(), Vector2(x, y + 8), ow, HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		y += 12 * (1 if text_width(ow) <= w else 2)
 	var msg: String = "Bereit zur Entwicklung!" if s.ready else s.reason
 	for line in wrap_lines(msg, w):
 		_text(Vector2(x, y + 8), line, 8, GameData.COL.mint if s.ready else GameData.COL.sun)
@@ -284,6 +287,7 @@ func _draw_evo(s: Dictionary, x: float, y: float, w: float) -> float:
 
 ## Text in Zeilen aufteilen, die höchstens w Pixel breit sind (Umbruch an Leerzeichen)
 static func wrap_lines(s: String, w: float, size := 8) -> Array:
+	s = T.t(s)
 	var lines: Array = []
 	var cur := ""
 	for word in s.split(" ", false):
@@ -327,13 +331,13 @@ func _draw_module_row(mods: Array, x: float, y: float, max_n := 10) -> float:
 ## Liste mit Symbol, Name und Beschreibung (max_rows Einträge, danach nur Symbole)
 func _draw_module_list(mods: Array, x: float, y: float, w: float, max_rows := 5) -> void:
 	if mods.is_empty():
-		draw_multiline_string(font(), Vector2(x, y + 8), "Noch keine. Module gibt es bei Elite-Gegnern, beim Händler und in Modulkapseln.", HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 3, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), Vector2(x, y + 8), T.t("Noch keine. Module gibt es bei Elite-Gegnern, beim Händler und in Modulkapseln."), HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 3, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 		return
 	for i in mini(mods.size(), max_rows):
 		var M: Dictionary = GameData.MODULES[mods[i]]
 		_draw_module_icon(mods[i], Vector2(x, y))
 		_text(Vector2(x + 20, y + 10), M.name, 8, Color(M.col), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-		draw_multiline_string(font(), Vector2(x + 20, y + 22), M.desc, HORIZONTAL_ALIGNMENT_LEFT, w - 20, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), Vector2(x + 20, y + 22), T.t(M.desc), HORIZONTAL_ALIGNMENT_LEFT, w - 20, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 		y += 38
 	if mods.size() > max_rows:
 		_draw_module_row(mods.slice(max_rows), x, y, 14)
@@ -351,7 +355,7 @@ func _draw_deck_list(deck: Array, x: float, y: float, w: float, max_rows := 14) 
 			return
 		var el: Color = GameData.EL[GameData.chip(k).el]
 		draw_rect(Rect2(x, y - 7, 7, 7), el)
-		_text(Vector2(x + 14, y), "%d× %s" % [counts[k], k], 8, GameData.COL.sun if GameData.is_upgraded(k) else GameData.COL.ink)
+		_text(Vector2(x + 14, y), "%d× %s" % [counts[k], T.chip(k)], 8, GameData.COL.sun if GameData.is_upgraded(k) else GameData.COL.ink)
 		_text(Vector2(x + 14, y), GameData.chip(k).cat, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, w - 14)
 		y += 14
 		row += 1

@@ -353,17 +353,17 @@ func try_fuse(id_a: int, id_b: int, rng: RandomNumberGenerator) -> Dictionary:
 	var a := monster(id_a)
 	var b := monster(id_b)
 	if a.is_empty() or b.is_empty() or id_a == id_b:
-		return {"ok": false, "msg": "Wähle zwei verschiedene Monster."}
+		return {"ok": false, "msg": T.t("Wähle zwei verschiedene Monster.")}
 	var i := find_recipe(a, b)
 	if i < 0:
 		var hidden: Array = []
 		for k in GameData.RECIPES.size():
 			if not data.recipes.has(GameData.RECIPES[k].r) and not data.hints.has(k):
 				hidden.append(k)
-		var msg := "Die Daten stoßen sich ab. Nichts passiert, und es kostet dich nichts."
+		var msg := T.t("Die Daten stoßen sich ab. Nichts passiert, und es kostet dich nichts.")
 		if not hidden.is_empty():
 			data.hints.append(hidden[rng.randi_range(0, hidden.size() - 1)])
-			msg += " Dafür steht ein neues Gerücht im Rezeptbuch."
+			msg += " " + T.t("Dafür steht ein neues Gerücht im Rezeptbuch.")
 		save_game()
 		return {"ok": false, "msg": msg}
 	var R: Dictionary = GameData.RECIPES[i]
@@ -371,9 +371,9 @@ func try_fuse(id_a: int, id_b: int, rng: RandomNumberGenerator) -> Dictionary:
 		if not data.hints.has(i):
 			data.hints.append(i)
 		save_game()
-		return {"ok": false, "msg": "Die Daten flackern kurz … aber etwas fehlt noch. Das Rezeptbuch hat einen Hinweis."}
+		return {"ok": false, "msg": T.t("Die Daten flackern kurz … aber etwas fehlt noch. Das Rezeptbuch hat einen Hinweis.")}
 	if frag() < GameData.FUSION_COST:
-		return {"ok": false, "msg": "Das passt zusammen! Dir fehlen aber noch %d Fragmente." % (GameData.FUSION_COST - frag())}
+		return {"ok": false, "msg": T.t("Das passt zusammen! Dir fehlen aber noch %d Fragmente.") % (GameData.FUSION_COST - frag())}
 	data.frag = frag() - GameData.FUSION_COST
 	data.team = team().filter(func(m): return int(m.id) != id_a and int(m.id) != id_b)
 	var is_new: bool = not data.dex.has(R.r)

@@ -41,10 +41,11 @@ func _letterbox(k: float, text: String, tt: float) -> void:
 	var h := roundf(LB * k)
 	draw_rect(Rect2(0, 0, W, h), Color.BLACK)
 	draw_rect(Rect2(0, H - h, W, h), Color.BLACK)
+	text = T.t(text)
 	if text != "":
 		var shown: String = text.substr(0, clampi(int((tt - 0.4) * TYPE_SPEED), 0, text.length()))
 		draw_multiline_string(font(), Vector2(40, H - LB + 16), shown, HORIZONTAL_ALIGNMENT_CENTER, W - 80, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
-	var hint := "%s: weiter · %s: überspringen" % ([InputSetup.btn("A"), InputSetup.btn("Start")] if InputSetup.pad else ["Enter", "Esc"])
+	var hint := T.t("%s: weiter · %s: überspringen") % ([InputSetup.btn("A"), InputSetup.btn("Start")] if InputSetup.pad else ["Enter", "Esc"])
 	_text(Vector2(0, 16), hint, 8, Color(GameData.COL.muted, 0.55 * k), HORIZONTAL_ALIGNMENT_RIGHT, W - 10)
 
 

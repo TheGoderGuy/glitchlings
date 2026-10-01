@@ -12,7 +12,9 @@ func _ready() -> void:
 	# auch wenn einzelne Tests persist einschalten (29.09.2026: ein Test hatte den echten Stand verändert)
 	SaveGame.path = "user://test_savegame.json"
 	SaveGame.log_path = "user://test_spieltest_log.csv"
+	Settings.lang = "de"   # Tests prüfen deutsche Texte; Englisch prüft test_english
 	test_scripts_compile()
+	test_english()
 	test_data()
 	test_hand()
 	test_projectile()
@@ -1142,6 +1144,74 @@ func test_sounds() -> void:
 	var empty: Array = sfx.streams.keys().filter(func(k): return sfx.streams[k].data.size() < 400)
 	check(empty.is_empty(), "Alle Sounds enthalten Daten")
 	sfx.free()
+
+
+## Englisch (01.10.2026): alle Daten und alle T.t-Texte übersetzt, Platzhalter passen, keine Umlaute
+func test_english() -> void:
+	var EN := LangEN.all()
+	var need: Array = []
+	for c in GameData.CHIPS:
+		need.append_array([c, GameData.CHIPS[c].desc, GameData.CHIPS[c].cat, GameData.CHIPS[c].rar])
+	for f in GameData.FORMS:
+		need.append(f)
+	for m in GameData.MONS:
+		var M: Dictionary = GameData.MONS[m]
+		need.append_array([M.passive, M.passive_desc, M.trait, M.animal])
+	for k in GameData.SPECIALS:
+		need.append_array([GameData.SPECIALS[k].name, GameData.SPECIALS[k].desc])
+	for k in GameData.MODULES:
+		need.append_array([GameData.MODULES[k].name, GameData.MODULES[k].desc])
+	for u in GameData.STATION_UPGRADES:
+		need.append_array([u.name, u.desc])
+	for z in GameData.ZONES:
+		need.append_array([GameData.ZONES[z].name, GameData.ZONES[z].desc])
+	for fo in GameData.FOES:
+		need.append(fo.name)
+		if fo.has("title"):
+			need.append(fo.title)
+		for sp in fo.get("specials", []):
+			need.append(sp.name)
+	for r in GameData.RECIPES:
+		need.append(r.hint)
+	for e in Rooms.EVENTS:
+		need.append_array([Rooms.EVENTS[e].title, Rooms.EVENTS[e].text])
+	for k in ZoneMap.TYPE_NAMES:
+		need.append_array([ZoneMap.TYPE_NAMES[k], ZoneMap.TYPE_DESC[k]])
+	for p in load("res://scripts/ui/handbook_view.gd").PAGES:
+		need.append_array([p.title, p.text])
+	for v in ["res://scripts/ui/opening_view.gd", "res://scripts/ui/ending_view.gd"]:
+		for p in load(v).PANELS:
+			if p.text != "":
+				need.append(p.text)
+	need.append_array(GameData.STAGE_NAMES.slice(1))
+	# alle T.t("…")-Texte im Code
+	var re := RegEx.new()
+	re.compile("T\\.t\\(\"((?:[^\"\\\\]|\\\\.)*)\"\\)")
+	var dirs := ["res://scripts/ui", "res://scripts/battle", "res://scripts/run", "res://scripts/meta", "res://scripts/data"]
+	for d in dirs:
+		for fn in DirAccess.get_files_at(d):
+			if fn.ends_with(".gd"):
+				for m in re.search_all(FileAccess.get_file_as_string(d + "/" + fn)):
+					need.append(m.get_string(1).c_unescape())
+	var missing: Array = []
+	for k in need:
+		if not EN.has(k) and not missing.has(k):
+			missing.append(k)
+	check(missing.is_empty(), "Englisch: alle Namen, Beschreibungen und Texte übersetzt (%d Schlüssel, fehlend: %s)" % [EN.size(), missing.slice(0, 5)])
+	# Platzhalter gleich, keine Umlaute im Englischen
+	var bad: Array = []
+	for k in EN:
+		var v: String = EN[k]
+		if k.count("%s") != v.count("%s") or k.count("%d") != v.count("%d") or k.count("{") != v.count("{"):
+			bad.append(k)
+		elif v.contains("ä") or v.contains("ö") or v.contains("ü") or v.contains("ß") or v.contains("Ä") or v.contains("Ö") or v.contains("Ü"):
+			bad.append(k)
+	check(bad.is_empty(), "Englisch: Platzhalter passen, keine Umlaute (%s)" % [bad.slice(0, 3)])
+	Settings.lang = "en"
+	var ok := T.t("Weiter") == "Continue" and T.chip("Glutball+") == "Ember Ball+" and T.t("Glutball+") == "Ember Ball+" 		and T.t("Elite-Bugsy") == "Elite Bugsy" and T.t("Glitch-Bytewurm") == "Glitch Byteworm" and T.dec(2.5) == "2.5" 		and GameData.upgrade_text("Glutball") == "45 > 60 damage, 3.0 > 2.4 s"
+	var syn := GameData.synergy("Feuersbrunst", ["Glutball"], [], "")
+	Settings.lang = "de"
+	check(ok and syn == "Combo with Ember Ball" and T.t("Weiter") == "Weiter" and T.dec(2.5) == "2,5", "Sprache umschaltbar: Chips+, Elite-Namen, Kommazahlen, Kombo-Hinweis")
 
 
 func test_music() -> void:

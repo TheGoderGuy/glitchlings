@@ -133,7 +133,7 @@ func evo_status() -> Dictionary:
 	if stage >= 2:
 		s.target = GameData.FORMS[form].up
 		s.ready = total >= need
-		s.reason = "" if s.ready else "Noch %d Element-Chips" % (need - total)
+		s.reason = "" if s.ready else T.t("Noch %d Element-Chips") % (need - total)
 		return s
 	for el in mon.evo:
 		s.dirs.append({"el": el, "form": mon.evo[el], "n": int(t.get(el, 0))})
@@ -162,11 +162,11 @@ func evo_status() -> Dictionary:
 		else:
 			s.target = mon.evo[s.leader]
 	if total < need:
-		s.reason = "Noch %d Element-Chips" % (need - total)
+		s.reason = T.t("Noch %d Element-Chips") % (need - total)
 	elif s.leader == "":
 		s.reason = "Gleichstand – spiel mehr von einem Element"
 	elif s.margin < GameData.EVO_LEAD:
-		s.reason = "Führung zu knapp – %s braucht %d Vorsprung" % [s.leader, GameData.EVO_LEAD]
+		s.reason = T.t("Führung zu knapp – %s braucht %d Vorsprung") % [T.t(s.leader), GameData.EVO_LEAD]
 	else:
 		s.ready = true
 	return s

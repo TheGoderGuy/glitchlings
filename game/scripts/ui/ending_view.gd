@@ -110,9 +110,9 @@ func _text_time(p: Dictionary) -> float:
 	if p.id == "reboot":
 		var n := 0
 		for l in REBOOT_LINES:
-			n += l.length()
+			n += T.t(l).length()
 		return REBOOT_TYPE_START + n / TYPE_SPEED
-	return 0.4 + p.text.length() / TYPE_SPEED
+	return 0.4 + T.t(p.text).length() / TYPE_SPEED
 
 
 ## Position eines Bildes im Stück "ending" (Heilung beginnt bei 0 s)
@@ -276,7 +276,7 @@ func _draw_reboot() -> void:
 	var x := 120.0
 	var y := 122.0
 	for i in REBOOT_LINES.size():
-		var l: String = REBOOT_LINES[i]
+		var l: String = T.t(REBOOT_LINES[i])
 		var s: String = l.substr(0, clampi(budget, 0, l.length()))
 		budget -= l.length()
 		_text(Vector2(x, y), "> " + s, 8, Color("#FFD84D") if i == 0 else green, HORIZONTAL_ALIGNMENT_LEFT, -1, false)

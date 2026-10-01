@@ -130,16 +130,16 @@ const EVENTS := {
 static func rest_options(run: RunState) -> Array:
 	var h := roundi(run.max_hp * REST_HEAL)
 	return [
-		{"id": "heal", "label": "Ausruhen", "desc": "Heilt %d HP." % h, "enabled": run.hp < run.max_hp},
-		{"id": "upgrade", "label": "Chip verbessern", "desc": "Ein Chip wird stärker und lädt schneller (z. B. Glutball > Glutball+).", "enabled": not run.upgradable().is_empty()},
-		{"id": "remove", "label": "Deck ausdünnen", "desc": "Entferne einen Chip aus deinem Deck.", "enabled": run.deck.size() > MIN_DECK},
+		{"id": "heal", "label": T.t("Ausruhen"), "desc": T.t("Heilt %d HP.") % h, "enabled": run.hp < run.max_hp},
+		{"id": "upgrade", "label": T.t("Chip verbessern"), "desc": T.t("Ein Chip wird stärker und lädt schneller (z. B. Glutball > Glutball+)."), "enabled": not run.upgradable().is_empty()},
+		{"id": "remove", "label": T.t("Deck ausdünnen"), "desc": T.t("Entferne einen Chip aus deinem Deck."), "enabled": run.deck.size() > MIN_DECK},
 	]
 
 
 static func rest_apply(run: RunState, id: String) -> String:
 	match id:
 		"heal":
-			return "%s ruht sich aus: +%d HP." % [run.species, run.heal(roundi(run.max_hp * REST_HEAL))]
+			return T.t("%s ruht sich aus: +%d HP.") % [T.t(run.species), run.heal(roundi(run.max_hp * REST_HEAL))]
 		"remove":
 			return "remove"
 		"upgrade":
@@ -167,136 +167,136 @@ static func event_options(run: RunState, key: String) -> Array:
 	match key:
 		"datenpaket":
 			return [
-				{"id": "open", "label": "Öffnen", "desc": "Ein zufälliger Chip kommt in dein Deck.", "enabled": true},
-				{"id": "send", "label": "Zum NEST schicken", "desc": "+20 Fragmente.", "enabled": true},
+				{"id": "open", "label": T.t("Öffnen"), "desc": T.t("Ein zufälliger Chip kommt in dein Deck."), "enabled": true},
+				{"id": "send", "label": T.t("Zum NEST schicken"), "desc": T.t("+20 Fragmente."), "enabled": true},
 			]
 		"brunnen":
 			return [
-				{"id": "drink", "label": "Trinken", "desc": "+20 HP.", "enabled": run.hp < run.max_hp},
-				{"id": "throw", "label": "Bits hineinwerfen (15)", "desc": "Ein zufälliger seltener Chip.", "enabled": run.frag >= 15},
-				{"id": "leave", "label": "Weitergehen", "desc": "Nichts passiert.", "enabled": true},
+				{"id": "drink", "label": T.t("Trinken"), "desc": T.t("+20 HP."), "enabled": run.hp < run.max_hp},
+				{"id": "throw", "label": T.t("Bits hineinwerfen (15)"), "desc": T.t("Ein zufälliger seltener Chip."), "enabled": run.frag >= 15},
+				{"id": "leave", "label": T.t("Weitergehen"), "desc": T.t("Nichts passiert."), "enabled": true},
 			]
 		"korrupt":
 			return [
-				{"id": "take", "label": "Nehmen", "desc": "Defrag (Episch) ins Deck, aber −10 max. HP.", "enabled": run.max_hp > 20},
-				{"id": "leave", "label": "Liegen lassen", "desc": "Nichts passiert.", "enabled": true},
+				{"id": "take", "label": T.t("Nehmen"), "desc": T.t("Defrag (Episch) ins Deck, aber −10 max. HP."), "enabled": run.max_hp > 20},
+				{"id": "leave", "label": T.t("Liegen lassen"), "desc": T.t("Nichts passiert."), "enabled": true},
 			]
 		"glitchling":
 			return [
-				{"id": "feed", "label": "Füttern (10)", "desc": "+5 max. HP und 10 HP heilen.", "enabled": run.frag >= 10},
-				{"id": "wave", "label": "Winken", "desc": "Deine Signatur-Leiste startet im nächsten Kampf halb voll.", "enabled": true},
+				{"id": "feed", "label": T.t("Füttern (10)"), "desc": T.t("+5 max. HP und 10 HP heilen."), "enabled": run.frag >= 10},
+				{"id": "wave", "label": T.t("Winken"), "desc": T.t("Deine Signatur-Leiste startet im nächsten Kampf halb voll."), "enabled": true},
 			]
 		"update":
 			var commons: Array = run.deck.filter(func(c): return GameData.chip(c).rar == "Gewöhnlich")
 			return [
-				{"id": "install", "label": "Aufrüsten lassen", "desc": "Ein zufälliger gewöhnlicher Chip wird zu einem seltenen.", "enabled": not commons.is_empty()},
-				{"id": "later", "label": "Ablehnen", "desc": "Die Drohne lässt zum Abschied 10 Fragmente da.", "enabled": true},
+				{"id": "install", "label": T.t("Aufrüsten lassen"), "desc": T.t("Ein zufälliger gewöhnlicher Chip wird zu einem seltenen."), "enabled": not commons.is_empty()},
+				{"id": "later", "label": T.t("Ablehnen"), "desc": T.t("Die Drohne lässt zum Abschied 10 Fragmente da."), "enabled": true},
 			]
 		"beeren":
 			return [
-				{"id": "collect", "label": "Pflücken", "desc": "+25 Fragmente.", "enabled": true},
-				{"id": "snack", "label": "Naschen", "desc": "+15 HP.", "enabled": run.hp < run.max_hp},
+				{"id": "collect", "label": T.t("Pflücken"), "desc": T.t("+25 Fragmente."), "enabled": true},
+				{"id": "snack", "label": T.t("Naschen"), "desc": T.t("+15 HP."), "enabled": run.hp < run.max_hp},
 			]
 		"backup":
 			return [
-				{"id": "copy", "label": "Chip kopieren", "desc": "Ein Chip deiner Wahl kommt ein zweites Mal ins Deck.", "enabled": true},
-				{"id": "leave", "label": "Nicht anfassen", "desc": "Nichts passiert.", "enabled": true},
+				{"id": "copy", "label": T.t("Chip kopieren"), "desc": T.t("Ein Chip deiner Wahl kommt ein zweites Mal ins Deck."), "enabled": true},
+				{"id": "leave", "label": T.t("Nicht anfassen"), "desc": T.t("Nichts passiert."), "enabled": true},
 			]
 		"minibot":
 			return [
-				{"id": "home", "label": "Heimbringen", "desc": "Der Bot schließt sich dir an: Mini-Bot ins Deck.", "enabled": true},
-				{"id": "repair", "label": "Rad reparieren (10)", "desc": "Er bedankt sich mit einem zufälligen seltenen Chip.", "enabled": run.frag >= 10},
+				{"id": "home", "label": T.t("Heimbringen"), "desc": T.t("Der Bot schließt sich dir an: Mini-Bot ins Deck."), "enabled": true},
+				{"id": "repair", "label": T.t("Rad reparieren (10)"), "desc": T.t("Er bedankt sich mit einem zufälligen seltenen Chip."), "enabled": run.frag >= 10},
 			]
 		"modulkapsel":
 			return [
-				{"id": "open", "label": "Einbauen", "desc": "Ein zufälliges Modul für diesen Run.", "enabled": true},
-				{"id": "scrap", "label": "Ausschlachten", "desc": "+25 Fragmente.", "enabled": true},
+				{"id": "open", "label": T.t("Einbauen"), "desc": T.t("Ein zufälliges Modul für diesen Run."), "enabled": true},
+				{"id": "scrap", "label": T.t("Ausschlachten"), "desc": T.t("+25 Fragmente."), "enabled": true},
 			]
 		"schmiede":
 			var commons2: Array = run.deck.filter(func(c): return GameData.chip(c).rar == "Gewöhnlich")
 			return [
-				{"id": "forge", "label": "Schmieden (−10 HP)", "desc": "Ein zufälliger gewöhnlicher Chip wird zu einem epischen.", "enabled": not commons2.is_empty() and run.hp > 10},
-				{"id": "slag", "label": "Schlacke verkaufen", "desc": "+15 Fragmente.", "enabled": true},
+				{"id": "forge", "label": T.t("Schmieden (−10 HP)"), "desc": T.t("Ein zufälliger gewöhnlicher Chip wird zu einem epischen."), "enabled": not commons2.is_empty() and run.hp > 10},
+				{"id": "slag", "label": T.t("Schlacke verkaufen"), "desc": T.t("+15 Fragmente."), "enabled": true},
 			]
 		"lavaquelle":
 			return [
-				{"id": "bathe", "label": "Baden", "desc": "+25 HP.", "enabled": run.hp < run.max_hp},
-				{"id": "absorb", "label": "Glut aufnehmen", "desc": "+%d Feuer-Prägung (zählt für die Evolution)." % EVENT_PRAEG, "enabled": true},
+				{"id": "bathe", "label": T.t("Baden"), "desc": T.t("+25 HP."), "enabled": run.hp < run.max_hp},
+				{"id": "absorb", "label": T.t("Glut aufnehmen"), "desc": T.t("+%d Feuer-Prägung (zählt für die Evolution).") % EVENT_PRAEG, "enabled": true},
 			]
 		"firewallriss":
 			return [
-				{"id": "sneak", "label": "Durchschlüpfen", "desc": "Der nächste Gegner startet mit 25 % weniger HP.", "enabled": not run.foe_weak},
-				{"id": "patch", "label": "Flicken (15)", "desc": "Firewall-Chip ins Deck und +5 max. HP.", "enabled": run.frag >= 15},
+				{"id": "sneak", "label": T.t("Durchschlüpfen"), "desc": T.t("Der nächste Gegner startet mit 25 % weniger HP."), "enabled": not run.foe_weak},
+				{"id": "patch", "label": T.t("Flicken (15)"), "desc": T.t("Firewall-Chip ins Deck und +5 max. HP."), "enabled": run.frag >= 15},
 			]
 		"ascheregen":
 			return [
-				{"id": "dig", "label": "Durchwühlen", "desc": "Halbe Chance: epischer Chip. Sonst verbrennst du dich (−15 HP).", "enabled": run.hp > 15},
-				{"id": "wait", "label": "Abwarten", "desc": "Die Asche legt sich. +10 Fragmente.", "enabled": true},
+				{"id": "dig", "label": T.t("Durchwühlen"), "desc": T.t("Halbe Chance: epischer Chip. Sonst verbrennst du dich (−15 HP)."), "enabled": run.hp > 15},
+				{"id": "wait", "label": T.t("Abwarten"), "desc": T.t("Die Asche legt sich. +10 Fragmente."), "enabled": true},
 			]
 		"datenleitung":
 			return [
-				{"id": "clean", "label": "Ausmisten", "desc": "Entferne einen Chip aus deinem Deck.", "enabled": run.deck.size() > MIN_DECK},
-				{"id": "read", "label": "Durchwühlen", "desc": "+30 Fragmente, aber ein Stromschlag: −10 HP.", "enabled": run.hp > 10},
+				{"id": "clean", "label": T.t("Ausmisten"), "desc": T.t("Entferne einen Chip aus deinem Deck."), "enabled": run.deck.size() > MIN_DECK},
+				{"id": "read", "label": T.t("Durchwühlen"), "desc": T.t("+30 Fragmente, aber ein Stromschlag: −10 HP."), "enabled": run.hp > 10},
 			]
 		"irrlicht":
 			return [
-				{"id": "follow", "label": "Folgen", "desc": "Meist ein seltener Chip. Manchmal ein Sumpfloch (−12 HP).", "enabled": run.hp > 12},
-				{"id": "charge", "label": "Ladung abgreifen", "desc": "+%d Elektro-Prägung (zählt für die Evolution)." % EVENT_PRAEG, "enabled": true},
+				{"id": "follow", "label": T.t("Folgen"), "desc": T.t("Meist ein seltener Chip. Manchmal ein Sumpfloch (−12 HP)."), "enabled": run.hp > 12},
+				{"id": "charge", "label": T.t("Ladung abgreifen"), "desc": T.t("+%d Elektro-Prägung (zählt für die Evolution).") % EVENT_PRAEG, "enabled": true},
 			]
 		"giftmoor":
 			return [
-				{"id": "dive", "label": "Eintauchen (−8 HP)", "desc": "+%d Virus-Prägung (zählt für die Evolution)." % EVENT_PRAEG, "enabled": run.hp > 8},
-				{"id": "mud", "label": "Heilschlamm", "desc": "+20 HP.", "enabled": run.hp < run.max_hp},
+				{"id": "dive", "label": T.t("Eintauchen (−8 HP)"), "desc": T.t("+%d Virus-Prägung (zählt für die Evolution).") % EVENT_PRAEG, "enabled": run.hp > 8},
+				{"id": "mud", "label": T.t("Heilschlamm"), "desc": T.t("+20 HP."), "enabled": run.hp < run.max_hp},
 			]
 		"orakel":
 			return [
-				{"id": "offer", "label": "Opfergabe (20)", "desc": "Ein zufälliger epischer Chip.", "enabled": run.frag >= 20},
-				{"id": "listen", "label": "Zuhören", "desc": "+%d Wasser-Prägung, und das Orakel verrät deinen Weg." % EVENT_PRAEG, "enabled": true},
+				{"id": "offer", "label": T.t("Opfergabe (20)"), "desc": T.t("Ein zufälliger epischer Chip."), "enabled": run.frag >= 20},
+				{"id": "listen", "label": T.t("Zuhören"), "desc": T.t("+%d Wasser-Prägung, und das Orakel verrät deinen Weg.") % EVENT_PRAEG, "enabled": true},
 			]
 		"werkbank":
 			return [
-				{"id": "tinker", "label": "Chip verbessern", "desc": "Wähle einen Chip, der stärker wird und schneller lädt.", "enabled": not run.upgradable().is_empty()},
-				{"id": "sell", "label": "Werkzeug verkaufen", "desc": "+20 Fragmente.", "enabled": true},
+				{"id": "tinker", "label": T.t("Chip verbessern"), "desc": T.t("Wähle einen Chip, der stärker wird und schneller lädt."), "enabled": not run.upgradable().is_empty()},
+				{"id": "sell", "label": T.t("Werkzeug verkaufen"), "desc": T.t("+20 Fragmente."), "enabled": true},
 			]
 		"pusteblumen":
 			return [
-				{"id": "blow", "label": "Kräftig pusten", "desc": "Die Bits fliegen davon – und einer deiner Chips wird zufällig verbessert.", "enabled": not run.upgradable().is_empty()},
-				{"id": "walk", "label": "Hindurchlaufen", "desc": "+15 HP.", "enabled": run.hp < run.max_hp},
+				{"id": "blow", "label": T.t("Kräftig pusten"), "desc": T.t("Die Bits fliegen davon – und einer deiner Chips wird zufällig verbessert."), "enabled": not run.upgradable().is_empty()},
+				{"id": "walk", "label": T.t("Hindurchlaufen"), "desc": T.t("+15 HP."), "enabled": run.hp < run.max_hp},
 			]
 		"obsidian":
 			return [
-				{"id": "look", "label": "Hineinsehen", "desc": "+8 max. HP.", "enabled": true},
-				{"id": "smash", "label": "Zerschlagen (−10 HP)", "desc": "+35 Fragmente.", "enabled": run.hp > 10},
+				{"id": "look", "label": T.t("Hineinsehen"), "desc": T.t("+8 max. HP."), "enabled": true},
+				{"id": "smash", "label": T.t("Zerschlagen (−10 HP)"), "desc": T.t("+35 Fragmente."), "enabled": run.hp > 10},
 			]
 		"glutkaefer":
 			return [
-				{"id": "sneak", "label": "Leise sammeln", "desc": "Meist +40 Fragmente. Wacht das Nest auf: −15 HP.", "enabled": run.hp > 15},
-				{"id": "take", "label": "Einen Käfer mitnehmen", "desc": "Funkenregen (Selten) kommt in dein Deck.", "enabled": true},
+				{"id": "sneak", "label": T.t("Leise sammeln"), "desc": T.t("Meist +40 Fragmente. Wacht das Nest auf: −15 HP."), "enabled": run.hp > 15},
+				{"id": "take", "label": T.t("Einen Käfer mitnehmen"), "desc": T.t("Funkenregen (Selten) kommt in dein Deck."), "enabled": true},
 			]
 		"wrack":
 			return [
-				{"id": "dive", "label": "Tauchen (−10 HP)", "desc": "Zwei zufällige Chips deines Decks werden verbessert.", "enabled": run.hp > 10 and not run.upgradable().is_empty()},
-				{"id": "search", "label": "Außen absuchen", "desc": "+20 Fragmente.", "enabled": true},
+				{"id": "dive", "label": T.t("Tauchen (−10 HP)"), "desc": T.t("Zwei zufällige Chips deines Decks werden verbessert."), "enabled": run.hp > 10 and not run.upgradable().is_empty()},
+				{"id": "search", "label": T.t("Außen absuchen"), "desc": T.t("+20 Fragmente."), "enabled": true},
 			]
 		"gluehwuermer":
 			return [
-				{"id": "dance", "label": "Mittanzen", "desc": "Heilt 30 %% deiner max. HP (%d)." % roundi(run.max_hp * 0.3), "enabled": run.hp < run.max_hp},
-				{"id": "catch", "label": "Einfangen", "desc": "Ladungsfeld ins Deck und +%d Elektro-Prägung." % EVENT_PRAEG, "enabled": true},
+				{"id": "dance", "label": T.t("Mittanzen"), "desc": T.t("Heilt 30 %% deiner max. HP (%d).") % roundi(run.max_hp * 0.3), "enabled": run.hp < run.max_hp},
+				{"id": "catch", "label": T.t("Einfangen"), "desc": T.t("Ladungsfeld ins Deck und +%d Elektro-Prägung.") % EVENT_PRAEG, "enabled": true},
 			]
 		"logbuch":
 			return [
-				{"id": "read", "label": "Weiterlesen", "desc": "+%d Code-Prägung. Vielleicht verstehst du, wie alles begann." % EVENT_PRAEG, "enabled": true},
-				{"id": "free", "label": "Speicher freigeben", "desc": "+30 Fragmente.", "enabled": true},
+				{"id": "read", "label": T.t("Weiterlesen"), "desc": T.t("+%d Code-Prägung. Vielleicht verstehst du, wie alles begann.") % EVENT_PRAEG, "enabled": true},
+				{"id": "free", "label": T.t("Speicher freigeben"), "desc": T.t("+30 Fragmente."), "enabled": true},
 			]
 		"nestbewohner":
 			return [
-				{"id": "cheer", "label": "Mut zusprechen", "desc": "+20 HP. Im nächsten Kampf startet die Signatur-Leiste halb voll.", "enabled": true},
-				{"id": "guide", "label": "Nach dem Weg fragen", "desc": "Sie kennen eine Abkürzung: Der nächste Gegner startet mit 25 % weniger HP.", "enabled": not run.foe_weak},
+				{"id": "cheer", "label": T.t("Mut zusprechen"), "desc": T.t("+20 HP. Im nächsten Kampf startet die Signatur-Leiste halb voll."), "enabled": true},
+				{"id": "guide", "label": T.t("Nach dem Weg fragen"), "desc": T.t("Sie kennen eine Abkürzung: Der nächste Gegner startet mit 25 % weniger HP."), "enabled": not run.foe_weak},
 			]
 		"kernspeicher":
 			return [
-				{"id": "repair", "label": "Chip reparieren", "desc": "Wähle einen Chip, der stärker wird und schneller lädt.", "enabled": not run.upgradable().is_empty()},
-				{"id": "salvage", "label": "Bergen (−12 HP)", "desc": "Ein zufälliger epischer Chip.", "enabled": run.hp > 12},
+				{"id": "repair", "label": T.t("Chip reparieren"), "desc": T.t("Wähle einen Chip, der stärker wird und schneller lädt."), "enabled": not run.upgradable().is_empty()},
+				{"id": "salvage", "label": T.t("Bergen (−12 HP)"), "desc": T.t("Ein zufälliger epischer Chip."), "enabled": run.hp > 12},
 			]
 	return []
 
@@ -306,65 +306,65 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 		["datenpaket", "open"]:
 			var c := run.random_chip()
 			run.deck.append(c)
-			return "Im Paket steckt %s. Er kommt in dein Deck." % c
+			return T.t("Im Paket steckt %s. Er kommt in dein Deck.") % T.chip(c)
 		["datenpaket", "send"]:
 			run.frag += 20
-			return "Der NEST bedankt sich mit 20 Fragmenten."
+			return T.t("Der NEST bedankt sich mit 20 Fragmenten.")
 		["brunnen", "drink"]:
-			return "Erfrischend! +%d HP." % run.heal(20)
+			return T.t("Erfrischend! +%d HP.") % run.heal(20)
 		["brunnen", "throw"]:
 			run.frag -= 15
 			var c := run.random_chip("Selten")
 			run.deck.append(c)
-			return "Der Brunnen blubbert und spuckt %s aus." % c
+			return T.t("Der Brunnen blubbert und spuckt %s aus.") % T.chip(c)
 		["korrupt", "take"]:
 			run.deck.append("Defrag")
 			run.max_hp -= 10
 			run.hp = mini(run.hp, run.max_hp)
-			return "Defrag gehört jetzt dir. Das Flackern kostet 10 max. HP."
+			return T.t("Defrag gehört jetzt dir. Das Flackern kostet 10 max. HP.")
 		["glitchling", "feed"]:
 			run.frag -= 10
 			run.max_hp += 5
 			run.heal(10)
-			return "Der Glitchling mampft glücklich und schenkt dir etwas Energie: +5 max. HP."
+			return T.t("Der Glitchling mampft glücklich und schenkt dir etwas Energie: +5 max. HP.")
 		["glitchling", "wave"]:
 			run.sp_bonus = true
-			return "Der Glitchling winkt zurück. Du fühlst dich motiviert!"
+			return T.t("Der Glitchling winkt zurück. Du fühlst dich motiviert!")
 		["update", "install"]:
 			var commons: Array = run.deck.filter(func(c): return GameData.chip(c).rar == "Gewöhnlich")
 			var old: String = commons[run.rng.randi_range(0, commons.size() - 1)]
 			var neu := run.random_chip("Selten")
 			run.deck.erase(old)
 			run.deck.append(neu)
-			return "Die Drohne schraubt und piept: %s wurde zu %s." % [old, neu]
+			return T.t("Die Drohne schraubt und piept: %s wurde zu %s.") % [T.chip(old), T.chip(neu)]
 		["update", "later"]:
 			run.frag += 10
-			return "Die Drohne piept enttäuscht und lässt 10 Fragmente fallen."
+			return T.t("Die Drohne piept enttäuscht und lässt 10 Fragmente fallen.")
 		["beeren", "collect"]:
 			run.frag += 25
-			return "Du pflückst die Beeren und tauschst sie gegen 25 Fragmente."
+			return T.t("Du pflückst die Beeren und tauschst sie gegen 25 Fragmente.")
 		["beeren", "snack"]:
-			return "Mmh, knisternd süß! +%d HP." % run.heal(15)
+			return T.t("Mmh, knisternd süß! +%d HP.") % run.heal(15)
 		["backup", "copy"]:
 			return "copy"
 		["minibot", "home"]:
 			run.deck.append("Mini-Bot")
-			return "Der Mini-Bot piept glücklich und rollt in dein Deck."
+			return T.t("Der Mini-Bot piept glücklich und rollt in dein Deck.")
 		["minibot", "repair"]:
 			run.frag -= 10
 			var c := run.random_chip("Selten")
 			run.deck.append(c)
-			return "Das Rad läuft wieder! Zum Dank schenkt er dir %s." % c
+			return T.t("Das Rad läuft wieder! Zum Dank schenkt er dir %s.") % T.chip(c)
 		["modulkapsel", "open"]:
 			var m := run.roll_module({"Gewöhnlich": 5, "Selten": 3, "Episch": 1})
 			if m == "":
 				run.frag += 25
-				return "Die Kapsel ist leer … aber 25 Fragmente liegen darin."
+				return T.t("Die Kapsel ist leer … aber 25 Fragmente liegen darin.")
 			run.add_module(m)
-			return "Modul eingebaut: %s. %s" % [GameData.MODULES[m].name, GameData.MODULES[m].desc]
+			return T.t("Modul eingebaut: %s. %s") % [T.t(GameData.MODULES[m].name), T.t(GameData.MODULES[m].desc)]
 		["modulkapsel", "scrap"]:
 			run.frag += 25
-			return "Du zerlegst die Kapsel: 25 Fragmente."
+			return T.t("Du zerlegst die Kapsel: 25 Fragmente.")
 		["schmiede", "forge"]:
 			var commons: Array = run.deck.filter(func(c): return GameData.chip(c).rar == "Gewöhnlich")
 			var old: String = commons[run.rng.randi_range(0, commons.size() - 1)]
@@ -372,138 +372,138 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 			run.deck.erase(old)
 			run.deck.append(neu)
 			run.hp -= 10
-			return "Zischend kühlt der Stahl ab: %s ist jetzt %s. Die Hitze kostet 10 HP." % [old, neu]
+			return T.t("Zischend kühlt der Stahl ab: %s ist jetzt %s. Die Hitze kostet 10 HP.") % [T.chip(old), T.chip(neu)]
 		["schmiede", "slag"]:
 			run.frag += 15
-			return "Ein Händler zahlt 15 Fragmente für die Schlacke."
+			return T.t("Ein Händler zahlt 15 Fragmente für die Schlacke.")
 		["lavaquelle", "bathe"]:
-			return "Herrlich warm! +%d HP." % run.heal(25)
+			return T.t("Herrlich warm! +%d HP.") % run.heal(25)
 		["lavaquelle", "absorb"]:
-			return _imprint(run, "Feuer", "%s atmet die Glut ein." % run.species)
+			return _imprint(run, "Feuer", T.t("%s atmet die Glut ein.") % T.t(run.species))
 		["firewallriss", "sneak"]:
 			run.foe_weak = true
-			return "Du schlüpfst durch den Riss und stellst dem Wächter ein Bein. Der nächste Gegner ist geschwächt."
+			return T.t("Du schlüpfst durch den Riss und stellst dem Wächter ein Bein. Der nächste Gegner ist geschwächt.")
 		["firewallriss", "patch"]:
 			run.frag -= 15
 			run.deck.append("Firewall")
 			run.max_hp += 5
 			run.hp += 5
-			return "Die Mauer ist geflickt. Ein Firewall-Chip bleibt übrig, +5 max. HP."
+			return T.t("Die Mauer ist geflickt. Ein Firewall-Chip bleibt übrig, +5 max. HP.")
 		["ascheregen", "dig"]:
 			if run.rng.randf() < 0.5:
 				var c := run.random_chip("Episch")
 				run.deck.append(c)
-				return "Unter der Asche liegt %s! Er kommt in dein Deck." % c
+				return T.t("Unter der Asche liegt %s! Er kommt in dein Deck.") % T.chip(c)
 			run.hp -= 15
-			return "Autsch, nur Glut! −15 HP."
+			return T.t("Autsch, nur Glut! −15 HP.")
 		["ascheregen", "wait"]:
 			run.frag += 10
-			return "Als sich die Asche legt, glitzern 10 Fragmente am Boden."
+			return T.t("Als sich die Asche legt, glitzern 10 Fragmente am Boden.")
 		["datenleitung", "clean"]:
 			return "remove"
 		["datenleitung", "read"]:
 			run.frag += 30
 			run.hp -= 10
-			return "Im Datenschlamm liegen 30 Fragmente. Dabei bekommst du einen Stromschlag: −10 HP."
+			return T.t("Im Datenschlamm liegen 30 Fragmente. Dabei bekommst du einen Stromschlag: −10 HP.")
 		["irrlicht", "follow"]:
 			if run.rng.randf() < 0.6:
 				var c := run.random_chip("Selten")
 				run.deck.append(c)
-				return "Das Irrlicht führt dich zu %s und verpufft zufrieden." % c
+				return T.t("Das Irrlicht führt dich zu %s und verpufft zufrieden.") % T.chip(c)
 			run.hp -= 12
-			return "Platsch! Ein Sumpfloch. Das Irrlicht kichert: −12 HP."
+			return T.t("Platsch! Ein Sumpfloch. Das Irrlicht kichert: −12 HP.")
 		["irrlicht", "charge"]:
-			return _imprint(run, "Elektro", "Es knistert! %s saugt die Ladung auf." % run.species)
+			return _imprint(run, "Elektro", T.t("Es knistert! %s saugt die Ladung auf.") % T.t(run.species))
 		["giftmoor", "dive"]:
 			run.hp -= 8
-			return _imprint(run, "Virus", "%s taucht in den Schlamm (−8 HP)." % run.species)
+			return _imprint(run, "Virus", T.t("%s taucht in den Schlamm (−8 HP).") % T.t(run.species))
 		["giftmoor", "mud"]:
-			return "Der Schlamm kühlt und heilt: +%d HP." % run.heal(20)
+			return T.t("Der Schlamm kühlt und heilt: +%d HP.") % run.heal(20)
 		["orakel", "offer"]:
 			run.frag -= 20
 			var c := run.random_chip("Episch")
 			run.deck.append(c)
-			return "Die Kröte verschluckt die Fragmente und rülpst %s aus." % c
+			return T.t("Die Kröte verschluckt die Fragmente und rülpst %s aus.") % T.chip(c)
 		["orakel", "listen"]:
-			var msg := _imprint(run, "Wasser", "Die Kröte murmelt uralte Weisheiten.")
+			var msg := _imprint(run, "Wasser", T.t("Die Kröte murmelt uralte Weisheiten."))
 			var es := run.evo_status()
 			if int(es.need) == 0:
-				return msg + " „Du bist am Ziel deines Weges.“"
+				return msg + T.t(" „Du bist am Ziel deines Weges.“")
 			if es.target != "" and SaveGame.data.get("dex", {}).has(es.target):
-				return msg + " „Dein Weg führt zu %s.“" % es.target
+				return msg + T.t(" „Dein Weg führt zu %s.“") % T.t(es.target)
 			if es.leader != "":
-				return msg + " „Dein Weg führt zu %s.“" % es.leader
-			return msg + " „Dein Weg ist noch offen.“"
+				return msg + T.t(" „Dein Weg führt zu %s.“") % T.t(es.leader)
+			return msg + T.t(" „Dein Weg ist noch offen.“")
 		["werkbank", "tinker"], ["kernspeicher", "repair"]:
 			return "upgrade"
 		["werkbank", "sell"]:
 			run.frag += 20
-			return "Ein vorbeiziehender Händler-Bot zahlt 20 Fragmente für das Werkzeug."
+			return T.t("Ein vorbeiziehender Händler-Bot zahlt 20 Fragmente für das Werkzeug.")
 		["pusteblumen", "blow"]:
 			var up := run.upgrade_random(1)
-			return "Die Bits wirbeln um deine Chips: %s!" % up[0] if not up.is_empty() else "Die Bits fliegen davon."
+			return T.t("Die Bits wirbeln um deine Chips: %s!") % T.chip(up[0]) if not up.is_empty() else T.t("Die Bits fliegen davon.")
 		["pusteblumen", "walk"]:
-			return "Die weichen Blüten kitzeln: +%d HP." % run.heal(15)
+			return T.t("Die weichen Blüten kitzeln: +%d HP.") % run.heal(15)
 		["obsidian", "look"]:
 			run.max_hp += 8
 			run.hp += 8
-			return "%s richtet sich auf und sieht sich selbst in die Augen: +8 max. HP." % run.species
+			return T.t("%s richtet sich auf und sieht sich selbst in die Augen: +8 max. HP.") % T.t(run.species)
 		["obsidian", "smash"]:
 			run.hp -= 10
 			run.frag += 35
-			return "Klirr! Die Splitter sind wertvoll: +35 Fragmente, aber −10 HP."
+			return T.t("Klirr! Die Splitter sind wertvoll: +35 Fragmente, aber −10 HP.")
 		["glutkaefer", "sneak"]:
 			if run.rng.randf() < 0.65:
 				run.frag += 40
-				return "Auf Zehenspitzen sammelst du 40 Fragmente ein. Die Käfer schnarchen weiter."
+				return T.t("Auf Zehenspitzen sammelst du 40 Fragmente ein. Die Käfer schnarchen weiter.")
 			run.hp -= 15
 			run.frag += 15
-			return "Ein Käfer wacht auf und zwickt! −15 HP, aber immerhin 15 Fragmente."
+			return T.t("Ein Käfer wacht auf und zwickt! −15 HP, aber immerhin 15 Fragmente.")
 		["glutkaefer", "take"]:
 			run.deck.append("Funkenregen")
-			return "Der kleine Käfer glüht zufrieden: Funkenregen kommt in dein Deck."
+			return T.t("Der kleine Käfer glüht zufrieden: Funkenregen kommt in dein Deck.")
 		["wrack", "dive"]:
 			run.hp -= 10
 			var up2 := run.upgrade_random(2)
-			return "Im Wrack findest du Ersatzteile: %s (−10 HP)." % ", ".join(up2)
+			return T.t("Im Wrack findest du Ersatzteile: %s (−10 HP).") % T.names(up2)
 		["wrack", "search"]:
 			run.frag += 20
-			return "Außen am Gehäuse klemmen 20 Fragmente."
+			return T.t("Außen am Gehäuse klemmen 20 Fragmente.")
 		["gluehwuermer", "dance"]:
-			return "Du tanzt mit den Glühwürmchen, bis alle Sorgen verschwinden: +%d HP." % run.heal(roundi(run.max_hp * 0.3))
+			return T.t("Du tanzt mit den Glühwürmchen, bis alle Sorgen verschwinden: +%d HP.") % run.heal(roundi(run.max_hp * 0.3))
 		["gluehwuermer", "catch"]:
 			run.deck.append("Ladungsfeld")
-			return _imprint(run, "Elektro", "Die Glühwürmchen summen in einem Chip weiter: Ladungsfeld kommt in dein Deck.")
+			return _imprint(run, "Elektro", T.t("Die Glühwürmchen summen in einem Chip weiter: Ladungsfeld kommt in dein Deck."))
 		["logbuch", "read"]:
-			return _imprint(run, "Code", "Ganz unten steht: „Fehler 0x0 hat sich selbst einen Namen gegeben: Ur-Glitch.“")
+			return _imprint(run, "Code", T.t("Ganz unten steht: „Fehler 0x0 hat sich selbst einen Namen gegeben: Ur-Glitch.“"))
 		["logbuch", "free"]:
 			run.frag += 30
-			return "Du löschst die Fehlermeldungen. Übrig bleiben 30 Fragmente."
+			return T.t("Du löschst die Fehlermeldungen. Übrig bleiben 30 Fragmente.")
 		["nestbewohner", "cheer"]:
 			run.sp_bonus = true
-			return "Die drei piepsen dir hinterher: „Hol unseren NEST zurück, Operator!“ +%d HP." % run.heal(20)
+			return T.t("Die drei piepsen dir hinterher: „Hol unseren NEST zurück, Operator!“ +%d HP.") % run.heal(20)
 		["nestbewohner", "guide"]:
 			run.foe_weak = true
-			return "Sie zeigen dir einen Lüftungsschacht. Der nächste Gegner wird überrascht."
+			return T.t("Sie zeigen dir einen Lüftungsschacht. Der nächste Gegner wird überrascht.")
 		["kernspeicher", "salvage"]:
 			run.hp -= 12
 			var c := run.random_chip("Episch")
 			run.deck.append(c)
-			return "Zwischen Kurzschlüssen ziehst du %s heraus (−12 HP)." % c
-	return "Du gehst weiter."
+			return T.t("Zwischen Kurzschlüssen ziehst du %s heraus (−12 HP).") % T.chip(c)
+	return T.t("Du gehst weiter.")
 
 
 ## Element-Prägung aus einem Ereignis: zählt wie gespielte Element-Chips (Evolution)
 static func _imprint(run: RunState, el: String, text: String) -> String:
 	run.praeg[el] = run.praeg.get(el, 0) + EVENT_PRAEG
-	return "%s +%d %s-Prägung." % [text, EVENT_PRAEG, el]
+	return T.t("%s +%d %s-Prägung.") % [text, EVENT_PRAEG, T.t(el)]
 
 
 # ---------- Datenhändler ----------
 
 static func _combo_suffix(run: RunState, chip: String) -> String:
 	var s := GameData.synergy(chip, run.deck, run.modules, run.mon.passive)
-	return "" if s == "" else " (%s!)" % s
+	return "" if s == "" else " (%s!)" % T.t(s)
 
 
 ## Preis nach Rabattchip-Modul
@@ -531,20 +531,20 @@ static func shop_options(run: RunState, node: Dictionary) -> Array:
 		var pr := price(run, o.price)
 		if o.has("module"):
 			var M: Dictionary = GameData.MODULES[o.module]
-			out.append({"id": "buy_%d" % i, "label": "Modul: %s (%d)" % [M.name, pr] if not o.sold else "Modul: %s – verkauft" % M.name,
-				"desc": "%s: %s" % [M.rar, M.desc], "enabled": not o.sold and run.frag >= pr, "module": o.module})
+			out.append({"id": "buy_%d" % i, "label": T.t("Modul: %s (%d)") % [T.t(M.name), pr] if not o.sold else T.t("Modul: %s – verkauft") % T.t(M.name),
+				"desc": "%s: %s" % [T.t(M.rar), T.t(M.desc)], "enabled": not o.sold and run.frag >= pr, "module": o.module})
 			continue
 		var ch: Dictionary = GameData.CHIPS[o.chip]
-		out.append({"id": "buy_%d" % i, "label": "%s (%d)" % [o.chip, pr] if not o.sold else "%s – verkauft" % o.chip,
-			"desc": "%s · %s: %s%s" % [ch.el, ch.rar, ch.desc, _combo_suffix(run, o.chip)], "enabled": not o.sold and run.frag >= pr, "chip": o.chip})
+		out.append({"id": "buy_%d" % i, "label": "%s (%d)" % [T.chip(o.chip), pr] if not o.sold else T.t("%s – verkauft") % T.chip(o.chip),
+			"desc": "%s · %s: %s%s" % [T.t(ch.el), T.t(ch.rar), T.t(ch.desc), _combo_suffix(run, o.chip)], "enabled": not o.sold and run.frag >= pr, "chip": o.chip})
 	var p_rep := price(run, PRICE_REPAIR)
 	var p_rem := price(run, PRICE_REMOVE)
-	out.append({"id": "repair", "label": "Reparatur (%d)" % p_rep, "desc": "Heilt 25 HP. Einmal pro Besuch.",
+	out.append({"id": "repair", "label": T.t("Reparatur (%d)") % p_rep, "desc": T.t("Heilt 25 HP. Einmal pro Besuch."),
 		"enabled": not node.shop.repair and run.frag >= p_rep and run.hp < run.max_hp})
 	var p_up := price(run, PRICE_UPGRADE)
-	out.append({"id": "upgrade", "label": "Chip verbessern (%d)" % p_up, "desc": "Ein Chip deiner Wahl wird stärker und lädt schneller. Einmal pro Besuch.",
+	out.append({"id": "upgrade", "label": T.t("Chip verbessern (%d)") % p_up, "desc": T.t("Ein Chip deiner Wahl wird stärker und lädt schneller. Einmal pro Besuch."),
 		"enabled": not node.shop.get("upgrade", false) and run.frag >= p_up and not run.upgradable().is_empty()})
-	out.append({"id": "remove", "label": "Chip entfernen (%d)" % p_rem, "desc": "Entferne einen Chip aus deinem Deck. Einmal pro Besuch.",
+	out.append({"id": "remove", "label": T.t("Chip entfernen (%d)") % p_rem, "desc": T.t("Entferne einen Chip aus deinem Deck. Einmal pro Besuch."),
 		"enabled": not node.shop.remove and run.frag >= p_rem and run.deck.size() > MIN_DECK})
 	return out
 
@@ -556,14 +556,14 @@ static func shop_apply(run: RunState, node: Dictionary, id: String) -> String:
 		o.sold = true
 		if o.has("module"):
 			run.add_module(o.module)
-			return "Modul eingebaut: %s. %s" % [GameData.MODULES[o.module].name, GameData.MODULES[o.module].desc]
+			return T.t("Modul eingebaut: %s. %s") % [T.t(GameData.MODULES[o.module].name), T.t(GameData.MODULES[o.module].desc)]
 		run.deck.append(o.chip)
-		return "%s kommt in dein Deck." % o.chip
+		return T.t("%s kommt in dein Deck.") % T.chip(o.chip)
 	match id:
 		"repair":
 			run.frag -= price(run, PRICE_REPAIR)
 			node.shop.repair = true
-			return "Repariert: +%d HP." % run.heal(25)
+			return T.t("Repariert: +%d HP.") % run.heal(25)
 		"remove":
 			run.frag -= price(run, PRICE_REMOVE)
 			node.shop.remove = true

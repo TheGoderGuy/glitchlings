@@ -128,8 +128,8 @@ func _draw() -> void:
 	var m := run.map
 	var ch := run.next_choices()
 	var target := Vector2i(run.floor_idx + 1, ch[sel]) if not ch.is_empty() else Vector2i(-9, -9)
-	_text(Vector2(0, 22), m.zone_name.to_upper(), 16, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
-	_text(Vector2(0, 34), "Ebene %d von %d" % [m.level + 1, m.levels], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	_text(Vector2(0, 22), T.t(m.zone_name).to_upper(), 16, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	_text(Vector2(0, 34), T.t("Ebene %d von %d") % [m.level + 1, m.levels], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 	# Wege
 	for f in m.floors.size() - 1:
@@ -178,7 +178,7 @@ func _draw() -> void:
 		# Neue Ebene: kurzes Einblenden in der Mitte
 		var a := minf(1.0, level_t / 0.5)
 		draw_rect(Rect2(0, 150, W, 50), Color(GameData.COL.dark, 0.75 * a))
-		_text(Vector2(0, 180), "EBENE %d" % (m.level + 1), 24, Color(GameData.COL.sun, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 180), T.t("EBENE %d") % (m.level + 1), 24, Color(GameData.COL.sun, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		_text(Vector2(0, 194), "Der Wächter ist besiegt. Der Weg führt tiefer hinein.", 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_CENTER, W)
 	if tip:
 		_draw_tip()
@@ -187,9 +187,9 @@ func _draw() -> void:
 		var pr := Rect2(60, 30, 520, 300)
 		_box(pr, GameData.COL.panel, GameData.COL.line)
 		_text(pr.position + Vector2(0, 28), "Pause", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, pr.size.x, true, true)
-		_text(Vector2(pr.position.x + 20, pr.position.y + 46), "Dein Deck (%d)" % run.deck.size(), 8, GameData.COL.muted)
+		_text(Vector2(pr.position.x + 20, pr.position.y + 46), T.t("Dein Deck (%d)") % run.deck.size(), 8, GameData.COL.muted)
 		_draw_deck_list(run.deck, pr.position.x + 20, pr.position.y + 66, 220, 10)
-		_text(Vector2(pr.position.x + 270, pr.position.y + 46), "Module (%d)" % run.modules.size(), 8, GameData.COL.muted)
+		_text(Vector2(pr.position.x + 270, pr.position.y + 46), T.t("Module (%d)") % run.modules.size(), 8, GameData.COL.muted)
 		_draw_module_list(run.modules, pr.position.x + 270, pr.position.y + 58, 230, 4)
 		_menu(PAUSE_ITEMS, pause_idx, pr.get_center().x, pr.end.y - 88, 200)
 
@@ -218,9 +218,9 @@ func _draw_side_panels(target: Vector2i) -> void:
 	# Vorteile für den nächsten Kampf: unter der Evolution, sonst (wenn der Platz fehlt) unter dem Kasten
 	var flags: Array = []
 	if run.sp_bonus:
-		flags.append("Signatur-Bonus!")
+		flags.append(T.t("Signatur-Bonus!"))
 	if run.foe_weak:
-		flags.append("Gegner geschwächt!")
+		flags.append(T.t("Gegner geschwächt!"))
 	if not flags.is_empty():
 		if y + 12 * (flags.size() - 1) <= L.end.y - 6:
 			for fl in flags:
@@ -235,9 +235,9 @@ func _draw_side_panels(target: Vector2i) -> void:
 		var n: Dictionary = run.map.node(target.x, target.y)
 		_icon(ICONS[n.type], R.position + Vector2(16, 14), 1, ICON_COL[n.type])
 		_text(R.position + Vector2(30, 18), ZoneMap.TYPE_NAMES[n.type], 8, ICON_COL[n.type], HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-		draw_multiline_string(font(), R.position + Vector2(8, 40), ZoneMap.TYPE_DESC[n.type], HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 16, tsz(8), 8, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+		draw_multiline_string(font(), R.position + Vector2(8, 40), T.t(ZoneMap.TYPE_DESC[n.type]), HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 16, tsz(8), 8, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	var pad: bool = InputSetup.pad
-	var hint := "< > Weg wählen\n%s betreten\n%s Pause, Deck, Module\n%s Handbuch" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("Start") if pad else "Esc", InputSetup.btn("Back") if pad else "H"]
+	var hint := T.t("< > Weg wählen\n%s betreten\n%s Pause, Deck, Module\n%s Handbuch") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("Start") if pad else "Esc", InputSetup.btn("Back") if pad else "H"]
 	draw_multiline_string(font(), Vector2(W - 150, 214), hint, HORIZONTAL_ALIGNMENT_LEFT, 140, tsz(8), 4, GameData.COL.muted)
 	# Module dieses Runs (Details in der Pause)
 	if not run.modules.is_empty():
@@ -260,10 +260,10 @@ func _draw_tip() -> void:
 	_text(Vector2(B.position.x, B.position.y + 22), "Die Zonenkarte", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, true)
 	var pad: bool = InputSetup.pad
 	var lines := [
-		"Wähle mit < > deinen Weg und betritt den nächsten Knoten mit %s. Es geht immer nach oben." % (InputSetup.btn("A") if pad else "Enter"),
-		"Kampf, Elite, Ereignis, Rast, Händler: Was die Symbole bedeuten, steht rechts unten in der Legende.",
-		"Oben wartet ein Wächter. Besiegst du ihn, geht es auf die nächste Ebene. Nach der letzten Ebene kommt der Boss der Zone.",
-		"Mit %s siehst du jederzeit dein Deck und deine Module." % (InputSetup.btn("Start") if pad else "Esc"),
+		T.t("Wähle mit < > deinen Weg und betritt den nächsten Knoten mit %s. Es geht immer nach oben.") % (InputSetup.btn("A") if pad else "Enter"),
+		T.t("Kampf, Elite, Ereignis, Rast, Händler: Was die Symbole bedeuten, steht rechts unten in der Legende."),
+		T.t("Oben wartet ein Wächter. Besiegst du ihn, geht es auf die nächste Ebene. Nach der letzten Ebene kommt der Boss der Zone."),
+		T.t("Mit %s siehst du jederzeit dein Deck und deine Module.") % (InputSetup.btn("Start") if pad else "Esc"),
 	]
 	var y := B.position.y + 44
 	for l in lines:
@@ -271,7 +271,7 @@ func _draw_tip() -> void:
 		var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
 		draw_multiline_string(font(), Vector2(B.position.x + 26, y), l, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 42, tsz(8), 3, GameData.COL.ink, wrap)
 		y += font().get_multiline_string_size(l, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 42, tsz(8), 3, wrap).y + 10
-	_text(Vector2(B.position.x, B.end.y - 10), "%s los geht's" % (InputSetup.btn("A") if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, true)
+	_text(Vector2(B.position.x, B.end.y - 10), T.t("%s los geht's") % (InputSetup.btn("A") if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, true)
 
 
 ## Positionsmarker: kleiner hüpfender Pfeil in Mint

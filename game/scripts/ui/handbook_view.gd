@@ -57,10 +57,10 @@ func close() -> void:
 func page_text(i: int) -> String:
 	var pad: bool = InputSetup.pad
 	var chips := "%s / %s / %s" % [InputSetup.btn("X"), InputSetup.btn("A"), InputSetup.btn("B")] if pad else "J / K / L"
-	return PAGES[i].text.format({
-		"move": "Steuerkreuz oder linker Stick" if pad else "WASD oder Pfeiltasten",
+	return T.t(PAGES[i].text).format({
+		"move": T.t("Steuerkreuz oder linker Stick" if pad else "WASD oder Pfeiltasten"),
 		"chips": chips,
-		"special": InputSetup.btn("Y") if pad else "die Leertaste",
+		"special": InputSetup.btn("Y") if pad else T.t("die Leertaste"),
 	})
 
 
@@ -81,10 +81,10 @@ func _draw() -> void:
 	_illustration(page, A)
 	var tx := A.end.x + 16
 	var tw := P.end.x - tx - 14
-	_text(Vector2(tx, P.position.y + 26), "%d. %s" % [page + 1, PAGES[page].title], 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	_text(Vector2(tx, P.position.y + 26), "%d. %s" % [page + 1, T.t(PAGES[page].title)], 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	draw_multiline_string(font(), Vector2(tx, P.position.y + 50), page_text(page), HORIZONTAL_ALIGNMENT_LEFT, tw, tsz(8), -1, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	var pad: bool = InputSetup.pad
-	var foot := "< > blättern   %s weiter   %s schließen" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"]
+	var foot := T.t("< > blättern   %s weiter   %s schließen") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"]
 	_text(Vector2(0, H - 14), foot, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
@@ -165,7 +165,7 @@ func _illu_chips(A: Rect2) -> void:
 		_box(g, GameData.COL.dark, el)
 		_text(g.position + Vector2(1, 11), keys[i], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g.size.x, false, true)
 		_text(r.position + Vector2(30, 17), names[i], 8, GameData.COL.sun if names[i].ends_with("+") else GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-		_text(r.position + Vector2(8, 34), ch.cat + (" %d" % ch.dmg if ch.dmg > 0 else ""), 8, GameData.COL.muted)
+		_text(r.position + Vector2(8, 34), T.t(ch.cat) + (" %d" % ch.dmg if ch.dmg > 0 else ""), 8, GameData.COL.muted)
 		if ready:
 			_text(r.position + Vector2(8, 34), "bereit", 8, el, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 16)
 		else:

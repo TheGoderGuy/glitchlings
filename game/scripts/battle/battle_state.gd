@@ -259,7 +259,7 @@ func use_special() -> void:
 		float_at(p.c, p.r, "Abbild!", GameData.EL.Code)
 	if S.has("scan"):
 		scan = maxi(scan, S.scan)
-		float_at(p.c, p.r, "Scan x%d" % scan, GameData.EL.Code)
+		float_at(p.c, p.r, T.t("Scan x%d") % scan, GameData.EL.Code)
 	if S.has("mines"):
 		var spots: Array = []
 		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
@@ -272,7 +272,7 @@ func use_special() -> void:
 			mines.append({"c": sp.x, "r": sp.y, "arm": 0.3, "t": 8.0})
 	if S.has("replay"):
 		if last_chip != "":
-			float_at(p.c, p.r, "Backentasche: " + last_chip, GameData.EL.Neutral)
+			float_at(p.c, p.r, T.t("Backentasche:") + " " + T.chip(last_chip), GameData.EL.Neutral)
 			_apply_chip(last_chip)
 		else:
 			delayed.append({"t": 0.05, "fn": _special_hit.bind(S, true, 30), "mark": false})
@@ -327,7 +327,7 @@ func _apply_chip(id: String) -> void:
 			delayed.append({"t": 0.15, "fn": _second_click.bind(int(ch.dmg)), "mark": false})
 		"Neustart":
 			var h2 := run.heal(roundi(15 * k))
-			float_at(p.c, p.r, "Neustart! +%d" % h2, GameData.COL.mint)
+			float_at(p.c, p.r, T.t("Neustart! +%d") % h2, GameData.COL.mint)
 			for s in hand:
 				if s.chip != "":
 					disc.append(s.chip)
@@ -449,7 +449,7 @@ func _apply_chip(id: String) -> void:
 		"Seuche":
 			e.poison = maxi(4, e.poison * 2)
 			fx_cell(3 + e.c, e.r, GameData.EL.Virus, 0.4)
-			float_at(3 + e.c, e.r, "Seuche: Gift %d s" % e.poison, GameData.EL.Virus)
+			float_at(3 + e.c, e.r, T.t("Seuche: Gift %d s") % e.poison, GameData.EL.Virus)
 		"Sporenfalle":
 			mines.append({"c": e.c, "r": e.r, "arm": 0.8, "t": 6.0, "dmg": ch.dmg, "poison": 6})
 		"Sprungantrieb":
@@ -608,7 +608,7 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 				float_at(p.c, p.r, "+%d" % hh, GameData.COL.mint)
 	events.append("tick" if dot else ("hit_big" if d >= 30 or m > 1 else "hit"))
 	var col: Color = GameData.COL.sun if m > 1 else (GameData.EL[el] if dot else GameData.COL.ink)
-	float_at(3 + e.c, e.r, ("Effektiv! " if m > 1 else "") + str(d), col)
+	float_at(3 + e.c, e.r, (T.t("Effektiv!") + " " if m > 1 else "") + str(d), col)
 	if not dot:
 		parts.append({"ring": true, "x": 3 + e.c + 0.5, "y": e.r + 0.45, "color": GameData.COL.sun if m > 1 else Color.WHITE, "t": 0.3, "max": 0.3})
 		shake = maxf(shake, 7.0 if d >= 30 else 4.0)
@@ -752,8 +752,8 @@ func _shift_element() -> void:
 	var strong := GameData.strong_against(def.el)
 	events.append("shift")
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 30)
-	float_at(3 + e.c, e.r, "Jetzt %s!" % def.el, GameData.EL[def.el])
-	status = "Der Ur-Glitch ist jetzt %s. %s-Chips treffen ihn besonders hart!" % [def.el, strong]
+	float_at(3 + e.c, e.r, T.t("Jetzt %s!") % T.t(def.el), GameData.EL[def.el])
+	status = T.t("Der Ur-Glitch ist jetzt %s. %s-Chips treffen ihn besonders hart!") % [T.t(def.el), T.t(strong)]
 	shake = maxf(shake, 4.0)
 
 
@@ -1176,12 +1176,12 @@ func _phase_change(phase: int) -> void:
 	var col := Color("#FF5470")
 	if phase == 2:
 		banner = {"text": "Phase 2!", "color": col, "t": 1.1, "max": 1.1}
-		status = "%s wird wütend: neue Angriffe!" % def.name
+		status = T.t("%s wird wütend: neue Angriffe!") % T.t(def.name)
 		if not def.get("guard", false) and special_ready(phase):
 			e.sp_t = 2.5
 	else:
 		banner = {"text": "Letzte Phase!", "color": col, "t": 1.1, "max": 1.1}
-		status = "%s ist fast besiegt – und wird rasend schnell!" % def.name
+		status = T.t("%s ist fast besiegt – und wird rasend schnell!") % T.t(def.name)
 		e.sp_t = minf(e.sp_t, 3.0)
 
 
@@ -1206,7 +1206,7 @@ func start_special() -> void:
 	if mon.passive in ["Eulenblick", "Mischwesen"]:
 		warn += 0.3
 	banner = {"text": spec.name + "!", "color": Color("#FFB23D"), "t": 1.3, "max": 1.3}
-	status = "Großangriff: %s! Weich allen goldenen Feldern aus." % spec.name
+	status = T.t("Großangriff: %s! Weich allen goldenen Feldern aus.") % T.t(spec.name)
 	events.append("alarm")
 	shake = maxf(shake, 3.0)
 	var total := warn
@@ -1293,4 +1293,4 @@ func _special_dodged() -> void:
 	events.append("overload")
 	float_at(3 + e.c, e.r, "Überlastet!", GameData.COL.sun)
 	banner = {"text": "Ausgewichen!", "color": GameData.COL.mint, "t": 0.9, "max": 0.9}
-	status = "Perfekt ausgewichen! %s ist kurz überlastet – jetzt angreifen!" % def.name
+	status = T.t("Perfekt ausgewichen! %s ist kurz überlastet – jetzt angreifen!") % T.t(def.name)

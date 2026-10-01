@@ -50,15 +50,15 @@ func _draw() -> void:
 		draw_rect(Rect2(r.get_center().x - 30, r.position.y + 86, 60, 4), Color(0.05, 0.02, 0.12, 0.35))
 		_draw_sprite(sp, r.get_center().x, r.position.y + 88, false, {"bob": bob, "blink": fmod(anim_t + i, 3.1) < 0.13})
 		_text(Vector2(r.position.x, r.position.y + 108), sp, 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-		_text(Vector2(r.position.x, r.position.y + 122), "%s · %s · %d HP" % [m.animal, m.el, m.hp], 8, el, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-		draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 140), m.trait, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 20, tsz(8), 2, GameData.COL.muted, wrap)
-		_text(Vector2(r.position.x + 10, r.position.y + 172), "Passiv: " + m.passive, 8, GameData.COL.mint)
-		draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 186), m.passive_desc, HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 3, GameData.COL.ink, wrap)
+		_text(Vector2(r.position.x, r.position.y + 122), "%s · %s · %d HP" % [T.t(m.animal), T.t(m.el), m.hp], 8, el, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+		draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 140), T.t(m.trait), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 20, tsz(8), 2, GameData.COL.muted, wrap)
+		_text(Vector2(r.position.x + 10, r.position.y + 172), T.t("Passiv:") + " " + T.t(m.passive), 8, GameData.COL.mint)
+		draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 186), T.t(m.passive_desc), HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 3, GameData.COL.ink, wrap)
 		var S: Dictionary = GameData.SPECIALS[sp]
-		_text(Vector2(r.position.x + 10, r.position.y + 228), "Signatur: " + S.name, 8, GameData.COL.sun)
+		_text(Vector2(r.position.x + 10, r.position.y + 228), T.t("Signatur:") + " " + T.t(S.name), 8, GameData.COL.sun)
 		var dirs: Array = m.evo.keys()
-		_text(Vector2(r.position.x + 10, r.position.y + 248), "Wird: " + " / ".join(dirs), 8, GameData.COL.muted)
+		_text(Vector2(r.position.x + 10, r.position.y + 248), T.t("Wird:") + " " + " / ".join(dirs.map(func(d): return T.t(d))), 8, GameData.COL.muted)
 	var pad: bool = InputSetup.pad
-	_text(Vector2(0, H - 12), "< > wählen    %s los geht's    %s zurück" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	_text(Vector2(0, H - 12), T.t("< > wählen    %s los geht's    %s zurück") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	if from_white and t_in < 0.8:
 		draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 1.0 - t_in / 0.8))

@@ -22,13 +22,17 @@ func _main_items() -> Array:
 	return [play, "Kampf-Handbuch", "Optionen", "Beenden"]
 
 
+## Optionen; Index 0 = Sprache (zweisprachig beschriftet, damit man sie immer findet)
 func _option_items() -> Array:
+	var on := T.t("An")
+	var off_ := T.t("Aus")
 	return [
-		"Vollbild: " + ("An" if Settings.fullscreen else "Aus"),
-		"Lautstärke: " + _bar_text(Settings.volume),
-		"Musik: " + _bar_text(Settings.music),
-		"Schwierigkeit: " + ["Entspannt", "Normal", "Knackig", "Korrumpiert"][Settings.difficulty],
-		"Bildschirmwackeln: " + ("An" if Settings.screen_shake else "Aus"),
+		("Language (Sprache): " if T.en() else "Sprache (Language): ") + T.LANGS[Settings.lang],
+		T.t("Vollbild:") + " " + (on if Settings.fullscreen else off_),
+		T.t("Lautstärke:") + " " + _bar_text(Settings.volume),
+		T.t("Musik:") + " " + _bar_text(Settings.music),
+		T.t("Schwierigkeit:") + " " + T.t(["Entspannt", "Normal", "Knackig", "Korrumpiert"][Settings.difficulty]),
+		T.t("Bildschirmwackeln:") + " " + (on if Settings.screen_shake else off_),
 		("Wirklich löschen? Nochmal drücken" if reset_armed else "Spielstand löschen") if SaveGame.has_save() else "Spielstand: keiner",
 		("Test: Alle Zonen frei (erledigt)" if SaveGame.unlocked_zones().size() == GameData.ZONE_ORDER.size() else "Test: Alle Zonen freischalten") if SaveGame.has_save() else "Test: erst Spiel starten",
 		("Test: Monsterdex komplett (erledigt)" if SaveGame.dex_count() >= GameData.FORMS.size() else "Test: Monsterdex komplett") if SaveGame.has_save() else "Test: erst Spiel starten",
@@ -87,35 +91,35 @@ func _process(delta: float) -> void:
 			dir = -1
 		elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("confirm"):
 			dir = 1
-		if Input.is_action_just_pressed("back") or (sel == 10 and Input.is_action_just_pressed("confirm")):
+		if Input.is_action_just_pressed("back") or (sel == 11 and Input.is_action_just_pressed("confirm")):
 			Sfx.play("back")
 			page = Page.MAIN
 			sel = 2
 			Settings.save_settings()
 			reset_armed = false
-		elif sel == 8 and Input.is_action_just_pressed("confirm"):
+		elif sel == 9 and Input.is_action_just_pressed("confirm"):
 			Sfx.play("confirm")
 			Settings.save_settings()
 			show_intro.emit()
-		elif sel == 7 and Input.is_action_just_pressed("confirm"):
+		elif sel == 8 and Input.is_action_just_pressed("confirm"):
 			# Testfunktion für den Produzenten: alle Glitchlinge im Dex mit Namen
 			if SaveGame.has_save():
 				SaveGame.unlock_full_dex()
 				Sfx.play("confirm")
 			else:
 				Sfx.play("back")
-		elif sel == 9 and Input.is_action_just_pressed("confirm"):
+		elif sel == 10 and Input.is_action_just_pressed("confirm"):
 			# Ordner mit spieltest_log.csv öffnen (für Tester)
 			OS.shell_open(SaveGame.log_folder())
 			Sfx.play("confirm")
-		elif sel == 6 and Input.is_action_just_pressed("confirm"):
+		elif sel == 7 and Input.is_action_just_pressed("confirm"):
 			# Testfunktion für den Produzenten: alle Zonen sofort spielbar
 			if SaveGame.has_save():
 				SaveGame.unlock_all_zones()
 				Sfx.play("confirm")
 			else:
 				Sfx.play("back")
-		elif sel == 5 and Input.is_action_just_pressed("confirm") and SaveGame.has_save():
+		elif sel == 6 and Input.is_action_just_pressed("confirm") and SaveGame.has_save():
 			# zweimal bestätigen, damit nichts aus Versehen verloren geht
 			if reset_armed:
 				SaveGame.reset()
@@ -124,18 +128,21 @@ func _process(delta: float) -> void:
 			else:
 				reset_armed = true
 				Sfx.play("warn")
-		elif dir != 0 and sel < 5:
+		elif dir != 0 and sel < 6:
 			match sel:
 				0:
-					Settings.fullscreen = not Settings.fullscreen
+					var langs: Array = T.LANGS.keys()
+					Settings.lang = langs[(langs.find(Settings.lang) + dir + langs.size()) % langs.size()]
 				1:
-					Settings.volume = clampi(Settings.volume + dir, 0, 10)
+					Settings.fullscreen = not Settings.fullscreen
 				2:
-					Settings.music = clampi(Settings.music + dir, 0, 10)
+					Settings.volume = clampi(Settings.volume + dir, 0, 10)
 				3:
+					Settings.music = clampi(Settings.music + dir, 0, 10)
+				4:
 					var nd := 4 if SaveGame.game_cleared() else 3   # „Korrumpiert“ erst nach dem Ende
 					Settings.difficulty = (Settings.difficulty + dir + nd) % nd
-				4:
+				5:
 					Settings.screen_shake = not Settings.screen_shake
 			Settings.apply()
 			Sfx.play("select")
@@ -172,17 +179,17 @@ func _draw() -> void:
 		_menu(_main_items(), sel, W / 2.0, 250, 180)
 	else:
 		_dim()
-		var r := Rect2(150, 40, 340, 290)
+		var r := Rect2(150, 14, 340, 312)
 		_box(r, GameData.COL.panel, GameData.COL.line)
 		_text(r.position + Vector2(0, 26), "Optionen", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		_menu(_option_items(), sel, r.get_center().x, r.position.y + 40, 280)
-		if sel == 3:
-			var dd: String = ["Mehr Zeit zum Ausweichen, Gegner treffen schwächer.", "So wie gedacht.", "Zähere Gegner, härtere Treffer, kürzere Warnungen.", "Nach dem Ende: stärkste Gegner, knappe Warnungen, 50 % mehr Fragmente."][Settings.difficulty]
+		if sel == 4:
+			var dd: String = T.t(["Mehr Zeit zum Ausweichen, Gegner treffen schwächer.", "So wie gedacht.", "Zähere Gegner, härtere Treffer, kürzere Warnungen.", "Nach dem Ende: stärkste Gegner, knappe Warnungen, 50 % mehr Fragmente."][Settings.difficulty])
 			if not SaveGame.game_cleared():
-				dd += "  (Nach dem Ende gibt es eine vierte Stufe.)"
-			_text(Vector2(0, r.end.y + 14), dd, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
+				dd += "  " + T.t("(Nach dem Ende gibt es eine vierte Stufe.)")
+			_text(Vector2(0, r.end.y + 12), dd, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 	var pad: bool = InputSetup.pad
-	var hint := ("Steuerkreuz wählen · %s bestätigen · %s zurück" % [InputSetup.btn("A"), InputSetup.btn("B")] if pad else "Pfeile wählen · Enter bestätigen · Esc zurück")
+	var hint := (T.t("Steuerkreuz wählen · %s bestätigen · %s zurück") % [InputSetup.btn("A"), InputSetup.btn("B")] if pad else T.t("Pfeile wählen · Enter bestätigen · Esc zurück"))
 	_text(Vector2(0, H - 10), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	_text(Vector2(0, H - 10), "v%s " % ProjectSettings.get_setting("application/config/version", "0.2"), 8, Color(GameData.COL.muted, 0.6), HORIZONTAL_ALIGNMENT_RIGHT, W)
 

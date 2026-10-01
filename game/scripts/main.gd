@@ -22,6 +22,8 @@ var foe_override := -1   # nur für Screenshots
 func _ready() -> void:
 	PixelCanvas.preload_all()
 	var shot := Shot.args()
+	if shot.has("lang"):
+		Settings.lang = shot.lang   # nur für Screenshots, wird nicht gespeichert
 	# Nur Intro bzw. Ende abspielen und beenden (Video-Aufnahme: godot --write-movie intro.avi -- --play=opening / --play=ending)
 	if OS.get_cmdline_user_args().has("--play=opening"):
 		SaveGame.persist = false

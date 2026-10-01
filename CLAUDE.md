@@ -91,6 +91,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Kino-Ende (30.09.2026): 9 Bilder, ca. 69 s – Ur-Glitch zerspringt, Neustart, Heilungswelle über den NEST, Heimkehr als Lichtspuren, Team, Zimmer am Morgen, Title Drop, kurzer Abspann (2 Karten), ENDE mit neuem Ei; Musik `ending` taktgenau (One-Shot), gemeinsame Kino-Werkzeuge in `cinema_canvas.gd`, 275 Tests – `vault/05 Produktion/Finale und Ende.md`
 - [x] Tester-Orientierung v0.3 (30.09.2026): Zonenwahl-Bildschirm (4 Zonen als Karten, gesperrt/geschafft), Station-Führung (7 Schritte, Hilfe-Taste Leertaste/Y), Karten-Tipp beim ersten Run, LIESMICH aktualisiert, 270 Tests – `vault/05 Produktion/Externer Spieltest.md`
 - [x] Kampf-Handbuch (30.09.2026): 8 Seiten mit gezeichneten Beispielen (Spielfeld, Chips, Ausweichen, Elemente, Zustände, Signatur/Passiv, Entwicklung, Nach dem Kampf), erreichbar über Titelmenü, Pause (Kampf + Karte), Station und Taste H / Select (`handbook_view.gd`, `PixelCanvas.open_handbook()`), 274 Tests
+- [x] **Englisch** (01.10.2026): Sprache in den Optionen (erster Start: Systemsprache), `T.t()` mit deutschen Texten als Schlüssel, englische Tabellen `scripts/data/lang_en_*.gd`, eigene englische Monsternamen (namecheck-geprüft), interne IDs bleiben deutsch, Test prüft Vollständigkeit, `node game/tools/lang_keys.js --missing`, Screenshots mit `--lang=en`, 278 Tests – `vault/05 Produktion/Englisch.md`
 - [x] Idle-Animationen: **alle 113 Figuren** (30.09.2026), 6 Bilder, 10 Bilder/s (`tools/sprites/node/anim_frames.js`, entfernt jetzt auch mitgemalte Hintergründe) – `vault/05 Produktion/Idle-Animationen.md`
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo
@@ -131,6 +132,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - Nutzungsrechte von PixelLab für kommerzielle Nutzung vor dem Launch prüfen lassen.
 
 ## Qualitätsregeln für Änderungen am Prototyp
+- Godot-Texte zweisprachig: neue zusammengesetzte Texte in `T.t("…") % …`, danach `node game/tools/lang_keys.js --missing` und Übersetzung in `scripts/data/lang_en_*.gd` eintragen (Test „Englisch …“ prüft das).
 - Godot-Text: im Code nur die Größen 8 / 16 / 24 verwenden. `_text()` bildet 8 automatisch auf die Pixeloid-Rastergröße ab; bei direkten `draw_multiline_string`/`draw_string`-Aufrufen `tsz(8)` und `font(bold, größe)` benutzen. Kein „→“ o. Ä. (fehlt in den Pixelschriften), stattdessen „>“. Controller-Tasten in Hinweisen immer über `InputSetup.btn("A")` usw.
 - Godot: Texturen **nie erst in `_draw()` laden** (bleiben im ersten Bild weiß) – `preload` oder `PixelCanvas.sprite()` (alles wird in `main._ready` vorgeladen).
 - Godot (`game/`): nach jeder Änderung **zuerst `--headless --import` auf SCRIPT ERROR prüfen** (ein Parse-Fehler in main.gd lässt das Spiel leer hängen!), dann Godot-Tests, bei Grafikänderungen per `--shot` einen Screenshot rendern – immer mit `timeout 60 … --quit-after 900`, damit nichts hängen bleibt. Godot-Exe: `~/AppData/Local/Microsoft/WinGet/Packages/GodotEngine*/Godot_*_console.exe`.

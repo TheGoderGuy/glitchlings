@@ -72,13 +72,13 @@ func active() -> bool:
 func texts(pad: bool) -> Array:
 	match step:
 		Step.MOVE:
-			return ["Bewegen (%d/3)" % mini(moves, 3), "Beweg dich mit %s über deine blauen Felder." % ("dem Steuerkreuz oder dem linken Stick" if pad else "WASD oder den Pfeiltasten")]
+			return [T.t("Bewegen (%d/3)") % mini(moves, 3), T.t("Beweg dich mit %s über deine blauen Felder.") % T.t("dem Steuerkreuz oder dem linken Stick" if pad else "WASD oder den Pfeiltasten")]
 		Step.CHIP:
-			return ["Chip spielen", "Drück %s: Pixelstrahl fliegt über deine Reihe. Stell dich in die Reihe des Gegners!" % (InputSetup.btn("X") if pad else "J")]
+			return ["Chip spielen", T.t("Drück %s: Pixelstrahl fliegt über deine Reihe. Stell dich in die Reihe des Gegners!") % (InputSetup.btn("X") if pad else "J")]
 		Step.DODGE:
-			return ["Ausweichen (%d/2)" % dodges, "Rote Felder mit „!“ werden gleich getroffen. Geh rechtzeitig runter!"]
+			return [T.t("Ausweichen (%d/2)") % dodges, "Rote Felder mit „!“ werden gleich getroffen. Geh rechtzeitig runter!"]
 		Step.SPECIAL:
-			return ["Signatur-Attacke", "Deine Leiste ist voll! Drück %s für die Signatur-Attacke." % (InputSetup.btn("Y") if pad else "die Leertaste")]
+			return ["Signatur-Attacke", T.t("Deine Leiste ist voll! Drück %s für die Signatur-Attacke.") % (InputSetup.btn("Y") if pad else T.t("die Leertaste"))]
 		Step.FREE:
-			return ["Super gemacht!", "Chips laden nach dem Einsatz nach. Jetzt besiege den Gegner! Alles Weitere erklärt das Handbuch (Pause oder %s)." % (InputSetup.btn("Back") if pad else "H")]
+			return ["Super gemacht!", T.t("Chips laden nach dem Einsatz nach. Jetzt besiege den Gegner! Alles Weitere erklärt das Handbuch (Pause oder %s).") % (InputSetup.btn("Back") if pad else "H")]
 	return []

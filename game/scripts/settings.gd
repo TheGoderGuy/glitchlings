@@ -8,6 +8,7 @@ var volume := 8          # 0–10 Gesamtlautstärke
 var music := 6           # 0–10 Musik
 var difficulty := 1      # 0 Entspannt, 1 Normal, 2 Knackig
 var screen_shake := true
+var lang := ""           # "de" / "en"; leer = beim ersten Start aus der Systemsprache
 
 
 func _ready() -> void:
@@ -18,12 +19,16 @@ func _ready() -> void:
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(PATH) != OK:
+		lang = T.system_lang()
 		return
 	fullscreen = cfg.get_value("video", "fullscreen", fullscreen)
 	volume = cfg.get_value("audio", "volume", volume)
 	music = cfg.get_value("audio", "music", music)
 	difficulty = cfg.get_value("game", "difficulty", difficulty)
 	screen_shake = cfg.get_value("comfort", "screen_shake", screen_shake)
+	lang = cfg.get_value("game", "lang", "")
+	if not T.LANGS.has(lang):
+		lang = T.system_lang()
 
 
 func save_settings() -> void:
@@ -33,6 +38,7 @@ func save_settings() -> void:
 	cfg.set_value("audio", "music", music)
 	cfg.set_value("game", "difficulty", difficulty)
 	cfg.set_value("comfort", "screen_shake", screen_shake)
+	cfg.set_value("game", "lang", lang)
 	cfg.save(PATH)
 
 

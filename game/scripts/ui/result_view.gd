@@ -31,9 +31,9 @@ func _draw() -> void:
 	var r := Rect2(90, 24, 460, 312)
 	_box(r, GameData.COL.panel, GameData.COL.sun if won else GameData.COL.coral)
 	_text(r.position + Vector2(0, 30), "Zone gesäubert!" if won else "Run beendet", 16, GameData.COL.sun if won else GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-	var sub := "%s ist defragmentiert. %s ist wieder sicher." % [GameData.FOES[GameData.ZONES[run.map.zone].boss].name, run.map.zone_name] if won else "%s braucht eine Pause. Alles Gelernte bleibt!" % run.form
+	var sub := T.t("%s ist defragmentiert. %s ist wieder sicher.") % [T.t(GameData.FOES[GameData.ZONES[run.map.zone].boss].name), T.t(run.map.zone_name)] if won else T.t("%s braucht eine Pause. Alles Gelernte bleibt!") % T.t(run.form)
 	_text(r.position + Vector2(0, 48), sub, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-	_text(r.position + Vector2(0, 64), "Ebene %d/%d · Etage %d/%d · Kämpfe %d · Chips %d · Fragmente %d" % [run.map.level + 1, run.map.levels, maxi(0, run.floor_idx + 1), run.map.floors.size(), run.fights_won, run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	_text(r.position + Vector2(0, 64), T.t("Ebene %d/%d · Etage %d/%d · Kämpfe %d · Chips %d · Fragmente %d") % [run.map.level + 1, run.map.levels, maxi(0, run.floor_idx + 1), run.map.floors.size(), run.fights_won, run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	# Monster links
 	var cx := r.position.x + 84
 	draw_rect(Rect2(cx - 40, r.position.y + 176, 80, 5), Color(0.05, 0.02, 0.12, 0.4))
@@ -45,27 +45,27 @@ func _draw() -> void:
 	_text(Vector2(x, y), "Was bleibt", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	y += 18
 	var lines: Array = []
-	lines.append(["+%d Prägung für %s" % [run.chips_used, run.form], GameData.COL.mint])
+	lines.append([T.t("+%d Prägung für %s") % [run.chips_used, T.t(run.form)], GameData.COL.mint])
 	if summary.get("evolved", false):
-		lines.append(["Entwicklung gespeichert: %s > %s" % [run.start_form, run.form], GameData.EL[run.form_el()]])
+		lines.append([T.t("Entwicklung gespeichert: %s > %s") % [T.t(run.start_form), T.t(run.form)], GameData.EL[run.form_el()]])
 	for f in summary.get("new_dex", []):
-		lines.append(["Neu im Monsterdex: %s" % f, GameData.COL.sun])
+		lines.append([T.t("Neu im Monsterdex: %s") % T.t(f), GameData.COL.sun])
 	if summary.get("unlocked", "") != "":
-		lines.append(["Neue Zone frei: %s!" % GameData.ZONES[summary.unlocked].name, GameData.COL.coral])
+		lines.append([T.t("Neue Zone frei: %s!") % T.t(GameData.ZONES[summary.unlocked].name), GameData.COL.coral])
 	if summary.get("game_cleared", false):
 		lines.append(["Der NEST ist gerettet! Neue Schwierigkeit: Korrumpiert", GameData.COL.sun])
 	if int(summary.get("frag_banked", 0)) > 0:
-		lines.append(["+%d Fragmente auf die Station gerettet" % int(summary.frag_banked), GameData.COL.sun])
+		lines.append([T.t("+%d Fragmente auf die Station gerettet") % int(summary.frag_banked), GameData.COL.sun])
 	var egg: Dictionary = summary.get("egg", {})
 	if not egg.is_empty():
-		lines.append(["Neues Ei: %s (schlüpft nach %d Run%s)" % [egg.rarity, int(egg.runs_left), "" if int(egg.runs_left) == 1 else "s"], GameData.COL.sun])
+		lines.append([(T.t("Neues Ei: %s (schlüpft nach %d Run)") if int(egg.runs_left) == 1 else T.t("Neues Ei: %s (schlüpft nach %d Runs)")) % [T.t(egg.rarity), int(egg.runs_left)], GameData.COL.sun])
 	elif summary.get("nest_full", false):
 		lines.append(["Brutnest voll – kein neues Ei", GameData.COL.muted])
 	elif run.fights_won < SaveGame.EGG_MIN_WINS:
-		lines.append(["Ab %d gewonnenen Kämpfen gibt es ein Ei" % SaveGame.EGG_MIN_WINS, GameData.COL.muted])
+		lines.append([T.t("Ab %d gewonnenen Kämpfen gibt es ein Ei") % SaveGame.EGG_MIN_WINS, GameData.COL.muted])
 	var ready: int = summary.get("hatch_ready", 0)
 	if ready > 0:
-		lines.append(["%d Ei%s bereit zum Schlüpfen!" % [ready, "" if ready == 1 else "er"], GameData.COL.coral])
+		lines.append([(T.t("1 Ei bereit zum Schlüpfen!") if ready == 1 else T.t("%d Eier bereit zum Schlüpfen!") % ready), GameData.COL.coral])
 	for ln in lines:
 		draw_rect(Rect2(x, y - 6, 4, 4), ln[1])
 		_text(Vector2(x + 10, y), ln[0], 8, ln[1])
@@ -87,4 +87,4 @@ func _draw() -> void:
 		_text(Vector2(bx, by + 8), str(n), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, 200)
 		col += 1
 	var pad: bool = InputSetup.pad
-	_text(Vector2(r.position.x, r.end.y - 12), "%s Zur Station" % (InputSetup.btn("A") if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	_text(Vector2(r.position.x, r.end.y - 12), T.t("%s Zur Station") % (InputSetup.btn("A") if pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)

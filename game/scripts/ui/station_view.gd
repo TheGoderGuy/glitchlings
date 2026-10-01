@@ -177,13 +177,13 @@ func _process(delta: float) -> void:
 					var u: Dictionary = GameData.STATION_UPGRADES[sel]
 					var cost := SaveGame.upgrade_cost(u.id)
 					if cost < 0:
-						up_msg = "%s ist schon ganz ausgebaut." % u.name
+						up_msg = T.t("%s ist schon ganz ausgebaut.") % T.t(u.name)
 						Sfx.play("back")
 					elif SaveGame.buy_upgrade(u.id):
-						up_msg = "%s ausgebaut: Stufe %d!" % [u.name, SaveGame.upgrade_level(u.id)]
+						up_msg = T.t("%s ausgebaut: Stufe %d!") % [T.t(u.name), SaveGame.upgrade_level(u.id)]
 						Sfx.play("evolve", 0.0)
 					else:
-						up_msg = "Dafür fehlen noch %d Fragmente." % (cost - SaveGame.frag())
+						up_msg = T.t("Dafür fehlen noch %d Fragmente.") % (cost - SaveGame.frag())
 						Sfx.play("back")
 			Tab.DEX:
 				var n := DEX_ORDER.size()
@@ -231,7 +231,7 @@ func _draw() -> void:
 		Tab.UPGRADE:
 			_draw_upgrades()
 	var pad: bool = InputSetup.pad
-	var hint := "%s/%s Reiter   %s Hilfe   %s Handbuch   %s Titel" % [InputSetup.btn("LB") if pad else "Q", InputSetup.btn("RB") if pad else "E", InputSetup.btn("Y") if pad else "Leertaste", InputSetup.btn("Back") if pad else "H", InputSetup.btn("B") if pad else "Esc"]
+	var hint := T.t("%s/%s Reiter   %s Hilfe   %s Handbuch   %s Titel") % [InputSetup.btn("LB") if pad else "Q", InputSetup.btn("RB") if pad else "E", InputSetup.btn("Y") if pad else T.t("Leertaste"), InputSetup.btn("Back") if pad else "H", InputSetup.btn("B") if pad else "Esc"]
 	_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if zone_pick:
 		_draw_zone_pick()
@@ -254,7 +254,7 @@ func _draw_tabs() -> void:
 		_text(Vector2(r.position.x, r.position.y + 13), TAB_NAMES[i], 8, GameData.COL.ink if active else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, w, true, active)
 		x += w + 4
 	var st: Dictionary = SaveGame.data.get("stats", {})
-	_text(Vector2(0, H - 8), "Fragmente %d · Dex %d/%d " % [SaveGame.frag(), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
+	_text(Vector2(0, H - 8), T.t("Fragmente %d · Dex %d/%d ") % [SaveGame.frag(), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
 
 
 func _draw_team() -> void:
@@ -287,19 +287,19 @@ func _draw_team() -> void:
 	var sc := 2 if int(m.stage) == 1 else 1
 	_draw_sprite(form, cx, R.position.y + 154, false, {"scale": sc, "bob": 1 if sin(anim_t * 4.0) > 0 else 0, "blink": fmod(anim_t, 3.3) < 0.13})
 	_text(Vector2(R.position.x, R.position.y + 176), form, 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, 180, true, true)
-	_text(Vector2(R.position.x, R.position.y + 190), "%s · %s · %d HP" % [GameData.STAGE_NAMES[int(m.stage)], F.el, int(M.hp) + 10 * (int(m.stage) - 1)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, 180)
-	_text(Vector2(R.position.x, R.position.y + 204), "Runs %d · Siege %d" % [int(m.runs), int(m.wins)], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 180)
+	_text(Vector2(R.position.x, R.position.y + 190), "%s · %s · %d HP" % [T.t(GameData.STAGE_NAMES[int(m.stage)]), T.t(F.el), int(M.hp) + 10 * (int(m.stage) - 1)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, 180)
+	_text(Vector2(R.position.x, R.position.y + 204), T.t("Runs %d · Siege %d") % [int(m.runs), int(m.wins)], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 180)
 	# Details rechts
 	var x := R.position.x + 190
 	var w := R.size.x - 204
 	var y := R.position.y + 20
 	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
 	var S: Dictionary = GameData.SPECIALS[form]
-	_text(Vector2(x, y), "Signatur: " + S.name, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	draw_multiline_string(font(), Vector2(x, y + 14), S.desc, HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 2, GameData.COL.ink, wrap)
+	_text(Vector2(x, y), T.t("Signatur:") + " " + T.t(S.name), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	draw_multiline_string(font(), Vector2(x, y + 14), T.t(S.desc), HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 2, GameData.COL.ink, wrap)
 	y += 44
-	_text(Vector2(x, y), "Passiv: " + M.passive, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	draw_multiline_string(font(), Vector2(x, y + 14), M.passive_desc, HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 3, GameData.COL.ink, wrap)
+	_text(Vector2(x, y), T.t("Passiv:") + " " + T.t(M.passive), 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	draw_multiline_string(font(), Vector2(x, y + 14), T.t(M.passive_desc), HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 3, GameData.COL.ink, wrap)
 	y += 56
 	# Entwicklung: mögliche Richtungen mit Lebenszeit-Prägung
 	_text(Vector2(x, y), "Entwicklung", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
@@ -307,9 +307,9 @@ func _draw_team() -> void:
 	_draw_evo(probe.evo_status(), x, y + 4, w)
 	var pad: bool = InputSetup.pad
 	var zones := SaveGame.unlocked_zones()
-	_text(Vector2(R.position.x, R.end.y - 26), "%d von %d Zonen frei" % [zones.size(), GameData.ZONE_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	_text(Vector2(R.position.x, R.end.y - 26), T.t("%d von %d Zonen frei") % [zones.size(), GameData.ZONE_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 	var pulse := 0.75 + 0.25 * sin(anim_t * 4.0)
-	_text(Vector2(R.position.x, R.end.y - 12), "%s Mit %s eine Zone wählen" % [InputSetup.btn("A") if pad else "Enter", form], 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	_text(Vector2(R.position.x, R.end.y - 12), T.t("%s Mit %s eine Zone wählen") % [InputSetup.btn("A") if pad else "Enter", T.t(form)], 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 
 
 # ---------- Zonenwahl ----------
@@ -354,14 +354,14 @@ func _process_zone_pick() -> void:
 static func zone_layout(z: String) -> String:
 	var Z: Dictionary = GameData.ZONES[z]
 	var lv: int = Z.get("levels", ZoneMap.LEVELS)
-	return "%d Ebenen · %d Wächter" % [lv, lv - 1]
+	return T.t("%d Ebenen · %d Wächter") % [lv, lv - 1]
 
 
 func _draw_zone_pick() -> void:
 	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.97))
 	var form: String = SaveGame.team()[sel].form
 	_text(Vector2(0, 30), "Wohin geht die Reise?", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
-	_text(Vector2(0, 46), "Mit %s durch eine Zone des NEST. Jede Zone hat ihre eigenen Gegner, Ereignisse und Musik." % form, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	_text(Vector2(0, 46), T.t("Mit %s durch eine Zone des NEST. Jede Zone hat ihre eigenen Gegner, Ereignisse und Musik.") % T.t(form), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	var n: int = GameData.ZONE_ORDER.size()
 	var cw := 146.0
 	var gap := 8.0
@@ -378,7 +378,7 @@ func _draw_zone_pick() -> void:
 		# Landschaft als Ausschnitt der Zonen-Kulisse (1:1, nicht skaliert)
 		var img := Rect2(r.position.x + 4, r.position.y + 4, cw - 8, 78)
 		draw_texture_rect_region(zone_texture(Z.bg), img, Rect2(250, 196, img.size.x, img.size.y), Color(1, 1, 1, 1.0 if open else 0.3))
-		_text(Vector2(r.position.x + 8, r.position.y + 16), "Zone %d" % (i + 1), 8, Color.WHITE)
+		_text(Vector2(r.position.x + 8, r.position.y + 16), T.t("Zone %d") % (i + 1), 8, Color.WHITE)
 		if open:
 			var tag := "Geschafft!" if done else "Neu!"
 			_text(Vector2(r.position.x, r.position.y + 16), tag, 8, GameData.COL.mint if done else GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, cw - 8, true, true)
@@ -389,12 +389,12 @@ func _draw_zone_pick() -> void:
 		for k in n:
 			draw_rect(Rect2(r.get_center().x - 22 + k * 12, r.position.y + 106, 8, 5), GameData.COL.coral if k <= i else GameData.COL.dark)
 		_text(Vector2(r.position.x, r.position.y + 124), zone_layout(z), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
-		var desc: String = Z.desc if open else "Gesperrt. Besiege den Boss von %s, um diese Zone freizuschalten." % GameData.ZONES[Z.unlock].name
+		var desc: String = T.t(Z.desc) if open else T.t("Gesperrt. Besiege den Boss von %s, um diese Zone freizuschalten.") % T.t(GameData.ZONES[Z.unlock].name)
 		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 142), desc, HORIZONTAL_ALIGNMENT_CENTER, cw - 16, tsz(8), 5, GameData.COL.ink if open else GameData.COL.muted, wrap)
-		var boss: String = GameData.FOES[Z.boss].name if done else "???"
-		_text(Vector2(r.position.x, r.end.y - 10), ("Endboss: " if Z.get("final", false) else "Boss: ") + boss, 8, GameData.COL.coral if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
+		var boss: String = T.t(GameData.FOES[Z.boss].name) if done else "???"
+		_text(Vector2(r.position.x, r.end.y - 10), T.t("Endboss:" if Z.get("final", false) else "Boss:") + " " + boss, 8, GameData.COL.coral if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
 	var pad: bool = InputSetup.pad
-	var foot := zone_msg if zone_msg != "" else "< > Zone wählen   %s losziehen   %s zurück" % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"]
+	var foot := zone_msg if zone_msg != "" else T.t("< > Zone wählen   %s losziehen   %s zurück") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"]
 	_text(Vector2(0, 322), foot, 8, GameData.COL.coral if zone_msg != "" else GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
@@ -462,8 +462,8 @@ func _draw_guide() -> void:
 	# Textkasten
 	var keys_tabs := "%s/%s" % [InputSetup.btn("LB"), InputSetup.btn("RB")] if pad else "Q/E"
 	var key_ok: String = InputSetup.btn("A") if pad else "Enter"
-	var key_help: String = InputSetup.btn("Y") if pad else "der Leertaste"
-	var txt: String = g[3]
+	var key_help: String = InputSetup.btn("Y") if pad else T.t("der Leertaste")
+	var txt: String = T.t(g[3])
 	match guide:
 		0:
 			txt = txt % keys_tabs
@@ -476,14 +476,14 @@ func _draw_guide() -> void:
 	_text(Vector2(B.position.x + 14, B.position.y + 20), g[2], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	_text(Vector2(B.position.x, B.position.y + 20), "%d/%d" % [guide + 1, GUIDE.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, B.size.x - 14)
 	draw_multiline_string(font(), Vector2(B.position.x + 14, B.position.y + 40), txt, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 28, tsz(8), 4, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
-	_text(Vector2(B.position.x, B.end.y - 10), "%s weiter   %s überspringen" % [key_ok, InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, B.size.x - 14)
+	_text(Vector2(B.position.x, B.end.y - 10), T.t("%s weiter   %s überspringen") % [key_ok, InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, B.size.x - 14)
 
 
 func _draw_upgrades() -> void:
 	var R := Rect2(40, 40, 560, 296)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
 	_text(Vector2(R.position.x, R.position.y + 22), "Station-Ausbau", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
-	_text(Vector2(R.position.x, R.position.y + 38), "Fragmente aus deinen Runs machen die Station dauerhaft besser. Du hast %d." % SaveGame.frag(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	_text(Vector2(R.position.x, R.position.y + 38), T.t("Fragmente aus deinen Runs machen die Station dauerhaft besser. Du hast %d.") % SaveGame.frag(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 	var ups: Array = GameData.STATION_UPGRADES
 	for i in ups.size():
 		var u: Dictionary = ups[i]
@@ -500,12 +500,12 @@ func _draw_upgrades() -> void:
 			draw_rect(pr, GameData.COL.mint if k < lv else GameData.COL.dark)
 			draw_rect(pr, GameData.COL.line, false, 1.0)
 		var desc: String = GameData.upgrade_desc(u, lv) if cost < 0 else GameData.upgrade_desc(u, lv + 1)
-		var prefix := "Jetzt: " if cost < 0 else ("Nächste Stufe: " if lv > 0 else "")
+		var prefix := T.t("Jetzt:") + " " if cost < 0 else (T.t("Nächste Stufe:") + " " if lv > 0 else "")
 		_text(Vector2(r.position.x + 10, r.position.y + 26), prefix + desc, 8, GameData.COL.muted)
-		var price_txt := "ganz ausgebaut" if cost < 0 else "%d Fragmente" % cost
+		var price_txt := T.t("ganz ausgebaut") if cost < 0 else T.t("%d Fragmente") % cost
 		var pcol: Color = GameData.COL.mint if cost < 0 else (GameData.COL.sun if SaveGame.frag() >= cost else Color(GameData.COL.coral, 0.9))
 		_text(Vector2(r.position.x, r.position.y + 13), price_txt, 8, pcol, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 10, true, true)
-	var foot := up_msg if up_msg != "" else "%s ausbauen" % (InputSetup.btn("A") if InputSetup.pad else "Enter")
+	var foot := up_msg if up_msg != "" else T.t("%s ausbauen") % (InputSetup.btn("A") if InputSetup.pad else "Enter")
 	_text(Vector2(R.position.x, R.end.y - 10), foot, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 
 
@@ -513,7 +513,7 @@ func _draw_nest() -> void:
 	var R := Rect2(40, 40, 560, 296)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
 	_text(Vector2(R.position.x, R.position.y + 22), "Brutnest", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
-	_text(Vector2(R.position.x, R.position.y + 38), "Eier gibt es nach Runs mit mindestens %d gewonnenen Kämpfen, seltenere nach einem Boss-Sieg." % SaveGame.EGG_MIN_WINS, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	_text(Vector2(R.position.x, R.position.y + 38), T.t("Eier gibt es nach Runs mit mindestens %d gewonnenen Kämpfen, seltenere nach einem Boss-Sieg.") % SaveGame.EGG_MIN_WINS, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 	var eggs := SaveGame.nest()
 	var slots := SaveGame.nest_slots()
 	var sw := 140.0 if slots <= 3 else 116.0
@@ -530,8 +530,8 @@ func _draw_nest() -> void:
 		draw_rect(Rect2(r.get_center().x - 26, r.position.y + 112, 52, 4), Color(0.05, 0.02, 0.12, 0.35))
 		_draw_egg(e.rarity, Vector2(r.get_center().x + wob, r.position.y + 114), 2)
 		var rc := _rarity_col(e.rarity)
-		_text(Vector2(r.position.x, r.position.y + 136), "%s Ei" % e.rarity, 8, rc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-		var txt := "schlüpft nach dem nächsten Run" if left == 1 else ("bereit!" if left <= 0 else "noch %d Runs" % left)
+		_text(Vector2(r.position.x, r.position.y + 136), T.t("%s Ei") % T.t(e.rarity), 8, rc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+		var txt := T.t("schlüpft nach dem nächsten Run") if left == 1 else (T.t("bereit!") if left <= 0 else T.t("noch %d Runs") % left)
 		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 152), txt, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	_text(Vector2(R.position.x, R.end.y - 18), "Gewöhnlich 1 Run · Selten 2 · Episch 3 · Legendär 5", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 
@@ -568,7 +568,7 @@ func _draw_lab() -> void:
 		if i == team.size():
 			var can := fuse_sel.size() == 2
 			_box(r, GameData.COL.panel.lightened(0.1) if active else GameData.COL.bg2, GameData.COL.sun if active else (GameData.COL.mint if can else GameData.COL.line))
-			_text(Vector2(r.position.x, r.position.y + 13), "Fusionieren (%d)" % GameData.FUSION_COST, 8, GameData.COL.mint if can else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+			_text(Vector2(r.position.x, r.position.y + 13), T.t("Fusionieren (%d)") % GameData.FUSION_COST, 8, GameData.COL.mint if can else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 			continue
 		var m: Dictionary = team[i]
 		var chosen := fuse_sel.has(int(m.id))
@@ -593,7 +593,7 @@ func _draw_lab() -> void:
 		else:
 			_text(Vector2(slot.position.x, slot.get_center().y + 3), "?", 16, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, slot.size.x, true, true)
 	_text(Vector2(R.position.x, R.position.y + 84), "+", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
-	var info := fuse_msg if fuse_msg != "" else "Kostet %d Fragmente, nur bei Erfolg. Beide verschmelzen." % GameData.FUSION_COST
+	var info := T.t(fuse_msg) if fuse_msg != "" else T.t("Kostet %d Fragmente, nur bei Erfolg. Beide verschmelzen.") % GameData.FUSION_COST
 	draw_multiline_string(font(), Vector2(R.position.x + 12, R.end.y - 10), info, HORIZONTAL_ALIGNMENT_CENTER, R.size.x - 24, tsz(8), 2, GameData.COL.sun if fuse_msg != "" else GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	# Rezeptbuch
 	var B := Rect2(206, 190, 426, 150)
@@ -606,10 +606,10 @@ func _draw_lab() -> void:
 		var line := ""
 		var col: Color = GameData.COL.muted
 		if SaveGame.data.get("recipes", []).has(R2.r):
-			line = "%s + %s = %s" % [R2.a, R2.b, R2.r]
+			line = "%s + %s = %s" % [T.t(R2.a), T.t(R2.b), T.t(R2.r)]
 			col = GameData.EL[GameData.FORMS[R2.r].el]
 		elif SaveGame.data.get("hints", []).has(float(i)) or SaveGame.data.get("hints", []).has(i):
-			line = "Gerücht: " + R2.hint
+			line = T.t("Gerücht:") + " " + T.t(R2.hint)
 			col = GameData.COL.ink
 		else:
 			line = "???"
@@ -632,7 +632,7 @@ func _draw_fusion() -> void:
 			var f: String = fusion.a if j == 0 else fusion.b
 			_draw_sprite(f, p.x, p.y, false, {"scale": 2 if GameData.FORMS[f].stage == 1 else 1, "flash": true, "mod": Color(0.7, 1.0, 0.9, 0.8)})
 		draw_circle(c + Vector2(0, -30), 6.0 + 30.0 * k, Color(1, 1, 1, 0.15 + 0.4 * k))
-		_text(Vector2(0, 70), "%s und %s verschmelzen …" % [fusion.a, fusion.b], 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 70), T.t("%s und %s verschmelzen …") % [T.t(fusion.a), T.t(fusion.b)], 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	else:
 		var k2 := t - HATCH_REVEAL
 		if k2 < 0.25:
@@ -640,14 +640,14 @@ func _draw_fusion() -> void:
 		var f: String = fusion.result
 		draw_rect(Rect2(c.x - 50, c.y - 2, 100, 6), Color(0.05, 0.02, 0.12, 0.4))
 		_draw_sprite(f, c.x, c.y, false, {"bob": 1 if sin(anim_t * 4.0) > 0 else 0, "blink": fmod(anim_t, 3.0) < 0.13})
-		_text(Vector2(0, 70), "Es ist %s!" % f, 16, GameData.EL[GameData.FORMS[f].el], HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 70), T.t("Es ist %s!") % T.t(f), 16, GameData.EL[GameData.FORMS[f].el], HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		if fusion.new_in_dex:
 			_text(Vector2(0, 88), "Neu im Monsterdex – Rezept notiert!", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		var S: Dictionary = GameData.SPECIALS[f]
-		_text(Vector2(0, 246), "Signatur: %s – %s" % [S.name, S.desc], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
-		_text(Vector2(0, 262), "Passiv: %s" % GameData.MONS[f].passive_desc, 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
+		_text(Vector2(0, 246), T.t("Signatur: %s – %s") % [T.t(S.name), T.t(S.desc)], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
+		_text(Vector2(0, 262), T.t("Passiv: %s") % T.t(GameData.MONS[f].passive_desc), 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k2 > 0.6:
-			_text(Vector2(0, 296), "%s weiter" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, 296), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_egg(rarity: String, feet: Vector2, scale: int) -> void:
@@ -683,9 +683,9 @@ func _draw_hatch() -> void:
 		var el: Color = GameData.EL[GameData.MONS[sp].el]
 		draw_rect(Rect2(c.x - 50, c.y - 2, 100, 6), Color(0.05, 0.02, 0.12, 0.4))
 		_draw_sprite(sp, c.x, c.y, false, {"scale": 3, "bob": 1 if sin(anim_t * 4.0) > 0 else 0, "blink": fmod(anim_t, 3.0) < 0.13})
-		_text(Vector2(0, 70), "%s ist geschlüpft!" % sp, 16, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 70), T.t("%s ist geschlüpft!") % T.t(sp), 16, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		if hatch.new_in_dex:
 			_text(Vector2(0, 88), "Neu im Monsterdex!", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
-		_text(Vector2(0, 250), "%s kommt in dein Team." % sp, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
+		_text(Vector2(0, 250), T.t("%s kommt in dein Team.") % T.t(sp), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k > 0.6:
-			_text(Vector2(0, 290), "%s weiter" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, 290), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)

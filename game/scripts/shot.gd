@@ -49,6 +49,8 @@ static func args() -> Dictionary:
 			shot.font = a.substr(7)
 		elif a.begins_with("--guide="):
 			shot.guide = int(a.substr(8))
+		elif a.begins_with("--lang="):
+			shot.lang = a.substr(7)
 		elif a == "--bonus":
 			shot.bonus = true
 		elif a == "--zones":

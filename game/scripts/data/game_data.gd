@@ -102,10 +102,10 @@ static func is_upgraded(id: String) -> bool:
 static func upgrade_text(id: String) -> String:
 	var b: Dictionary = CHIPS[base_chip(id)]
 	var u := chip(base_chip(id) + "+")
-	var cd := "%.1f > %.1f s" % [b.cd, u.cd]
+	var cd := "%s > %s s" % [T.dec(b.cd), T.dec(u.cd)]
 	if int(b.dmg) > 0:
-		return ("%d > %d Schaden, " % [b.dmg, u.dmg]) + cd.replace(".", ",")
-	return "30 %% stärker, " + cd.replace(".", ",")
+		return (T.t("%d > %d Schaden, ") % [b.dmg, u.dmg]) + cd
+	return T.t("30 % stärker, ") + cd
 
 
 ## ---------- Synergien (Anzeige in Chipwahl und Händler) ----------
@@ -133,16 +133,16 @@ static func synergy(chip_id: String, deck: Array, modules: Array, passive: Strin
 		if cb == b:
 			continue
 		if need != "" and CHIP_TAGS.get(cb, []).has(need):
-			return "Kombo mit " + cb
+			return T.t("Kombo mit %s") % T.chip(cb)
 		var cneed: String = PAYOFFS.get(cb, "")
 		if cneed != "" and tags.has(cneed):
-			return "Kombo mit " + cb
+			return T.t("Kombo mit %s") % T.chip(cb)
 	for m in modules:
 		if MODULE_TAGS.has(m) and (tags.has(MODULE_TAGS[m]) or need == MODULE_TAGS[m]):
-			return "Kombo mit " + MODULES[m].name
+			return T.t("Kombo mit %s") % T.t(MODULES[m].name)
 	for t in PASSIVE_TAGS.get(passive, []):
 		if tags.has(t) or need == t:
-			return "Kombo mit " + passive
+			return T.t("Kombo mit %s") % T.t(passive)
 	return ""
 
 
@@ -593,12 +593,12 @@ const STATION_UPGRADES := [
 static func upgrade_desc(u: Dictionary, lv: int) -> String:
 	match u.id:
 		"werkbank":
-			return u.desc % lv
+			return T.t(u.desc) % lv
 		"vorrat":
-			return u.desc % (10 * lv)
+			return T.t(u.desc) % (10 * lv)
 		"filter":
-			return u.desc % (15 * lv)
-	return u.desc
+			return T.t(u.desc) % (15 * lv)
+	return T.t(u.desc)
 
 
 const MODULE_PRICE := {"Gewöhnlich": 45, "Selten": 70, "Episch": 100}

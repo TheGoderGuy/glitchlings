@@ -117,13 +117,13 @@ func _process(delta: float) -> void:
 				if choose_mode == "upgrade":
 					var neu := run.upgrade_chip(chip)
 					Sfx.play("evolve", 0.0)
-					_show_message("%s ist jetzt %s: %s." % [chip, neu, GameData.upgrade_text(chip)], type != "shop")
+					_show_message(T.t("%s ist jetzt %s: %s.") % [T.chip(chip), T.chip(neu), GameData.upgrade_text(chip)], type != "shop")
 				elif choose_mode == "copy":
 					run.deck.append(chip)
-					_show_message("Kopie erstellt: %s ist jetzt noch einmal in deinem Deck." % chip, true)
+					_show_message(T.t("Kopie erstellt: %s ist jetzt noch einmal in deinem Deck.") % T.chip(chip), true)
 				else:
 					run.remove_chip(chip)
-					_show_message("%s wurde aus deinem Deck entfernt." % chip, type != "shop")
+					_show_message(T.t("%s wurde aus deinem Deck entfernt.") % T.chip(chip), type != "shop")
 		State.MESSAGE:
 			if Input.is_action_just_pressed("confirm"):
 				Sfx.play("confirm")
@@ -217,19 +217,19 @@ func _draw() -> void:
 	draw_rect(Rect2(MON_X - 30, FEET_Y - 2, 60, 4), Color(0.05, 0.02, 0.12, 0.35))
 	_draw_sprite(run.form, MON_X, FEET_Y, false, {"bob": bob, "blink": blink})
 	_text(Vector2(8, 290), "HP %d/%d" % [run.hp, run.max_hp], 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, 144)
-	_text(Vector2(8, 304), "Fragmente %d" % run.frag, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, 144)
-	_text(Vector2(8, 318), "Deck %d Chips" % run.deck.size(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 144)
+	_text(Vector2(8, 304), T.t("Fragmente %d") % run.frag, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, 144)
+	_text(Vector2(8, 318), T.t("Deck %d Chips") % run.deck.size(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 144)
 	if not run.modules.is_empty():
 		var mw := minf(run.modules.size(), 9) * 15.0
 		_draw_module_row(run.modules, 80 - mw / 2.0, 326, 9)
 
 	var r := Rect2(160, 24, 460, 312)
 	_box(r, Color(GameData.COL.panel, 0.95), _type_col())
-	_text(r.position + Vector2(0, 28), _title().to_upper(), 16, _type_col(), HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	_text(r.position + Vector2(0, 28), T.t(_title()).to_upper(), 16, _type_col(), HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
 	match state:
 		State.MENU:
-			draw_multiline_string(font(), r.position + Vector2(24, 54), _intro(), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 4, GameData.COL.ink, wrap)
+			draw_multiline_string(font(), r.position + Vector2(24, 54), T.t(_intro()), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 4, GameData.COL.ink, wrap)
 			var o := _options()
 			# viele Einträge (Händler): enger stapeln, damit die Beschreibung unten frei bleibt
 			var step := 24 if o.size() <= 6 else 20
@@ -237,13 +237,13 @@ func _draw() -> void:
 			for i in o.size():
 				_option_row(Rect2(r.position.x + 60, y + i * step, r.size.x - 120, 17), o[i].label, i == sel, o[i].enabled)
 			if sel < o.size():
-				draw_multiline_string(font(), Vector2(r.position.x + 24, r.end.y - 40), o[sel].desc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 3, GameData.COL.muted, wrap)
+				draw_multiline_string(font(), Vector2(r.position.x + 24, r.end.y - 40), T.t(o[sel].desc), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 3, GameData.COL.muted, wrap)
 		State.REMOVE:
 			var q: String = {"copy": "Welchen Chip kopieren?", "upgrade": "Welchen Chip verbessern?"}.get(choose_mode, "Welchen Chip entfernen?")
 			_text(r.position + Vector2(0, 54), q, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 			if choose_mode == "upgrade" and sel < remove_list.size():
 				var cu: String = remove_list[sel]
-				_text(Vector2(r.position.x, r.end.y - 14), "%s > %s+: %s" % [cu, cu, GameData.upgrade_text(cu)], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+				_text(Vector2(r.position.x, r.end.y - 14), "%s > %s+: %s" % [T.chip(cu), T.chip(cu), GameData.upgrade_text(cu)], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 			# bis 10 Einträge einspaltig, sonst zweispaltig
 			var n := remove_list.size() + 1   # inkl. „Zurück“
 			var cols := 1 if n <= 10 else 2
@@ -257,10 +257,10 @@ func _draw() -> void:
 					_option_row(Rect2(cx, cy, cw, 16), "Zurück", i == sel, true)
 					continue
 				var c: String = remove_list[i]
-				_option_row(Rect2(cx, cy, cw, 16), "%d× %s" % [run.deck.count(c), c], i == sel, true, GameData.EL[GameData.chip(c).el])
+				_option_row(Rect2(cx, cy, cw, 16), "%d× %s" % [run.deck.count(c), T.chip(c)], i == sel, true, GameData.EL[GameData.chip(c).el])
 		State.MESSAGE:
-			draw_multiline_string(font(), r.position + Vector2(24, 120), message, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 5, GameData.COL.ink, wrap)
-			_text(Vector2(r.position.x, r.end.y - 20), "%s weiter" % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+			draw_multiline_string(font(), r.position + Vector2(24, 120), T.t(message), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 5, GameData.COL.ink, wrap)
+			_text(Vector2(r.position.x, r.end.y - 20), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 
 
 func _option_row(r: Rect2, label: String, active: bool, enabled: bool, mark := Color.TRANSPARENT) -> void:

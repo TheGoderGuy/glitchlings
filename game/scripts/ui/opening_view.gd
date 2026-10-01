@@ -69,9 +69,9 @@ func _text_time(p: Dictionary) -> float:
 	if p.id == "boot":
 		var n := 0
 		for l in BOOT_LINES:
-			n += l.length()
+			n += T.t(l).length()
 		return BOOT_TYPE_START + n / TYPE_SPEED
-	return 0.4 + p.text.length() / TYPE_SPEED
+	return 0.4 + T.t(p.text).length() / TYPE_SPEED
 
 
 ## Position eines Bildes im Stück "opening" (Welt beginnt bei 0 s)
@@ -180,7 +180,8 @@ func _draw_boot() -> void:
 	var y := 132.0
 	var budget := int(maxf(0.0, t - BOOT_TYPE_START) * TYPE_SPEED)
 	if t >= BOOT_TYPE_START:
-		for l in BOOT_LINES:
+		for l0 in BOOT_LINES:
+			var l := T.t(l0)
 			var s: String = l.substr(0, clampi(budget, 0, l.length()))
 			budget -= l.length()
 			_text(Vector2(x, y), "> " + s, 8, green, HORIZONTAL_ALIGNMENT_LEFT, -1, false)
