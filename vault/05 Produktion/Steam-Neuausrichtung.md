@@ -49,7 +49,8 @@ Switch ist vorerst gestrichen. Team: Produzent + Claude. Engine: **Godot 4**. Ke
 Siehe [[Tech Stack]]. Basisauflösung **640×360**, ganzzahlige Skalierung (1080p ×3, 1440p ×4, 4K ×6, Steam Deck ×2).
 
 ## Offene Punkte
-- [ ] Nutzungsrechte PixelLab für kommerzielle Nutzung klären + Steam-KI-Offenlegung vorbereiten
+- [x] Nutzungsrechte PixelLab geklärt (03.10.2026, Produzent): jede kommerzielle und nicht-kommerzielle Nutzung erlaubt
+- [ ] Steam-KI-Offenlegung vorbereiten (Content-Fragebogen: Grafiken mit PixelLab erzeugt)
 - [ ] Markenrecherche „Glitchlings“ (DPMA/EUIPO, Steam-Suche)
 - [ ] Musik & Sound: Wer macht das? (Auftrag, Asset-Pakete, lizenzfreie Musik) – bis dahin 4 selbst synthetisierte Chiptune-Platzhalter (`game/scripts/audio/music_synth.gd`), jederzeit durch WAV/OGG gleichen Namens in `game/assets/music/` ersetzbar
 - [ ] Gewerbe anmelden, bevor die Steam-Seite live geht (Steamworks braucht Steuer-/Bankdaten)

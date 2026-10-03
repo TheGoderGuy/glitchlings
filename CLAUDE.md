@@ -134,7 +134,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
   3. Augen suchen: `node eyes.js <png>` (Vorschlag, Ergebnis immer visuell prüfen; bei Glubschaugen Fellfarbe per fx,fy vorgeben)
   4. `node png2spr.js <png> <Schlüssel> --blink "x0,y0,x1,y1;…" --insert` → Eintrag + Blinzel-PNG (ein Rechteck je Auge)
   5. `node dark_outline.js <Schlüssel>` (Kontur schwarz schließen) und `node spr2png.js <Schlüssel>` (PNGs nach `assets/sprites/`)
-- Nutzungsrechte von PixelLab für kommerzielle Nutzung vor dem Launch prüfen lassen.
+- **Nutzungsrechte PixelLab geklärt (03.10.2026, Produzent):** PixelLab erlaubt jede kommerzielle und nicht-kommerzielle Nutzung der erzeugten Bilder. Für Steam bleibt nur die Offenlegung KI-erzeugter Inhalte im Content-Fragebogen.
 
 ## Qualitätsregeln für Änderungen am Prototyp
 - Godot-Texte zweisprachig: neue zusammengesetzte Texte in `T.t("…") % …`, danach `node game/tools/lang_keys.js --missing` und Übersetzung in `scripts/data/lang_en_*.gd` eintragen (Test „Englisch …“ prüft das).

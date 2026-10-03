@@ -53,4 +53,5 @@ Alle Bilder liegen in `assets/steam/`, die Übersicht in `assets/steam/_uebersic
 - Mindestens 5 Spielszenen-Screenshots in 1920 × 1080 (= 640 × 360 × 3, passt genau zu unserer Basisauflösung).
 - Optional: Seitenhintergrund 1438 × 810. Ohne ihn erzeugt Steam ihn aus dem letzten Screenshot.
 - Die .exe-Datei mit dem neuen Symbol ist noch nicht gebaut. Das passiert beim nächsten Tester-Zip, und nur dann, wenn der Produzent es sagt.
-- Nutzungsrechte von PixelLab für kommerzielle Nutzung vor dem Launch prüfen. Das gilt auch für Logo und Kapseln.
+- ~~Nutzungsrechte von PixelLab prüfen~~ geklärt am 03.10.2026: PixelLab erlaubt jede kommerzielle und nicht-kommerzielle Nutzung, also auch für Logo und Kapseln.
+- Bei Steam im Content-Fragebogen angeben, dass Grafiken mit KI-Unterstützung (PixelLab) erzeugt wurden.
