@@ -1,5 +1,5 @@
 // Baut game/assets/logo/digiei.ico aus den Pixel-Fassungen des Digi-Eis (03.10.2026).
-// Enthält 32, 64, 128 und 256 px (256 = 128 ganzzahlig verdoppelt), jeweils als PNG-Eintrag.
+// Enthält 16, 32, 64, 128 und 256 px (256 = 128 ganzzahlig verdoppelt), jeweils als PNG-Eintrag.
 // Aufruf: node tools/logo/make_ico.js
 const fs = require("fs");
 const path = require("path");
@@ -17,7 +17,7 @@ function scale(png, k) {
 }
 
 const read = (f) => PNG.sync.read(fs.readFileSync(path.join(DIR, f)));
-const images = [read("digiei_32.png"), read("digiei_64.png"), read("digiei_128.png"), scale(read("digiei_128.png"), 2)]
+const images = [read("digiei_16.png"), read("digiei_32.png"), read("digiei_64.png"), read("digiei_128.png"), scale(read("digiei_128.png"), 2)]
   .map((p) => ({ size: p.width, data: PNG.sync.write(p) }));
 
 const head = Buffer.alloc(6 + 16 * images.length);
