@@ -38,7 +38,7 @@ Beide Startdecks haben 6 Angriffs- und 2 Support-Chips. Je Entwicklungsrichtung 
 Monsterdex: **102 Formen, 13 Linien.** Eier: 13 Babys möglich.
 
 ## Idle-Animationen
-Alle 14 Formen haben eine Idle-Animation, je 6 Bilder. Davon sind 3 Animationen neu generiert oder gekürzt:
+Alle 14 Formen haben eine Idle-Animation, je 6 Bilder. Nachgebessert wurden:
 - **Knisterli:** Die erste Fassung hatte fast die ganze Zeit die Augen zu und sah aus, als würde er niesen. Neu generiert mit „eyes stay open“.
 - **Lutrion, Flammschwinge, Heliopsitta:** Nur die ruhige Hälfte wird vor und zurück abgespielt. Bei Lutrion verschwanden die Leuchtlinien, Flammschwinge spuckte kurz Feuer, Heliopsitta leuchtete zu grell auf.
 - **Bachli:** Läuft mit den Bildern 0, 1, 2, 3, 2, 1, weil Bild 5 das Gesicht verändert.
