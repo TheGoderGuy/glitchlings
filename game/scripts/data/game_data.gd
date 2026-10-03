@@ -67,11 +67,12 @@ const CHIPS := {
 ## ---------- Verbesserte Chips (30.09.2026) ----------
 ## „Glutball+“ ist die verbesserte Fassung von „Glutball“: +30 % Schaden (auf 5 gerundet), 20 % kürzere Ladezeit.
 ## Chips ohne Schaden (Schilde, Heilung …) laden schneller und wirken 30 % stärker (k).
-## ---------- Rollen-Slots (01.10.2026, Spieltest-Feedback) ----------
-## Drei Slots mit fester Rolle: 0 Angriff (J / □), 1 Schutz (K / ✕), 2 Hilfe (L / ○: Heilung und Unterstützung).
-## Jeder Slot zieht aus seinem eigenen Teil des Decks.
-const ROLE_NAMES := ["Angriff", "Schutz", "Hilfe"]
-const ROLE_COL := ["#FF7A93", "#58B7FF", "#6EE7C5"]
+## ---------- Rollen-Slots (01.10.2026, Spieltest-Feedback; 03.10.2026 auf 2 + 1 umgestellt) ----------
+## Zwei Angriffs-Slots (J / □ und K / ✕) teilen sich den Angriffsstapel, der Support-Slot (L / ○) zieht
+## Schutz und Heilung aus dem Support-Stapel. Rolle = Stapel: 0 Angriff, 1 Support.
+const ROLE_NAMES := ["Angriff", "Support"]
+const ROLE_COL := ["#FF7A93", "#6EE7C5"]
+const SLOT_ROLE := [0, 0, 1]
 const ROLE_DEF := ["Blubberschild", "Firewall", "Hitzeschild", "Konter", "Kopierschutz", "Nebel", "Sprungantrieb",
 	"Blendgranate", "Blackout", "Eisfeld", "Strudel"]
 const ROLE_SUP := ["Heilpatch", "Neustart", "Defrag", "Ladungsfeld", "Portscan", "Übertakten"]
@@ -79,7 +80,7 @@ const ROLE_SUP := ["Heilpatch", "Neustart", "Defrag", "Ladungsfeld", "Portscan",
 
 static func role(id: String) -> int:
 	var b := base_chip(id)
-	return 1 if ROLE_DEF.has(b) else (2 if ROLE_SUP.has(b) else 0)
+	return 1 if ROLE_DEF.has(b) or ROLE_SUP.has(b) else 0
 
 
 ## Kartenbild im Kampf: [Trefferbild oder Symbol, Kurzwirkung]. Trefferbilder (3×3 Gegnerfeld):

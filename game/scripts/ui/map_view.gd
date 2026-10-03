@@ -272,21 +272,21 @@ func _draw_deck_tip() -> void:
 	_box(B, Color(GameData.COL.panel, 0.97), GameData.COL.sun)
 	_text(Vector2(B.position.x, B.position.y + 22), "Dein Deck", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, true)
 	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
-	draw_multiline_string(font(), Vector2(B.position.x + 24, B.position.y + 40), T.t("Das sind deine Chips. Im Kampf hast du drei Slots, jeder mit eigener Rolle und eigenem Stapel. Nach jedem Einsatz kommt der nächste Chip aus diesem Stapel."), HORIZONTAL_ALIGNMENT_CENTER, B.size.x - 48, tsz(8), 3, GameData.COL.ink, wrap)
+	draw_multiline_string(font(), Vector2(B.position.x + 24, B.position.y + 40), T.t("Das sind deine Chips. Im Kampf hast du zwei Angriffs-Slots und einen Support-Slot für Schutz und Heilung. Nach jedem Einsatz kommt der nächste Chip aus dem passenden Stapel."), HORIZONTAL_ALIGNMENT_CENTER, B.size.x - 48, tsz(8), 3, GameData.COL.ink, wrap)
 	var pad: bool = InputSetup.pad
-	for ro in 3:
-		var cx := B.position.x + 20 + ro * 176
+	for ro in 2:
+		var cx := B.position.x + 24 + ro * 262
 		var col := Color(GameData.ROLE_COL[ro])
-		var key: String = (InputSetup.btn(["X", "A", "B"][ro]) if pad else ["J", "K", "L"][ro])
-		_box(Rect2(cx, B.position.y + 74, 168, 180), Color(GameData.COL.bg2, 0.9), col.darkened(0.3))
-		_text(Vector2(cx, B.position.y + 90), "%s  [%s]" % [T.t(GameData.ROLE_NAMES[ro]), key], 8, col, HORIZONTAL_ALIGNMENT_CENTER, 168, true, true)
+		var key: String = ((InputSetup.btn("X") + " " + InputSetup.btn("A")) if pad else "J K") if ro == 0 else (InputSetup.btn("B") if pad else "L")
+		_box(Rect2(cx, B.position.y + 74, 250, 180), Color(GameData.COL.bg2, 0.9), col.darkened(0.3))
+		_text(Vector2(cx, B.position.y + 90), "%s  [%s]" % [T.t(GameData.ROLE_NAMES[ro]), key], 8, col, HORIZONTAL_ALIGNMENT_CENTER, 250, true, true)
 		var counts := {}
 		for c in run.deck:
 			if GameData.role(c) == ro:
 				counts[c] = counts.get(c, 0) + 1
 		var y := B.position.y + 110
 		if counts.is_empty():
-			_text(Vector2(cx, y), "(keiner)", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 168)
+			_text(Vector2(cx, y), "(keiner)", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 250)
 		for c in counts:
 			if y > B.position.y + 240:
 				break

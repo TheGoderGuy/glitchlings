@@ -39,8 +39,7 @@ func update(st: BattleState, dt: float) -> void:
 			if st.e.max - st.e.hp > last_hits:
 				step = Step.SLOTS
 				# Schutz- und Hilfe-Slot sofort bereit machen
-				for k in [1, 2]:
-					st.hand[k].rem = 0.0
+				st.hand[2].rem = 0.0
 		Step.SLOTS:
 			if st.last_chip != "" and GameData.role(st.last_chip) > 0:
 				step = Step.DODGE
@@ -82,7 +81,7 @@ func texts(pad: bool) -> Array:
 		Step.CHIP:
 			return ["Chip spielen", T.t("Drück %s für deinen Angriffs-Chip. Die meisten treffen deine Reihe: Stell dich in die Reihe des Gegners!") % (InputSetup.btn("X") if pad else "J")]
 		Step.SLOTS:
-			return ["Schutz und Hilfe", T.t("Jeder Slot hat eine Rolle und seinen eigenen Stapel. Probier %s (Schutz) oder %s (Hilfe)!") % [InputSetup.btn("A") if pad else "K", InputSetup.btn("B") if pad else "L"]]
+			return ["Support", T.t("Zwei Angriffs-Slots (%s, %s) und ein Support-Slot (%s) für Schutz und Heilung. Probier jetzt %s!") % [InputSetup.btn("X") if pad else "J", InputSetup.btn("A") if pad else "K", InputSetup.btn("B") if pad else "L", InputSetup.btn("B") if pad else "L"]]
 		Step.DODGE:
 			return [T.t("Ausweichen (%d/2)") % dodges, "Rote Felder mit „!“ werden gleich getroffen. Geh rechtzeitig runter!"]
 		Step.SPECIAL:

@@ -15,11 +15,11 @@ var rng: RandomNumberGenerator
 var t := 0.0
 var p := {}
 var e := {}
-## Rollen-Slots (01.10.2026): jeder Slot (0 Angriff, 1 Schutz, 2 Hilfe) hat eigenen Zieh- und Ablagestapel
-var piles: Array = [[], [], []]
-var discs: Array = [[], [], []]
+## Rollen-Slots: Stapel 0 = Angriff (Slots 0 und 1), Stapel 1 = Support (Slot 2), siehe GameData.SLOT_ROLE
+var piles: Array = [[], []]
+var discs: Array = [[], []]
 var hand: Array = []
-const RESHUFFLE := 3.0     # Ist der Stapel eines Slots leer, kostet das Neumischen zusätzliche Ladezeit
+const RESHUFFLE := 3.0     # Ist der Support-Stapel leer, kostet das Neumischen zusätzliche Ladezeit (Heilung nicht zu oft)
 var _reshuffled := false
 var proj: Array = []
 var warns: Array = []
@@ -92,8 +92,9 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 		"phase": 1, "sp_t": def.get("sp_first", 5.0), "sp_i": 0}
 	for c in run.deck:
 		piles[GameData.role(c)].append(c)
+	for k in 2:
+		piles[k] = _shuffle(piles[k])
 	for i in 3:
-		piles[i] = _shuffle(piles[i])
 		hand.append({"chip": _draw_one(i), "rem": 0.0, "max": 1.0, "deny": 0.0, "shuf": false})
 	if mon.passive == "Katzenreflex":
 		reflex = 2 if run.stage >= 3 else 1
@@ -145,26 +146,28 @@ func _shuffle(a: Array) -> Array:
 
 ## Nächsten Chip für Slot i ziehen; ist sein Stapel leer, wird die Ablage neu gemischt (merkt sich _reshuffled)
 func _draw_one(i: int) -> String:
+	var k: int = GameData.SLOT_ROLE[i]
 	_reshuffled = false
-	if piles[i].is_empty() and not discs[i].is_empty():
-		piles[i] = _shuffle(discs[i])
-		discs[i] = []
-		_reshuffled = true
-	if piles[i].is_empty():
+	if piles[k].is_empty() and not discs[k].is_empty():
+		piles[k] = _shuffle(discs[k])
+		discs[k] = []
+		_reshuffled = k == 1   # nur der Support-Stapel kostet Zeit beim Mischen
+	if piles[k].is_empty():
 		return ""
-	return piles[i].pop_back()
+	return piles[k].pop_back()
 
 
 func next_chip(i: int) -> String:
-	return piles[i].back() if not piles[i].is_empty() else ""
+	var k: int = GameData.SLOT_ROLE[i]
+	return piles[k].back() if not piles[k].is_empty() else ""
 
 
 func pile_count() -> int:
-	return piles[0].size() + piles[1].size() + piles[2].size()
+	return piles[0].size() + piles[1].size()
 
 
 func disc_count() -> int:
-	return discs[0].size() + discs[1].size() + discs[2].size()
+	return discs[0].size() + discs[1].size()
 
 
 # ---------- Eingaben ----------

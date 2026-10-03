@@ -8,7 +8,7 @@ const MapView := preload("res://scripts/ui/map_view.gd")
 
 const PAGES := [
 	{"title": "Das Spielfeld", "text": "Jede Seite hat 3 × 3 Felder: links deine, rechts die des Gegners. Du bewegst dich nur auf deinen Feldern, der Gegner nur auf seinen.\n\nDie meisten Angriffe fliegen über deine Reihe. Stell dich also in dieselbe Reihe wie der Gegner! Manche Chips treffen stattdessen eine Spalte, den Nahbereich oder sogar das ganze Feld.\n\nBewegen: {move}."},
-	{"title": "Chips", "text": "Du hast drei Slots ({chips}), jeder mit eigener Rolle: Angriff, Schutz und Hilfe (Heilung und Unterstützung). Jeder Slot zieht aus seinem Teil deines Decks. Nach dem Einsatz kommt der nächste Chip und lädt auf – drückst du zu früh, passiert nichts.\n\nÜber jeder Karte steht, welcher Chip als Nächstes kommt. Ist ein Stapel leer, wird er neu gemischt, das dauert etwas länger.\n\nDas Bild oben rechts auf der Karte zeigt, wo ein Angriff trifft. Verbesserte Chips (z. B. Glutball+) machen mehr Schaden und laden schneller."},
+	{"title": "Chips", "text": "Du hast drei Slots ({chips}): zwei für Angriffe und einen Support-Slot für Schutz und Heilung. Die Angriffs-Slots ziehen aus deinem Angriffsstapel, der Support-Slot aus Schilden, Heilung und Hilfen. Nach dem Einsatz kommt der nächste Chip und lädt auf – drückst du zu früh, passiert nichts.\n\nÜber den Karten steht, welcher Chip als Nächstes kommt. Ist der Support-Stapel leer, wird er neu gemischt, das dauert etwas länger.\n\nDas Bild oben rechts auf der Karte zeigt, wo ein Angriff trifft. Verbesserte Chips (z. B. Glutball+) machen mehr Schaden und laden schneller."},
 	{"title": "Ausweichen", "text": "Rote Felder mit „!“ werden gleich getroffen – geh rechtzeitig runter!\n\nGoldene Felder mit „!!“ kündigen einen Großangriff von Wächtern und Bossen an. Weichst du allen Feldern aus, ist der Gegner kurz überlastet: Er kann nichts tun, und deine Signatur-Leiste lädt.\n\nLava brennt, Schleim macht dich langsam. Bitmilben und Glitch-Sporen platzen nach kurzer Zeit – tritt drauf, bevor es knallt!"},
 	{"title": "Elemente", "text": "Feuer schlägt Code, Code schlägt Wasser, Wasser schlägt Feuer. Elektro und Virus schlagen sich gegenseitig. Neutral ist weder stark noch schwach.\n\nEin Treffer mit Element-Vorteil macht 1,5-fachen Schaden, mit Nachteil nur 0,75-fachen.\n\nDas Element des Gegners steht oben rechts im Kampf. Jede Zone verrät bei der Zonenwahl, welches Element dort hilft."},
 	{"title": "Zustände und Kombos", "text": "Brand und Gift verursachen Schaden über Zeit. Eingefroren oder betäubt kann der Gegner kurz nichts tun, langsam bewegt und greift er halb so schnell an.\n\nKombos machen Chips richtig stark: Feuersbrunst trifft brennende Gegner doppelt, Datenfresser vergiftete, Frostsplitter eingefrorene sogar dreifach.\n\nIn der Chipwahl zeigt „Kombo mit …“, welcher Chip zu deinem Deck, deinen Modulen oder deinem Passiv passt."},
@@ -150,7 +150,7 @@ func _illu_field(A: Rect2) -> void:
 
 
 func _illu_chips(A: Rect2) -> void:
-	var names := ["Glutball+", "Firewall", "Heilpatch"]
+	var names := ["Glutball+", "Pixelstrahl", "Heilpatch"]
 	var pad: bool = InputSetup.pad
 	var keys := [InputSetup.btn("X"), InputSetup.btn("A"), InputSetup.btn("B")] if pad else ["J", "K", "L"]
 	for i in 3:
@@ -159,9 +159,9 @@ func _illu_chips(A: Rect2) -> void:
 		var el: Color = GameData.EL[ch.el]
 		var charge := 1.0 if i != 1 else fmod(anim_t * 0.4, 1.0)
 		var ready := charge >= 1.0
-		var rc := Color(GameData.ROLE_COL[i])
+		var rc := Color(GameData.ROLE_COL[GameData.SLOT_ROLE[i]])
 		_box(r, GameData.COL.panel if ready else GameData.COL.bg2, rc if ready else GameData.COL.line)
-		_text(r.position + Vector2(0, -2), T.t(GameData.ROLE_NAMES[i]), 8, rc, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 4, true, true)
+		_text(r.position + Vector2(0, -2), T.t(GameData.ROLE_NAMES[GameData.SLOT_ROLE[i]]), 8, rc, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 4, true, true)
 		draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(3, r.size.y - 2)), el)
 		var g := Rect2(r.position + Vector2(8, 6), Vector2(15, 14))
 		_box(g, GameData.COL.dark, el)
@@ -172,7 +172,7 @@ func _illu_chips(A: Rect2) -> void:
 			_text(r.position + Vector2(8, 34), "bereit", 8, rc, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 16)
 		else:
 			_bar(Rect2(r.position + Vector2(6, r.size.y - 8), Vector2(r.size.x - 12, 5)), charge, el.darkened(0.2))
-	_text(Vector2(A.position.x + 14, A.position.y + 204), "Angriff | Schutz | Hilfe", 8, GameData.COL.muted)
+	_text(Vector2(A.position.x + 14, A.position.y + 204), "Angriff | Angriff | Support", 8, GameData.COL.muted)
 
 
 func _illu_dodge(A: Rect2) -> void:

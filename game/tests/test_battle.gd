@@ -121,20 +121,28 @@ func test_hand() -> void:
 	var st := fresh()
 	check(st.hand.size() == 3 and st.pile_count() == 5, "3 Chips auf der Hand, 5 im Stapel")
 	# Rollen-Slots: jeder Slot hält einen Chip seiner Rolle (Pixmiez: Angriff, Firewall, Heilpatch)
-	check(GameData.role(st.hand[0].chip) == 0 and st.hand[1].chip == "Firewall" and st.hand[2].chip == "Heilpatch", "Slots: Angriff, Schutz, Hilfe")
+	check(GameData.role(st.hand[0].chip) == 0 and GameData.role(st.hand[1].chip) == 0 and st.hand[2].chip in ["Firewall", "Heilpatch"], "Slots: Angriff, Angriff, Support")
 	# Der einzige Schutz-Chip kommt nach dem Neumischen zurück, mit Strafzeit
 	var stx := fresh()
-	stx.use_slot(1)
-	check(stx.hand[1].chip == "Firewall" and stx.hand[1].shuf and is_equal_approx(stx.hand[1].max, GameData.CHIPS.Firewall.cd + BattleState.RESHUFFLE), "Leerer Slot-Stapel: neu mischen kostet %.0f s extra" % BattleState.RESHUFFLE)
+	stx.use_slot(2)
+	var no_wait: bool = not stx.hand[2].shuf
+	stx.hand[2].rem = 0.0
+	stx.use_slot(2)
+	check(no_wait and stx.hand[2].shuf and is_equal_approx(stx.hand[2].max, GameData.chip(stx.hand[2].chip).cd + BattleState.RESHUFFLE), "Leerer Support-Stapel: neu mischen kostet %.0f s extra" % BattleState.RESHUFFLE)
+	var sta := fresh()
+	for n in 8:
+		sta.hand[n % 2].rem = 0.0
+		sta.use_slot(n % 2)
+	check(sta.hand.slice(0, 2).all(func(h): return GameData.role(h.chip) == 0 and not h.shuf), "Angriffs-Slots teilen sich den Stapel, Mischen ohne Wartezeit")
 	# Startdecks: alle Linien haben jede Rolle mindestens einmal
 	var roles_ok := true
 	for m in GameData.MONS:
-		var rs := [0, 0, 0]
+		var rs := [0, 0]
 		for c in GameData.MONS[m].deck:
 			rs[GameData.role(c)] += 1
 		if rs.has(0):
 			roles_ok = false
-	check(roles_ok, "Jedes Startdeck hat Angriff, Schutz und Hilfe")
+	check(roles_ok, "Jedes Startdeck hat Angriffs- und Support-Chips")
 	check(GameData.chip_short("Pixelstrahl") == "20" and GameData.chip_short("Firewall") == "Schild 4 s" and GameData.chip_short("Konter") == "Konter 35" and GameData.chip_short("Heilpatch+").begins_with("Heilt"), "Kurzwirkung auf den Karten")
 	var all_cards := true
 	for c in GameData.CHIPS:
@@ -773,10 +781,10 @@ func test_tutorial() -> void:
 	for k in 40:
 		st.update(1.0 / 60.0)
 		tut.update(st, 1.0 / 60.0)
-	check(tut.step == Tutorial.Step.SLOTS and st.hand[1].rem == 0.0, "Tutorial: Treffer mit dem Chip → Schutz und Hilfe ausprobieren")
-	st.use_slot(1)
+	check(tut.step == Tutorial.Step.SLOTS and st.hand[2].rem == 0.0, "Tutorial: Treffer mit dem Chip → Support-Slot ausprobieren")
+	st.use_slot(2)
 	tut.update(st, 1.0 / 60.0)
-	check(tut.step == Tutorial.Step.DODGE, "Tutorial: Schutz-Chip gespielt → Ausweichen üben")
+	check(tut.step == Tutorial.Step.DODGE, "Tutorial: Support-Chip gespielt → Ausweichen üben")
 	st.e.frozen = 0.0
 	var bot := BattleBot.new(0.0)
 	var t := 0.0
@@ -1645,8 +1653,8 @@ func test_modules() -> void:
 ## Neue Chips (29.09.2026): Kombos prüfen
 func _chip(st: BattleState, id: String) -> void:
 	st.hand = [{"chip": id, "rem": 0.0, "max": 1.0, "queued": false}, {"chip": "", "rem": 0.0, "max": 1.0, "queued": false}, {"chip": "", "rem": 0.0, "max": 1.0, "queued": false}]
-	st.piles = [[], [], []]
-	st.discs = [[], [], []]
+	st.piles = [[], []]
+	st.discs = [[], []]
 	st.use_slot(0)
 
 

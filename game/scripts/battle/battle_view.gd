@@ -720,23 +720,24 @@ func _draw_hand() -> void:
 	_text(Vector2(HAND_X + 3 * (CARD_W + 6), 302), (InputSetup.btn("Start") if InputSetup.pad else "Esc") + ": " + T.t("Pause"), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 130)
 	for i in 3:
 		var s: Dictionary = st.hand[i]
-		var rc := Color(GameData.ROLE_COL[i])
-		# Kopfzeile: Rolle links, nächster Chip aus diesem Stapel rechts
+		var ro: int = GameData.SLOT_ROLE[i]
+		var rc := Color(GameData.ROLE_COL[ro])
+		# Kopfzeile: Rolle links, nächster Chip aus dem Stapel rechts (beim Angriffspaar nur einmal, über dem zweiten Slot)
 		var x0 := HAND_X + i * (CARD_W + 6)
-		_text(Vector2(x0 + 1, 302), T.t(GameData.ROLE_NAMES[i]), 8, rc, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-		var nx := st.next_chip(i)
+		_text(Vector2(x0 + 1, 302), T.t(GameData.ROLE_NAMES[ro]), 8, rc, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+		var nx := st.next_chip(i) if i > 0 else ""
 		if nx != "":
 			_text(Vector2(x0, 302), "> " + T.chip(nx), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, CARD_W - 1)
 		# Stapel hinter der Karte (bis zu zwei Kartenrücken)
 		var r := Rect2(x0, HAND_Y, CARD_W, CARD_H)
-		for k in range(mini(st.piles[i].size(), 2), 0, -1):
+		for k in range(mini(st.piles[ro].size(), 2) if i > 0 else 0, 0, -1):
 			_box(Rect2(r.position + Vector2(2 * k, -2 * k), r.size), GameData.COL.bg2.darkened(0.2 * k), rc.darkened(0.55))
 		# neue Karte gleitet vom Stapel herein
 		var ka: float = card_t[i] / 0.18
 		r.position += Vector2(roundf(4.0 * ka), roundf(-4.0 * ka))
 		if s.chip == "":
 			_box(r, GameData.COL.bg2, GameData.COL.line)
-			draw_multiline_string(font(), r.position + Vector2(8, 18), T.t("Kein %s-Chip im Deck") % T.t(GameData.ROLE_NAMES[i]), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+			draw_multiline_string(font(), r.position + Vector2(8, 18), T.t("Kein %s-Chip im Deck") % T.t(GameData.ROLE_NAMES[ro]), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 2, GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 			continue
 		var ch: Dictionary = GameData.chip(s.chip)
 		var el: Color = GameData.EL[ch.el]
@@ -842,10 +843,10 @@ func _draw_ready() -> void:
 ## Erklärkasten über der Karte von Slot i (Beschreibung des Chips)
 func _draw_chip_tip(i: int, id: String, is_new := true) -> void:
 	var ch: Dictionary = GameData.chip(id)
-	var rc := Color(GameData.ROLE_COL[i])
+	var rc := Color(GameData.ROLE_COL[GameData.SLOT_ROLE[i]])
 	var R := Rect2(HAND_X + i * (CARD_W + 6), 230, CARD_W, 64)
 	_box(R, Color(GameData.COL.panel, 0.96), rc)
-	var head := (T.t("Neu:") + " " + T.chip(id)) if is_new else T.t(GameData.ROLE_NAMES[i]) + " · " + T.t(ch.el)
+	var head := (T.t("Neu:") + " " + T.chip(id)) if is_new else T.t(GameData.ROLE_NAMES[GameData.SLOT_ROLE[i]]) + " · " + T.t(ch.el)
 	_text(R.position + Vector2(6, 12), head, 8, rc, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	draw_multiline_string(font(), R.position + Vector2(6, 25), T.t(ch.desc), HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 12, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	# Pfeil zur Karte
@@ -955,7 +956,7 @@ func _draw_pick() -> void:
 		var ro := GameData.role(k)
 		_text(c.position + Vector2(0, 38), "%s · %s" % [T.t(ch.el), T.t(ch.rar)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		# Slot, in den der Chip kommt
-		_text(c.position + Vector2(0, 14), T.t("%s-Slot (%s)") % [T.t(GameData.ROLE_NAMES[ro]), _glyph_chip(ro)], 8, Color(GameData.ROLE_COL[ro]), HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
+		_text(c.position + Vector2(0, 14), (T.t("Angriffs-Slot (%s)") % (_glyph_chip(0) + "/" + _glyph_chip(1))) if ro == 0 else (T.t("Support-Slot (%s)") % _glyph_chip(2)), 8, Color(GameData.ROLE_COL[ro]), HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		var stats: String = T.t(ch.cat) + (" · %d" % ch.dmg if ch.dmg > 0 else "") + " · %ss" % T.dec(ch.cd)
 		_text(c.position + Vector2(0, 52), stats, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 		draw_multiline_string(font(), c.position + Vector2(8, 70), T.t(ch.desc), HORIZONTAL_ALIGNMENT_CENTER, c.size.x - 16, tsz(8), 3, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
