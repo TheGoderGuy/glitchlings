@@ -36,7 +36,8 @@ tags: [produktion, kampf, ux, spieltest, godot]
 - Handbuch-Seite „Chips“ neu geschrieben.
 
 ## Entschleunigen
-- **Bereit-Pause** vor jedem Kampf (auch nach Boss-Intros): Das Spiel steht, über jeder Karte und über der Signatur steht ihre Beschreibung. Mit Bestätigen oder einer Chip-Taste geht es los.
+- **Bereit-Pause** (auch nach Boss-Intros): Das Spiel steht, über jeder Karte und über der Signatur steht ihre Beschreibung. Mit Bestätigen oder einer Chip-Taste geht es los.
+  **Seit 03.10.2026 nur noch, wenn auf der Starthand ein unbekannter Chip liegt.** Der Produzent fand die Pause vor jedem Kampf zu viel. Mit bekannten Chips startet der Kampf sofort (`_needs_ready`).
 - **Neue Chips** werden einmal pro Spielstand erklärt: Kommt ein unbekannter Chip auf die Hand, läuft das Spiel 2,6 s in Zeitlupe (30 %), darüber erscheint „Neu: …“ mit der Beschreibung (`seen_chips` im Spielstand).
 
 ## Tests (287)

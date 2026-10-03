@@ -1351,6 +1351,7 @@ func test_boss_intro() -> void:
 	var run := RunState.new("Pixmiez", 3)
 	var bv = load("res://scenes/battle.tscn").instantiate()
 	add_child(bv)
+	SaveGame.data["seen_chips"] = []   # unbekannte Chips: Bereit-Pause kommt
 	bv.setup(run, run.foe_for({"type": "boss"}), "boss")
 	check(bv.mode == bv.Mode.INTRO, "Bosskampf beginnt mit dem Intro")
 	var hp0: int = run.hp
@@ -1388,6 +1389,15 @@ func test_boss_intro() -> void:
 	await get_tree().process_frame
 	check(bv3.mode == bv3.Mode.FIGHT, "Bestätigen startet den Kampf")
 	bv3.queue_free()
+	# Bekannte Chips: keine Bereit-Pause, der Kampf startet sofort
+	var bv4 = load("res://scenes/battle.tscn").instantiate()
+	add_child(bv4)
+	SaveGame.data["seen_chips"] = GameData.CHIPS.keys()
+	var r4 := RunState.new("Pixmiez", 6)
+	bv4.setup(r4, r4.foe_for({"type": "fight"}), "fight")
+	check(bv4.mode == bv4.Mode.FIGHT, "Nur bekannte Chips auf der Hand: Kampf startet ohne Bereit-Pause")
+	bv4.queue_free()
+	SaveGame.data["seen_chips"] = []
 	Music.stop()
 
 

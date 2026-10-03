@@ -81,7 +81,7 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 		_set_mode(Mode.INTRO)
 	else:
 		Music.play(Music.zone_key("battle", run.map.zone))
-		_set_mode(Mode.FIGHT if skip_ready else Mode.READY)
+		_set_mode(Mode.READY if _needs_ready() else Mode.FIGHT)
 	for i in 3:
 		prev_chips[i] = st.hand[i].chip
 
@@ -851,6 +851,18 @@ func _draw_chip_tip(i: int, id: String, is_new := true) -> void:
 		draw_rect(Rect2(R.get_center().x - 4 + k, R.end.y + k, 9 - k * 2, 1), rc)
 
 
+## Bereit-Pause nur, wenn auf der Starthand ein Chip liegt, den der Spieler noch nicht kennt
+## (Produzent 03.10.2026: vor jedem Kampf war zu viel)
+func _needs_ready() -> bool:
+	if skip_ready:
+		return false
+	var seen: Array = SaveGame.data.get("seen_chips", [])
+	for s in st.hand:
+		if s.chip != "" and not seen.has(GameData.base_chip(s.chip)):
+			return true
+	return false
+
+
 ## Gesehene Chips merken (Erklärung erscheint pro Spielstand nur einmal)
 func _mark_seen_hand() -> void:
 	for s in st.hand:
@@ -1139,7 +1151,7 @@ func _start_boss_fight() -> void:
 	if Music.current != _boss_track():
 		Music.play(_boss_track())
 	st.shake = 0.0
-	_set_mode(Mode.FIGHT if skip_ready else Mode.READY)
+	_set_mode(Mode.READY if _needs_ready() else Mode.FIGHT)
 
 
 func _draw_boss_intro() -> void:
