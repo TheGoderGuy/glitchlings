@@ -11,6 +11,8 @@ var sel := 0
 var glitch_t := 0.0
 var glitch_off := Vector2i.ZERO
 var reset_armed := false
+## Bildmarke „Digi-Ei“ (03.10.2026), links neben dem Schriftzug
+const LOGO_EGG := preload("res://assets/logo/digiei_64.png")
 
 
 func _main_items() -> Array:
@@ -161,13 +163,17 @@ func _draw() -> void:
 	var logo := "GLITCHLINGS"
 	var y := 92.0
 	var jitter := Vector2(glitch_off) if glitch_t < 0.15 else Vector2.ZERO
-	draw_set_transform(Vector2(0, 0), 0, Vector2(2, 2))
 	var f := font(true, 24)
+	# Ei + Schriftzug zusammen mittig: Ei 64 px, 4 px Abstand, Schrift doppelt groß
+	var tw := roundi(f.get_string_size(logo, HORIZONTAL_ALIGNMENT_LEFT, -1, 24).x) * 2
+	var lx := roundi((W - 64 - 4 - tw) / 2.0)
+	draw_texture(LOGO_EGG, Vector2(lx, y - 52))
+	draw_set_transform(Vector2(lx + 68, 0), 0, Vector2(2, 2))
 	var lp := Vector2(0, y / 2)
-	draw_string(f, lp + Vector2(-1, 0) + jitter, logo, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, Color("#4CC3F0", 0.8))
-	draw_string(f, lp + Vector2(1, 0) - jitter, logo, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, Color("#FF5470", 0.8))
-	draw_string_outline(f, lp, logo, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, 4, GameData.COL.dark)
-	draw_string(f, lp, logo, HORIZONTAL_ALIGNMENT_CENTER, W / 2.0, 24, GameData.COL.ink)
+	draw_string(f, lp + Vector2(-1, 0) + jitter, logo, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color("#4CC3F0", 0.8))
+	draw_string(f, lp + Vector2(1, 0) - jitter, logo, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, Color("#FF5470", 0.8))
+	draw_string_outline(f, lp, logo, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, 4, GameData.COL.dark)
+	draw_string(f, lp, logo, HORIZONTAL_ALIGNMENT_LEFT, -1, 24, GameData.COL.ink)
 	draw_set_transform(Vector2.ZERO)
 	_text(Vector2(0, 114), "Brüten. Fusionieren. Prägen.", 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if SaveGame.game_cleared():
