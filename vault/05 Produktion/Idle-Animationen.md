@@ -3,7 +3,7 @@ tags: [produktion, grafik, godot]
 ---
 # Idle-Animationen (30.09.2026)
 
-Alle **113 Figuren** haben eine Idle-Animation: 88 Glitchling-Formen und 25 Gegner, Wächter und Bosse.
+Alle **127 Figuren** haben eine Idle-Animation: 102 Glitchling-Formen (Otter und Ara seit 03.10.2026) und 25 Gegner, Wächter und Bosse.
 
 - 6 Bilder, **10 Bilder/s**. Der Produzent hat beim Pilot mit 6 Figuren entschieden: „10 Bilder/s sieht sehr gut aus“.
 - Dateien: `game/assets/sprites/anim/<sprite>_idle_0.png … _5.png`. `PixelCanvas` spielt sie automatisch statt Wippen und Blinzeln ab. Figuren starten versetzt, damit nicht alle im Gleichtakt atmen.
