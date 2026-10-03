@@ -8,7 +8,7 @@ const NEST_SLOTS := 3
 ## Seltenheiten (Gewöhnlich … Legendär) sind gestrichen, bis es einen Plan dafür gibt.
 const EGG_RUNS := 2
 ## Alle Babys können im Ei stecken; Arten, die noch nicht im Monsterdex (und nicht schon im Nest) sind, kommen dreimal so oft
-const EGG_SPECIES := ["Pixmiez", "Funkling", "Tröpfel", "Kekso", "Lumi", "Quakli", "Molchi", "Maskli", "Brummbit", "Kauzbit", "Buddli"]
+const EGG_SPECIES := ["Pixmiez", "Funkling", "Tröpfel", "Kekso", "Lumi", "Quakli", "Molchi", "Maskli", "Brummbit", "Kauzbit", "Buddli", "Bachli", "Plapperli"]
 const EGG_NEW_WEIGHT := 3
 ## Eier kaufen im Brutnest (Produzent 03.10.2026): gleiche Regeln wie gefundene Eier
 const EGG_PRICE := 200

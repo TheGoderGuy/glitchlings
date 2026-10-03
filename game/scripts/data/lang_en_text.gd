@@ -76,7 +76,7 @@ const D := {
 	# Zustände und schwebende Texte
 	"Brand": "Burn", "Gift": "Poison", "Eis": "Ice", "Langsam": "Slow", "Übertaktet": "Overclocked", "Betäubt": "Stunned",
 	"Eingefroren": "Frozen", "Geblendet": "Blinded", "Geschwächt!": "Weakened!", "Zertreten!": "Squashed!",
-	"Gehamstert!": "Hoarded!", "Übermut!": "Bravado!", "Abbild!": "Afterimage!", "Backentasche:": "Cheek Pouch:",
+	"Nachgeplappert!": "Parroted!", "Gehamstert!": "Hoarded!", "Übermut!": "Bravado!", "Abbild!": "Afterimage!", "Backentasche:": "Cheek Pouch:",
 	"Neustart! +%d": "Reboot! +%d", "Scan aktiv": "Scan active", "Aufgeräumt!": "Cleaned up!", "Signatur +25 %": "Signature +25%",
 	"Angezogen": "Pulled in", "Blackout!": "Blackout!", "Seuche: Gift %d s": "Plague: poison %d s", "Sprungbereit": "Ready to jump",
 	"Blase": "Bubble", "Übertaktet!": "Overclocked!", "Defrag!": "Defrag!", "Krit!": "Crit!", "Geklaut!": "Stolen!",

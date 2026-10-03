@@ -346,5 +346,47 @@
   "blink": "36,30,49,36",
   "dim": true,
   "hi": true
+ },
+ "Bachli_32": {
+  "blink": "19,10,23,15;27,9,28,13"
+ },
+ "Plapperli_32": {
+  "blink": "17,12,21,17"
+ },
+ "Strudli_64": {
+  "blink": "47,19,50,23;55,20,56,22"
+ },
+ "Knisterli_64": {
+  "blink": "42,23,46,27;49,24,51,27"
+ },
+ "Surrfeder_64": {
+  "blink": "39,19,43,25"
+ },
+ "Glutfeder_64": {
+  "blink": "36,19,40,25"
+ },
+ "Wogotter_80": {
+  "blink": "56,10,59,14"
+ },
+ "Lutrion_80": {
+  "blink": "60,30,63,35"
+ },
+ "Sturmschwinge_80": {
+  "blink": "53,20,57,23,54,25"
+ },
+ "Flammschwinge_80": {
+  "blink": "49,19,53,22,47,20"
+ },
+ "Hydrolutra_96": {
+  "blink": "74,12,76,13,72,10"
+ },
+ "Fulgurlutra_96": {
+  "blink": "65,14,66,14 (von Hand: Augenpixel mit Fellfarbe 67,14 übermalt)"
+ },
+ "Fulgopsitta_96": {
+  "blink": "75,12,77,14,73,13"
+ },
+ "Heliopsitta_96": {
+  "blink": "79,20,80,21,79,17"
  }
 }

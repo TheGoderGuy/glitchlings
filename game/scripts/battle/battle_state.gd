@@ -68,6 +68,8 @@ var loot_gained := 0   # tatsächlich erhaltene Fragmente (Sammler-Modul)
 var echo_count := 0    # Echochip: jeder 4. Chip doppelt
 var leech := 0         # Saugbit: gesammelter Schaden
 var steal_count := 0   # Langfinger (Waschbär): jeder 4. Treffer lädt einen Chip
+var parrot_count := 0  # Nachplappern (Ara): jeder 4. Angriffs-Chip kommt nach 0,5 s noch einmal
+var dmg_scale := 1.0   # Schadensfaktor für den gerade ausgelösten Chip (Nachplappern: 0,5)
 var counter := 0       # Konter/Kopierschutz: Schaden, der beim Blocken zurückgeht
 var counter_el := "Neutral"
 var dodge_t := 0.0     # Sprungantrieb: nächster Treffer wird ausgewichen
@@ -236,6 +238,11 @@ func use_slot(i: int) -> void:
 		if echo_count % 4 == 0 and not over:
 			float_at(p.c, p.r, "Echo!", Color("#FF8FD8"))
 			_apply_chip(id)
+	# Nachplappern (Ara): jeder 4. Angriffs-Chip wird nach 0,5 s mit halbem Schaden wiederholt
+	if mon.passive == "Nachplappern" and ro == 0:
+		parrot_count += 1
+		if parrot_count % 4 == 0:
+			delayed.append({"t": 0.5, "fn": _parrot.bind(id), "mark": false})
 	# Übermut: jeder 3. Chip halbiert die Ladezeit der anderen
 	if mon.passive == "Übermut":
 		combo += 1
@@ -334,8 +341,20 @@ func _special_hit(S: Dictionary, last: bool, d: int) -> void:
 
 # ---------- Chips ----------
 
+func _parrot(id: String) -> void:
+	if over:
+		return
+	float_at(p.c, p.r, "Nachgeplappert!", GameData.EL.Elektro)
+	dmg_scale = 0.5
+	_apply_chip(id)
+	dmg_scale = 1.0
+
+
 func _apply_chip(id: String) -> void:
 	var ch: Dictionary = GameData.chip(id)
+	if dmg_scale != 1.0 and ch.has("dmg"):
+		ch = ch.duplicate()
+		ch.dmg = maxi(1, roundi(ch.dmg * dmg_scale))
 	var el: String = ch.el
 	var base := GameData.base_chip(id)
 	var k: float = ch.get("k", 1.0)   # verbesserte Chips: auch feste Werte (Heilung, Nebentreffer) stärker
@@ -827,9 +846,12 @@ func _update_logic(dt: float) -> void:
 			float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
 
 	var rate: float = mon.rech * (2.0 if oc > 0 else 1.0)
-	for s in hand:
+	for i in hand.size():
+		var s: Dictionary = hand[i]
 		if s.rem > 0:
-			s.rem = maxf(0.0, s.rem - dt * rate)
+			# Teamgeist (Otter): Support-Slot lädt 25 % schneller
+			var r2 := rate * (1.25 if mon.passive == "Teamgeist" and GameData.SLOT_ROLE[i] == 1 else 1.0)
+			s.rem = maxf(0.0, s.rem - dt * r2)
 	if pend_move != null and p.cd <= 0:
 		var m: Vector2i = pend_move
 		pend_move = null

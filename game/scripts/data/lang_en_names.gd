@@ -13,7 +13,7 @@ const D := {
 
 	# ---------- Tiere ----------
 	"Katze": "Cat", "Welpe": "Puppy", "Axolotl": "Axolotl", "Hamster": "Hamster", "Hase": "Hare", "Frosch": "Frog",
-	"Salamander": "Salamander", "Bär": "Bear", "Robo-Eule": "Robo-owl", "Dachs": "Badger", "Waschbär": "Raccoon",
+	"Salamander": "Salamander", "Bär": "Bear", "Robo-Eule": "Robo-owl", "Dachs": "Badger", "Waschbär": "Raccoon", "Otter": "Otter", "Ara": "Macaw",
 	"Axolotl × Hamster": "Axolotl × Hamster", "Hase × Eule": "Hare × Owl", "Bär × Hamster": "Bear × Hamster",
 	"Hamster × Frosch": "Hamster × Frog", "Katze × Frosch": "Cat × Frog",
 
@@ -53,6 +53,10 @@ const D := {
 	# Waschbär
 	"Maskli": "Maskli", "Plätschbär": "Puddlecoon", "Klaubär": "Pilfercoon", "Flutmaske": "Floodmask", "Nachtmaske": "Nightmask",
 	"Hydrocyon": "Hydrocyon", "Virocyon": "Virocyon",
+	"Bachli": "Brookli", "Strudli": "Swirli", "Wogotter": "Tideotter", "Hydrolutra": "Hydrolutra",
+	"Knisterli": "Crackli", "Lutrion": "Lutrion", "Fulgurlutra": "Fulgurlutra",
+	"Plapperli": "Chatterli", "Surrfeder": "Buzzfeather", "Sturmschwinge": "Stormwing", "Fulgopsitta": "Fulgopsitta",
+	"Glutfeder": "Emberfeather", "Flammschwinge": "Flamewing", "Heliopsitta": "Heliopsitta",
 	# Fusionen
 	"Wolkerich": "Cloudster", "Spukatz": "Spookat", "Wolperling": "Jackalowl", "Schlummerbit": "Slumberbit", "Pustebacke": "Puffcheek",
 
@@ -91,7 +95,7 @@ const D := {
 	# ---------- Passive ----------
 	"Katzenreflex": "Cat Reflex", "Übermut": "Bravado", "Regeneration": "Regeneration", "Hamstern": "Hoarding",
 	"Hasenhaken": "Hare Dash", "Giftbaut": "Toxic Skin", "Giftdrüsen": "Venom Glands", "Dickes Fell": "Thick Fur",
-	"Eulenblick": "Owl Eyes", "Furchtlos": "Fearless", "Langfinger": "Sticky Fingers", "Wolkendecke": "Cloud Cover",
+	"Eulenblick": "Owl Eyes", "Furchtlos": "Fearless", "Langfinger": "Sticky Fingers", "Teamgeist": "Team Spirit", "Nachplappern": "Parrot Talk", "Wolkendecke": "Cloud Cover",
 	"Mischwesen": "Hybrid", "Winterschlaf": "Hibernation", "Schwebegas": "Float Gas", "Spuk": "Haunt",
 
 	# ---------- Signatur-Attacken ----------
@@ -115,6 +119,10 @@ const D := {
 	"Magmaausbruch": "Magma Burst", "Erdkernbrecher": "Core Breaker", "Zackenstreif": "Zigzag Stripe", "Donnergrube": "Thunder Pit",
 	"Hochspannungsgraben": "High-Voltage Trench", "Taschendieb": "Pickpocket", "Waschgang": "Wash Cycle", "Flutraubzug": "Flood Heist",
 	"Sintflut-Coup": "Deluge Coup", "Giftgriff": "Venom Grab", "Schattenraub": "Shadow Heist", "Datenraubzug": "Data Heist",
+	"Bauchrutscher": "Belly Slide", "Strudelwirbel": "Swirl Spin", "Wogenbrecher": "Wavebreaker", "Mahlstrom": "Maelstrom",
+	"Schnurrhaarblitz": "Whisker Bolt", "Donnerwirbel": "Thunder Spin", "Gewitterfront": "Storm Front",
+	"Plapperschwall": "Chatter Burst", "Surrsturz": "Buzz Dive", "Federsalve": "Feather Volley", "Donnerschrei": "Thunder Shriek",
+	"Glutfedern": "Ember Feathers", "Feuerfächer": "Fire Fan", "Sonnensturz": "Sun Dive",
 	"Schlaflied": "Lullaby", "Gasexplosion": "Gas Blast", "Sporenwolke": "Spore Cloud", "Giftpranke": "Venom Paw",
 	"Myzelnetz": "Mycelium Web", "Perlenschuss": "Pearl Shot", "Gischtsprung": "Spray Leap", "Springflut": "Spring Tide",
 	"Spukschlag": "Haunt Strike",

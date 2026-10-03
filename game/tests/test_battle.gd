@@ -54,6 +54,7 @@ func _ready() -> void:
 	test_chip_texts()
 	test_form_migration()
 	test_badger_raccoon()
+	test_otter_macaw()
 	test_guards()
 	test_run_save()
 	test_progression()
@@ -499,9 +500,9 @@ func test_meta() -> void:
 	# Eine Ei-Sorte (03.10.2026): 2 Runs, alle Babys möglich, fehlende Arten dreifach gewichtet
 	SaveGame.data.nest = []
 	var ew := SaveGame.egg_weights()
-	var all_babies := ew.size() == 11 and SaveGame.EGG_RUNS == 2
+	var all_babies := ew.size() == 13 and SaveGame.EGG_RUNS == 2
 	var dex_has_tr: bool = SaveGame.data.dex.has("Tröpfel")
-	check(all_babies and ew["Tröpfel"] == (1 if dex_has_tr else 3) and ew.values().has(3), "Eier: eine Sorte (2 Runs), alle 11 Babys, fehlende Arten 3-fach")
+	check(all_babies and ew["Tröpfel"] == (1 if dex_has_tr else 3) and ew.values().has(3), "Eier: eine Sorte (2 Runs), alle 13 Babys, fehlende Arten 3-fach")
 	var rng_e := RandomNumberGenerator.new()
 	rng_e.seed = 5
 	var new_hits := 0
@@ -934,7 +935,7 @@ func test_new_lines() -> void:
 				ok = false
 				printerr("    Richtung passt nicht: %s %s → %s" % [sp, el, M.evo[el]])
 	var lines: int = GameData.MONS.keys().filter(func(k): return not GameData.MONS[k].get("fusion", false)).size()
-	check(ok and lines == 11, "11 Linien + Fusionen, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
+	check(ok and lines == 13, "13 Linien + Fusionen, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
 	# Passive
 	var st := BattleState.new(RunState.new("Brummbit", 1), GameData.FOES[0])
 	st.reflex = 0
@@ -1813,6 +1814,38 @@ func test_badger_raccoon() -> void:
 		sm.hit_enemy(5, "Neutral")
 	check(sm.hand.any(func(s): return s.rem == 0.0), "Langfinger: der 4. Treffer lädt einen Chip sofort")
 	check(SaveGame.EGG_SPECIES.has("Maskli") and SaveGame.EGG_SPECIES.has("Buddli"), "Dachs und Waschbär schlüpfen aus Eiern")
+
+
+## Otter (Bachli) und Ara (Plapperli), 03.10.2026
+func test_otter_macaw() -> void:
+	# Teamgeist: Support-Slot lädt 25 % schneller, Angriffs-Slots normal
+	var so := BattleState.new(RunState.new("Bachli", 1), GameData.FOES[0])
+	so.e.frozen = 999.0
+	for s in so.hand:
+		s.rem = 5.0
+	so.update(1.0)
+	check(absf(so.hand[0].rem - 4.0) < 0.01 and absf(so.hand[2].rem - 3.75) < 0.01, "Teamgeist: Support-Slot lädt 25 %% schneller (%.2f / %.2f)" % [so.hand[0].rem, so.hand[2].rem])
+	# Nachplappern: der 4. Angriffs-Chip kommt nach 0,5 s mit halbem Schaden noch einmal
+	var sa := BattleState.new(RunState.new("Plapperli", 1), GameData.FOES[3])
+	sa.e.frozen = 999.0
+	sa.def.el = "Neutral"
+	sa.e.r = sa.p.r
+	var hp0: int = sa.e.hp
+	var pd: int = GameData.chip("Pixelstrahl").dmg
+	for n in 4:
+		sa.hand[0].chip = "Pixelstrahl"
+		sa.hand[0].rem = 0.0
+		sa.use_slot(0)
+		step(sa, 0.1)
+	step(sa, 1.5)
+	var dealt: int = hp0 - sa.e.hp
+	check(sa.parrot_count == 4 and dealt == 4 * pd + roundi(pd * 0.5), "Nachplappern: 4 × Pixelstrahl + ein halber Nachplapperer (%d)" % dealt)
+	var ok := true
+	for f in ["Bachli", "Strudli", "Wogotter", "Hydrolutra", "Knisterli", "Lutrion", "Fulgurlutra", "Plapperli", "Surrfeder", "Sturmschwinge", "Fulgopsitta", "Glutfeder", "Flammschwinge", "Heliopsitta"]:
+		if not GameData.FORMS.has(f) or not GameData.SPECIALS.has(f) or not ResourceLoader.exists("res://assets/sprites/%s.png" % GameData.FORMS[f].spr):
+			ok = false
+			printerr("    fehlt: " + f)
+	check(ok and SaveGame.EGG_SPECIES.has("Bachli") and SaveGame.EGG_SPECIES.has("Plapperli"), "Otter und Ara: 14 Formen mit Sprite und Signatur, schlüpfen aus Eiern")
 
 
 ## Ebenen-Wächter, Boss-Phasen und Großangriffe (30.09.2026)
