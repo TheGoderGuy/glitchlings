@@ -31,6 +31,13 @@ func load_settings() -> void:
 	lang = cfg.get_value("game", "lang", "")
 	if not T.LANGS.has(lang):
 		lang = T.system_lang()
+	# Tastaturbelegung (03.10.2026): nur bekannte Aktionen mit gültigen Tasten übernehmen
+	var keys: Dictionary = cfg.get_value("keys", "map", {})
+	InputSetup.overrides.clear()
+	for e in InputSetup.REBIND:
+		if keys.has(e[0]) and int(keys[e[0]]) > 0 and not InputSetup.FIXED_KEYS.has(int(keys[e[0]])):
+			InputSetup.overrides[e[0]] = int(keys[e[0]])
+	InputSetup.setup()
 
 
 func save_settings() -> void:
@@ -42,6 +49,7 @@ func save_settings() -> void:
 	cfg.set_value("game", "difficulty", difficulty)
 	cfg.set_value("comfort", "screen_shake", screen_shake)
 	cfg.set_value("game", "lang", lang)
+	cfg.set_value("keys", "map", InputSetup.overrides)
 	cfg.save(PATH)
 
 

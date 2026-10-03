@@ -58,9 +58,9 @@ func page_text(i: int) -> String:
 	var pad: bool = InputSetup.pad
 	var chips := "%s / %s / %s" % [InputSetup.btn("X"), InputSetup.btn("A"), InputSetup.btn("B")] if pad else "J / K / L"
 	return T.t(PAGES[i].text).format({
-		"move": T.t("Steuerkreuz oder linker Stick" if pad else "WASD oder Pfeiltasten"),
+		"move": T.t("Steuerkreuz oder linker Stick") if pad else T.t("%s oder Pfeiltasten") % InputSetup.move_keys(),
 		"chips": chips,
-		"special": InputSetup.btn("Y") if pad else T.t("die Leertaste"),
+		"special": InputSetup.btn("Y") if pad else InputSetup.key_text("special", "acc"),
 	})
 
 
@@ -152,7 +152,7 @@ func _illu_field(A: Rect2) -> void:
 func _illu_chips(A: Rect2) -> void:
 	var names := ["Glutball+", "Pixelstrahl", "Heilpatch"]
 	var pad: bool = InputSetup.pad
-	var keys := [InputSetup.btn("X"), InputSetup.btn("A"), InputSetup.btn("B")] if pad else ["J", "K", "L"]
+	var keys := [InputSetup.btn("X"), InputSetup.btn("A"), InputSetup.btn("B")] if pad else [InputSetup.key_label("chip_1"), InputSetup.key_label("chip_2"), InputSetup.key_label("chip_3")]
 	for i in 3:
 		var r := Rect2(A.position.x + 14, A.position.y + 30 + i * 52, A.size.x - 28, 44)
 		var ch: Dictionary = GameData.chip(names[i])

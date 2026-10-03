@@ -249,10 +249,13 @@ func _screenshot(shot: Dictionary) -> void:
 			await get_tree().process_frame
 			current.handbook.set_process(false)
 			current.handbook.queue_redraw()
-		"title", "options", "wechsel":
+		"title", "options", "wechsel", "keys":
 			show_title()
 			if mode == "options":
 				current.page = TitleScreen.Page.OPTIONS
+			if mode == "keys":
+				current.page = TitleScreen.Page.KEYS
+				current.sel = int(shot.get("t", 0.0))
 		"starter":
 			show_starters()
 		"opening":

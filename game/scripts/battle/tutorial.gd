@@ -77,15 +77,15 @@ func active() -> bool:
 func texts(pad: bool) -> Array:
 	match step:
 		Step.MOVE:
-			return [T.t("Bewegen (%d/3)") % mini(moves, 3), T.t("Beweg dich mit %s über deine blauen Felder.") % T.t("dem Steuerkreuz oder dem linken Stick" if pad else "WASD oder den Pfeiltasten")]
+			return [T.t("Bewegen (%d/3)") % mini(moves, 3), T.t("Beweg dich mit %s über deine blauen Felder.") % (T.t("dem Steuerkreuz oder dem linken Stick") if pad else T.t("%s oder den Pfeiltasten") % InputSetup.move_keys())]
 		Step.CHIP:
-			return ["Chip spielen", T.t("Drück %s für deinen Angriffs-Chip. Die meisten treffen deine Reihe: Stell dich in die Reihe des Gegners!") % (InputSetup.btn("X") if pad else "J")]
+			return ["Chip spielen", T.t("Drück %s für deinen Angriffs-Chip. Die meisten treffen deine Reihe: Stell dich in die Reihe des Gegners!") % (InputSetup.btn("X") if pad else InputSetup.key_label("chip_1"))]
 		Step.SLOTS:
-			return ["Support", T.t("Zwei Angriffs-Slots (%s, %s) und ein Support-Slot (%s) für Schutz und Heilung. Probier jetzt %s!") % [InputSetup.btn("X") if pad else "J", InputSetup.btn("A") if pad else "K", InputSetup.btn("B") if pad else "L", InputSetup.btn("B") if pad else "L"]]
+			return ["Support", T.t("Zwei Angriffs-Slots (%s, %s) und ein Support-Slot (%s) für Schutz und Heilung. Probier jetzt %s!") % [InputSetup.btn("X") if pad else InputSetup.key_label("chip_1"), InputSetup.btn("A") if pad else InputSetup.key_label("chip_2"), InputSetup.btn("B") if pad else InputSetup.key_label("chip_3"), InputSetup.btn("B") if pad else InputSetup.key_label("chip_3")]]
 		Step.DODGE:
 			return [T.t("Ausweichen (%d/2)") % dodges, "Rote Felder mit „!“ werden gleich getroffen. Geh rechtzeitig runter!"]
 		Step.SPECIAL:
-			return ["Signatur-Attacke", T.t("Deine Leiste ist voll! Drück %s für die Signatur-Attacke.") % (InputSetup.btn("Y") if pad else T.t("die Leertaste"))]
+			return ["Signatur-Attacke", T.t("Deine Leiste ist voll! Drück %s für die Signatur-Attacke.") % (InputSetup.btn("Y") if pad else InputSetup.key_text("special", "acc"))]
 		Step.FREE:
-			return ["Super gemacht!", T.t("Chips laden nach dem Einsatz nach. Jetzt besiege den Gegner! Alles Weitere erklärt das Handbuch (Pause oder %s).") % (InputSetup.btn("Back") if pad else "H")]
+			return ["Super gemacht!", T.t("Chips laden nach dem Einsatz nach. Jetzt besiege den Gegner! Alles Weitere erklärt das Handbuch (Pause oder %s).") % (InputSetup.btn("Back") if pad else InputSetup.key_label("handbook"))]
 	return []

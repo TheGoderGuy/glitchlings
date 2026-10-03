@@ -250,7 +250,7 @@ func _draw() -> void:
 		Tab.UPGRADE:
 			_draw_upgrades()
 	var pad: bool = InputSetup.pad
-	var hint := T.t("%s/%s Reiter   %s Hilfe   %s Handbuch   %s Titel") % [InputSetup.btn("LB") if pad else "Q", InputSetup.btn("RB") if pad else "E", InputSetup.btn("Y") if pad else T.t("Leertaste"), InputSetup.btn("Back") if pad else "H", InputSetup.btn("B") if pad else "Esc"]
+	var hint := T.t("%s/%s Reiter   %s Hilfe   %s Handbuch   %s Titel") % [InputSetup.btn("LB") if pad else InputSetup.key_label("tab_prev"), InputSetup.btn("RB") if pad else InputSetup.key_label("tab_next"), InputSetup.btn("Y") if pad else InputSetup.key_label("special"), InputSetup.btn("Back") if pad else InputSetup.key_label("handbook"), InputSetup.btn("B") if pad else "Esc"]
 	_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if zone_pick:
 		_draw_zone_pick()
@@ -483,7 +483,7 @@ func _draw_guide() -> void:
 	# Textkasten
 	var keys_tabs := "%s/%s" % [InputSetup.btn("LB"), InputSetup.btn("RB")] if pad else "Q/E"
 	var key_ok: String = InputSetup.btn("A") if pad else "Enter"
-	var key_help: String = InputSetup.btn("Y") if pad else T.t("der Leertaste")
+	var key_help: String = InputSetup.btn("Y") if pad else InputSetup.key_text("special", "dat")
 	var txt: String = T.t(g[3])
 	match guide:
 		0:
@@ -491,7 +491,7 @@ func _draw_guide() -> void:
 		1:
 			txt = txt % key_ok
 		6:
-			txt = txt % [key_ok, key_help, InputSetup.btn("Back") if pad else "H"]
+			txt = txt % [key_ok, key_help, InputSetup.btn("Back") if pad else InputSetup.key_label("handbook")]
 	var B := Rect2(196, 214 if g[1] != "team" else 200, 420, 110)
 	_box(B, Color(GameData.COL.panel, 0.97), GameData.COL.sun)
 	_text(Vector2(B.position.x + 14, B.position.y + 20), g[2], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)

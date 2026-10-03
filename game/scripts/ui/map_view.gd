@@ -250,7 +250,7 @@ func _draw_side_panels(target: Vector2i) -> void:
 		_text(R.position + Vector2(30, 18), ZoneMap.TYPE_NAMES[n.type], 8, ICON_COL[n.type], HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 		draw_multiline_string(font(), R.position + Vector2(8, 40), T.t(ZoneMap.TYPE_DESC[n.type]), HORIZONTAL_ALIGNMENT_LEFT, R.size.x - 16, tsz(8), 8, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	var pad: bool = InputSetup.pad
-	var hint := T.t("< > Weg wählen\n%s betreten\n%s Pause, Deck, Module\n%s Handbuch") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("Start") if pad else "Esc", InputSetup.btn("Back") if pad else "H"]
+	var hint := T.t("< > Weg wählen\n%s betreten\n%s Pause, Deck, Module\n%s Handbuch") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("Start") if pad else "Esc", InputSetup.btn("Back") if pad else InputSetup.key_label("handbook")]
 	draw_multiline_string(font(), Vector2(W - 150, 214), hint, HORIZONTAL_ALIGNMENT_LEFT, 140, tsz(8), 4, GameData.COL.muted)
 	# Module dieses Runs (Details in der Pause)
 	if not run.modules.is_empty():
@@ -277,7 +277,7 @@ func _draw_deck_tip() -> void:
 	for ro in 2:
 		var cx := B.position.x + 24 + ro * 262
 		var col := Color(GameData.ROLE_COL[ro])
-		var key: String = ((InputSetup.btn("X") + " " + InputSetup.btn("A")) if pad else "J K") if ro == 0 else (InputSetup.btn("B") if pad else "L")
+		var key: String = ((InputSetup.btn("X") + " " + InputSetup.btn("A")) if pad else InputSetup.key_label("chip_1") + " " + InputSetup.key_label("chip_2")) if ro == 0 else (InputSetup.btn("B") if pad else InputSetup.key_label("chip_3"))
 		_box(Rect2(cx, B.position.y + 74, 250, 180), Color(GameData.COL.bg2, 0.9), col.darkened(0.3))
 		_text(Vector2(cx, B.position.y + 90), "%s  [%s]" % [T.t(GameData.ROLE_NAMES[ro]), key], 8, col, HORIZONTAL_ALIGNMENT_CENTER, 250, true, true)
 		var counts := {}

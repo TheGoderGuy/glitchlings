@@ -100,7 +100,11 @@ const D := {
 	"Perfekt ausgewichen! %s ist kurz überlastet – jetzt angreifen!": "Perfect dodge! %s is overloaded – attack now!",
 	# Tutorial
 	"Bewegen (%d/3)": "Move (%d/3)", "Beweg dich mit %s über deine blauen Felder.": "Move across your blue tiles with %s.",
-	"dem Steuerkreuz oder dem linken Stick": "the D-pad or the left stick", "WASD oder den Pfeiltasten": "WASD or the arrow keys",
+	"dem Steuerkreuz oder dem linken Stick": "the D-pad or the left stick", "WASD oder den Pfeiltasten": "WASD or the arrow keys", "%s oder den Pfeiltasten": "%s or the arrow keys", "%s oder Pfeiltasten": "%s or arrow keys",
+	"Tastenbelegung": "Key bindings", "Hoch": "Up", "Runter": "Down", "Links": "Left", "Rechts": "Right", "Angriff 1": "Attack 1", "Angriff 2": "Attack 2",
+	"Reiter zurück": "Previous tab", "Reiter vor": "Next tab", "Standard wiederherstellen": "Restore defaults", "Standard wiederhergestellt.": "Defaults restored.",
+	"Taste drücken …": "Press a key …", "Neue Taste drücken · Esc bricht ab": "Press a new key · Esc cancels", "Diese Taste ist fest belegt.": "This key is reserved.",
+	"Getauscht mit %s.": "Swapped with %s.", "Pfeiltasten, Enter, Esc, Rücktaste und Tab bleiben immer belegt.": "Arrow keys, Enter, Esc, Backspace and Tab always keep their function.",
 	"Chip spielen": "Play a chip",
 	"Drück %s: Pixelstrahl fliegt über deine Reihe. Stell dich in die Reihe des Gegners!": "Press %s: Pixel Beam flies along your row. Stand in the enemy's row!",
 	"Ausweichen (%d/2)": "Dodge (%d/2)",

@@ -11,7 +11,7 @@ const SKIP_FILES = ["scripts/audio/music_synth.gd", "scripts/audio/sfx.gd", "scr
 const SKIP_LINE = /is_action|Sfx\.play|Music\.(play|seek|current)|preload\(|load\(|res:\/\/|user:\/\/|get_value|set_value|push_error|print\(|^\s*match |^\s*"[^"]*",?\s*$(?!)|(==|!=)\s*"|"\s*(==|!=)|\.has\("|\bin \[|\.begins_with\(|\.ends_with\(|draw_sprite\(|sprite\(|zone_texture\(|_imprint\(run, "|random_chip\("|\.append\("[A-ZÄÖÜ][a-zäöü]+[^ "]*"\)|\.erase\(|Color\("|PICTOS|ICONS\[/;
 
 // In beiden Sprachen gleich (Tasten, Formatvorlagen, Eigennamen, Pixelmuster)
-const SAME = new Set(["Start", "VSync: ", "Esc", "Enter", "Back", "LB", "RB", "BOSS", "GLITCHLINGS", "TheGoderGuy", "Silkscreen", "Glutball+",
+const SAME = new Set(["Start", "special", "acc", "dat", "VSync: ", "Esc", "Enter", "Back", "LB", "RB", "BOSS", "GLITCHLINGS", "TheGoderGuy", "Silkscreen", "Glutball+",
   ", +%d HP", " · %ss", "%s · %d HP", "%s · %s · %d HP", "buy_%d", ".xx.xx.", ".xxxxx.", "..xxx..", "application/config/version",
   "Language (Sprache): ", "Sprache (Language): ", "© 2026 TheGoderGuy"]);
 

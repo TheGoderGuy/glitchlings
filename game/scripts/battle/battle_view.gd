@@ -314,8 +314,17 @@ func feet_y(r: float) -> float:
 	return Y0 + r * CH + FEET
 
 
+## Text auf eine Breite kürzen (mit Punkt), z. B. Chipnamen neben langen Tastennamen wie „Umschalt“
+func _fit(s: String, w: float) -> String:
+	if text_width(s, 8, true) <= w:
+		return s
+	while s.length() > 1 and text_width(s + ".", 8, true) > w:
+		s = s.left(-1)
+	return s + "."
+
+
 func _glyph_chip(i: int) -> String:
-	return InputSetup.btn(["X", "A", "B"][i]) if InputSetup.pad else ["J", "K", "L"][i]
+	return InputSetup.btn(["X", "A", "B"][i]) if InputSetup.pad else InputSetup.key_label(["chip_1", "chip_2", "chip_3"][i])
 
 
 # ---------- Zeichnen ----------
@@ -741,10 +750,10 @@ func _draw_hand() -> void:
 		_box(r, GameData.COL.panel if ready else GameData.COL.bg2, rc if ready else GameData.COL.line)
 		draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(3, r.size.y - 2)), el)
 		# Tasten-Symbol
-		var g := Rect2(r.position + Vector2(8, 5), Vector2(15, 14))
+		var g := Rect2(r.position + Vector2(8, 5), Vector2(maxf(15.0, text_width(_glyph_chip(i), 8, true) + 6), 14))
 		_box(g, GameData.COL.dark, rc if ready else GameData.COL.line)
 		_text(g.position + Vector2(1, 11), _glyph_chip(i), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g.size.x, false, true)
-		_text(r.position + Vector2(29, 16), s.chip, 8, GameData.COL.ink if ready else GameData.COL.muted, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+		_text(Vector2(g.end.x + 6, r.position.y + 16), _fit(T.t(s.chip), r.end.x - 21 - g.end.x - 6), 8, GameData.COL.ink if ready else GameData.COL.muted, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 		# Trefferbild oder Symbol oben rechts
 		_draw_chip_icon(s.chip, r.position + Vector2(r.size.x - 17, 5), ready)
 		_text(r.position + Vector2(8, 33), GameData.chip_short(s.chip), 8, GameData.COL.ink if ready else GameData.COL.muted)
@@ -772,7 +781,7 @@ func _draw_hand() -> void:
 	var sel: Color = GameData.EL[S.el]
 	var pulse := full and sin(anim_t * 8.0) > 0
 	_box(R, GameData.COL.panel if full else GameData.COL.bg2, GameData.COL.sun if pulse else GameData.COL.line)
-	var glyph := InputSetup.btn("Y") if InputSetup.pad else T.t("Leertaste")
+	var glyph := InputSetup.btn("Y") if InputSetup.pad else InputSetup.key_label("special")
 	var g2 := Rect2(R.position + Vector2(6, 5), Vector2(text_width(glyph, 8, true) + 8, 14))
 	_box(g2, GameData.COL.dark, GameData.COL.sun if full else GameData.COL.line)
 	_text(g2.position + Vector2(1, 11), glyph, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, g2.size.x, false, true)

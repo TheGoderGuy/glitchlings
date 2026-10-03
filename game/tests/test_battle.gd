@@ -56,6 +56,7 @@ func _ready() -> void:
 	test_badger_raccoon()
 	test_otter_macaw()
 	test_frame_pacing()
+	test_key_rebind()
 	test_guards()
 	test_run_save()
 	test_progression()
@@ -2218,3 +2219,24 @@ func test_frame_pacing() -> void:
 			t += 1.0 / hz
 		res.append([run.hp, st.e.c, st.e.r])
 	check(res[0] == res[1], "60 Hz und 165 Hz: gleicher Kampfverlauf nach 6 s (%s / %s)" % [str(res[0]), str(res[1])])
+
+
+## Tastaturbelegung (03.10.2026) – ändert nur die InputMap, speichert nichts
+func test_key_rebind() -> void:
+	var has_key := func(action: String, key: int) -> bool:
+		for ev in InputMap.action_get_events(action):
+			if ev is InputEventKey and ev.physical_keycode == key:
+				return true
+		return false
+	InputSetup.reset_keys()
+	check(has_key.call("chip_1", KEY_J) and has_key.call("move_up", KEY_W) and has_key.call("move_up", KEY_UP), "Standardbelegung: J, W (+ Pfeiltaste)")
+	var r1 := InputSetup.rebind("chip_1", KEY_U)
+	check(r1 == "" and has_key.call("chip_1", KEY_U) and not has_key.call("chip_1", KEY_J) and has_key.call("confirm", KEY_U) and InputSetup.key_label("chip_1") == "U", "Umbelegen: Angriff 1 auf U (auch Bestätigen, Anzeige „U“)")
+	var r2 := InputSetup.rebind("chip_2", KEY_U)
+	check(r2 == "chip_1" and has_key.call("chip_2", KEY_U) and has_key.call("chip_1", KEY_K), "Doppelt belegt: Tasten werden getauscht")
+	var r3 := InputSetup.rebind("special", KEY_ENTER)
+	check(r3 == "fest" and has_key.call("special", KEY_SPACE), "Feste Tasten (Enter, Esc, Pfeile …) lassen sich nicht vergeben")
+	InputSetup.rebind("move_up", KEY_I)
+	check(has_key.call("move_up", KEY_UP) and InputSetup.move_keys() == "IASD", "Pfeiltasten bleiben beim Umbelegen erhalten")
+	InputSetup.reset_keys()
+	check(has_key.call("chip_1", KEY_J) and has_key.call("chip_2", KEY_K) and InputSetup.overrides.is_empty() and InputSetup.key_text("special", "acc") == T.t("die Leertaste"), "Standard wiederherstellen")
