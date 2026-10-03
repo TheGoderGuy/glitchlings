@@ -57,11 +57,10 @@ var last_cell := Vector2i(1, 1)
 var prev_chips := ["", "", ""]
 var card_t := [0.0, 0.0, 0.0]
 var ghosts: Array = []          # {text, x, y, t}
-# Erklärung neuer Chips (einmal pro Chip und Spielstand): Zeitlupe + Hinweis über der Karte
-var tip_q: Array = []           # [{slot, chip}]
-var tip_t := 0.0
-const TIP_TIME := 2.6
-const TIP_SLOW := 0.3
+# Neuer Chip (einmal pro Chip und Spielstand): kleines blinkendes „Neu!“ auf der Karte, ohne Zeitlupe
+# (03.10.2026: Zeitlupe und Erklärkasten waren dem Produzenten zu viel)
+var new_t := [0.0, 0.0, 0.0]
+const NEW_TIME := 3.0
 var skip_ready := false         # Tests/Screenshots: ohne Bereit-Pause starten
 const LUNGE := 0.16
 const KNOCK := 0.14
@@ -274,7 +273,7 @@ func _process_fight(delta: float) -> void:
 			st.use_special()
 	_tick_anims(delta)
 	_track_cards(delta)
-	var dt := delta * (TIP_SLOW if tip_t > 0 else 1.0)
+	var dt := delta
 	if st.freeze > 0:
 		st.freeze -= dt
 	else:
@@ -758,6 +757,11 @@ func _draw_hand() -> void:
 			_bar(Rect2(r.position + Vector2(6, r.size.y - 8), Vector2(r.size.x - 12, 5)), 1.0 - s.rem / s.max, el.darkened(0.2))
 			if s.get("shuf", false) and s.rem > GameData.chip(s.chip).cd:
 				_text(r.position + Vector2(8, 33), "mischt …", 8, rc, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 14)
+		# neuer Chip: kleines blinkendes „Neu!“ an der oberen Kante
+		if new_t[i] > 0 and fmod(new_t[i], 0.5) > 0.15:
+			var nw := text_width("Neu!", 8, true) + 6
+			_box(Rect2(r.end.x - nw - 20, r.position.y - 5, nw, 11), GameData.COL.sun, GameData.COL.dark)
+			_text(Vector2(r.end.x - nw - 20, r.position.y + 4), "Neu!", 8, GameData.COL.dark, HORIZONTAL_ALIGNMENT_CENTER, nw, false, true)
 		# zu früh gedrückt: roter Rahmen blinkt kurz
 		if s.get("deny", 0.0) > 0 and fmod(s.deny, 0.1) < 0.06:
 			draw_rect(r, GameData.COL.coral, false, 2.0)
@@ -780,8 +784,6 @@ func _draw_hand() -> void:
 	_bar(Rect2(R.position + Vector2(6, R.size.y - 8), Vector2(R.size.x - 12, 5)), st.sp / 100.0, GameData.COL.sun if full else sel.darkened(0.2))
 	if mode == Mode.READY:
 		_draw_ready()
-	elif tip_t > 0 and not tip_q.is_empty():
-		_draw_chip_tip(tip_q[0].slot, tip_q[0].chip)
 
 
 ## Trefferbild (3×3 Gegnerfeld, deine Reihe = Mitte) oder Symbol für Schutz/Hilfe, 12×12 Pixel
@@ -883,6 +885,7 @@ func _mark_seen(id: String) -> void:
 func _track_cards(delta: float) -> void:
 	for i in 3:
 		card_t[i] = maxf(0.0, card_t[i] - delta)
+		new_t[i] = maxf(0.0, new_t[i] - delta)
 		var c: String = st.hand[i].chip
 		if c != prev_chips[i]:
 			if prev_chips[i] != "":
@@ -891,20 +894,12 @@ func _track_cards(delta: float) -> void:
 			prev_chips[i] = c
 			var seen: Array = SaveGame.data.get("seen_chips", [])
 			if c != "" and SaveGame.persist and not seen.has(GameData.base_chip(c)):
-				tip_q.append({"slot": i, "chip": c})
+				new_t[i] = NEW_TIME
 				_mark_seen(c)
-				if tip_t <= 0:
-					tip_t = TIP_TIME
 	for k in range(ghosts.size() - 1, -1, -1):
 		ghosts[k].t -= delta
 		if ghosts[k].t <= 0:
 			ghosts.remove_at(k)
-	if tip_t > 0:
-		tip_t -= delta
-		if tip_t <= 0 and not tip_q.is_empty():
-			tip_q.pop_front()
-			if not tip_q.is_empty():
-				tip_t = TIP_TIME
 
 
 func _panel(r: Rect2) -> void:

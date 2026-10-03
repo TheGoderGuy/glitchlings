@@ -323,9 +323,8 @@ func _screenshot(shot: Dictionary) -> void:
 				return
 			current.simulate(shot.get("sim", 2.0))
 			if mode == "chiptip":
-				# Erklärung eines neuen Chips über dem Schutz-Slot (Zeitlupe)
-				current.tip_q = [{"slot": 1, "chip": current.st.hand[1].chip}]
-				current.tip_t = 2.0
+				# neuer Chip im Schutz-Slot: „Neu!“-Marke
+				current.new_t[1] = 2.9
 			if shot.has("special"):
 				# Großangriff auslösen und bis kurz vor dem Einschlag vorspulen
 				current.st.start_special()
