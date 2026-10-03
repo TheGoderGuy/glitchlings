@@ -4,9 +4,12 @@ extends Node
 
 const VERSION := 1
 const NEST_SLOTS := 3
-## Schlüpfdauer in abgeschlossenen Runs (Entscheidung 28.09.2026: Gewöhnlich 1 … Legendär 4–5)
-const EGG_RUNS := {"Gewöhnlich": 1, "Selten": 2, "Episch": 3, "Legendär": 5}
-const EGG_SPRITE := {"Gewöhnlich": "egg_g", "Selten": "egg_s", "Episch": "egg_e", "Legendär": "egg_e"}
+## Eier (Produzent 03.10.2026): nur noch eine Sorte, schlüpft nach 2 Runs (Brutwärmer: 1).
+## Seltenheiten (Gewöhnlich … Legendär) sind gestrichen, bis es einen Plan dafür gibt.
+const EGG_RUNS := 2
+## Alle Babys können im Ei stecken; Arten, die noch nicht im Monsterdex (und nicht schon im Nest) sind, kommen dreimal so oft
+const EGG_SPECIES := ["Pixmiez", "Funkling", "Tröpfel", "Kekso", "Lumi", "Quakli", "Molchi", "Maskli", "Brummbit", "Kauzbit", "Buddli"]
+const EGG_NEW_WEIGHT := 3
 ## Mindestzahl gewonnener Kämpfe für ein Ei
 const EGG_MIN_WINS := 2
 
@@ -61,6 +64,10 @@ func _upgrade() -> void:
 		if data.get("dex", {}).has(old):
 			data.dex.erase(old)
 			data.dex[FORM_MIGRATION[old]] = true
+	# Ei-Seltenheiten gestrichen (03.10.2026): alte Eier schlüpfen spätestens nach 2 Runs
+	for e in data.get("nest", []):
+		e.erase("rarity")
+		e.runs_left = mini(int(e.runs_left), EGG_RUNS)
 	var rec: Array = []
 	for r in data.get("recipes", []):
 		rec.append(FORM_MIGRATION.get(r, r))
@@ -174,29 +181,43 @@ func nest() -> Array:
 	return data.get("nest", [])
 
 
-func add_egg(rarity: String, rng: RandomNumberGenerator) -> Dictionary:
+func add_egg(rng: RandomNumberGenerator) -> Dictionary:
 	if nest().size() >= nest_slots():
 		return {}
-	var pool: Array = egg_pool(rarity)
-	var runs := maxi(1, int(EGG_RUNS[rarity]) - upgrade_level("brutwaermer"))
-	var egg := {"rarity": rarity, "species": pool[rng.randi_range(0, pool.size() - 1)], "runs_left": runs}
+	var runs := maxi(1, EGG_RUNS - upgrade_level("brutwaermer"))
+	var egg := {"species": _roll_species(rng), "runs_left": runs}
 	data.nest.append(egg)
 	return egg
 
 
-## Welche Babys in welcher Ei-Seltenheit stecken (wächst mit neuen Linien)
-func egg_pool(rarity: String) -> Array:
-	var pools := {"Gewöhnlich": ["Pixmiez", "Funkling", "Tröpfel", "Kekso"], "Selten": ["Lumi", "Quakli", "Molchi", "Maskli"],
-		"Episch": ["Brummbit", "Kauzbit", "Buddli"], "Legendär": ["Brummbit", "Kauzbit", "Buddli"]}
-	var out: Array = pools[rarity].filter(func(s): return GameData.MONS.has(s))
-	return out
+## Gewicht je Art: neue Arten (nicht im Dex, nicht schon im Nest) EGG_NEW_WEIGHT, bekannte 1
+func egg_weights() -> Dictionary:
+	var waiting: Array = nest().map(func(e): return e.species)
+	var w := {}
+	for s in EGG_SPECIES:
+		if GameData.MONS.has(s):
+			w[s] = 1 if data.get("dex", {}).has(s) or waiting.has(s) else EGG_NEW_WEIGHT
+	return w
+
+
+func _roll_species(rng: RandomNumberGenerator) -> String:
+	var w := egg_weights()
+	var total := 0
+	for s in w:
+		total += int(w[s])
+	var roll := rng.randi_range(1, total)
+	for s in w:
+		roll -= int(w[s])
+		if roll <= 0:
+			return s
+	return EGG_SPECIES[0]
 
 
 func ready_eggs() -> Array:
 	return nest().filter(func(e): return int(e.runs_left) <= 0)
 
 
-## Schlüpft das erste bereite Ei: {species, new_in_dex, rarity} oder {}
+## Schlüpft das erste bereite Ei: {species, new_in_dex, id} oder {}
 func hatch_next() -> Dictionary:
 	for i in nest().size():
 		var e: Dictionary = nest()[i]
@@ -205,7 +226,7 @@ func hatch_next() -> Dictionary:
 			var is_new: bool = not data.dex.has(e.species)
 			var m := add_monster(e.species)
 			save_game()
-			return {"species": e.species, "new_in_dex": is_new, "rarity": e.rarity, "id": m.id}
+			return {"species": e.species, "new_in_dex": is_new, "id": m.id}
 	return {}
 
 
@@ -244,13 +265,7 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 		e.runs_left = maxi(0, int(e.runs_left) - 1)
 	# Neues Ei als Belohnung
 	if run.fights_won >= EGG_MIN_WINS:
-		var roll := run.rng.randi_range(1, 100)
-		var rarity := "Gewöhnlich"
-		if won:
-			rarity = "Episch" if roll <= 20 else ("Selten" if roll <= 60 else "Gewöhnlich")
-		else:
-			rarity = "Episch" if roll <= 3 else ("Selten" if roll <= 25 else "Gewöhnlich")
-		var egg := add_egg(rarity, run.rng)
+		var egg := add_egg(run.rng)
 		if egg.is_empty():
 			sum.nest_full = true
 		else:

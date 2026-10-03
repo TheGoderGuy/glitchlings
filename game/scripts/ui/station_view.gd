@@ -515,7 +515,7 @@ func _draw_nest() -> void:
 	var R := Rect2(40, 40, 560, 296)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
 	_text(Vector2(R.position.x, R.position.y + 22), "Brutnest", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
-	_text(Vector2(R.position.x, R.position.y + 38), T.t("Eier gibt es nach Runs mit mindestens %d gewonnenen Kämpfen, seltenere nach einem Boss-Sieg.") % SaveGame.EGG_MIN_WINS, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	_text(Vector2(R.position.x, R.position.y + 38), T.t("Ein Ei gibt es nach jedem Run mit mindestens %d gewonnenen Kämpfen.") % SaveGame.EGG_MIN_WINS, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 	var eggs := SaveGame.nest()
 	var slots := SaveGame.nest_slots()
 	var sw := 140.0 if slots <= 3 else 116.0
@@ -530,12 +530,11 @@ func _draw_nest() -> void:
 		var left := int(e.runs_left)
 		var wob := roundi(sin(anim_t * (10.0 if left <= 1 else 4.0) + i) * (2.0 if left <= 1 else 0.0))
 		draw_rect(Rect2(r.get_center().x - 26, r.position.y + 112, 52, 4), Color(0.05, 0.02, 0.12, 0.35))
-		_draw_egg(e.rarity, Vector2(r.get_center().x + wob, r.position.y + 114), 2)
-		var rc := _rarity_col(e.rarity)
-		_text(Vector2(r.position.x, r.position.y + 136), T.t("%s Ei") % T.t(e.rarity), 8, rc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+		_draw_egg(Vector2(r.get_center().x + wob, r.position.y + 114), 2)
+		_text(Vector2(r.position.x, r.position.y + 136), "Ei", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		var txt := T.t("schlüpft nach dem nächsten Run") if left == 1 else (T.t("bereit!") if left <= 0 else T.t("noch %d Runs") % left)
 		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 152), txt, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
-	_text(Vector2(R.position.x, R.end.y - 18), "Gewöhnlich 1 Run · Selten 2 · Episch 3 · Legendär 5", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	_text(Vector2(R.position.x, R.end.y - 18), "Eier schlüpfen nach 2 Runs. Arten, die dir noch fehlen, schlüpfen häufiger.", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 
 
 func _draw_dex() -> void:
@@ -652,16 +651,12 @@ func _draw_fusion() -> void:
 			_text(Vector2(0, 296), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
-func _draw_egg(rarity: String, feet: Vector2, scale: int) -> void:
-	var tex: Texture2D = EGG_TEX[SaveGame.EGG_SPRITE[rarity]]
+func _draw_egg(feet: Vector2, scale: int) -> void:
+	var tex: Texture2D = EGG_TEX.egg_s
 	var size := tex.get_width() * scale
 	draw_set_transform(Vector2(roundi(feet.x - size / 2.0), roundi(feet.y - size)), 0, Vector2(scale, scale))
-	draw_texture(tex, Vector2.ZERO, Color(1, 0.85, 0.6) if rarity == "Legendär" else Color.WHITE)
+	draw_texture(tex, Vector2.ZERO)
 	draw_set_transform(Vector2.ZERO)
-
-
-func _rarity_col(r: String) -> Color:
-	return {"Gewöhnlich": GameData.COL.ink, "Selten": GameData.EL.Wasser, "Episch": GameData.EL.Virus, "Legendär": GameData.COL.sun}[r]
 
 
 func _draw_hatch() -> void:
@@ -675,7 +670,7 @@ func _draw_hatch() -> void:
 		for i in 10:
 			var a := i * TAU / 10.0 + t
 			draw_line(c + Vector2(0, -30), c + Vector2(0, -30) + Vector2(cos(a), sin(a)) * (40.0 + 60.0 * t / HATCH_REVEAL), Color(1, 1, 0.8, 0.12 * t), 2)
-		_draw_egg(hatch_egg.get("rarity", "Gewöhnlich"), Vector2(c.x + wob, c.y), 3)
+		_draw_egg(Vector2(c.x + wob, c.y), 3)
 		_text(Vector2(0, 70), "Oh? Ein Ei bewegt sich …", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	else:
 		var k := t - HATCH_REVEAL

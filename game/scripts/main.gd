@@ -201,8 +201,8 @@ func _demo_save() -> void:
 	SaveGame.see("Prismiez")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 3
-	SaveGame.add_egg("Gewöhnlich", rng)
-	SaveGame.add_egg("Selten", rng)
+	SaveGame.add_egg(rng)
+	SaveGame.add_egg(rng)
 	SaveGame.data.stats = {"runs": 6, "wins": 1}
 	SaveGame.data.frag = 85
 	SaveGame.data.hints = [2]

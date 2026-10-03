@@ -489,19 +489,39 @@ func test_meta() -> void:
 	run2.chips_used = GameData.EVO_AT[3] - GameData.EVO_AT[2]
 	run2.praeg = {"Feuer": 30}
 	check(run2.try_evolve().get("to", "") == "Magmawulf", "Champion-Schwelle zählt Lebenszeit-Prägung")
-	# Eier reifen: gewöhnliches Ei schlüpft nach 1 Run
-	SaveGame.data.nest = [{"rarity": "Gewöhnlich", "species": "Tröpfel", "runs_left": 1}, {"rarity": "Episch", "species": "Pixmiez", "runs_left": 3}]
+	# Eier reifen: ein Ei schlüpft, wenn seine Runs abgelaufen sind
+	SaveGame.data.nest = [{"species": "Tröpfel", "runs_left": 1}, {"species": "Pixmiez", "runs_left": 3}]
 	run2.fights_won = 0
 	SaveGame.record_run(run2, false)
-	check(SaveGame.ready_eggs().size() == 1 and int(SaveGame.nest()[1].runs_left) == 2, "Eier reifen pro Run (gewöhnlich 1, episch 3)")
+	check(SaveGame.ready_eggs().size() == 1 and int(SaveGame.nest()[1].runs_left) == 2, "Eier reifen pro Run")
 	var h := SaveGame.hatch_next()
 	check(h.get("species", "") == "Tröpfel" and SaveGame.team().size() == 2 and h.new_in_dex, "Ei schlüpft: neues Monster im Team und im Dex")
-	var ok_rar := true
-	for r in SaveGame.EGG_RUNS:
-		if SaveGame.egg_pool(r).is_empty():
-			ok_rar = false
-	check(ok_rar and SaveGame.EGG_RUNS.Legendär == 5 and SaveGame.EGG_RUNS.Gewöhnlich == 1, "Ei-Seltenheiten: Gewöhnlich 1 … Legendär 5 Runs")
-	var full_egg := {"rarity": "Episch", "species": "Pixmiez", "runs_left": 3}
+	# Eine Ei-Sorte (03.10.2026): 2 Runs, alle Babys möglich, fehlende Arten dreifach gewichtet
+	SaveGame.data.nest = []
+	var ew := SaveGame.egg_weights()
+	var all_babies := ew.size() == 11 and SaveGame.EGG_RUNS == 2
+	var dex_has_tr: bool = SaveGame.data.dex.has("Tröpfel")
+	check(all_babies and ew["Tröpfel"] == (1 if dex_has_tr else 3) and ew.values().has(3), "Eier: eine Sorte (2 Runs), alle 11 Babys, fehlende Arten 3-fach")
+	var rng_e := RandomNumberGenerator.new()
+	rng_e.seed = 5
+	var new_hits := 0
+	var known: Array = []
+	for s in ew:
+		if ew[s] == 1:
+			known.append(s)
+	for n in 400:
+		if not known.has(SaveGame._roll_species(rng_e)):
+			new_hits += 1
+	var exp_new := 400.0 * (3 * (ew.size() - known.size())) / (3 * (ew.size() - known.size()) + known.size())
+	check(absf(new_hits - exp_new) < 40, "Fehlende Arten schlüpfen häufiger (%d von 400, erwartet ~%.0f)" % [new_hits, exp_new])
+	var old := {"version": SaveGame.VERSION, "nest": [{"rarity": "Episch", "species": "Pixmiez", "runs_left": 3}]}
+	var keep: Dictionary = SaveGame.data
+	SaveGame.data = old
+	SaveGame._upgrade()
+	var mig: Dictionary = SaveGame.data.nest[0]
+	SaveGame.data = keep
+	check(not mig.has("rarity") and int(mig.runs_left) == 2, "Alte Eier: Seltenheit entfernt, spätestens nach 2 Runs")
+	var full_egg := {"species": "Pixmiez", "runs_left": 2}
 	SaveGame.data.nest = [full_egg.duplicate(), full_egg.duplicate(), full_egg.duplicate()]
 	var run3 := RunState.new("Pixmiez", 3)
 	run3.fights_won = 4
@@ -963,8 +983,7 @@ func test_new_lines() -> void:
 	st8.sp = 100.0
 	st8.use_special()
 	check(st8.e.c == 0 and st8.e.r == st8.p.r, "Zungenschlag zieht den Gegner vor dich")
-	# Eier enthalten jetzt seltenere Linien
-	check(SaveGame.egg_pool("Selten").has("Lumi") and SaveGame.egg_pool("Episch").has("Kauzbit") and not SaveGame.egg_pool("Gewöhnlich").has("Brummbit"), "Seltene Eier enthalten seltenere Linien")
+	check(SaveGame.EGG_SPECIES.has("Lumi") and SaveGame.EGG_SPECIES.has("Kauzbit") and SaveGame.EGG_SPECIES.has("Brummbit"), "Alle Linien schlüpfen aus Eiern")
 
 
 func test_passives() -> void:
@@ -1793,7 +1812,7 @@ func test_badger_raccoon() -> void:
 	for i in 4:
 		sm.hit_enemy(5, "Neutral")
 	check(sm.hand.any(func(s): return s.rem == 0.0), "Langfinger: der 4. Treffer lädt einen Chip sofort")
-	check(SaveGame.egg_pool("Selten").has("Maskli") and SaveGame.egg_pool("Episch").has("Buddli"), "Dachs und Waschbär schlüpfen aus Eiern")
+	check(SaveGame.EGG_SPECIES.has("Maskli") and SaveGame.EGG_SPECIES.has("Buddli"), "Dachs und Waschbär schlüpfen aus Eiern")
 
 
 ## Ebenen-Wächter, Boss-Phasen und Großangriffe (30.09.2026)
@@ -2018,8 +2037,8 @@ func test_progression() -> void:
 	check(SaveGame.upgrade_cost("nestplatz") == -1 and SaveGame.nest_slots() == 4, "Nest-Erweiterung: 4 Plätze")
 	SaveGame.data.nest = []
 	var rng2 := RandomNumberGenerator.new()
-	var egg := SaveGame.add_egg("Selten", rng2)
-	var egg2 := SaveGame.add_egg("Gewöhnlich", rng2)
+	var egg := SaveGame.add_egg(rng2)
+	var egg2 := SaveGame.add_egg(rng2)
 	check(int(egg.runs_left) == 1 and int(egg2.runs_left) == 1, "Brutwärmer: Eier schlüpfen einen Run früher (mindestens 1)")
 
 

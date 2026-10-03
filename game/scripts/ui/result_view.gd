@@ -58,7 +58,7 @@ func _draw() -> void:
 		lines.append([T.t("+%d Fragmente auf die Station gerettet") % int(summary.frag_banked), GameData.COL.sun])
 	var egg: Dictionary = summary.get("egg", {})
 	if not egg.is_empty():
-		lines.append([(T.t("Neues Ei: %s (schlüpft nach %d Run)") if int(egg.runs_left) == 1 else T.t("Neues Ei: %s (schlüpft nach %d Runs)")) % [T.t(egg.rarity), int(egg.runs_left)], GameData.COL.sun])
+		lines.append([(T.t("Neues Ei (schlüpft nach %d Run)") if int(egg.runs_left) == 1 else T.t("Neues Ei (schlüpft nach %d Runs)")) % int(egg.runs_left), GameData.COL.sun])
 	elif summary.get("nest_full", false):
 		lines.append(["Brutnest voll – kein neues Ei", GameData.COL.muted])
 	elif run.fights_won < SaveGame.EGG_MIN_WINS:

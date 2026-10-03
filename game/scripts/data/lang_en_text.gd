@@ -371,6 +371,11 @@ const D := {
 	"Betäubt 3 s": "Stun 3 s", "Gift ×2": "Poison ×2", "Lebensraub": "Lifesteal", "Weicht aus": "Dodges", "Heilt %d": "Heal %d",
 	"Block + %d": "Block + %d", "Konter %d": "Counter %d", "laden": "charge",
 
+	# ---------- Eier (03.10.2026: eine Sorte) ----------
+	"Ei": "Egg", "Neues Ei (schlüpft nach %d Run)": "New egg (hatches after %d run)", "Neues Ei (schlüpft nach %d Runs)": "New egg (hatches after %d runs)",
+	"Eier schlüpfen nach 2 Runs. Arten, die dir noch fehlen, schlüpfen häufiger.": "Eggs hatch after 2 runs. Species you are still missing hatch more often.",
+	"Ein Ei gibt es nach jedem Run mit mindestens %d gewonnenen Kämpfen.": "You get an egg after every run with at least %d won battles.",
+
 	# ---------- Kampf-Handbuch ----------
 	"Du hast drei Slots ({chips}), jeder mit eigener Rolle: Angriff, Schutz und Hilfe (Heilung und Unterstützung). Jeder Slot zieht aus seinem Teil deines Decks. Nach dem Einsatz kommt der nächste Chip und lädt auf – drückst du zu früh, passiert nichts.\n\nÜber jeder Karte steht, welcher Chip als Nächstes kommt. Ist ein Stapel leer, wird er neu gemischt, das dauert etwas länger.\n\nDas Bild oben rechts auf der Karte zeigt, wo ein Angriff trifft. Verbesserte Chips (z. B. Glutball+) machen mehr Schaden und laden schneller.": "You have three slots ({chips}), each with its own role: attack, defense and support (healing and help). Each slot draws from its part of your deck. After use, the next chip comes in and charges – press too early and nothing happens.\n\nAbove each card you see which chip comes next. When a pile runs out, it's reshuffled, which takes a little longer.\n\nThe picture at the top right of a card shows where an attack hits. Upgraded chips (e.g. Ember Ball+) deal more damage and charge faster.",
 	"KAMPF-HANDBUCH": "BATTLE HANDBOOK", "< > blättern   %s weiter   %s schließen": "< > turn pages   %s next   %s close",

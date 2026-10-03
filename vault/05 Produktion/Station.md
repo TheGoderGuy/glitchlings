@@ -11,7 +11,11 @@ Titel → **erster Start:** Starter wählen → Station · **danach:** direkt St
 ## Dauerhaft (Spielstand `user://savegame.json`)
 - **Team:** jedes Monster ist ein Individuum mit Form, Stufe, Lebenszeit-Prägung, Runs/Siegen. Zwei Funklinge können sich verschieden entwickeln.
 - **Evolution bleibt erhalten**, auch bei Niederlage (keine Schuldgefühle). Schwellen: Rookie 15, Champion 60 gespielte Chips über alle Runs.
-- **Brutnest:** 3 Plätze. Ei nach Runs mit ≥ 2 gewonnenen Kämpfen; Boss-Sieg: 40 % Gewöhnlich, 40 % Selten, 20 % Episch, sonst 75/22/3. Schlüpfen nach abgeschlossenen Runs: Gewöhnlich 1, Selten 2, Episch 3, Legendär 5. Nest voll → kein Ei.
+- **Brutnest:** 3 Plätze (Ausbau: 4). Ein Ei gibt es nach jedem Run mit ≥ 2 gewonnenen Kämpfen. Ist das Nest voll, gibt es kein Ei.
+  - **Seit 03.10.2026 gibt es nur noch eine Ei-Sorte.** Sie schlüpft nach **2 Runs** (mit Brutwärmer nach 1).
+  - Im Ei kann jedes der 11 Babys stecken. **Arten, die noch nicht im Monsterdex und nicht schon im Nest sind, kommen dreimal so oft** (`SaveGame.EGG_NEW_WEIGHT`).
+  - Die Seltenheiten Gewöhnlich, Selten, Episch und Legendär sind gestrichen, bis es einen Plan dafür gibt. Idee für später: ein Legendär-Ei mit Schimmer-Variante (reine Optik) für den ersten Sieg über einen Zonen-Boss.
+  - Alte Eier verlieren beim Laden ihre Seltenheit und schlüpfen spätestens nach 2 Runs.
 - **Monsterdex:** 18 Formen, Unbekanntes als Silhouette.
 - Titel → Optionen → „Spielstand löschen“ (zweimal bestätigen).
 
@@ -20,6 +24,8 @@ Deck, Fragmente, HP, Ereignis-Boni.
 
 ## Linien & Ei-Inhalt (Phase 3b, 29.09.2026)
 9 Linien, 40 Formen, 40 Signaturen. Starter bleiben Pixmiez, Funkling, Tröpfel – die übrigen gibt es nur aus Eiern:
+
+*(Tabelle veraltet seit 03.10.2026: alle Babys in einer Ei-Sorte, siehe oben.)*
 
 | Ei | Inhalt |
 |---|---|
