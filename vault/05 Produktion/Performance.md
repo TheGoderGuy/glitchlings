@@ -29,9 +29,26 @@ Core Ultra 7 255HX, RTX 5070 Laptop, Godot 4.7 (GL Compatibility):
 - Die GPU ist praktisch unbelastet (unter 0,3 ms). Gerendert wird intern in 640 × 360 und nur ganzzahlig hochskaliert. Die Grenze liegt also bei der CPU, nämlich bei GDScript-Logik und dem Zeichnen.
 - Ein Ausreißer (265 ms, 24 langsame Bilder) trat in einem von vier Ur-Glitch-Läufen auf und ließ sich nicht wiederholen. Wahrscheinlich kam er vom System.
 
-## Bekannte kleine Hänger
-- Die Musik wird beim Szenenwechsel als WAV-Datei geladen. Das dauert 2 bis 23 ms (alle Stücke zusammen 64 MB). Auf langsamen Rechnern kann deshalb beim Wechsel ein Bild ausfallen. Mögliche Lösung: die Musik nach dem Start im Hintergrund vorladen.
-- Kino-Bildwechsel: bis 13 ms, also noch unter dem Budget.
+## Gleichmäßigkeit für höhere Schwierigkeit (03.10.2026)
+Der Produzent will ein flüssiges Spielgefühl, weil die Schwierigkeit steigen soll. Umgesetzt:
+
+1. **Feste Rechenschritte im Kampf** (`BattleState.advance`)
+   - Jedes Bild wird in Schritte von höchstens 1/120 s geteilt. Dadurch laufen Kampf und Trefferprüfung bei 60, 120 und 165 Hz gleich ab.
+   - Ein Hänger zählt höchstens 50 ms. Das Spiel bremst dann kurz, statt vorzuspulen.
+   - Vorher konnte ein Geschoss den Gegner bei einem 100-ms-Hänger überspringen: Es fliegt 12 Felder pro Sekunde, das Trefferfenster ist ±0,4 Felder. Außerdem wäre ein Angriff ohne sichtbare Vorwarnung eingeschlagen.
+   - Tests: „Hänger von 250 ms: Geschoss überspringt den Gegner nicht“ und „60 Hz und 165 Hz: gleicher Kampfverlauf nach 6 s“.
+2. **Musik wird vorgeladen** (`music.gd`)
+   - Alle Stücke laden nach dem Start mit Threads im Hintergrund. Im Browser, ohne Threads, kommt ein Stück alle 20 Bilder dazu.
+   - Ein Szenenwechsel wartet nicht mehr auf die WAV-Datei. Vorher kostete das bis zu 23 ms.
+3. **Zonen-Kulissen werden beim Start vorberechnet** (`PixelCanvas.preload_all`)
+   - Jede Kulisse kostet etwa 20 ms Pixelarbeit. Bisher fiel die genau beim ersten Kampf oder der ersten Karte einer Zone an, und die Zonenwahl rechnete beim ersten Öffnen alle vier auf einmal.
+4. **Neue Option „VSync: An/Aus“** (unter Vollbild)
+   - An (Standard): ruhiges Bild ohne Zerreißen.
+   - Aus: weniger Eingabeverzögerung, Bildrate bis 300.
+
+**Wechsel-Messung** `--bench=30 --mode=wechsel`: Sie wechselt alle 45 Bilder zwischen Titel, Station, Karte, Kampf und Ergebnis und meldet das langsamste Bild nach jedem Wechsel.
+- Ergebnis: Titel 3 ms, Karte 6–8 ms, Kampf 5–7 ms, Ergebnis 3–4 ms.
+- Ausnahme: Das **allererste** Öffnen der Station kostet einmal 15–25 ms. Das ist kein Schriftrastern (Vorwärmen half nicht) und auch nicht das Zeichnen selbst (etwa 5 ms). Vermutlich wird beim ersten Mal Text geformt. Das ist ein einmaliger Menü-Hänger ohne Bedeutung fürs Spielgefühl und wird nicht weiter verfolgt.
 
 ## Offen
 - Nicht auf schwacher Hardware gemessen. Grobe Schätzung: Ein Steam Deck ist in der CPU etwa 2,5- bis 4-mal langsamer, das ergäbe 8 bis 12 ms im 99. Perzentil und damit weiter 60 fps. Für eine sichere Aussage muss man auf echtem Gerät testen, zum Beispiel einem alten Laptop oder dem Steam Deck.

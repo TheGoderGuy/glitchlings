@@ -55,6 +55,7 @@ func _ready() -> void:
 	test_form_migration()
 	test_badger_raccoon()
 	test_otter_macaw()
+	test_frame_pacing()
 	test_guards()
 	test_run_save()
 	test_progression()
@@ -2189,3 +2190,31 @@ func test_handbook() -> void:
 	check(opened and ts.handbook == null, "Handbuch öffnet sich über dem Titel und schließt wieder")
 	ts.queue_free()
 	hb.free()
+
+
+## Gleichmäßiger Kampf (03.10.2026): feste Rechenschritte, Hänger bremsen statt vorzuspulen
+func test_frame_pacing() -> void:
+	# Ein Geschoss trifft auch dann, wenn ein Bild 250 ms dauert (ohne Begrenzung spränge es 3 Felder weit)
+	var sa := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[3])
+	sa.e.frozen = 999.0
+	sa.def.el = "Neutral"
+	sa.e.r = sa.p.r
+	sa.e.c = 1
+	var hp0: int = sa.e.hp
+	sa.proj.append({"lob": false, "row": sa.p.r, "x": sa.p.c + 0.5, "v": 12.0, "el": "Neutral", "dmg": 20, "id": "Pixelstrahl"})
+	for i in 20:
+		sa.advance(0.25)
+	check(sa.e.hp == hp0 - 20, "Hänger von 250 ms: Geschoss überspringt den Gegner nicht (%d Schaden)" % (hp0 - sa.e.hp))
+	# Gleicher Kampfverlauf bei 60 Hz und 165 Hz (ohne Eingaben, gleicher Zufall)
+	var res: Array = []
+	for hz in [60.0, 165.0]:
+		var run := RunState.new("Pixmiez", 1)
+		run.rng.seed = 11
+		var st := BattleState.new(run, GameData.FOES[0])
+		st.rng.seed = 11
+		var t := 0.0
+		while t < 6.0:
+			st.advance(1.0 / hz)
+			t += 1.0 / hz
+		res.append([run.hp, st.e.c, st.e.r])
+	check(res[0] == res[1], "60 Hz und 165 Hz: gleicher Kampfverlauf nach 6 s (%s / %s)" % [str(res[0]), str(res[1])])

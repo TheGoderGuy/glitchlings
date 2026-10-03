@@ -4,6 +4,7 @@ extends Node
 const PATH := "user://settings.cfg"
 
 var fullscreen := false
+var vsync := true        # aus: weniger Eingabeverzögerung, dafür evtl. Bildzerreißen (Bildrate dann bis 300)
 var volume := 8          # 0–10 Gesamtlautstärke
 var music := 6           # 0–10 Musik
 var difficulty := 1      # 0 Entspannt, 1 Normal, 2 Knackig
@@ -22,6 +23,7 @@ func load_settings() -> void:
 		lang = T.system_lang()
 		return
 	fullscreen = cfg.get_value("video", "fullscreen", fullscreen)
+	vsync = cfg.get_value("video", "vsync", vsync)
 	volume = cfg.get_value("audio", "volume", volume)
 	music = cfg.get_value("audio", "music", music)
 	difficulty = cfg.get_value("game", "difficulty", difficulty)
@@ -34,6 +36,7 @@ func load_settings() -> void:
 func save_settings() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("video", "fullscreen", fullscreen)
+	cfg.set_value("video", "vsync", vsync)
 	cfg.set_value("audio", "volume", volume)
 	cfg.set_value("audio", "music", music)
 	cfg.set_value("game", "difficulty", difficulty)
@@ -45,6 +48,8 @@ func save_settings() -> void:
 func apply() -> void:
 	if DisplayServer.get_name() != "headless":
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if fullscreen else DisplayServer.WINDOW_MODE_WINDOWED)
+		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_ENABLED if vsync else DisplayServer.VSYNC_DISABLED)
+		Engine.max_fps = 0 if vsync else 300
 	var bus := AudioServer.get_bus_index("Master")
 	AudioServer.set_bus_volume_db(bus, linear_to_db(volume / 10.0) if volume > 0 else -80.0)
 	AudioServer.set_bus_mute(bus, volume == 0)

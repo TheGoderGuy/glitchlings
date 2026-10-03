@@ -34,6 +34,7 @@ func _option_items() -> Array:
 	return [
 		("Language (Sprache): " if T.en() else "Sprache (Language): ") + T.LANGS[Settings.lang],
 		T.t("Vollbild:") + " " + (on if Settings.fullscreen else off_),
+		"VSync: " + (on if Settings.vsync else off_),
 		T.t("Lautstärke:") + " " + _bar_text(Settings.volume),
 		T.t("Musik:") + " " + _bar_text(Settings.music),
 		T.t("Schwierigkeit:") + " " + T.t(["Entspannt", "Normal", "Knackig", "Korrumpiert"][Settings.difficulty]),
@@ -96,38 +97,38 @@ func _process(delta: float) -> void:
 			dir = -1
 		elif Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("confirm"):
 			dir = 1
-		if Input.is_action_just_pressed("back") or (sel == 11 and Input.is_action_just_pressed("confirm")):
+		if Input.is_action_just_pressed("back") or (sel == 12 and Input.is_action_just_pressed("confirm")):
 			Sfx.play("back")
 			page = Page.MAIN
 			sel = 2
 			Settings.save_settings()
 			reset_armed = false
-		elif sel == 9 and Input.is_action_just_pressed("confirm"):
+		elif sel == 10 and Input.is_action_just_pressed("confirm"):
 			Sfx.play("confirm")
 			Settings.save_settings()
 			show_intro.emit()
-		elif sel == 8 and Input.is_action_just_pressed("confirm"):
+		elif sel == 9 and Input.is_action_just_pressed("confirm"):
 			# Testfunktion für den Produzenten: alle Glitchlinge im Dex mit Namen
 			if SaveGame.has_save():
 				SaveGame.unlock_full_dex()
 				Sfx.play("confirm")
 			else:
 				Sfx.play("back")
-		elif sel == 10 and Input.is_action_just_pressed("confirm"):
+		elif sel == 11 and Input.is_action_just_pressed("confirm"):
 			# Ordner mit spieltest_log.csv öffnen (für Tester), im Browser als Datei herunterladen
 			if OS.has_feature("web"):
 				SaveGame.download_log()
 			else:
 				OS.shell_open(SaveGame.log_folder())
 			Sfx.play("confirm")
-		elif sel == 7 and Input.is_action_just_pressed("confirm"):
+		elif sel == 8 and Input.is_action_just_pressed("confirm"):
 			# Testfunktion für den Produzenten: alle Zonen sofort spielbar
 			if SaveGame.has_save():
 				SaveGame.unlock_all_zones()
 				Sfx.play("confirm")
 			else:
 				Sfx.play("back")
-		elif sel == 6 and Input.is_action_just_pressed("confirm") and SaveGame.has_save():
+		elif sel == 7 and Input.is_action_just_pressed("confirm") and SaveGame.has_save():
 			# zweimal bestätigen, damit nichts aus Versehen verloren geht
 			if reset_armed:
 				SaveGame.reset()
@@ -136,7 +137,7 @@ func _process(delta: float) -> void:
 			else:
 				reset_armed = true
 				Sfx.play("warn")
-		elif dir != 0 and sel < 6:
+		elif dir != 0 and sel < 7:
 			match sel:
 				0:
 					var langs: Array = T.LANGS.keys()
@@ -144,13 +145,15 @@ func _process(delta: float) -> void:
 				1:
 					Settings.fullscreen = not Settings.fullscreen
 				2:
-					Settings.volume = clampi(Settings.volume + dir, 0, 10)
+					Settings.vsync = not Settings.vsync
 				3:
-					Settings.music = clampi(Settings.music + dir, 0, 10)
+					Settings.volume = clampi(Settings.volume + dir, 0, 10)
 				4:
+					Settings.music = clampi(Settings.music + dir, 0, 10)
+				5:
 					var nd := 4 if SaveGame.game_cleared() else 3   # „Korrumpiert“ erst nach dem Ende
 					Settings.difficulty = (Settings.difficulty + dir + nd) % nd
-				5:
+				6:
 					Settings.screen_shake = not Settings.screen_shake
 			Settings.apply()
 			Sfx.play("select")
@@ -198,8 +201,8 @@ func _draw() -> void:
 		var r := Rect2(150, 14, 340, 312)
 		_box(r, GameData.COL.panel, GameData.COL.line)
 		_text(r.position + Vector2(0, 26), "Optionen", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
-		_menu(_option_items(), sel, r.get_center().x, r.position.y + 40, 280)
-		if sel == 4:
+		_menu(_option_items(), sel, r.get_center().x, r.position.y + 40, 280, 20.0)
+		if sel == 5:
 			var dd: String = T.t(["Mehr Zeit zum Ausweichen, Gegner treffen schwächer.", "So wie gedacht.", "Zähere Gegner, härtere Treffer, kürzere Warnungen.", "Nach dem Ende: stärkste Gegner, knappe Warnungen, 50 % mehr Fragmente."][Settings.difficulty])
 			if not SaveGame.game_cleared():
 				dd += "  " + T.t("(Nach dem Ende gibt es eine vierte Stufe.)")

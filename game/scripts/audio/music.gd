@@ -13,6 +13,11 @@ var active := 0
 var current := ""
 var positions := {}   # gemerkte Abspielposition je Stück
 var tween: Tween      # laufende Überblendung (wird bei jedem Wechsel abgebrochen)
+## Vorladen (03.10.2026): Alle Stücke werden nach dem Start im Hintergrund geladen, damit ein Szenenwechsel
+## nicht auf die WAV-Datei warten muss (das kostete bis zu 23 ms, auf langsamen Rechnern ein Ruckler).
+var cache := {}       # Stück -> AudioStreamWAV
+var pending: Array = []
+var _web_wait := 0
 
 
 func _ready() -> void:
@@ -28,6 +33,61 @@ func _ready() -> void:
 		players.append(p)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	Settings.apply()  # Musik-Bus existiert erst jetzt
+	for file in ResourceLoader.list_directory("res://assets/music/"):
+		if file.ends_with(".wav"):
+			pending.append(file.get_basename())
+	# Mit Threads im Hintergrund; im Browser (ohne Threads) nacheinander, ein Stück alle paar Bilder
+	if not OS.has_feature("web"):
+		for k in pending:
+			ResourceLoader.load_threaded_request(_path(k))
+
+
+func _process(_delta: float) -> void:
+	if pending.is_empty():
+		set_process(false)
+		return
+	if OS.has_feature("web"):
+		_web_wait += 1
+		if _web_wait >= 20:
+			_web_wait = 0
+			var k: String = pending.pop_front()
+			cache[k] = load(_path(k))
+		return
+	for i in range(pending.size() - 1, -1, -1):
+		var k: String = pending[i]
+		var status := ResourceLoader.load_threaded_get_status(_path(k))
+		if status == ResourceLoader.THREAD_LOAD_LOADED:
+			cache[k] = ResourceLoader.load_threaded_get(_path(k))
+			pending.remove_at(i)
+		elif status != ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+			pending.remove_at(i)   # Fehler: dann eben beim Abspielen laden
+
+
+## Beim Beenden noch laufende Hintergrund-Ladevorgänge abschließen und alles freigeben
+func _exit_tree() -> void:
+	if not OS.has_feature("web"):
+		for k in pending:
+			ResourceLoader.load_threaded_get(_path(k))
+	pending.clear()
+	cache.clear()
+	for p in players:
+		p.stream = null
+
+
+func _path(key: String) -> String:
+	return "res://assets/music/%s.wav" % key
+
+
+## Stück holen: vorgeladen, noch im Hintergrund (dann darauf warten) oder direkt laden
+func _stream(key: String) -> AudioStreamWAV:
+	if not cache.has(key):
+		if pending.has(key) and not OS.has_feature("web"):
+			cache[key] = ResourceLoader.load_threaded_get(_path(key))
+			pending.erase(key)
+		else:
+			cache[key] = load(_path(key))
+			pending.erase(key)
+	return cache[key]
 
 
 ## Stück der Zone, falls vorhanden („map_vulkan“), sonst das allgemeine („map“)
@@ -53,7 +113,7 @@ func play(key: String) -> void:
 	current = key
 	active = 1 - active
 	var neu := players[active]
-	var stream: AudioStreamWAV = load(path)
+	var stream: AudioStreamWAV = _stream(key)
 	# Schleife in Frames; neue Stereo-Stücke spielen das Intro nur einmal, danach A+B in Schleife
 	# One-Shot-Stücke (Kino-Intro) laufen einmal durch
 	var oneshot: bool = MusicSynth.TRACKS.has(key) and MusicSynth.TRACKS[key].get("oneshot", false)

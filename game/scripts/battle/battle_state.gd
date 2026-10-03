@@ -22,6 +22,8 @@ var hand: Array = []
 const RESHUFFLE := 3.0     # Ist der Support-Stapel leer, kostet das Neumischen zusätzliche Ladezeit (Heilung nicht zu oft)
 var _reshuffled := false
 var proj: Array = []
+const SIM_STEP := 1.0 / 120.0    # längster Rechenschritt des Kampfes
+const MAX_FRAME_DT := 0.05        # mehr zählt ein einzelnes Bild nie
 var warns: Array = []
 var mines: Array = []
 var pops: Array = []
@@ -807,6 +809,22 @@ func boss_phase() -> int:
 
 
 # ---------- Hauptschleife ----------
+
+## Ein Bild weiterrechnen (03.10.2026): in Schritten von höchstens SIM_STEP, damit Kampf und Trefferprüfung bei
+## 60 und 165 Hz gleich ablaufen. Ein Hänger zählt höchstens MAX_FRAME_DT – das Spiel bremst kurz, statt
+## vorzuspulen (sonst könnten Geschosse den Gegner überspringen oder Angriffe ohne Vorwarnung einschlagen).
+func advance(delta: float) -> void:
+	var dt := minf(delta, MAX_FRAME_DT)
+	var steps := maxi(1, ceili(dt / SIM_STEP - 0.001))
+	var h := dt / steps
+	for k in steps:
+		if freeze > 0:
+			freeze -= h
+		else:
+			update(h)
+		if over:
+			return
+
 
 func update(dt: float) -> void:
 	if not over:

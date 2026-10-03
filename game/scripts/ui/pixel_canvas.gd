@@ -144,9 +144,9 @@ func _dim() -> void:
 
 
 ## Menüliste; gibt nichts zurück, zeichnet nur. sel = gewählter Eintrag.
-func _menu(items: Array, sel: int, center_x: float, y: float, width := 200.0) -> void:
+func _menu(items: Array, sel: int, center_x: float, y: float, width := 200.0, step := 22.0) -> void:
 	for i in items.size():
-		var r := Rect2(center_x - width / 2, y + i * 22, width, 18)
+		var r := Rect2(center_x - width / 2, y + i * step, width, 18)
 		var active := i == sel
 		_box(r, GameData.COL.panel if active else Color(GameData.COL.bg2, 0.85), GameData.COL.sun if active else GameData.COL.line)
 		if active:
@@ -171,6 +171,10 @@ const IDLE_FPS := 10.0  # Bilder pro Sekunde der Idle-Animationen (Produzent: 10
 
 ## Alle Sprites beim Spielstart laden: Texturen, die erst in _draw() zum ersten Mal geladen werden, bleiben in dem Bild weiß.
 static func preload_all() -> void:
+	# Zonen-Kulissen vorberechnen (03.10.2026): pro Kulisse ~20 ms Pixelarbeit – beim ersten Besuch einer Zone,
+	# der Station oder der Zonenwahl ruckelte es sonst genau beim Kampfbeginn bzw. Bildschirmwechsel
+	for z in ZONE_PAL:
+		zone_texture(z)
 	for k in SPRITE_FILES:
 		sprite(k)
 	for f in GameData.FORMS:

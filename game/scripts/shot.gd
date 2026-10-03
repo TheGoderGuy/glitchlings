@@ -119,6 +119,13 @@ static func bench(node: Node, secs: float) -> void:
 	var t0 := Time.get_ticks_usec()
 	var last := t0
 	var act := 0.0
+	# --mode=wechsel: alle 45 Bilder die Szene wechseln (Titel > Station > Karte > Kampf > Ergebnis), langsamste Bilder je Wechsel
+	var swap: bool = Shot.args().get("mode", "") == "wechsel"
+	var swap_n := 0
+	var swap_step := 0
+	var swap_max := {}
+	var swap_name := ""
+	const SWAPS := ["Titel", "Station", "Karte", "Kampf", "Ergebnis"]
 	while (last - t0) / 1e6 < secs:
 		await tree.process_frame
 		var now := Time.get_ticks_usec()
@@ -126,11 +133,34 @@ static func bench(node: Node, secs: float) -> void:
 		last = now
 		if frames[-1] > 1000.0 / 60.0:
 			var cs = node.get("current")
-			print("  langsam: %.1f ms bei %.1f s in %s" % [frames[-1], (now - t0) / 1e6, cs.get_script().resource_path.get_file() if cs != null else "?"])
+			print("  langsam: %.1f ms bei %.1f s in %s (Render-CPU %.1f ms, GPU %.1f ms)" % [frames[-1], (now - t0) / 1e6, cs.get_script().resource_path.get_file() if cs != null else "?", RenderingServer.viewport_get_measured_render_time_cpu(vp), RenderingServer.viewport_get_measured_render_time_gpu(vp)])
 		rcpu += RenderingServer.viewport_get_measured_render_time_cpu(vp)
 		rgpu += RenderingServer.viewport_get_measured_render_time_gpu(vp)
 		calls += Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)
 		n += 1
+		if swap:
+			if swap_name != "" and swap_n < 6:
+				swap_max[swap_name] = maxf(swap_max.get(swap_name, 0.0), frames[-1])
+			swap_n += 1
+			if swap_n >= 45:
+				swap_n = 0
+				swap_name = SWAPS[swap_step % SWAPS.size()]
+				match swap_step % SWAPS.size():
+					0: node.show_title()
+					1:
+						var tc := Time.get_ticks_usec()
+						node.show_station()
+						if swap_step < 5:
+							print("  Station aufbauen: %.1f ms" % ((Time.get_ticks_usec() - tc) / 1000.0))
+					2:
+						node.run = RunState.new("Pixmiez", 7)
+						node.show_map()
+					3:
+						node.run.enter(node.run.next_choices()[0])
+						node.run.current_node().type = "fight"
+						node._enter_node()
+					4: node.show_result(true)
+				swap_step += 1
 		var cur = node.get("current")
 		if cur != null and cur.get("st") != null:
 			var st = cur.st
@@ -155,4 +185,9 @@ static func bench(node: Node, secs: float) -> void:
 	var foe: String = cur1.st.def.name if cur1 != null and cur1.get("st") != null else ""
 	print("BENCH %s %s | Bilder %d | Schnitt %.2f ms (%.0f fps) | 99%% %.2f ms | max %.2f ms | über 16,7 ms: %d | Render-CPU %.2f ms | GPU %.2f ms | Zeichenaufrufe %.0f | %s" % [
 		Shot.args().get("mode", "?"), foe, frames.size(), avg, 1000.0 / avg, p99, sorted[-1], over, rcpu / n, rgpu / n, calls / n, RenderingServer.get_video_adapter_name()])
+	if swap:
+		var parts: Array = []
+		for k in SWAPS:
+			parts.append("%s %.1f ms" % [k, swap_max.get(k, 0.0)])
+		print("WECHSEL (langsamstes Bild der ersten 6 nach dem Wechsel, %d Wechsel): %s" % [swap_step, " | ".join(parts)])
 	tree.quit()

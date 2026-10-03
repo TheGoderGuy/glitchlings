@@ -273,11 +273,7 @@ func _process_fight(delta: float) -> void:
 			st.use_special()
 	_tick_anims(delta)
 	_track_cards(delta)
-	var dt := delta
-	if st.freeze > 0:
-		st.freeze -= dt
-	else:
-		st.update(dt)
+	st.advance(delta)
 	if tut != null and tut.active():
 		tut.update(st, delta)
 		if tut.just_finished:
