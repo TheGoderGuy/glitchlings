@@ -10,6 +10,8 @@ const EGG_RUNS := 2
 ## Alle Babys können im Ei stecken; Arten, die noch nicht im Monsterdex (und nicht schon im Nest) sind, kommen dreimal so oft
 const EGG_SPECIES := ["Pixmiez", "Funkling", "Tröpfel", "Kekso", "Lumi", "Quakli", "Molchi", "Maskli", "Brummbit", "Kauzbit", "Buddli"]
 const EGG_NEW_WEIGHT := 3
+## Eier kaufen im Brutnest (Produzent 03.10.2026): gleiche Regeln wie gefundene Eier
+const EGG_PRICE := 200
 ## Mindestzahl gewonnener Kämpfe für ein Ei
 const EGG_MIN_WINS := 2
 
@@ -187,6 +189,16 @@ func add_egg(rng: RandomNumberGenerator) -> Dictionary:
 	var runs := maxi(1, EGG_RUNS - upgrade_level("brutwaermer"))
 	var egg := {"species": _roll_species(rng), "runs_left": runs}
 	data.nest.append(egg)
+	return egg
+
+
+## Ei für Fragmente kaufen; {} wenn das Nest voll ist oder die Fragmente fehlen
+func buy_egg(rng: RandomNumberGenerator) -> Dictionary:
+	if frag() < EGG_PRICE or nest().size() >= nest_slots():
+		return {}
+	data.frag = frag() - EGG_PRICE
+	var egg := add_egg(rng)
+	save_game()
 	return egg
 
 

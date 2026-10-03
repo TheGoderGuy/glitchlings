@@ -16,6 +16,7 @@ Titel → **erster Start:** Starter wählen → Station · **danach:** direkt St
   - Im Ei kann jedes der 11 Babys stecken. **Arten, die noch nicht im Monsterdex und nicht schon im Nest sind, kommen dreimal so oft** (`SaveGame.EGG_NEW_WEIGHT`).
   - Die Seltenheiten Gewöhnlich, Selten, Episch und Legendär sind gestrichen, bis es einen Plan dafür gibt. Idee für später: ein Legendär-Ei mit Schimmer-Variante (reine Optik) für den ersten Sieg über einen Zonen-Boss.
   - Alte Eier verlieren beim Laden ihre Seltenheit und schlüpfen spätestens nach 2 Runs.
+  - **Ei kaufen** (Produzent 03.10.2026): im Brutnest für **200 Fragmente** (`SaveGame.EGG_PRICE`, `buy_egg`). Gleiche Regeln wie gefundene Eier: 2 Runs, fehlende Arten häufiger. Geht nur mit freiem Nestplatz. Fragmente haben damit neben Ausbau und Labor ein drittes Ziel.
 - **Monsterdex:** 18 Formen, Unbekanntes als Silhouette.
 - Titel → Optionen → „Spielstand löschen“ (zweimal bestätigen).
 

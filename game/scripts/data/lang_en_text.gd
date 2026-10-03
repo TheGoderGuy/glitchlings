@@ -313,7 +313,7 @@ const D := {
 	"Willkommen in der Station!": "Welcome to the station!",
 	"Hier ist dein Zuhause zwischen den Runs. Mit %s wechselst du die Reiter oben.": "This is your home between runs. Switch the tabs at the top with %s.",
 	"Das sind deine Glitchlinge. Wähle eins aus und drücke %s – dann suchst du dir eine Zone für den Run aus.": "These are your Glitchlings. Pick one and press %s – then choose a zone for the run.",
-	"Nach jedem Run mit mindestens zwei Siegen bekommst du ein Ei. Es schlüpft nach ein paar Runs – so wächst dein Team.": "After every run with at least two wins you get an egg. It hatches after a few runs – that's how your team grows.",
+	"Nach jedem Run mit mindestens zwei Siegen bekommst du ein Ei, oder du kaufst eins für 200 Fragmente. Es schlüpft nach zwei Runs – so wächst dein Team.": "After every run with at least two wins you get an egg, or you can buy one for 200 fragments. It hatches after two runs – that is how your team grows.",
 	"Hier verschmelzen zwei Glitchlinge zu einer seltenen Fusion. Die Rezepte sind geheim, aber Gerüchte helfen dir.": "Here two Glitchlings fuse into a rare fusion. The recipes are secret, but rumors help.",
 	"Alle Formen, die du entdeckt hast. Wie sich ein Glitchling entwickelt, bestimmen die Chips, die du im Kampf spielst!": "All the forms you've discovered. How a Glitchling evolves depends on the chips you play in battle!",
 	"Fragmente aus deinen Runs machen die Station dauerhaft stärker: mehr HP, verbesserte Start-Chips, ein vierter Nestplatz …": "Fragments from your runs make the station permanently stronger: more HP, upgraded starting chips, a fourth nest slot …",
@@ -372,7 +372,8 @@ const D := {
 	"Block + %d": "Block + %d", "Konter %d": "Counter %d", "laden": "charge",
 
 	# ---------- Eier (03.10.2026: eine Sorte) ----------
-	"Ei": "Egg", "Neues Ei (schlüpft nach %d Run)": "New egg (hatches after %d run)", "Neues Ei (schlüpft nach %d Runs)": "New egg (hatches after %d runs)",
+	"Ei": "Egg", "%s Ei kaufen (%d Fragmente)": "%s Buy egg (%d fragments)", "Das Brutnest ist voll.": "The nest is full.",
+	"Ei gekauft! Es schlüpft nach %d Runs.": "Egg bought! It hatches after %d runs.", "Neues Ei (schlüpft nach %d Run)": "New egg (hatches after %d run)", "Neues Ei (schlüpft nach %d Runs)": "New egg (hatches after %d runs)",
 	"Eier schlüpfen nach 2 Runs. Arten, die dir noch fehlen, schlüpfen häufiger.": "Eggs hatch after 2 runs. Species you are still missing hatch more often.",
 	"Ein Ei gibt es nach jedem Run mit mindestens %d gewonnenen Kämpfen.": "You get an egg after every run with at least %d won battles.",
 

@@ -34,6 +34,7 @@ var fuse_sel: Array = []     # IDs der gewählten Labor-Monster (max. 2)
 var fuse_msg := ""
 var fusion := {}             # laufende Fusions-Szene
 var up_msg := ""             # Rückmeldung im Ausbau-Reiter
+var nest_msg := ""           # Rückmeldung beim Ei-Kauf
 var zone_pick := false       # Zonenwahl offen (nach Enter im Team-Reiter)
 var zone_sel := 0            # gewählte Zone (Index in GameData.ZONE_ORDER)
 var zone_msg := ""
@@ -43,7 +44,7 @@ var guide := -1              # Schritt der Station-Führung (-1 = aus)
 const GUIDE := [
 	[0, "tabs", "Willkommen in der Station!", "Hier ist dein Zuhause zwischen den Runs. Mit %s wechselst du die Reiter oben."],
 	[0, "team", "Team", "Das sind deine Glitchlinge. Wähle eins aus und drücke %s – dann suchst du dir eine Zone für den Run aus."],
-	[1, "tab", "Brutnest", "Nach jedem Run mit mindestens zwei Siegen bekommst du ein Ei. Es schlüpft nach ein paar Runs – so wächst dein Team."],
+	[1, "tab", "Brutnest", "Nach jedem Run mit mindestens zwei Siegen bekommst du ein Ei, oder du kaufst eins für 200 Fragmente. Es schlüpft nach zwei Runs – so wächst dein Team."],
 	[2, "tab", "Labor", "Hier verschmelzen zwei Glitchlinge zu einer seltenen Fusion. Die Rezepte sind geheim, aber Gerüchte helfen dir."],
 	[3, "tab", "Monsterdex", "Alle Formen, die du entdeckt hast. Wie sich ein Glitchling entwickelt, bestimmen die Chips, die du im Kampf spielst!"],
 	[4, "tab", "Ausbau", "Fragmente aus deinen Runs machen die Station dauerhaft stärker: mehr HP, verbesserte Start-Chips, ein vierter Nestplatz …"],
@@ -120,11 +121,13 @@ func _process(delta: float) -> void:
 	elif Input.is_action_just_pressed("tab_next"):
 		tab = ((tab + 1) % TAB_NAMES.size()) as Tab
 		up_msg = ""
+		nest_msg = ""
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("tab_prev"):
 		tab = ((tab + TAB_NAMES.size() - 1) % TAB_NAMES.size()) as Tab
 		up_msg = ""
+		nest_msg = ""
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
@@ -171,6 +174,20 @@ func _process(delta: float) -> void:
 					else:
 						fuse_msg = "Wähle zuerst zwei Monster aus."
 						Sfx.play("back")
+			Tab.NEST:
+				if Input.is_action_just_pressed("confirm"):
+					if SaveGame.nest().size() >= SaveGame.nest_slots():
+						nest_msg = T.t("Das Brutnest ist voll.")
+						Sfx.play("back")
+					elif SaveGame.frag() < SaveGame.EGG_PRICE:
+						nest_msg = T.t("Dafür fehlen noch %d Fragmente.") % (SaveGame.EGG_PRICE - SaveGame.frag())
+						Sfx.play("back")
+					else:
+						var rng := RandomNumberGenerator.new()
+						rng.randomize()
+						SaveGame.buy_egg(rng)
+						nest_msg = T.t("Ei gekauft! Es schlüpft nach %d Runs.") % maxi(1, SaveGame.EGG_RUNS - SaveGame.upgrade_level("brutwaermer"))
+						Sfx.play("pop", 0.0)
 			Tab.UPGRADE:
 				_nav_v(GameData.STATION_UPGRADES.size())
 				if Input.is_action_just_pressed("confirm"):
@@ -534,7 +551,14 @@ func _draw_nest() -> void:
 		_text(Vector2(r.position.x, r.position.y + 136), "Ei", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		var txt := T.t("schlüpft nach dem nächsten Run") if left == 1 else (T.t("bereit!") if left <= 0 else T.t("noch %d Runs") % left)
 		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 152), txt, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
-	_text(Vector2(R.position.x, R.end.y - 18), "Eier schlüpfen nach 2 Runs. Arten, die dir noch fehlen, schlüpfen häufiger.", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	# Ei kaufen
+	var can_buy := SaveGame.frag() >= SaveGame.EGG_PRICE and SaveGame.nest().size() < SaveGame.nest_slots()
+	var B := Rect2(R.get_center().x - 120, R.end.y - 50, 240, 18)
+	_box(B, GameData.COL.panel.lightened(0.08) if can_buy else GameData.COL.bg2, GameData.COL.sun if can_buy else GameData.COL.line)
+	var key: String = InputSetup.btn("A") if InputSetup.pad else "Enter"
+	_text(Vector2(B.position.x, B.position.y + 13), T.t("%s Ei kaufen (%d Fragmente)") % [key, SaveGame.EGG_PRICE], 8, GameData.COL.ink if can_buy else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, can_buy)
+	var foot := nest_msg if nest_msg != "" else "Eier schlüpfen nach 2 Runs. Arten, die dir noch fehlen, schlüpfen häufiger."
+	_text(Vector2(R.position.x, R.end.y - 14), foot, 8, GameData.COL.sun if nest_msg != "" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 
 
 func _draw_dex() -> void:

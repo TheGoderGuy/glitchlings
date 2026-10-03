@@ -2040,6 +2040,15 @@ func test_progression() -> void:
 	var egg := SaveGame.add_egg(rng2)
 	var egg2 := SaveGame.add_egg(rng2)
 	check(int(egg.runs_left) == 1 and int(egg2.runs_left) == 1, "Brutwärmer: Eier schlüpfen einen Run früher (mindestens 1)")
+	# Ei kaufen: 200 Fragmente, nur mit freiem Platz
+	SaveGame.data.nest = []
+	SaveGame.data.frag = 250
+	var bought := SaveGame.buy_egg(rng2)
+	var poor := SaveGame.buy_egg(rng2)   # nur noch 50 Fragmente
+	SaveGame.data.frag = 900
+	SaveGame.data.nest = [{"species": "Lumi", "runs_left": 2}, {"species": "Lumi", "runs_left": 2}, {"species": "Lumi", "runs_left": 2}, {"species": "Lumi", "runs_left": 2}]
+	var full := SaveGame.buy_egg(rng2)
+	check(not bought.is_empty() and poor.is_empty() and full.is_empty() and SaveGame.frag() == 900 and SaveGame.EGG_PRICE == 200, "Ei kaufen: 200 Fragmente, nicht ohne Fragmente oder bei vollem Nest")
 
 
 ## Händler: Chip-Auswahl abbrechen gibt die Fragmente zurück (30.09.2026)
