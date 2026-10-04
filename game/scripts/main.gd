@@ -253,6 +253,12 @@ func _screenshot(shot: Dictionary) -> void:
 			show_title()
 			if mode == "options":
 				current.page = TitleScreen.Page.OPTIONS
+				current.sel = int(shot.get("t", 0.0))
+				current.reset_armed = shot.has("bonus")   # --bonus: Rückfrage beim Zurücksetzen zeigen
+			if mode == "title" and shot.has("bonus"):
+				# nur die Meldung nach dem Zurücksetzen zeigen – nicht wirklich zurücksetzen (würde echte Einstellungen löschen)
+				current.title_msg = "Spiel zurückgesetzt. Mit „Neues Spiel“ geht es ganz von vorn los."
+				current.title_msg_t = 3.0
 			if mode == "keys":
 				current.page = TitleScreen.Page.KEYS
 				current.sel = int(shot.get("t", 0.0))

@@ -101,7 +101,9 @@ const D := {
 	# Tutorial
 	"Bewegen (%d/3)": "Move (%d/3)", "Beweg dich mit %s über deine blauen Felder.": "Move across your blue tiles with %s.",
 	"dem Steuerkreuz oder dem linken Stick": "the D-pad or the left stick", "WASD oder den Pfeiltasten": "WASD or the arrow keys", "%s oder den Pfeiltasten": "%s or the arrow keys", "%s oder Pfeiltasten": "%s or arrow keys",
-	"Tastenbelegung": "Key bindings", "Hoch": "Up", "Runter": "Down", "Links": "Left", "Rechts": "Right", "Angriff 1": "Attack 1", "Angriff 2": "Attack 2",
+	"Tastenbelegung": "Key bindings", "Spiel zurücksetzen": "Reset game", "Wirklich alles zurücksetzen? Nochmal drücken": "Really reset everything? Press again",
+	"Löscht Spielstand, laufenden Run und alle Einstellungen (auch die Tastenbelegung). Das Spieltest-Log bleibt.": "Deletes your save, the current run and all settings (including key bindings). The playtest log is kept.",
+	"Spiel zurückgesetzt. Mit „Neues Spiel“ geht es ganz von vorn los.": "Game reset. “New game” starts again from the very beginning.", "Hoch": "Up", "Runter": "Down", "Links": "Left", "Rechts": "Right", "Angriff 1": "Attack 1", "Angriff 2": "Attack 2",
 	"Reiter zurück": "Previous tab", "Reiter vor": "Next tab", "Standard wiederherstellen": "Restore defaults", "Standard wiederhergestellt.": "Defaults restored.",
 	"Taste drücken …": "Press a key …", "Neue Taste drücken · Esc bricht ab": "Press a new key · Esc cancels", "Diese Taste ist fest belegt.": "This key is reserved.",
 	"Getauscht mit %s.": "Swapped with %s.", "Pfeiltasten, Enter, Esc, Rücktaste und Tab bleiben immer belegt.": "Arrow keys, Enter, Esc, Backspace and Tab always keep their function.",

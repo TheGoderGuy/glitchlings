@@ -2,6 +2,7 @@ extends Node
 ## Spieler-Einstellungen, gespeichert in user://settings.cfg.
 
 const PATH := "user://settings.cfg"
+var path := PATH   # Tests leiten auf eine eigene Datei um
 
 var fullscreen := false
 var vsync := true        # aus: weniger Eingabeverzögerung, dafür evtl. Bildzerreißen (Bildrate dann bis 300)
@@ -19,7 +20,7 @@ func _ready() -> void:
 
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(PATH) != OK:
+	if cfg.load(path) != OK:
 		lang = T.system_lang()
 		return
 	fullscreen = cfg.get_value("video", "fullscreen", fullscreen)
@@ -40,6 +41,22 @@ func load_settings() -> void:
 	InputSetup.setup()
 
 
+## Alles auf Anfang (Spiel zurücksetzen, 04.10.2026): Standardwerte, Sprache wieder aus dem System,
+## Standard-Tastenbelegung; die Datei wird gelöscht, damit der nächste Start wie der allererste ist
+func reset_defaults() -> void:
+	fullscreen = false
+	vsync = true
+	volume = 8
+	music = 6
+	difficulty = 1
+	screen_shake = true
+	lang = T.system_lang()
+	InputSetup.reset_keys()
+	if FileAccess.file_exists(path):
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	apply()
+
+
 func save_settings() -> void:
 	var cfg := ConfigFile.new()
 	cfg.set_value("video", "fullscreen", fullscreen)
@@ -50,7 +67,7 @@ func save_settings() -> void:
 	cfg.set_value("comfort", "screen_shake", screen_shake)
 	cfg.set_value("game", "lang", lang)
 	cfg.set_value("keys", "map", InputSetup.overrides)
-	cfg.save(PATH)
+	cfg.save(path)
 
 
 func apply() -> void:

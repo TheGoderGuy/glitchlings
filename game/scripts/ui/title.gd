@@ -14,6 +14,8 @@ var reset_armed := false
 var key_wait := ""      # Aktion, die gerade eine neue Taste bekommt (Tastenbelegung)
 var key_msg := ""       # Rückmeldung auf der Tastenbelegungs-Seite
 var key_block := 0.0    # kurz keine Menü-Eingaben nach dem Belegen (die Taste selbst soll nichts auslösen)
+var title_msg := ""     # kurze Meldung im Hauptmenü (z. B. nach dem Zurücksetzen)
+var title_msg_t := 0.0
 ## Bildmarke „Digi-Ei“ (03.10.2026), links neben dem Schriftzug
 const LOGO_EGG := preload("res://assets/logo/digiei_64.png")
 
@@ -55,7 +57,7 @@ func _option_label(id: String) -> String:
 		"keys":
 			return "Tastenbelegung"
 		"reset":
-			return ("Wirklich löschen? Nochmal drücken" if reset_armed else "Spielstand löschen") if SaveGame.has_save() else "Spielstand: keiner"
+			return "Wirklich alles zurücksetzen? Nochmal drücken" if reset_armed else "Spiel zurücksetzen"
 		"zones":
 			return ("Test: Alle Zonen frei (erledigt)" if SaveGame.unlocked_zones().size() == GameData.ZONE_ORDER.size() else "Test: Alle Zonen freischalten") if SaveGame.has_save() else "Test: erst Spiel starten"
 		"dex":
@@ -124,6 +126,8 @@ func _process(delta: float) -> void:
 	if handbook != null:
 		queue_redraw()
 		return
+	if title_msg_t > 0:
+		title_msg_t -= delta
 	# gelegentliches Glitch-Zucken im Logo
 	glitch_t -= delta
 	if glitch_t <= 0:
@@ -219,11 +223,9 @@ func _process_options() -> void:
 					Sfx.play("back")
 		"reset":
 			# zweimal bestätigen, damit nichts aus Versehen verloren geht
-			if ok and SaveGame.has_save():
+			if ok:
 				if reset_armed:
-					SaveGame.reset()
-					reset_armed = false
-					Sfx.play("back")
+					reset_game()
 				else:
 					reset_armed = true
 					Sfx.play("warn")
@@ -249,6 +251,19 @@ func _process_options() -> void:
 					Settings.screen_shake = not Settings.screen_shake
 			Settings.apply()
 			Sfx.play("select")
+
+
+## Spiel zurücksetzen (04.10.2026): Spielstand mit laufendem Run, Einstellungen und Tastenbelegung wie bei einer
+## Neuinstallation. Das Spieltest-Log bleibt (Testerdaten). Danach Hauptmenü, „Neues Spiel“ startet mit dem Intro.
+func reset_game() -> void:
+	SaveGame.reset()
+	Settings.reset_defaults()
+	reset_armed = false
+	page = Page.MAIN
+	sel = 0
+	title_msg = "Spiel zurückgesetzt. Mit „Neues Spiel“ geht es ganz von vorn los."
+	title_msg_t = 4.0
+	Sfx.play("back")
 
 
 func _process_keys() -> void:
@@ -306,6 +321,8 @@ func _draw() -> void:
 
 	if page == Page.MAIN:
 		_menu(_main_items(), sel, W / 2.0, 250, 180)
+		if title_msg_t > 0:
+			_text(Vector2(0, 130), title_msg, 8, Color(GameData.COL.sun, minf(1.0, title_msg_t)), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	else:
 		_dim()
 		var r := Rect2(150, 10, 340, 316)
@@ -323,6 +340,8 @@ func _draw() -> void:
 func _draw_options(r: Rect2) -> void:
 	_text(r.position + Vector2(0, 26), "Optionen", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	_menu(_option_items(), sel, r.get_center().x, r.position.y + 38, 280, 19.0)
+	if OPTIONS[sel] == "reset":
+		_text(Vector2(0, r.end.y + 12), "Löscht Spielstand, laufenden Run und alle Einstellungen (auch die Tastenbelegung). Das Spieltest-Log bleibt.", 8, GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if OPTIONS[sel] == "difficulty":
 		var dd: String = T.t(["Mehr Zeit zum Ausweichen, Gegner treffen schwächer.", "So wie gedacht.", "Zähere Gegner, härtere Treffer, kürzere Warnungen.", "Nach dem Ende: stärkste Gegner, knappe Warnungen, 50 % mehr Fragmente."][Settings.difficulty])
 		if not SaveGame.game_cleared():

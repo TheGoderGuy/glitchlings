@@ -29,3 +29,18 @@ Der Produzent wollte vor der Weitergabe ein kleines Tutorial, „was wo zu finde
 - **Kampf-Handbuch** (8 Seiten mit gezeichneten Beispielen): Spielfeld, Chips, Ausweichen (rote und goldene Felder, Lava), Elemente (Kreislauf, ×1,5 / ×0,75), Zustände und Kombos, Signatur und Passiv, Entwicklung (12/35/80, 2 Vorsprung), Nach dem Kampf (Chipwahl, Fragmente, Elite, Glitch-Elite, Wächter, Boss-Phasen).
   - Erreichbar über das Titelmenü, das Pause-Menü in Kampf und Karte, die Station und jederzeit mit H bzw. Back/Share. Das Kampf-Tutorial verweist am Ende darauf.
   - Der Select-Knopf pausiert nicht mehr, er öffnet das Handbuch (Pause bleibt auf Start).
+
+## Spiel zurücksetzen (04.10.2026)
+Wunsch des Produzenten. **Optionen > Spiel zurücksetzen** (zweimal bestätigen) setzt alles zurück wie bei einer Neuinstallation:
+- gelöscht werden Spielstand samt laufendem Run, alle Einstellungen und die Tastenbelegung,
+- die Sprache kommt danach wieder aus dem System,
+- das **Spieltest-Log bleibt erhalten**, weil darin die Testerdaten stehen.
+
+Danach landet man im Hauptmenü mit der Meldung „Spiel zurückgesetzt …“. „Neues Spiel“ beginnt wieder mit Intro, Starterwahl und Tutorial.
+
+Vorher hieß der Eintrag „Spielstand löschen“. Er löschte nur den Spielstand und war ohne Spielstand ausgegraut.
+
+Technik:
+- `TitleScreen.reset_game()`, `Settings.reset_defaults()`. Die Einstellungsdatei wird gelöscht, damit der nächste Start wie der allererste ist.
+- Tests leiten `Settings.path` auf `user://test_settings.cfg` um, so wie Spielstand und Log.
+- Screenshot: `--mode=options --t=8 --bonus` zeigt die Rückfrage, `--mode=title --bonus` die Meldung. Dabei wird nur angezeigt, nichts wirklich zurückgesetzt.

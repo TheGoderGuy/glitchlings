@@ -12,6 +12,7 @@ func _ready() -> void:
 	# auch wenn einzelne Tests persist einschalten (29.09.2026: ein Test hatte den echten Stand verändert)
 	SaveGame.path = "user://test_savegame.json"
 	SaveGame.log_path = "user://test_spieltest_log.csv"
+	Settings.path = "user://test_settings.cfg"   # Einstellungen nie in die echte Datei (Zurücksetzen löscht sie)
 	Settings.lang = "de"   # Tests prüfen deutsche Texte; Englisch prüft test_english
 	test_scripts_compile()
 	test_english()
@@ -57,6 +58,7 @@ func _ready() -> void:
 	test_otter_macaw()
 	test_frame_pacing()
 	test_key_rebind()
+	test_reset_game()
 	test_guards()
 	test_run_save()
 	test_progression()
@@ -2240,3 +2242,30 @@ func test_key_rebind() -> void:
 	check(has_key.call("move_up", KEY_UP) and InputSetup.move_keys() == "IASD", "Pfeiltasten bleiben beim Umbelegen erhalten")
 	InputSetup.reset_keys()
 	check(has_key.call("chip_1", KEY_J) and has_key.call("chip_2", KEY_K) and InputSetup.overrides.is_empty() and InputSetup.key_text("special", "acc") == T.t("die Leertaste"), "Standard wiederherstellen")
+
+
+## Spiel zurücksetzen (04.10.2026): Spielstand, Einstellungen und Tastenbelegung wie neu, Log bleibt
+func test_reset_game() -> void:
+	var keep: Dictionary = SaveGame.data.duplicate(true)
+	var keep_vol: int = Settings.volume
+	var keep_lang: String = Settings.lang
+	SaveGame.new_game("Pixmiez")
+	var lf := FileAccess.open(SaveGame.log_path, FileAccess.WRITE)
+	lf.store_line("test")
+	lf.close()
+	Settings.volume = 3
+	Settings.vsync = false
+	Settings.save_settings()
+	InputSetup.rebind("chip_1", KEY_U)
+	const TS := preload("res://scripts/ui/title.gd")
+	var t: Node = TS.new()
+	t.page = TS.Page.OPTIONS
+	t.reset_game()
+	var log_kept := FileAccess.file_exists(SaveGame.log_path)
+	check(not SaveGame.has_save() and not FileAccess.file_exists(Settings.path) and Settings.volume == 8 and Settings.vsync and InputSetup.overrides.is_empty() and t.page == TS.Page.MAIN, "Spiel zurücksetzen: Spielstand, Einstellungen und Tasten wie neu, zurück ins Hauptmenü")
+	check(log_kept and Settings.path == "user://test_settings.cfg", "Spiel zurücksetzen: Spieltest-Log bleibt, Tests nutzen eigene Einstellungsdatei")
+	t.free()
+	SaveGame.data = keep
+	Settings.volume = keep_vol
+	Settings.lang = keep_lang
+	Settings.apply()
