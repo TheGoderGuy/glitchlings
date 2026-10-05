@@ -454,31 +454,17 @@ func _draw_arena_overlays() -> void:
 				draw_rect(rect, gold, false, bw)
 				_text(rect.position + Vector2(0, 26), "!!", 16, Color(1, 1, 1, minf(1.0, 0.5 + k)), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true, true)
 				continue
+			if w.get("lava", false):
+				_draw_ground_warn(rect, k, w.get("kind", "lava") == "slime", cell)
+				continue
 			draw_rect(rect, Color(GameData.COL.coral, a))
 			_text(rect.position + Vector2(0, 26), "!", 16, Color(1, 1, 1, minf(1.0, 0.4 + k)), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true, true)
 	for hz in st.hazards:
 		var rect := cell_rect(hz.c, hz.r)
-		var fade := minf(1.0, hz.t / 0.5)
 		if hz.get("kind", "lava") == "slime":
-			draw_rect(rect, Color("#2E5A24", 0.85 * fade))
-			for k in 4:
-				var bx2 := rect.position.x + 8 + (k * 19) % int(rect.size.x - 16)
-				var by2 := rect.position.y + 10 + (k * 11) % int(rect.size.y - 18) + sin(anim_t * 3.0 + k) * 2.0
-				draw_circle(Vector2(bx2, by2), 3.0 + (k % 2), Color("#7BD35A", 0.7 * fade))
-			draw_rect(Rect2(rect.position, Vector2(rect.size.x, 2)), Color("#A8F07A", fade))
-			continue
-		draw_rect(rect, Color("#7A1F0E", 0.85 * fade))
-		for k in 5:
-			var bx := rect.position.x + 6 + fmod(k * 17.0 + anim_t * 9.0 * (1 + k % 2), rect.size.x - 12)
-			var by := rect.position.y + 6 + (k * 7) % int(rect.size.y - 12)
-			draw_rect(Rect2(roundi(bx), roundi(by), 3, 3), Color("#FFB347", fade * (0.6 + 0.4 * sin(anim_t * 8.0 + k))))
-		draw_rect(Rect2(rect.position, Vector2(rect.size.x, 2)), Color("#FF8A4C", fade))
-	for w in st.warns:
-		if w.get("lava", false):
-			var wc := Color("#7BD35A") if w.get("kind", "lava") == "slime" else Color("#FF8A4C")
-			for cell in w.cells:
-				var rr := cell_rect(cell.x, cell.y)
-				draw_rect(rr.grow(-2), Color(wc, 0.25 + 0.25 * sin(anim_t * 20.0)))
+			_draw_slime_pool(rect, hz)
+		else:
+			_draw_lava_pool(rect, hz)
 	for q in st.parts:
 		if q.has("cell"):
 			draw_rect(cell_rect(q.c, q.r), Color(q.color, q.t / q.max * 0.8))
@@ -596,9 +582,7 @@ func _draw_actors() -> void:
 			tint = Color(1.0, 0.78, 0.72)
 		tint.a = fade
 		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint})
-		if e.frozen > 0:
-			var rect := cell_rect(3 + e.c, e.r)
-			draw_rect(Rect2(rect.position.x + 4, rect.position.y - 40, rect.size.x - 8, rect.size.y + 34), Color(GameData.EL.Wasser, 0.3))
+		_draw_status_fx(ecx, efy)
 		if st.delayed.any(func(d): return d.mark):
 			var cc := Vector2(ecx, efy - 26)
 			var rad := 22.0 + 3.0 * sin(anim_t * 20.0)
@@ -1613,6 +1597,18 @@ func _draw_vfx() -> void:
 				for i in 8:
 					var ang := i * TAU / 8.0
 					_px(cen + Vector2(-22, -24) + Vector2(cos(ang), sin(ang)) * (4 + k * 16), 3, Color(GameData.EL.Code, a))
+			"erupt":
+				var fp := Vector2(cen.x, feet_y(v.r) - 6)
+				var slime: bool = v.get("slime", false)
+				var c1: Color = SLIME_MID if slime else LAVA_GLOW
+				var c2: Color = SLIME_LIGHT if slime else LAVA_HOT
+				if not slime and k < 0.3:
+					draw_circle(fp, 10 + k * 40, Color(LAVA_HOT, 0.5 * (1.0 - k / 0.3)))
+				for i in 7:
+					var ang := -PI * (0.15 + 0.7 * i / 6.0) + rng.randf_range(-0.15, 0.15)
+					var sp := rng.randf_range(40.0, 70.0) * (0.6 if slime else 1.0)
+					var q := fp + Vector2(cos(ang) * sp * k, sin(ang) * sp * k + 60.0 * k * k)
+					_px(q, 4 if i % 2 == 0 else 3, Color(c1 if i % 3 else c2, a))
 			"drop":
 				var fp := Vector2(cen.x, feet_y(v.r) - 4)
 				if k < 0.6:
@@ -1621,3 +1617,161 @@ func _draw_vfx() -> void:
 					_px(q, 4, GameData.EL.Virus)
 				else:
 					draw_arc(fp, 6 + (k - 0.6) * 40, 0, TAU, 16, Color(GameData.EL.Virus, a), 2)
+
+
+# ---------- Flächeneffekte und Zustände (05.10.2026, Tester-Feedback: „bei Lava ein Riss und dann Lava statt nur das !“) ----------
+
+const LAVA_CRUST := Color("#4A140B")
+const LAVA_GLOW := Color("#FF7A1F")
+const LAVA_HOT := Color("#FFD24D")
+const SLIME_DARK := Color("#2F5E22")
+const SLIME_MID := Color("#5FA83E")
+const SLIME_LIGHT := Color("#A8F07A")
+
+
+## Feste Zufallsformen je Feld (Risse, Adern, Pfützen), damit nichts flackert
+func _cell_rng(cell: Vector2i, salt: int) -> RandomNumberGenerator:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = cell.x * 7919 + cell.y * 104729 + salt
+	return rng
+
+
+## Pixelig abgerundetes Rechteck
+func _blob_rect(r: Rect2, col: Color, cut := 3.0) -> void:
+	draw_rect(Rect2(r.position.x + cut, r.position.y, r.size.x - cut * 2, r.size.y), col)
+	draw_rect(Rect2(r.position.x, r.position.y + cut, r.size.x, r.size.y - cut * 2), col)
+
+
+## Warnung vor Lava (Risse, die immer heller glühen) bzw. Schleim (blubbernde, wachsende Pfütze)
+func _draw_ground_warn(rect: Rect2, k: float, slime: bool, cell: Vector2i) -> void:
+	var c := rect.get_center() + Vector2(0, 4)
+	var danger := 0.35 + 0.35 * k * (0.6 + 0.4 * sin(anim_t * 26.0))
+	draw_rect(rect, Color(GameData.COL.coral, 0.10 + 0.12 * k))
+	draw_rect(rect, Color(GameData.COL.coral, danger), false, 1)
+	if slime:
+		var rad := 4.0 + 17.0 * k
+		draw_circle(c, rad + 1, Color(SLIME_DARK.darkened(0.4), 0.8))
+		draw_circle(c, rad, Color(SLIME_DARK, 0.9))
+		draw_circle(c + Vector2(-2, -2), rad * 0.6, Color(SLIME_MID, 0.8))
+		var rng := _cell_rng(cell, 3)
+		for i in 4:
+			var t2 := fmod(anim_t * 1.6 + i * 0.27, 1.0)
+			var q := c + Vector2(rng.randf_range(-rad, rad) * 0.7, -t2 * 14.0)
+			draw_arc(q, 1.5 + t2 * 2.0, 0, TAU, 8, Color(SLIME_LIGHT, 1.0 - t2), 1)
+		return
+	# Lava: Risse wachsen vom Feldmittelpunkt aus und glühen immer heller
+	var rng2 := _cell_rng(cell, 11)
+	var glow := LAVA_GLOW.lerp(LAVA_HOT, clampf((k - 0.5) * 2.0, 0.0, 1.0))
+	for b in 4:
+		var ang := b * TAU / 4.0 + rng2.randf_range(-0.6, 0.6)
+		var pts: Array = [c]
+		var q := c
+		for s in 5:
+			ang += rng2.randf_range(-0.7, 0.7)
+			q += Vector2(cos(ang), sin(ang) * 0.55) * rng2.randf_range(5.0, 8.0)
+			q.x = clampf(q.x, rect.position.x + 3, rect.end.x - 3)
+			q.y = clampf(q.y, rect.position.y + 3, rect.end.y - 3)
+			pts.append(q)
+		var shown := int(ceil(k * 1.3 * (pts.size() - 1)))
+		for s in mini(shown, pts.size() - 1):
+			draw_line(pts[s].round(), pts[s + 1].round(), Color("#1A0805"), 4)
+			draw_line(pts[s].round(), pts[s + 1].round(), Color(glow, 0.5 + 0.5 * k), 2 if k > 0.5 else 1)
+	draw_circle(c, 2.0 + 4.0 * k, Color(glow, 0.5 + 0.5 * k))
+	if k > 0.45:
+		for i in 3:
+			var t3 := fmod(anim_t * 2.2 + i * 0.33, 1.0)
+			_px(c + Vector2(-12 + i * 12, -t3 * 22.0), 2, Color(LAVA_HOT, 1.0 - t3))
+
+
+## Lavapfütze: glühende Fläche mit treibenden dunklen Krustenschollen und platzenden Blasen; kühlt am Ende grau ab
+func _draw_lava_pool(rect: Rect2, hz: Dictionary) -> void:
+	var cool := clampf(1.0 - hz.t / 0.8, 0.0, 1.0)
+	var fade := minf(1.0, hz.t / 0.3)
+	var inner := rect.grow(-3)
+	var grey := Color("#4A4242")
+	var pulse := 0.85 + 0.15 * sin(anim_t * 4.0 + hz.c)
+	_blob_rect(inner, Color(Color("#8A220E").lerp(grey.darkened(0.3), cool), fade))
+	_blob_rect(inner.grow(-2), Color(Color("#E2501A").lerp(grey, cool), fade))
+	_blob_rect(inner.grow(-6), Color(Color("#FF8A2E").lerp(grey, cool), pulse * fade))
+	var rng := _cell_rng(Vector2i(hz.c, hz.r), hz.get("seed", 0))
+	# Krustenschollen treiben langsam
+	for i in 5:
+		var w := rng.randf_range(10.0, 18.0)
+		var h := rng.randf_range(6.0, 10.0)
+		var px := inner.position.x + 4 + fposmod(rng.randf_range(0, inner.size.x) + anim_t * rng.randf_range(2.0, 5.0), inner.size.x - w - 8)
+		var py := inner.position.y + 4 + rng.randf_range(0, inner.size.y - h - 8)
+		var plate := Rect2(roundi(px), roundi(py), roundi(w), roundi(h))
+		_blob_rect(plate, Color(LAVA_CRUST.lerp(grey.darkened(0.2), cool), fade), 2.0)
+		draw_rect(Rect2(plate.position.x + 2, plate.position.y, plate.size.x - 4, 1), Color(Color("#7A3A22").lerp(grey, cool), fade))
+	if cool < 0.6:
+		# heiße Stellen und platzende Blasen
+		for b in 3:
+			var bp := Vector2(rng.randf_range(inner.position.x + 8, inner.end.x - 8), rng.randf_range(inner.position.y + 7, inner.end.y - 6))
+			var t2 := fmod(anim_t * 0.9 + b * 0.37, 1.0)
+			if t2 < 0.8:
+				draw_circle(bp, 1.0 + t2 * 4.0, Color(LAVA_HOT, fade))
+			else:
+				draw_arc(bp, 5.0 + (t2 - 0.8) * 20.0, 0, TAU, 10, Color(LAVA_HOT, (1.0 - t2) * 5.0 * fade), 1)
+		for i in 2:
+			var t3 := fmod(anim_t * 1.3 + i * 0.5 + hz.c * 0.2, 1.0)
+			_px(Vector2(inner.position.x + 14 + i * 40, inner.position.y + 6 - t3 * 26.0), 2, Color(LAVA_HOT, (1.0 - t3) * fade))
+
+
+## Giftschleim: unregelmäßige Pfütze aus Kreisen mit Blasen und Glanzlichtern
+func _draw_slime_pool(rect: Rect2, hz: Dictionary) -> void:
+	var fade := minf(1.0, hz.t / 0.5)
+	var cell := Vector2i(hz.c, hz.r)
+	var rng := _cell_rng(cell, hz.get("seed", 0))
+	var c := rect.get_center() + Vector2(0, 3)
+	var blobs: Array = []
+	for i in 5:
+		blobs.append([c + Vector2(rng.randf_range(-24, 24), rng.randf_range(-9, 9)), rng.randf_range(9.0, 15.0)])
+	for bl in blobs:
+		draw_circle(bl[0], bl[1] + 1.5, Color(SLIME_DARK.darkened(0.45), 0.9 * fade))
+	for bl in blobs:
+		draw_circle(bl[0], bl[1], Color(SLIME_DARK, 0.92 * fade))
+	for bl in blobs:
+		draw_circle(bl[0] + Vector2(-2, -2), bl[1] * 0.55, Color(SLIME_MID, 0.75 * fade))
+	for i in 3:
+		var bp: Vector2 = blobs[i][0] + Vector2(rng.randf_range(-4, 4), rng.randf_range(-3, 3))
+		var t2 := fmod(anim_t * 0.8 + i * 0.31, 1.0)
+		if t2 < 0.85:
+			draw_arc(bp, 1.0 + t2 * 3.5, 0, TAU, 8, Color(SLIME_LIGHT, fade), 1)
+		else:
+			_px(bp + Vector2(0, -4), 2, Color(SLIME_LIGHT, fade))
+	_px(blobs[0][0] + Vector2(-blobs[0][1] * 0.4, -blobs[0][1] * 0.45), 2, Color(1, 1, 1, 0.7 * fade))
+	_px(blobs[3][0] + Vector2(-blobs[3][1] * 0.3, -blobs[3][1] * 0.4), 2, Color(1, 1, 1, 0.5 * fade))
+
+
+## Zustände sichtbar am Gegner: Brand = Flammen, Gift = Blasen und Tropfen, Langsam = Wasserwirbel, Eis = Kristalle
+func _draw_status_fx(ecx: float, efy: float) -> void:
+	var e: Dictionary = st.e
+	if e.frozen > 0:
+		var rect := cell_rect(3 + e.c, e.r)
+		draw_rect(Rect2(rect.position.x + 6, rect.position.y - 36, rect.size.x - 12, rect.size.y + 30), Color(ICE, 0.18))
+		for i in 7:
+			var ang := i * TAU / 7.0 + 0.4
+			var q := Vector2(ecx, efy - 22) + Vector2(cos(ang) * 24.0, sin(ang) * 18.0)
+			_diamond(q, 3.0 + (i % 3), Color(ICE, 0.85), Color.WHITE)
+	if e.burn > 0:
+		for i in 3:
+			var fx := ecx - 14 + i * 14
+			var h := 8.0 + 5.0 * absf(sin(anim_t * 14.0 + i * 1.7))
+			var by := efy - 10 - (i % 2) * 14
+			draw_rect(Rect2(roundi(fx - 3), roundi(by - h), 6, roundi(h)), Color(FIRE_DARK, 0.9))
+			draw_rect(Rect2(roundi(fx - 2), roundi(by - h * 0.7), 4, roundi(h * 0.7)), Color(FIRE_MID, 0.95))
+			draw_rect(Rect2(roundi(fx - 1), roundi(by - h * 0.4), 2, roundi(h * 0.4)), FIRE_HOT)
+	if e.poison > 0:
+		for i in 4:
+			var t2 := fmod(anim_t * 0.9 + i * 0.25, 1.0)
+			var q := Vector2(ecx - 16 + i * 11, efy - 14 - t2 * 34.0)
+			draw_circle(q, 2.0 + t2 * 2.5, Color(SLIME_MID, 0.8 * (1.0 - t2)))
+			draw_arc(q, 2.0 + t2 * 2.5, 0, TAU, 8, Color(SLIME_LIGHT, 1.0 - t2), 1)
+		var dr := fmod(anim_t * 1.5, 1.0)
+		_px(Vector2(ecx + 8, efy - 18 + dr * 16.0), 2, Color(GameData.EL.Virus, 1.0 - dr))
+	if e.slow > 0:
+		draw_set_transform(off + Vector2(ecx, efy - 1), 0, Vector2(1, 0.3))
+		for j in 2:
+			var a0 := anim_t * (4.0 + j * 2.0) + j
+			draw_arc(Vector2.ZERO, 22.0 - j * 7.0, a0, a0 + 4.0, 16, Color(GameData.EL.Wasser.lightened(0.2 * j), 0.85), 2)
+		draw_set_transform(off)

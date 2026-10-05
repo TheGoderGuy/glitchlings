@@ -77,6 +77,8 @@ static func args() -> Dictionary:
 			shot.guard = true
 		elif a == "--pops":
 			shot.pops = true
+		elif a == "--area":
+			shot.area = true
 		elif a == "--lava":
 			shot.lava = true
 		elif a == "--pad":

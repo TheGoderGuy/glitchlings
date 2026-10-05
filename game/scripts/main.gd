@@ -385,6 +385,31 @@ func _screenshot(shot: Dictionary) -> void:
 					cs.update(1.0 / 60.0)
 					tt += 1.0 / 60.0
 				cs.events.clear()
+			if shot.has("area"):
+				# Flächeneffekte prüfen: Warnungen in drei Stadien, frische und abkühlende Fläche, Ausbruch, Zustand am Gegner
+				var cs2: BattleState = current.st
+				cs2.warns.clear()
+				cs2.hazards.clear()
+				cs2.vfx.clear()
+				cs2.parts.clear()
+				cs2.e.atk_t = 99.0
+				cs2.e.move_t = 99.0
+				var sl: bool = run.map.zone == "sumpf"
+				var hk := "slime" if sl else "lava"
+				for wi in 3:
+					cs2.warns.append({"cells": [Vector2i(wi, 0)], "t": [0.72, 0.45, 0.08][wi], "max": 0.9, "dmg": 0, "lava": true, "kind": hk})
+				cs2.hazards.append({"c": 0, "r": 2, "t": 2.5, "tick": 0.3, "kind": hk, "seed": 5})
+				cs2.hazards.append({"c": 2, "r": 2, "t": 0.35, "tick": 0.3, "kind": hk, "seed": 9})
+				cs2.vfx_add("erupt", 1, 2, 0.45, {"slime": sl})
+				cs2.vfx[-1].t = 0.3
+				match run.map.zone:
+					"vulkan":
+						cs2.e.burn = 3
+					"sumpf":
+						cs2.e.poison = 3
+						cs2.e.slow = 2.0
+					_:
+						cs2.e.frozen = 2.0
 			if shot.has("pops"):
 				var pk: String = "spore" if run.map.zone == "sumpf" else "milbe"
 				current.st.pops.append({"c": 0, "r": 0, "t": 2.5, "max": 3.0, "kind": pk})

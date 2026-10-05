@@ -82,3 +82,24 @@ Die neuen Gegner, alle 64 px, gezeichnet mit PixelLab Pro Flash im Stil der best
 | **Fehlerqualle** | Errorjelly | Glitch-Qualle | Elektro: teleportiert, Kreuz und Einzelfeld. Blinzelt. |
 
 Alle Namen sind mit `tools/namecheck` geprüft. Ein Test prüft, dass jede Zone nur ihre eigenen Gegner hat, und die Autopilot-Runs gewinnen weiter in allen Zonen.
+
+## 4. Flächeneffekte und Zustände (05.10.2026)
+Das Feedback: „Auch die Flächeneffekte, also Lava, Gift usw., können besser dargestellt werden, z. B. bei Lava ein Riss und dann Lava statt nur das !“
+
+Vorher sah eine Lava- oder Schleim-Warnung aus wie jede Angriffswarnung: ein rotes Feld mit „!“. Die Flächen waren ein dunkelroter bzw. grüner Kasten mit Punkten, und Zustände standen nur als Text im HUD.
+
+Jetzt:
+- **Lava-Warnung:** Vom Feldmittelpunkt wachsen Risse im Boden, die immer heller glühen, und Glutfunken steigen auf. Das „!“ entfällt, ein schwacher rötlicher Rahmen bleibt als Gefahrensignal.
+- **Ausbruch:** Beim Entstehen der Fläche spritzt Lava bzw. Schleim hoch (`vfx` „erupt“).
+- **Lavapfütze:** Eine glühend orange Fläche mit treibenden dunklen Krustenschollen, heißen Stellen und platzenden Blasen. In den letzten 0,8 s kühlt sie braun-grau ab.
+- **Schleim-Warnung:** Eine grüne Pfütze breitet sich blubbernd aus.
+- **Schleimpfütze (Gift):** Eine unregelmäßige Pfütze aus mehreren Klecksen mit Blasen und Glanzlichtern.
+- **Zustände am Gegner:**
+  - Brand: Flammen am Körper
+  - Gift: grüne Blasen und Tropfen
+  - Langsam: Wasserwirbel an den Füßen
+  - Eis: Kristalle statt einer flachen blauen Fläche
+
+Die Formen jeder Fläche sind fest ausgewürfelt (`seed` je Fläche), damit nichts flackert.
+
+**Technik:** In `battle_view.gd` zeichnen `_draw_ground_warn`, `_draw_lava_pool`, `_draw_slime_pool` und `_draw_status_fx` die neuen Effekte. Geprüft wird per Screenshot `--mode=fight --zone=vulkan|sumpf|kern --area` und mit dem Test „Lava und Schleim: Ausbruch beim Entstehen“. Leistung im Vulkan-Boss: 1,0 ms pro Bild.

@@ -1120,8 +1120,9 @@ func _update_logic(dt: float) -> void:
 			if w.get("lava", false):
 				var slime: bool = w.get("kind", "lava") == "slime"
 				for cell in w.cells:
-					hazards.append({"c": cell.x, "r": cell.y, "t": 4.0 if slime else 3.0, "tick": 0.0, "kind": "slime" if slime else "lava"})
+					hazards.append({"c": cell.x, "r": cell.y, "t": 4.0 if slime else 3.0, "tick": 0.0, "kind": "slime" if slime else "lava", "seed": randi() % 1000})
 					fx_cell(cell.x, cell.y, Color("#7BD35A") if slime else GameData.EL.Feuer, 0.3)
+					vfx_add("erupt", cell.x, cell.y, 0.45, {"slime": slime})
 				events.append("hit")
 				continue
 			var hit := false

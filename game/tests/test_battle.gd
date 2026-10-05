@@ -2323,4 +2323,12 @@ func test_chip_vfx() -> void:
 	sh.hand[2].rem = 0.0
 	sh.run.hp = 50
 	sh.use_slot(2)
+	# Flächeneffekte (05.10.2026): Lava und Schleim brechen beim Entstehen sichtbar aus
+	var lv := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[7])
+	lv.e.atk_t = 99.0
+	lv.warns.append({"cells": [Vector2i(0, 0)], "t": 0.05, "max": 0.9, "dmg": 0, "lava": true, "kind": "lava"})
+	lv.warns.append({"cells": [Vector2i(2, 2)], "t": 0.05, "max": 0.9, "dmg": 0, "lava": true, "kind": "slime"})
+	step(lv, 0.1)
+	var er: Array = lv.vfx.filter(func(v): return v.kind == "erupt")
+	check(lv.hazards.size() == 2 and er.size() == 2 and er.any(func(v): return v.slime) and lv.hazards.all(func(h): return h.has("seed")), "Lava und Schleim: Ausbruch beim Entstehen, Pfützen mit fester Form")
 	check(sh.vfx.any(func(v): return v.kind == "patch") and not sh.parts.any(func(q): return q.color == GameData.EL.Elektro), "Heilpatch: Pflaster und Heil-Partikel statt Elektro-Funken")
