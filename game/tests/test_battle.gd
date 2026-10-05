@@ -2145,7 +2145,7 @@ func test_ps_buttons() -> void:
 	check(ok_ps and ok_x and ff.has_char(0xE000) and ff.has_char(0xE003) and PixelCanvas.font().fallbacks.has(ff), "PS-Controller: ✕ ○ □ △ als eigene Pixel-Symbole, L1/R1/Options")
 
 
-## Stilregel: jedes Sprite höchstens 32 Farben – Grundbild, Blinzel-Bild und Idle-Frames zusammen (30.09.2026)
+## Stilregel: jedes Sprite höchstens 32 Farben – Grundbild, Blinzel-Bild, Idle- und Angriffs-Frames zusammen (30.09./05.10.2026)
 func test_sprite_colors() -> void:
 	var files := {}
 	for f in GameData.FORMS:
@@ -2153,10 +2153,14 @@ func test_sprite_colors() -> void:
 	for k in PixelCanvas.SPRITE_FILES:
 		files[PixelCanvas.SPRITE_FILES[k]] = true
 	var bad: Array = []
+	var no_atk: Array = []
 	for spr in files:
 		var paths: Array = ["res://assets/sprites/%s.png" % spr, "res://assets/sprites/%s_blink.png" % spr]
 		for i in 6:
 			paths.append("res://assets/sprites/anim/%s_idle_%d.png" % [spr, i])
+			paths.append("res://assets/sprites/anim/%s_atk_%d.png" % [spr, i])
+		if not ResourceLoader.exists("res://assets/sprites/anim/%s_atk_0.png" % spr):
+			no_atk.append(spr)
 		var cols := {}
 		for p in paths:
 			if not ResourceLoader.exists(p):
@@ -2172,7 +2176,8 @@ func test_sprite_colors() -> void:
 					cols[(d[i] << 16) | (d[i + 1] << 8) | d[i + 2]] = true
 		if cols.size() > 32:
 			bad.append("%s:%d" % [spr, cols.size()])
-	check(bad.is_empty(), "Alle %d Sprites höchstens 32 Farben (inkl. Blinzeln und Idle) %s" % [files.size(), bad])
+	check(bad.is_empty(), "Alle %d Sprites höchstens 32 Farben (inkl. Blinzeln, Idle und Angriff) %s" % [files.size(), bad])
+	check(no_atk.is_empty(), "Alle %d Figuren haben eine Angriffsanimation %s" % [files.size(), no_atk])
 
 
 ## Station-Führung und Zonenwahl (30.09.2026)

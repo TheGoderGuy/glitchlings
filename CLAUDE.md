@@ -55,7 +55,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Godot 4.7 installiert (winget), Repo https://github.com/TheGoderGuy/glitchlings
 - [x] Phase 1a (28.09.2026): Kampf-Kern portiert – Pixmiez, 15 Chips, 3 Gegner + Boss, Chipwahl, Pause/Deck, Ergebnis, Controller, 23 Tests
 - [x] Phase 1b (28.09.2026): Pixel-Schrift Silkscreen (OFL), synthetisierte Platzhalter-Sounds (`Sfx.play`), Titelbildschirm, Optionen (Vollbild, Lautstärke, Bildschirmwackeln), Pause-Menü, 26 Tests
-- [ ] Phase 1c: Angriffs-/Idle-Animationen, Musik, Balancing nach erstem Anspielen – besser als der Browser-Prototyp?
+- [ ] Phase 1c: ~~Angriffs-/Idle-Animationen~~ (fertig), Musik, Balancing nach erstem Anspielen – besser als der Browser-Prototyp?
 - [x] Phase 2a (28.09.2026): Zonenkarte Cache-Wiesen (7 Etagen + Boss; Kampf, Elite, Ereignis, Rast, Händler), Ergebnisbildschirm, 42 Tests – `vault/05 Produktion/Zonenkarte.md`
 - [x] Phase 2b (28.09.2026): Starterwahl (Pixmiez/Funkling/Tröpfel), Evolution im Run (15/35 Prägung, 18 Formen, 18 Signaturen), Evolutions-Szene, 55 Tests – `vault/05 Produktion/Evolution im Run.md`
 - [x] Phase 2c-1 (28.09.2026): 12 neue Chips (jetzt 27, je Element 4–5), 4 neue Ereignisse (jetzt 8), 76 Tests
@@ -100,7 +100,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] **Rollen-Slots + Einstieg** (01.10.2026, Tester-Feedback): seit 03.10. **2× Angriff (J/□, K/✕, geteilter Stapel) + 1× Support (L/○: Schutz + Heilung)**, Support-Neumischen +3 s, Startdecks 6 Angriff + 2 Support, Karten mit Trefferbild + Kurzwirkung + sichtbarem Stapel, Deck-Vorstellung, Tutorial-Schritt, Bereit-Pause nur bei unbekannten Chips auf der Starthand (03.10.), neue Chips mit kleinem „Neu!“ (keine Zeitlupe mehr, 03.10.), 289 Tests – `vault/05 Produktion/Rollen-Slots und Einstieg.md`
 - [x] **Web-Spieltest** (01.10.2026): Godot-Web-Export (ohne Threads), `Web_bauen.bat` → `build/Glitchlings_Web.zip` für itch.io (Restricted), Testfassung `testbuild` nur Wiesen + Vulkan, Titel mit „TESTVERSION“ + © 2026 TheGoderGuy, Log-Download im Browser, lokaler Test `node tools/webserver.js` (Launch „web“, `/_itch` = 1280×720-Rahmen), 279 Tests – `vault/05 Produktion/Web-Spieltest.md`
 - [x] **Englisch** (01.10.2026): Sprache in den Optionen (erster Start: Systemsprache), `T.t()` mit deutschen Texten als Schlüssel, englische Tabellen `scripts/data/lang_en_*.gd`, eigene englische Monsternamen (namecheck-geprüft), interne IDs bleiben deutsch, Test prüft Vollständigkeit, `node game/tools/lang_keys.js --missing`, Screenshots mit `--lang=en`, 278 Tests – `vault/05 Produktion/Englisch.md`
-- [x] Idle-Animationen: **alle 127 Figuren** (30.09.2026, Otter + Ara 03.10.), 6 Bilder, 10 Bilder/s (`tools/sprites/node/anim_frames.js`, entfernt jetzt auch mitgemalte Hintergründe) – `vault/05 Produktion/Idle-Animationen.md`
+- [x] Idle-Animationen: **alle 132 Figuren** (30.09.2026, Otter + Ara 03.10., neue Zonengegner 04.10.), 6 Bilder, 10 Bilder/s (`tools/sprites/node/anim_frames.js`, entfernt jetzt auch mitgemalte Hintergründe) – `vault/05 Produktion/Idle-Animationen.md`
+- [x] **Angriffsanimationen** (05.10.2026): alle 132 Figuren, 6 Bilder (PixelLab `animate_image`, Prompt „big exaggerated attack …“), eigener Glitchling bei Angriffs-Chips + Signatur (0,36 s), Gegner holen synchron zur Warnung aus und schlagen beim Einschlag zu, Vorschnellen bleibt; `anim_frames.js --kind atk`, Screenshot `--atkpose=0–1`, Test prüft 32 Farben inkl. Angriff + jede Figur hat eine, 312 Tests – `vault/05 Produktion/Angriffsanimationen.md`
 - [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
 - [ ] Phase 4: Steam-Seite + Demo
 
@@ -123,7 +124,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] Champions für die übrigen Nicht-Code-Rookies (Godot, 29.09.2026) · [x] Ultras (Godot, 29.09.2026)
 - [x] Station-Leben: Bindung/Pflege + Expeditionen (`vault/05 Produktion/Station-Leben.md`)
 - [x] Champions der übrigen Linien · [x] Ultras (Godot)
-- [ ] Angriffsanimationen (Idle fertig)
+- [x] Angriffsanimationen (05.10.2026): alle 132 Figuren – `vault/05 Produktion/Angriffsanimationen.md`
 - [ ] Prototyp mit 5–10 externen Testern spielen lassen, Ergebnisse ins Playtest-Log (`vault/05 Produktion/Prototyp-Spezifikation.md`)
 
 ## Arbeitsweise mit PixelLab (sobald verbunden)

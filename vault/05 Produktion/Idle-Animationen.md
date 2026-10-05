@@ -30,5 +30,5 @@ Bewusst behalten, weil es zur Figur passt: Hüpfbyte quakt mit offenem Maul, Vir
 - Werkzeug `tools/sprites/node/fix_colors.js [--dry]`: reduziert das Grundbild (reduce32), färbt Blinzel-Bild und Idle-Frames mit derselben Zuordnung um, Zusatzfarben gehen auf die nächste Palettenfarbe. Optisch kaum ein Unterschied, alle Blinzler bleiben sichtbar.
 - Test `test_sprite_colors` prüft jetzt bei jedem Lauf: höchstens 32 Farben je Sprite inklusive Blinzeln und Idle.
 
-## Offen
-- Angriffsanimationen (Ausholen der Gegner) sind noch nicht umgesetzt.
+## Angriffsanimationen
+Fertig seit 05.10.2026 für alle 132 Figuren, Details in [[Angriffsanimationen]]. Die 5 neuen Zonengegner (04.10.2026) haben ebenfalls Idle-Animationen.
