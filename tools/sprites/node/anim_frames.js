@@ -4,6 +4,7 @@
 //   <rohframe-präfix> z. B. /tmp/pixi_32_raw_  (Dateien <präfix>0.png … <präfix>6.png, Frame 0 = Eingabe)
 //   --frames          welche Rohframes in welcher Reihenfolge (Standard 0–5; Frame 6 läuft zurück auf 0)
 //   --replace a=b     Rohframe a durch Rohframe b ersetzen (z. B. verzogenen Frame durch das Original)
+//   --kind atk        Angriffsanimation statt Idle (Ausgabe <name>_atk_<i>.png, 05.10.2026)
 // Jeder Frame wird auf die Palette des Grundbilds gezogen (nächste Farbe), damit nichts flimmert und die
 // 32-Farben-Regel hält. Ausgabe: game/assets/sprites/anim/<name>_idle_<i>.png
 const {PNG} = require("pngjs"), fs = require("fs"), path = require("path");
@@ -20,6 +21,7 @@ for (let i = 0; i < base.data.length; i += 4) {
   if (!pal.some(p => p[0] === c[0] && p[1] === c[1] && p[2] === c[2])) pal.push(c);
 }
 const nearest = (r, g, b) => { let best = pal[0], bd = 1e9; for (const p of pal) { const d = (p[0]-r)**2*0.3 + (p[1]-g)**2*0.59 + (p[2]-b)**2*0.11; if (d < bd) { bd = d; best = p; } } return best; };
+const kind = opt("--kind", "idle");
 const order = opt("--frames", "0,1,2,3,4,5").split(",").map(Number);
 const repl = {};
 for (const r of (opt("--replace", "") || "").split(",").filter(Boolean)) { const [a, b] = r.split("=").map(Number); repl[a] = b; }
@@ -36,7 +38,7 @@ order.forEach((raw, i) => {
     const c = nearest(f.data[j], f.data[j + 1], f.data[j + 2]);
     out.data[j] = c[0]; out.data[j + 1] = c[1]; out.data[j + 2] = c[2]; out.data[j + 3] = 255;
   }
-  fs.writeFileSync(path.join(root, "anim", `${name}_idle_${i}.png`), PNG.sync.write(out));
+  fs.writeFileSync(path.join(root, "anim", `${name}_${kind}_${i}.png`), PNG.sync.write(out));
 });
 console.log(`${name}: ${order.length} Frames, Palette ${pal.length} Farben${bgFixed ? `, Hintergrund entfernt (${bgFixed} Frames)` : ""}`);
 

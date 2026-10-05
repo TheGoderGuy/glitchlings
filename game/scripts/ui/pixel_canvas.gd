@@ -214,9 +214,18 @@ static func sprite(key: String) -> Dictionary:
 	var idle: Array = []
 	while ResourceLoader.exists("res://assets/sprites/anim/%s_idle_%d.png" % [file, idle.size()]):
 		idle.append(load("res://assets/sprites/anim/%s_idle_%d.png" % [file, idle.size()]))
-	var s := {"tex": tex, "blink": blink, "flash": ImageTexture.create_from_image(white), "n": img.get_width(), "foot": foot, "idle": idle}
+	# Angriffsanimation (optional, 05.10.2026): assets/sprites/anim/<datei>_atk_0, _1, …
+	var atk: Array = []
+	while ResourceLoader.exists("res://assets/sprites/anim/%s_atk_%d.png" % [file, atk.size()]):
+		atk.append(load("res://assets/sprites/anim/%s_atk_%d.png" % [file, atk.size()]))
+	var s := {"tex": tex, "blink": blink, "flash": ImageTexture.create_from_image(white), "n": img.get_width(), "foot": foot, "idle": idle, "atk": atk}
 	_sprites[key] = s
 	return s
+
+
+## Hat das Sprite eine Angriffsanimation?
+static func has_attack(key: String) -> bool:
+	return not sprite(key).atk.is_empty()
 
 
 ## Spieler-Babys (32 px) werden verdoppelt, ab Rookie 1 Kunstpixel = 1 Pixel.
@@ -236,6 +245,10 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 		# Animation beim Bewegen (Kampf) oder bei Kameraschwenks (Intro); "phase" setzt ihn ausdrücklich
 		var fi: int = int(anim_t * IDLE_FPS + opts.get("phase", float(absi(key.hash()) % 60) * 0.1)) % s.idle.size()
 		tex = s.idle[fi]
+	# Angriff: "atk" = Fortschritt 0–1 (überdeckt Idle und Blinzeln, nicht den weißen Treffer-Blitz)
+	var atk_k: float = opts.get("atk", -1.0)
+	if atk_k >= 0.0 and not s.atk.is_empty() and not opts.get("flash", false):
+		tex = s.atk[clampi(int(atk_k * s.atk.size()), 0, s.atk.size() - 1)]
 	var mod: Color = opts.get("mod", Color.WHITE)
 	if flip:
 		draw_set_transform(off + Vector2(left + size, top), 0, Vector2(-sc, sc))

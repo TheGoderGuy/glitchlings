@@ -385,6 +385,16 @@ func _screenshot(shot: Dictionary) -> void:
 					cs.update(1.0 / 60.0)
 					tt += 1.0 / 60.0
 				cs.events.clear()
+			if shot.has("atkpose"):
+				# Angriffsanimation prüfen: Spieler und Gegner beim gleichen Fortschritt (0–1)
+				var ak: float = shot.atkpose
+				current.p_atk = current.ATK_TIME * (1.0 - ak)
+				current.st.e.atk_t = 99.0
+				current.st.warns.clear()
+				current.st.warns.append({"cells": [Vector2i(current.st.p.c, current.st.p.r)], "t": maxf(0.01, 1.0 - ak / current.ATK_HIT), "max": 1.0, "dmg": 0})
+				if ak > current.ATK_HIT:
+					current.st.warns.clear()
+					current.e_atk_post = current.E_ATK_POST * (1.0 - (ak - current.ATK_HIT) / (1.0 - current.ATK_HIT))
 			if shot.has("area"):
 				# Flächeneffekte prüfen: Warnungen in drei Stadien, frische und abkühlende Fläche, Ausbruch, Zustand am Gegner
 				var cs2: BattleState = current.st

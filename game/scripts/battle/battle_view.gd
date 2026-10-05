@@ -63,6 +63,13 @@ var new_t := [0.0, 0.0, 0.0]
 const NEW_TIME := 3.0
 var skip_ready := false         # Tests/Screenshots: ohne Bereit-Pause starten
 const LUNGE := 0.16
+## Angriffsanimationen (05.10.2026): Dauer beim eigenen Glitchling; beim Gegner laufen die Ausholbilder
+## synchron zur Warnung bis ATK_HIT, der Rest nach dem Einschlag in E_ATK_POST Sekunden
+const ATK_TIME := 0.36
+const ATK_HIT := 0.55
+const E_ATK_POST := 0.24
+var p_atk := 0.0          # Restzeit der Angriffsanimation des Spielers
+var e_atk_post := 0.0     # Restzeit der Nachbewegung des Gegners nach dem Einschlag
 const KNOCK := 0.14
 
 
@@ -92,6 +99,9 @@ func _animate_event(ev: String) -> void:
 	match ev:
 		"shoot", "slash", "chip":
 			p_lunge = LUNGE
+			# Angriffsanimation nur bei Angriffs-Chips (nicht bei Schild, Heilung, Hilfen)
+			if st.last_chip != "" and GameData.role(st.last_chip) == 0:
+				p_atk = ATK_TIME
 			if ev != "chip":
 				muzzle = 0.09
 				muzzle_col = GameData.EL[GameData.chip(st.last_chip).el] if st.last_chip != "" else Color.WHITE
@@ -101,6 +111,9 @@ func _animate_event(ev: String) -> void:
 			p_knock = KNOCK
 		"strike":
 			e_strike = 0.12
+			e_atk_post = E_ATK_POST
+		"special":
+			p_atk = ATK_TIME
 		"move":
 			p_hop = 0.09
 			var fy := feet_y(last_cell.y)
@@ -112,6 +125,8 @@ func _animate_event(ev: String) -> void:
 
 func _tick_anims(dt: float) -> void:
 	p_lunge = maxf(0.0, p_lunge - dt)
+	p_atk = maxf(0.0, p_atk - dt)
+	e_atk_post = maxf(0.0, e_atk_post - dt)
 	p_knock = maxf(0.0, p_knock - dt)
 	p_hop = maxf(0.0, p_hop - dt)
 	e_knock = maxf(0.0, e_knock - dt)
@@ -502,6 +517,7 @@ func _draw_actors() -> void:
 		pcx = lerpf(pcx, gx(3 + e.c) + CW / 2.0 - 30, u)
 		pfy = lerpf(pfy, feet_y(e.r), u) - u * 26.0
 	# Vorschnellen (Bogen hin und zurück), Rückstoß, Hüpfer
+	# Vorschnellen bleibt auch mit Angriffsanimation (die Bilder allein sind eher dezent)
 	if p_lunge > 0:
 		pcx += sin((1.0 - p_lunge / LUNGE) * PI) * 7.0
 	if p_knock > 0:
@@ -516,7 +532,7 @@ func _draw_actors() -> void:
 	if st.decoy > 0 and st.decoy_t > 0:
 		for k in st.decoy:
 			_draw_sprite(mkey, pcx - 16 - k * 10, pfy, false, {"scale": BABY_SCALE if run.stage == 1 else 1, "mod": Color(0.6, 1.0, 0.8, 0.35 + 0.1 * sin(anim_t * 8.0 + k))})
-	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1})
+	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1, "atk": (1.0 - p_atk / ATK_TIME) if p_atk > 0 else -1.0})
 	var body := Vector2(gx(p.c) + CW / 2.0, feet_y(p.r) - 24)
 	if muzzle > 0:
 		# Mündungsblitz vorn am Monster
@@ -559,6 +575,13 @@ func _draw_actors() -> void:
 		var windup := 0.0
 		for w in st.warns:
 			windup = maxf(windup, 1.0 - w.t / w.max)
+		var e_has_atk := PixelCanvas.has_attack(st.def.spr)
+		var e_atk := -1.0
+		if e_has_atk:
+			if e_atk_post > 0:
+				e_atk = ATK_HIT + (1.0 - ATK_HIT) * (1.0 - e_atk_post / E_ATK_POST)
+			elif windup > 0:
+				e_atk = windup * ATK_HIT
 		ecx += windup * 4.0
 		if e_strike > 0:
 			ecx -= sin((1.0 - e_strike / 0.12) * PI) * 9.0
@@ -581,7 +604,7 @@ func _draw_actors() -> void:
 		elif st.def.get("elite", false):
 			tint = Color(1.0, 0.78, 0.72)
 		tint.a = fade
-		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint})
+		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint, "atk": -1.0 if defeated else e_atk})
 		_draw_status_fx(ecx, efy)
 		if st.delayed.any(func(d): return d.mark):
 			var cc := Vector2(ecx, efy - 26)
