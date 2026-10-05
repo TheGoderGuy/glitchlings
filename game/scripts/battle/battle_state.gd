@@ -34,6 +34,8 @@ var bots: Array = []
 var marks: Array = []
 var fx: Array = []     # schwebende Texte {x, y, text, color, t, max}
 var parts: Array = []  # Partikel / Ringe / Feld-Blitze
+var vfx: Array = []    # Chip-Effekte passend zur Karte (04.10.2026), rein optisch: {kind, c, r, t, max, …}
+var shield_kind := ""  # welcher Schild steht: firewall / lock (Kopierschutz) / konter
 var events: Array = [] # Sound-/Ereignisnamen für die Ansicht (wird dort geleert)
 
 var shield := 0.0
@@ -237,6 +239,7 @@ func use_slot(i: int) -> void:
 	s.max = (GameData.chip(nx).cd if nx != "" else 1.0) * (0.85 if run.has_mod("schnelllader") else 1.0) + (RESHUFFLE if _reshuffled else 0.0)
 	s.rem = s.max
 	_apply_chip(id)
+	_chip_vfx(GameData.base_chip(id), GameData.chip(id).el)
 	# Echochip: jeder 4. Chip wird ein zweites Mal ausgelöst
 	if run.has_mod("echochip"):
 		echo_count += 1
@@ -352,6 +355,7 @@ func _parrot(id: String) -> void:
 	float_at(p.c, p.r, "Nachgeplappert!", GameData.EL.Elektro)
 	dmg_scale = 0.5
 	_apply_chip(id)
+	_chip_vfx(GameData.base_chip(id), GameData.chip(id).el)
 	dmg_scale = 1.0
 
 
@@ -456,6 +460,7 @@ func _apply_chip(id: String) -> void:
 				_miss()
 		"Kopierschutz", "Konter":
 			shield = 6.0 if base == "Kopierschutz" else 1.5
+			shield_kind = "lock" if base == "Kopierschutz" else "konter"
 			counter = ch.dmg
 			counter_el = el
 			float_at(p.c, p.r, base, GameData.EL[el])
@@ -511,6 +516,7 @@ func _apply_chip(id: String) -> void:
 			delayed.append({"t": 0.4, "fn": _flammenwelle.bind(col, k), "mark": false})
 		"Firewall":
 			shield = 4.0
+			shield_kind = "firewall"
 			float_at(p.c, p.r, "Firewall", GameData.EL.Code)
 		"Blubberschild":
 			bubble = roundi(30 * k)
@@ -529,7 +535,7 @@ func _apply_chip(id: String) -> void:
 			var h: int = mini(roundi(25 * k), run.max_hp - run.hp)
 			run.hp += h
 			float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
-			burst(p.c + 0.5, p.r + 0.5, GameData.EL.Elektro, 10)
+			burst(p.c + 0.5, p.r + 0.5, GameData.COL.mint, 10)
 		"Blitzcursor":
 			delayed.append({"t": 0.5, "fn": _blitz.bind(k), "mark": true})
 		"Mini-Bot":
@@ -540,6 +546,73 @@ func _apply_chip(id: String) -> void:
 				if s.chip != "":
 					s.rem = 0.0
 			float_at(p.c, p.r, "Defrag!", GameData.EL.Neutral)
+
+
+## Rein optischer Effekt; zufällige Formen (Blitz-Zacken) werden einmal festgelegt, damit nichts flackert
+func vfx_add(kind: String, c: float, r: float, dur: float, extra := {}) -> void:
+	var v := {"kind": kind, "c": c, "r": r, "t": dur, "max": dur, "seed": randi() % 1000}
+	v.merge(extra)
+	vfx.append(v)
+
+
+## Zu jeder Karte ein passender Effekt (Tester-Feedback 04.10.2026: „Effekte sollen zu den Karten passen“)
+func _chip_vfx(base: String, el: String) -> void:
+	var ec: int = 3 + int(e.c)
+	match base:
+		"Byteschlag", "Glutklinge":
+			vfx_add("slash", 3, p.r, 0.25, {"el": el})
+		"Laserschuss":
+			vfx_add("beam", p.c, p.r, 0.25, {"el": "Code"})
+		"Debugger":
+			vfx_add("beam", p.c, p.r, 0.35, {"el": "Code", "debug": true})
+		"Blitzlanze":
+			vfx_add("bolt_col", 3 + p.c, 0, 0.3)
+		"Flutwelle":
+			vfx_add("wave_row", p.c, p.r, 0.45)
+		"Feuersbrunst":
+			vfx_add("inferno", 3, 0, 0.7)
+		"Tsunami":
+			vfx_add("tsunami", 3, 0, 0.6)
+			vfx_add("ice", ec, e.r, 1.0)
+		"Eisfeld":
+			vfx_add("ice", ec, e.r, 1.0)
+		"Strudel":
+			vfx_add("swirl", ec, e.r, 0.9)
+		"Wurmloch":
+			vfx_add("portal", ec, e.r, 0.7)
+		"Blendgranate":
+			vfx_add("flash", ec, e.r, 0.45)
+		"Blackout":
+			vfx_add("blackout", ec, e.r, 0.8)
+		"Magnetfeld":
+			vfx_add("magnet", ec, e.r, 0.6, {"pc": p.c, "pr": p.r})
+		"Seuche":
+			vfx_add("toxic", ec, e.r, 1.0)
+		"Kettenblitz":
+			vfx_add("chain", ec, e.r, 0.3, {"pc": p.c, "pr": p.r})
+		"Funkenregen":
+			for i in 3:
+				vfx_add("sparkfall", 3 + randi() % 3, randi() % 3, 0.45 + 0.1 * i, {"delay": 0.1 * i})
+		"Heilpatch":
+			vfx_add("patch", p.c, p.r, 1.0)
+		"Neustart":
+			vfx_add("reboot", p.c, p.r, 0.8)
+		"Übertakten":
+			vfx_add("overclock", p.c, p.r, 0.9)
+		"Defrag":
+			vfx_add("defrag", p.c, p.r, 0.8)
+		"Portscan":
+			vfx_add("scan", p.c, p.r, 0.7)
+		"Ladungsfeld":
+			vfx_add("charge", p.c, p.r, 0.8)
+		"Sprungantrieb":
+			vfx_add("jump", p.c, p.r, 0.5)
+		"Firewall", "Kopierschutz", "Konter", "Blubberschild", "Hitzeschild", "Nebel":
+			vfx_add("shieldup", p.c, p.r, 0.35, {"el": el})
+		"Mini-Bot", "Geschützturm":
+			vfx_add("spawn", p.c, p.r, 0.4)
+		"Bug-Mine", "Sporenfalle":
+			vfx_add("drop", ec, e.r, 0.4)
 
 
 func _chip_sound(id: String) -> String:
@@ -561,6 +634,7 @@ func _chip_sound(id: String) -> String:
 
 func _chain_hit(k := 1.0) -> void:
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Elektro, 8)
+	vfx_add("strike", 3 + e.c, e.r, 0.2, {"small": true})
 	hit_enemy(roundi(10 * k), "Elektro")
 
 
@@ -570,6 +644,7 @@ func _second_click(d := 12) -> void:
 
 func _funkenregen(k := 1.0) -> void:
 	fx_cell(3 + e.c, e.r, GameData.EL.Feuer, 0.4)
+	vfx_add("sparkfall", 3 + e.c, e.r, 0.4)
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Feuer, 12)
 	hit_enemy(roundi(25 * k), "Feuer")
 	if not over:
@@ -582,6 +657,7 @@ func _miss() -> void:
 
 func _land_glutball(col: int, row: int, k := 1.0) -> void:
 	fx_cell(3 + col, row, GameData.EL.Feuer, 0.4)
+	vfx_add("explode", 3 + col, row, 0.45)
 	for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
 		var c: int = col + d.x
 		var r: int = row + d.y
@@ -600,6 +676,7 @@ func _land_glutball(col: int, row: int, k := 1.0) -> void:
 
 
 func _flammenwelle(col: int, k := 1.0) -> void:
+	vfx_add("flames_col", 3 + col, 0, 0.55)
 	for r in 3:
 		fx_cell(3 + col, r, GameData.EL.Feuer, 0.3)
 	if e.c == col:
@@ -610,6 +687,7 @@ func _flammenwelle(col: int, k := 1.0) -> void:
 
 func _blitz(k := 1.0) -> void:
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL.Elektro, 12)
+	vfx_add("strike", 3 + e.c, e.r, 0.3)
 	hit_enemy(roundi(20 * k), "Elektro")
 
 
@@ -1111,6 +1189,10 @@ func _update_fx(dt: float) -> void:
 		f.y -= dt * 0.8
 		if f.t <= 0:
 			fx.remove_at(i)
+	for i in range(vfx.size() - 1, -1, -1):
+		vfx[i].t -= dt
+		if vfx[i].t <= 0:
+			vfx.remove_at(i)
 	for i in range(parts.size() - 1, -1, -1):
 		var q: Dictionary = parts[i]
 		q.t -= dt

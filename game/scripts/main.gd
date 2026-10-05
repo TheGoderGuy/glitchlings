@@ -367,6 +367,24 @@ func _screenshot(shot: Dictionary) -> void:
 				current.st.start_special()
 				current.st.update(shot.special)
 				current.st.events.clear()
+			if shot.has("chip"):
+				# Chip-Effekt prüfen: Gegner in die Reihe, Chip spielen, --t Sekunden weiter (z. B. --chip=Heilpatch --t=0.4)
+				var cs: BattleState = current.st
+				cs.e.r = cs.p.r
+				cs.e.atk_t = 99.0
+				cs.e.move_t = 99.0
+				cs.vfx.clear()
+				cs.proj.clear()
+				cs.parts.clear()
+				cs.fx.clear()
+				cs.hand[0].chip = shot.chip
+				cs.hand[0].rem = 0.0
+				cs.use_slot(0)
+				var tt := 0.0
+				while tt < shot.get("t", 0.2):
+					cs.update(1.0 / 60.0)
+					tt += 1.0 / 60.0
+				cs.events.clear()
 			if shot.has("pops"):
 				var pk: String = "spore" if run.map.zone == "sumpf" else "milbe"
 				current.st.pops.append({"c": 0, "r": 0, "t": 2.5, "max": 3.0, "kind": pk})

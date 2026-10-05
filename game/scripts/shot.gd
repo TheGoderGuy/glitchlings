@@ -56,6 +56,8 @@ static func args() -> Dictionary:
 			shot.font = a.substr(7)
 		elif a.begins_with("--guide="):
 			shot.guide = int(a.substr(8))
+		elif a.begins_with("--chip="):
+			shot.chip = a.substr(7)
 		elif a.begins_with("--key="):
 			# Tastaturbelegung nur für den Screenshot, z. B. --key=chip_1:Shift
 			var ak := a.substr(6).split(":")

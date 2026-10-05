@@ -540,9 +540,7 @@ func _draw_actors() -> void:
 		draw_rect(Rect2(mz - Vector2(1, 4) * k * 2, Vector2(2, 8) * k * 2), Color(muzzle_col, 0.9))
 		draw_rect(Rect2(mz - Vector2(2, 2), Vector2(4, 4)), Color.WHITE)
 	if st.shield > 0:
-		for i in 12:
-			var a0 := i * TAU / 12.0 + anim_t * 2.0
-			draw_arc(body, 30, a0, a0 + TAU / 24.0, 3, GameData.EL.Code, 2)
+		_draw_shield(body)
 	if st.heat > 0:
 		for i in 12:
 			var a1 := i * TAU / 12.0 - anim_t * 3.0
@@ -631,14 +629,7 @@ func _draw_effects() -> void:
 			var k: float = float(i + 1) / pr.hist.size()
 			var s := roundi((6.0 if pr.lob else 4.0) * k)
 			draw_rect(Rect2(pr.hist[i] - Vector2(s, s) / 2, Vector2(s, s)), Color(col, k * 0.4))
-		if pr.lob:
-			draw_rect(Rect2(pos - Vector2(6, 6), Vector2(12, 12)), col.darkened(0.55))
-			draw_rect(Rect2(pos - Vector2(4, 4), Vector2(8, 8)), col)
-			draw_rect(Rect2(pos - Vector2(2, 3), Vector2(3, 3)), Color("#FFF1B8"))
-		else:
-			draw_rect(Rect2(pos - Vector2(13, 3), Vector2(26, 7)), col.darkened(0.5))
-			draw_rect(Rect2(pos - Vector2(12, 2), Vector2(24, 5)), col)
-			draw_rect(Rect2(pos + Vector2(0, -1), Vector2(9, 2)), Color.WHITE)
+		_draw_proj(pr, pos, col)
 	for q in st.pops:
 		_draw_minion(q)
 	for q in st.parts:
@@ -652,6 +643,7 @@ func _draw_effects() -> void:
 			continue
 		var s := 3 if q.t / q.max > 0.5 else 2
 		draw_rect(Rect2(roundi(x - s / 2.0), roundi(y - s / 2.0), s, s), Color(q.color, q.t / q.max))
+	_draw_vfx()
 	for f in st.fx:
 		var k: float = f.t / f.max
 		var big := k > 0.8
@@ -1263,3 +1255,369 @@ func show_evolve_for_screenshot(t: float) -> void:
 
 func show_pause_for_screenshot() -> void:
 	_set_mode(Mode.PAUSE)
+
+
+# ---------- Chip-Effekte passend zur Karte (04.10.2026, Tester-Feedback) ----------
+
+const FIRE_DARK := Color("#FF4B2B")
+const FIRE_MID := Color("#FF9A2E")
+const FIRE_HOT := Color("#FFE27A")
+const ICE := Color("#BFF4FF")
+
+
+## Mitte eines Feldes auf Körperhöhe
+func _vc(c: float, r: float) -> Vector2:
+	return Vector2(gx(c) + CW / 2.0, feet_y(r) - 20)
+
+
+func _px(pos: Vector2, size: float, col: Color) -> void:
+	draw_rect(Rect2((pos - Vector2(size, size) / 2.0).round(), Vector2(size, size)), col)
+
+
+func _plus(q: Vector2, s: int, col: Color) -> void:
+	draw_rect(Rect2(roundi(q.x) - s, roundi(q.y) - 1, 2 * s + 1, 3), col)
+	draw_rect(Rect2(roundi(q.x) - 1, roundi(q.y) - s, 3, 2 * s + 1), col)
+
+
+## Zackenlinie (Blitz) von a nach b; die Form hängt nur am Seed und flackert daher nicht
+func _zigzag(a: Vector2, b: Vector2, seed_v: int, col: Color, width := 2.0, steps := 7) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_v
+	var n := (b - a).orthogonal().normalized()
+	var prev := a
+	for i in range(1, steps + 1):
+		var q := a.lerp(b, float(i) / steps)
+		if i < steps:
+			q += n * rng.randf_range(-7.0, 7.0)
+		draw_line(prev.round(), q.round(), col, width)
+		prev = q
+
+
+func _diamond(q: Vector2, s: float, col: Color, edge: Color) -> void:
+	if s < 1.0:
+		return
+	draw_colored_polygon(PackedVector2Array([q + Vector2(0, -s * 1.6), q + Vector2(s, 0), q + Vector2(0, s * 1.6), q + Vector2(-s, 0)]), col)
+	draw_line(q + Vector2(-s, 0), q + Vector2(0, -s * 1.6), edge, 1)
+
+
+## Flammenzungen über einem Feld (Fußpunkt base)
+func _flame(base: Vector2, k: float, a: float, seed_v: int, n := 4) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = seed_v
+	var grow := sin(clampf(k, 0.0, 1.0) * PI)
+	for i in n:
+		var x := base.x - 22.0 + i * (44.0 / maxf(1, n - 1)) + rng.randf_range(-3, 3)
+		var h := (16.0 + rng.randf_range(0, 18)) * grow * (0.85 + 0.15 * sin(anim_t * 22.0 + i))
+		draw_rect(Rect2(roundi(x - 5), roundi(base.y - h), 10, roundi(h)), Color(FIRE_DARK, a))
+		draw_rect(Rect2(roundi(x - 3), roundi(base.y - h * 0.75), 6, roundi(h * 0.75)), Color(FIRE_MID, a))
+		draw_rect(Rect2(roundi(x - 1), roundi(base.y - h * 0.45), 3, roundi(h * 0.45)), Color(FIRE_HOT, a))
+
+
+## Pflaster des Heilpatches
+func _bandage(q: Vector2, a: float) -> void:
+	q = q.round()
+	draw_rect(Rect2(q - Vector2(11, 5), Vector2(22, 10)), Color("#2B1E1A", a))
+	draw_rect(Rect2(q - Vector2(10, 4), Vector2(20, 8)), Color("#F2C9A0", a))
+	draw_rect(Rect2(q - Vector2(4, 4), Vector2(8, 8)), Color("#FFF4E8", a))
+	_plus(q, 2, Color("#FF6B8A", a))
+	for dx in [-8, -6, 6, 8]:
+		_px(q + Vector2(dx, -1 if dx < 0 else 1), 1, Color("#C99A72", a))
+
+
+## Geschosse sehen je nach Chip anders aus
+func _draw_proj(pr: Dictionary, pos: Vector2, col: Color) -> void:
+	if pr.lob:
+		# Glutball: Feuerball
+		draw_circle(pos, 8, FIRE_DARK)
+		draw_circle(pos, 6, FIRE_MID)
+		draw_circle(pos + Vector2(-1, -1), 3, FIRE_HOT)
+		return
+	match pr.get("id", ""):
+		"Wasserstrahl":
+			draw_rect(Rect2(pos.x - 34, pos.y - 3, 34, 6), Color(GameData.EL.Wasser, 0.55))
+			for i in 4:
+				_px(pos + Vector2(-8 - i * 9, sin(anim_t * 30.0 + i) * 4), 3, Color(GameData.EL.Wasser.lightened(0.35), 0.9))
+			draw_circle(pos, 6, GameData.EL.Wasser)
+			draw_circle(pos + Vector2(2, -2), 2, Color.WHITE)
+		"Virusspritzer":
+			var w := 1.0 + 0.2 * sin(anim_t * 25.0)
+			draw_circle(pos, 6 * w, GameData.EL.Virus.darkened(0.45))
+			draw_circle(pos, 5 * w, GameData.EL.Virus)
+			_px(pos + Vector2(-2, -2), 2, Color.WHITE)
+			for i in 3:
+				_px(pos + Vector2(-7 - i * 5, 4 + i * 2), 3 - i, GameData.EL.Virus)
+		"Datenfresser":
+			var open := absf(sin(anim_t * 18.0)) * 0.9
+			draw_circle(pos, 7, GameData.COL.dark)
+			draw_circle(pos, 6, GameData.EL.Virus)
+			draw_colored_polygon(PackedVector2Array([pos, pos + Vector2(8, -8 * open - 0.5), pos + Vector2(8, 8 * open + 0.5)]), GameData.COL.dark)
+			_px(pos + Vector2(-1, -3), 2, Color.WHITE)
+		"Kurzschluss":
+			draw_circle(pos, 5, GameData.EL.Elektro)
+			draw_circle(pos, 2, Color.WHITE)
+			_zigzag(pos + Vector2(-16, -6), pos + Vector2(4, -2), int(anim_t * 20.0), Color(GameData.EL.Elektro, 0.9), 1.0, 4)
+			_zigzag(pos + Vector2(-16, 6), pos + Vector2(4, 2), int(anim_t * 20.0) + 7, Color(GameData.EL.Elektro, 0.9), 1.0, 4)
+		"Frostsplitter":
+			draw_colored_polygon(PackedVector2Array([pos + Vector2(10, 0), pos + Vector2(0, -4), pos + Vector2(-9, 0), pos + Vector2(0, 4)]), ICE)
+			draw_line(pos + Vector2(-9, 0), pos + Vector2(10, 0), Color.WHITE, 1)
+			_px(pos + Vector2(-14, 0), 2, Color(ICE, 0.6))
+		"Parasit":
+			for i in 3:
+				draw_line(pos + Vector2(-2 + i * 2, 3), pos + Vector2(-4 + i * 3, 7), Color("#5A0F28"), 1)
+			draw_circle(pos, 5, Color("#8C1D40"))
+			draw_circle(pos + Vector2(1, -1), 3, Color("#E0427A"))
+		"Doppelklick":
+			for dx in [0, 7]:
+				var q := pos + Vector2(dx, 0)
+				draw_line(q + Vector2(-6, -5), q, Color.WHITE, 2)
+				draw_line(q, q + Vector2(-6, 5), Color.WHITE, 2)
+		_:
+			# Pixelstrahl: Datenstrahl mit abplatzenden Pixeln
+			draw_rect(Rect2(pos - Vector2(12, 3), Vector2(24, 7)), col.darkened(0.5))
+			draw_rect(Rect2(pos - Vector2(11, 2), Vector2(22, 5)), col)
+			draw_rect(Rect2(pos + Vector2(2, -1), Vector2(8, 2)), Color.WHITE)
+			for i in 3:
+				_px(pos + Vector2(-16 - i * 6, ((i * 7 + int(anim_t * 30.0)) % 5) - 2), 2, Color(col, 0.7))
+
+
+## Schilde: Firewall als glühende Mauer, Kopierschutz als Sechseck, Konter als gekreuzte Klingen
+func _draw_shield(body: Vector2) -> void:
+	match st.shield_kind:
+		"firewall":
+			var x := body.x + 20
+			for row in 6:
+				var y := body.y - 26 + row * 7
+				var shift := 5 if row % 2 == 1 else 0
+				for c in 2:
+					var bx := x + c * 11 - shift
+					draw_rect(Rect2(bx, y, 10, 6), GameData.COL.dark)
+					draw_rect(Rect2(bx + 1, y + 1, 8, 4), GameData.EL.Code.lightened(0.15 * (0.5 + 0.5 * sin(anim_t * 6.0 + row))))
+			for c in 3:
+				var fx := x - 2 + c * 8
+				var h := 4.0 + 3.0 * absf(sin(anim_t * 12.0 + c))
+				draw_rect(Rect2(fx, body.y - 26 - h, 4, h), FIRE_MID)
+				draw_rect(Rect2(fx + 1, body.y - 26 - h * 0.6, 2, h * 0.6), FIRE_HOT)
+		"lock":
+			draw_circle(body, 28, Color(GameData.EL.Code, 0.12))
+			draw_arc(body, 30, anim_t, anim_t + TAU, 7, GameData.EL.Code, 2)
+			var lq := body + Vector2(0, -36)
+			draw_arc(lq + Vector2(0, -2), 4, PI, TAU, 8, GameData.EL.Code, 2)
+			draw_rect(Rect2(lq.x - 5, lq.y - 2, 10, 7), GameData.EL.Code)
+			_px(lq + Vector2(0, 1), 2, GameData.COL.dark)
+		"konter":
+			var glint := 0.6 + 0.4 * sin(anim_t * 20.0)
+			draw_line(body + Vector2(16, -18), body + Vector2(32, 10), Color(1, 1, 1, glint), 2)
+			draw_line(body + Vector2(16, 10), body + Vector2(32, -18), Color(1, 1, 1, glint), 2)
+			_px(body + Vector2(24, -4), 4, Color(GameData.COL.sun, glint))
+		_:
+			for i in 12:
+				var a0 := i * TAU / 12.0 + anim_t * 2.0
+				draw_arc(body, 30, a0, a0 + TAU / 24.0, 3, GameData.EL.Code, 2)
+
+
+func _draw_vfx() -> void:
+	for v in st.vfx:
+		var k: float = 1.0 - v.t / v.max
+		var a: float = clampf(v.t / v.max * 1.6, 0.0, 1.0)
+		if v.has("delay"):
+			var run_t: float = v.max - v.t
+			if run_t < v.delay:
+				continue
+			k = clampf((run_t - v.delay) / maxf(0.01, v.max - v.delay), 0.0, 1.0)
+		var cen := _vc(v.c, v.r)
+		var rng := RandomNumberGenerator.new()
+		rng.seed = v.seed
+		match v.kind:
+			"slash":
+				var col: Color = GameData.EL[v.el] if v.el != "Neutral" else Color("#CFF6FF")
+				var sc := Vector2(gx(3), feet_y(v.r) - 22)
+				var sweep := minf(1.0, k * 2.5)
+				draw_arc(sc, 42, -1.2, -1.2 + 2.4 * sweep, 16, Color(col, a), 4)
+				draw_arc(sc, 37, -1.0, -1.0 + 2.0 * sweep, 14, Color(1, 1, 1, a), 2)
+			"beam":
+				var y := feet_y(v.r) - 22
+				var x0 := gx(v.c) + CW / 2.0 + 18
+				var x1 := gx(6)
+				var col: Color = GameData.COL.mint if v.get("debug", false) else GameData.EL.Code
+				var w := 7.0 * a + (2.0 if fmod(anim_t, 0.06) < 0.03 else 0.0)
+				draw_rect(Rect2(x0, y - w / 2.0, x1 - x0, w), Color(col, 0.6 * a))
+				draw_rect(Rect2(x0, y - 1, x1 - x0, 3), Color(1, 1, 1, a))
+				if v.get("debug", false):
+					var glyphs := ["{", "}", "0", "1", ";", "#"]
+					for i in 6:
+						_text(Vector2(x0 + 16 + i * 48 + k * 24, y - 7), glyphs[i], 8, Color(col, a), HORIZONTAL_ALIGNMENT_LEFT, -1, false)
+			"bolt_col":
+				var x := gx(v.c) + CW / 2.0
+				_zigzag(Vector2(x, Y0 - 34), Vector2(x, feet_y(2) - 4), v.seed, Color(GameData.EL.Elektro, a), 4.0, 10)
+				_zigzag(Vector2(x, Y0 - 34), Vector2(x, feet_y(2) - 4), v.seed, Color(1, 1, 1, a), 2.0, 10)
+			"strike":
+				var wd := 2.0 if v.get("small", false) else 4.0
+				_zigzag(Vector2(cen.x, Y0 - 40), cen, v.seed, Color(GameData.EL.Elektro, a), wd, 6)
+				_zigzag(Vector2(cen.x, Y0 - 40), cen, v.seed, Color(1, 1, 1, a), 1.0, 6)
+				draw_circle(cen, 8 * a, Color(1, 1, 0.8, 0.6 * a))
+			"chain":
+				var pcen := _vc(v.pc, v.pr)
+				_zigzag(pcen, cen, v.seed, Color(GameData.EL.Elektro, a), 3.0, 9)
+				_zigzag(pcen, cen, v.seed, Color(1, 1, 1, a), 1.0, 9)
+			"wave_row":
+				var y := feet_y(v.r)
+				var x0 := gx(v.c) + CW * 0.5
+				var front := lerpf(x0, gx(6), k)
+				draw_rect(Rect2(x0, y - 14, maxf(0, front - x0), 14), Color(GameData.EL.Wasser, 0.4 * a))
+				for i in 8:
+					var hh := 28.0 * (1.0 - i / 9.0)
+					draw_rect(Rect2(front - i * 4 - 4, y - hh, 4, hh), Color(GameData.EL.Wasser, a))
+					draw_rect(Rect2(front - i * 4 - 4, y - hh, 4, 2), Color(1, 1, 1, a))
+			"tsunami":
+				var top := Y0 - 16.0
+				var bot := feet_y(2)
+				var front := lerpf(gx(3) - 30, gx(6), k)
+				draw_rect(Rect2(gx(3), top + 24, maxf(0, front - gx(3)), bot - top - 24), Color(GameData.EL.Wasser, 0.35 * a))
+				for i in 10:
+					var yt := top + i * 4
+					draw_rect(Rect2(front - i * 5 - 5, yt, 5, bot - yt), Color(GameData.EL.Wasser, a))
+					draw_rect(Rect2(front - i * 5 - 5, yt, 5, 3), Color(1, 1, 1, a))
+			"inferno":
+				for c in 3:
+					for r in 3:
+						_flame(Vector2(gx(3 + c) + CW / 2.0, feet_y(r)), k, a, v.seed + c * 3 + r, 3)
+			"flames_col":
+				for r in 3:
+					_flame(Vector2(gx(v.c) + CW / 2.0, feet_y(r)), k, a, v.seed + r)
+			"sparkfall":
+				for i in 3:
+					var x := cen.x - 16 + i * 16
+					var y := lerpf(Y0 - 40 - i * 12, feet_y(v.r) - 8, k)
+					draw_rect(Rect2(x - 1, y - 10, 3, 10), Color(FIRE_MID, a))
+					_px(Vector2(x, y), 4, Color(FIRE_HOT, a))
+				if k > 0.8:
+					draw_circle(Vector2(cen.x, feet_y(v.r) - 8), 10, Color(FIRE_MID, 0.6 * a))
+			"explode":
+				var rad := 8.0 + k * 34.0
+				draw_circle(cen, rad, Color(FIRE_MID, 0.45 * a))
+				draw_circle(cen, rad * 0.6, Color(FIRE_HOT, 0.7 * a))
+				draw_arc(cen, rad + 4, 0, TAU, 20, Color(FIRE_DARK, a), 3)
+				for i in 6:
+					_px(cen + Vector2(cos(i * 1.1) * rad, sin(i * 1.1) * rad * 0.6 - k * 12), 5, Color(0.3, 0.28, 0.3, 0.6 * a))
+			"ice":
+				var grow := minf(1.0, k * 4.0)
+				for i in 6:
+					var ang := i * TAU / 6.0 + 0.3
+					var q := cen + Vector2(cos(ang), sin(ang)) * (18.0 + (i % 2) * 6.0)
+					_diamond(q, (4.0 + (i % 3) * 2.0) * grow, Color(ICE, a), Color(1, 1, 1, a))
+			"swirl":
+				for j in 3:
+					var a0 := anim_t * (7.0 - j * 2) + j
+					draw_arc(cen, 6.0 + j * 8.0, a0, a0 + 3.6, 12, Color(GameData.EL.Wasser.lightened(0.2 * j), a), 2)
+			"portal":
+				var fp := Vector2(cen.x, feet_y(v.r) - 2)
+				draw_set_transform(off + fp, 0, Vector2(1, 0.35))
+				draw_circle(Vector2.ZERO, 30, Color(0.06, 0.0, 0.12, 0.7 * a))
+				for j in 3:
+					var a1 := anim_t * 5.0 + j * 2.0
+					draw_arc(Vector2.ZERO, 30.0 - j * 8.0, a1, a1 + 4.5, 16, Color(GameData.EL.Virus.lightened(j * 0.2), a), 3)
+				draw_set_transform(off)
+			"flash":
+				var rad := 10.0 + 70.0 * k
+				draw_circle(cen, rad, Color(1, 1, 1, 0.5 * a))
+				for i in 8:
+					var dir := Vector2(cos(i * TAU / 8.0), sin(i * TAU / 8.0))
+					draw_line(cen + dir * rad * 0.5, cen + dir * (rad + 14), Color(1, 1, 0.8, a), 2)
+			"blackout":
+				draw_rect(Rect2(gx(3) - 8, Y0 - 50, gx(6) - gx(3) + 16, 3 * CH + 60), Color(0.02, 0.01, 0.06, 0.65 * a))
+				for i in 8:
+					if fmod(anim_t * 12.0 + i, 2.0) < 1.0:
+						_px(cen + Vector2(rng.randf_range(-26, 26), rng.randf_range(-30, 12)), 2, Color(GameData.EL.Elektro, a))
+					else:
+						rng.randf()
+						rng.randf()
+			"magnet":
+				var pcen := _vc(v.pc, v.pr)
+				for j in 3:
+					var mid := (pcen + cen) / 2.0 + Vector2(0, -24 - j * 12)
+					var prev := pcen
+					for s in range(1, 13):
+						var t := s / 12.0
+						var q := pcen.lerp(mid, t).lerp(mid.lerp(cen, t), t)
+						if (s + int(anim_t * 20.0)) % 2 == 0:
+							draw_line(prev.round(), q.round(), Color(GameData.EL.Elektro, a), 2)
+						prev = q
+			"toxic":
+				for i in 7:
+					var t2 := fmod(k * 1.4 + i * 0.13, 1.0)
+					var q := cen + Vector2(rng.randf_range(-22, 22), 12 - t2 * 42)
+					var s := 2.0 + rng.randi_range(0, 3)
+					draw_arc(q, s, 0, TAU, 8, Color(GameData.EL.Virus.lightened(0.3), a), 1)
+					_px(q + Vector2(-1, -1), 1, Color(1, 1, 1, a))
+			"patch":
+				if k < 0.35:
+					var t2 := k / 0.35
+					_bandage(cen + Vector2(-34, -44) * (1.0 - t2), 1.0)
+				else:
+					var t3 := (k - 0.35) / 0.65
+					_bandage(cen + Vector2(0, -2), a)
+					for i in 3:
+						_plus(cen + Vector2(-16 + i * 16, -14 - t3 * 30 - i * 4), 3, Color(GameData.COL.mint, a))
+				draw_arc(cen, 20 + k * 10, 0, TAU, 20, Color(GameData.COL.mint, 0.5 * a), 1)
+			"reboot":
+				var rot := k * TAU * 1.5
+				draw_arc(cen, 20, rot, rot + 4.6, 24, Color(GameData.COL.mint, a), 3)
+				_px(cen + Vector2(cos(rot + 4.6), sin(rot + 4.6)) * 20, 7, Color(GameData.COL.mint, a))
+				if k < 0.2:
+					draw_circle(cen, 30, Color(1, 1, 1, 0.4 * (1.0 - k / 0.2)))
+			"overclock":
+				for i in 5:
+					var y := cen.y - 18 + i * 8
+					var x := cen.x - 28 - fmod(k * 120.0 + i * 17.0, 40.0)
+					draw_rect(Rect2(x, y, 18 + (i % 3) * 6, 2), Color(GameData.EL.Feuer, a))
+				var g := cen + Vector2(0, -36)
+				for i in 8:
+					var ang := i * TAU / 8.0 + anim_t * 6.0
+					_px(g + Vector2(cos(ang), sin(ang)) * 8, 3, Color(GameData.EL.Feuer, a))
+				draw_circle(g, 6, Color(GameData.EL.Feuer, a))
+				draw_circle(g, 2, Color(GameData.COL.dark, a))
+			"defrag":
+				var cols := [GameData.EL.Feuer, GameData.EL.Wasser, GameData.EL.Code, GameData.EL.Elektro, GameData.EL.Virus, GameData.COL.mint]
+				var t2 := clampf(k * 1.6, 0.0, 1.0)
+				t2 = t2 * t2 * (3.0 - 2.0 * t2)
+				for i in 6:
+					var start := cen + Vector2(rng.randf_range(-40, 40), rng.randf_range(-50, 10))
+					var q := start.lerp(cen + Vector2(-25 + i * 10, -38), t2).round()
+					draw_rect(Rect2(q - Vector2(4, 4), Vector2(8, 8)), Color(GameData.COL.dark, a))
+					draw_rect(Rect2(q - Vector2(3, 3), Vector2(6, 6)), Color(cols[i], a))
+			"scan":
+				var rr := 20.0 + k * 320.0
+				draw_arc(cen, rr, -0.5, 0.5, 20, Color(GameData.EL.Code, a), 2)
+				draw_arc(cen, rr * 0.8, -0.4, 0.4, 16, Color(GameData.EL.Code, a * 0.5), 1)
+				if k > 0.55:
+					var ec: Vector2 = _vc(3 + st.e.c, st.e.r)
+					draw_arc(ec, 16, 0, TAU, 16, Color(GameData.EL.Code, a), 1)
+					draw_rect(Rect2(ec.x - 22, ec.y, 44, 1), Color(GameData.EL.Code, a))
+					draw_rect(Rect2(ec.x, ec.y - 22, 1, 44), Color(GameData.EL.Code, a))
+			"charge":
+				for i in 8:
+					var t2 := fmod(k * 2.0 + i * 0.125, 1.0)
+					var q := cen + Vector2(rng.randf_range(-20, 20), 10 - t2 * 50)
+					_px(q, 2 + (i % 2), Color(GameData.EL.Elektro, a * (1.0 - t2)))
+				draw_arc(cen, 24 - k * 8, 0, TAU, 20, Color(GameData.EL.Elektro, a), 2)
+			"jump":
+				var fp := Vector2(cen.x, feet_y(v.r))
+				for i in 3:
+					var y := fp.y - 8 - i * 9 - k * 14
+					draw_line(Vector2(fp.x - 7, y + 5), Vector2(fp.x, y), Color(GameData.COL.mint, a), 2)
+					draw_line(Vector2(fp.x, y), Vector2(fp.x + 7, y + 5), Color(GameData.COL.mint, a), 2)
+			"shieldup":
+				var col: Color = GameData.EL[v.el] if v.el != "Neutral" else GameData.COL.sun
+				draw_arc(cen, 14 + k * 22, PI / 6.0, PI / 6.0 + TAU, 6, Color(col, a), 3)
+			"spawn":
+				for i in 8:
+					var ang := i * TAU / 8.0
+					_px(cen + Vector2(-22, -24) + Vector2(cos(ang), sin(ang)) * (4 + k * 16), 3, Color(GameData.EL.Code, a))
+			"drop":
+				var fp := Vector2(cen.x, feet_y(v.r) - 4)
+				if k < 0.6:
+					var q := Vector2(fp.x, lerpf(Y0 - 40, fp.y, k / 0.6))
+					_px(q, 8, GameData.EL.Virus.darkened(0.4))
+					_px(q, 4, GameData.EL.Virus)
+				else:
+					draw_arc(fp, 6 + (k - 0.6) * 40, 0, TAU, 16, Color(GameData.EL.Virus, a), 2)

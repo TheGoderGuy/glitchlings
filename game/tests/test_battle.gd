@@ -59,6 +59,7 @@ func _ready() -> void:
 	test_frame_pacing()
 	test_key_rebind()
 	test_reset_game()
+	test_chip_vfx()
 	test_guards()
 	test_run_save()
 	test_progression()
@@ -2296,3 +2297,30 @@ func test_reset_game() -> void:
 	Settings.volume = keep_vol
 	Settings.lang = keep_lang
 	Settings.apply()
+
+
+## Jeder Chip hat einen eigenen sichtbaren Effekt oder ein eigenes Geschoss (04.10.2026, Tester-Feedback)
+func test_chip_vfx() -> void:
+	var missing: Array = []
+	for id in GameData.CHIPS:
+		var st := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[3])
+		st.e.r = st.p.r
+		st.e.atk_t = 99.0
+		st.hand[0].chip = id
+		st.hand[0].rem = 0.0
+		st.use_slot(0)
+		var seen := false
+		for i in 60:
+			if not st.vfx.is_empty() or not st.proj.is_empty() or st.delayed.any(func(d): return d.mark):
+				seen = true
+				break
+			st.update(1.0 / 60.0)
+		if not seen:
+			missing.append(id)
+	check(missing.is_empty(), "Alle %d Chips haben einen passenden Effekt (ohne: %s)" % [GameData.CHIPS.size(), ", ".join(missing)])
+	var sh := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[0])
+	sh.hand[2].chip = "Heilpatch"
+	sh.hand[2].rem = 0.0
+	sh.run.hp = 50
+	sh.use_slot(2)
+	check(sh.vfx.any(func(v): return v.kind == "patch") and not sh.parts.any(func(q): return q.color == GameData.EL.Elektro), "Heilpatch: Pflaster und Heil-Partikel statt Elektro-Funken")
