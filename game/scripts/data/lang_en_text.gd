@@ -151,6 +151,7 @@ const D := {
 	"%s wurde aus deinem Deck entfernt.": "%s was removed from your deck.",
 	"HP %d/%d": "HP %d/%d", "Fragmente %d": "Fragments %d", "Deck %d Chips": "Deck %d chips",
 	"Welchen Chip kopieren?": "Which chip should be copied?", "Welchen Chip verbessern?": "Which chip should be upgraded?",
+	"Wird verbessert:": "Upgrading:", "Schaden %d > %d": "Damage %d > %d", "Wirkung +30 %": "Effect +30%", "Laden %s > %s s": "Charge %s > %s s",
 	"Welchen Chip entfernen?": "Which chip should be removed?",
 	# Rastplatz und Händler
 	"Ausruhen": "Rest", "Heilt %d HP.": "Heals %d HP.", "Chip verbessern": "Upgrade chip",

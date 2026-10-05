@@ -321,6 +321,41 @@ static func wrap_lines(s: String, w: float, size := 8) -> Array:
 
 
 ## Modul-Symbol (14×14): Rahmen in Seltenheitsfarbe, Piktogramm in Modulfarbe
+## Trefferbild (3×3 Gegnerfeld, deine Reihe = Mitte) oder Symbol für Schutz/Hilfe, 12×12 Pixel (× s)
+func _draw_chip_icon(id: String, pos: Vector2, bright: bool, s := 1) -> void:
+	var info: Array = GameData.CHIP_CARD.get(GameData.base_chip(id), ["row", ""])
+	var col: Color = GameData.EL[GameData.chip(id).el]
+	if not bright:
+		col = col.darkened(0.35)
+	var pat: String = info[0]
+	if GameData.PICTOS.has(pat):
+		var pic: Array = GameData.PICTOS[pat]
+		for y in 6:
+			for x in 6:
+				if pic[y][x] == "#":
+					draw_rect(Rect2(pos + Vector2(x * 2, y * 2) * s, Vector2(2, 2) * s), col)
+		return
+	var hit := {}
+	match pat:
+		"row": hit = {Vector2i(0, 1): 1, Vector2i(1, 1): 1, Vector2i(2, 1): 1}
+		"front": hit = {Vector2i(0, 1): 1, Vector2i(1, 1): 1}
+		"col", "mycol": hit = {Vector2i(1, 0): 1, Vector2i(1, 1): 1, Vector2i(1, 2): 1}
+		"field": for yy in 3:
+			for xx in 3:
+				hit[Vector2i(xx, yy)] = 1
+		"aim", "mine": hit = {Vector2i(1, 1): 1}
+		"blast": hit = {Vector2i(1, 1): 1, Vector2i(0, 1): 2, Vector2i(2, 1): 2, Vector2i(1, 0): 2, Vector2i(1, 2): 2}
+		"pull": hit = {Vector2i(0, 1): 1, Vector2i(2, 1): 2}
+	for y in 3:
+		for x in 3:
+			var c: Color = GameData.COL.dark.lightened(0.15)
+			if hit.has(Vector2i(x, y)):
+				c = col if hit[Vector2i(x, y)] == 1 else col.darkened(0.45)
+			draw_rect(Rect2(pos + Vector2(x * 4, y * 4) * s, Vector2(3, 3) * s), c)
+	if pat == "mine":
+		draw_rect(Rect2(pos + Vector2(5, 5) * s, Vector2(1, 1) * s), GameData.COL.dark)
+
+
 func _draw_module_icon(id: String, pos: Vector2) -> void:
 	var M: Dictionary = GameData.MODULES[id]
 	var rc: Color = {"Gewöhnlich": GameData.COL.line.lightened(0.3), "Selten": Color("#58B7FF"), "Episch": Color("#FFC83D")}[M.rar]

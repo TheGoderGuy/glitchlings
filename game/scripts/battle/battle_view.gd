@@ -797,41 +797,6 @@ func _draw_hand() -> void:
 		_draw_ready()
 
 
-## Trefferbild (3×3 Gegnerfeld, deine Reihe = Mitte) oder Symbol für Schutz/Hilfe, 12×12 Pixel
-func _draw_chip_icon(id: String, pos: Vector2, bright: bool) -> void:
-	var info: Array = GameData.CHIP_CARD.get(GameData.base_chip(id), ["row", ""])
-	var col: Color = GameData.EL[GameData.chip(id).el]
-	if not bright:
-		col = col.darkened(0.35)
-	var pat: String = info[0]
-	if GameData.PICTOS.has(pat):
-		var pic: Array = GameData.PICTOS[pat]
-		for y in 6:
-			for x in 6:
-				if pic[y][x] == "#":
-					draw_rect(Rect2(pos + Vector2(x * 2, y * 2), Vector2(2, 2)), col)
-		return
-	var hit := {}
-	match pat:
-		"row": hit = {Vector2i(0, 1): 1, Vector2i(1, 1): 1, Vector2i(2, 1): 1}
-		"front": hit = {Vector2i(0, 1): 1, Vector2i(1, 1): 1}
-		"col", "mycol": hit = {Vector2i(1, 0): 1, Vector2i(1, 1): 1, Vector2i(1, 2): 1}
-		"field": for yy in 3:
-			for xx in 3:
-				hit[Vector2i(xx, yy)] = 1
-		"aim", "mine": hit = {Vector2i(1, 1): 1}
-		"blast": hit = {Vector2i(1, 1): 1, Vector2i(0, 1): 2, Vector2i(2, 1): 2, Vector2i(1, 0): 2, Vector2i(1, 2): 2}
-		"pull": hit = {Vector2i(0, 1): 1, Vector2i(2, 1): 2}
-	for y in 3:
-		for x in 3:
-			var c: Color = GameData.COL.dark.lightened(0.15)
-			if hit.has(Vector2i(x, y)):
-				c = col if hit[Vector2i(x, y)] == 1 else col.darkened(0.45)
-			draw_rect(Rect2(pos + Vector2(x * 4, y * 4), Vector2(3, 3)), c)
-	if pat == "mine":
-		draw_rect(Rect2(pos + Vector2(5, 5), Vector2(1, 1)), GameData.COL.dark)
-
-
 ## Bereit-Pause vor jedem Kampf: über jeder Karte steht, was sie tut
 func _draw_ready() -> void:
 	draw_rect(Rect2(0, 0, W, 296), Color(GameData.COL.dark, 0.55))

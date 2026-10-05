@@ -243,6 +243,7 @@ func _draw() -> void:
 			_text(r.position + Vector2(0, 54), q, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 			if choose_mode == "upgrade" and sel < remove_list.size():
 				var cu: String = remove_list[sel]
+				_draw_upgrade_card(cu)
 				_text(Vector2(r.position.x, r.end.y - 14), "%s > %s+: %s" % [T.chip(cu), T.chip(cu), GameData.upgrade_text(cu)], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 			# bis 10 Einträge einspaltig, sonst zweispaltig
 			var n := remove_list.size() + 1   # inkl. „Zurück“
@@ -261,6 +262,31 @@ func _draw() -> void:
 		State.MESSAGE:
 			draw_multiline_string(font(), r.position + Vector2(24, 120), T.t(message), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 5, GameData.COL.ink, wrap)
 			_text(Vector2(r.position.x, r.end.y - 20), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+
+
+## Chip verbessern: oben links die Karte des gewählten Chips mit alt > neu (05.10.2026, Produzent)
+func _draw_upgrade_card(id: String) -> void:
+	var b: Dictionary = GameData.chip(id)
+	var u: Dictionary = GameData.chip(id + "+")
+	var el: Color = GameData.EL[b.el]
+	var lines := wrap_lines(b.desc, 132).slice(0, 4)
+	var c := Rect2(8, 8, 144, 102 + lines.size() * 12)
+	_box(c, Color(GameData.COL.panel, 0.96), GameData.COL.sun)
+	draw_rect(Rect2(c.position + Vector2(1, 1), Vector2(c.size.x - 2, 4)), el)
+	_text(c.position + Vector2(0, 16), T.t("Wird verbessert:"), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
+	_text(c.position + Vector2(0, 30), T.chip(id), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
+	_text(c.position + Vector2(0, 42), "> " + T.chip(id + "+"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, c.size.x, true, true)
+	_text(c.position + Vector2(0, 54), "%s · %s" % [T.t(b.el), T.t(b.rar)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
+	# Trefferbild bzw. Symbol, doppelt groß
+	_draw_chip_icon(id, Vector2(c.position.x + 10, c.position.y + 62), true, 2)
+	var sx := c.position.x + 40
+	if int(b.dmg) > 0:
+		_text(Vector2(sx, c.position.y + 72), T.t("Schaden %d > %d") % [b.dmg, u.dmg], 8, GameData.COL.mint)
+	else:
+		_text(Vector2(sx, c.position.y + 72), T.t("Wirkung +30 %"), 8, GameData.COL.mint)
+	_text(Vector2(sx, c.position.y + 84), T.t("Laden %s > %s s") % [T.dec(b.cd), T.dec(u.cd)], 8, GameData.COL.mint)
+	for i in lines.size():
+		_text(Vector2(c.position.x, c.position.y + 106 + i * 12), lines[i], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, c.size.x)
 
 
 func _option_row(r: Rect2, label: String, active: bool, enabled: bool, mark := Color.TRANSPARENT) -> void:

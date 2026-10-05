@@ -8,6 +8,7 @@ Der Produzent hat 5 Punkte aus der Ideenliste freigegeben („versuche 1–5“)
 ## 1. Chips verbessern („Name+“)
 - Jeder Chip hat eine verbesserte Fassung, z. B. **Glutball+**: +30 % Schaden (auf 5 gerundet), 20 % kürzere Ladezeit. Chips ohne Schaden (Heilpatch, Blubberschild …) wirken 30 % stärker. Beispiel: Heilpatch+ heilt 33 statt 25.
 - Verbessern lässt sich jeder Chip **einmal**. Verbesserte Chips stehen in Gold in der Deckliste.
+- **Chipkarte beim Verbessern (05.10.2026, Wunsch des Produzenten):** Am Rastplatz und beim Händler steht oben links immer die Karte des gerade gewählten Chips. Sie zeigt den Namen > Name+, Element und Seltenheit, das Trefferbild, Schaden alt > neu (bzw. „Wirkung +30 %“), Ladezeit alt > neu und die Beschreibung (`room_view._draw_upgrade_card`). Das Trefferbild `_draw_chip_icon` liegt dafür jetzt in `PixelCanvas`.
 - **Wo:**
   - Rastplatz: neue dritte Wahl „Chip verbessern“ neben Ausruhen und Deck ausdünnen.
   - Datenhändler: „Chip verbessern (45)“, einmal pro Besuch.
