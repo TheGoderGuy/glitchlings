@@ -20,6 +20,7 @@ var base_chips := 0       # Lebenszeit-Prägung des Monsters vor diesem Run
 var base_praeg := {}
 var forms_seen: Array = []
 var tutorial := false     # erster Run: der erste Kampf ist ein geführtes Tutorial
+var training := false     # Trainingskampf (nach der Starterwahl / Titel > Training): nicht speichern, keine Belohnung
 var last_foe := ""        # für das Spieltest-Log (woran ist der Run gescheitert?)
 var start_ms := 0
 var chips_used := 0

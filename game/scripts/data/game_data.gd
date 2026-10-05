@@ -252,22 +252,28 @@ const FOES := [
 	{"name": "Skolopendrox", "el": "Code", "hp": 480, "move": 1.2, "atk": 2.0, "dmg": 18, "pat": ["row", "col2"], "spr": "skolopendrox",
 		"title": "Torwächter des Kerns", "loot": 40, "boss": true, "guard": true, "tele": false, "minion": "none",
 		"phase2": ["wall", "cross", "col2"], "specials": [{"shape": "sweep", "name": "Segmentfeuer"}]},
+	# --- Zonentypische Gegner (04.10.2026, Tester: „Bosse passen, Gegner nicht“) – Index 25–29 ---
+	{"name": "Funkenkäfer", "el": "Feuer", "hp": 85, "move": 1.3, "atk": 2.4, "dmg": 12, "pat": ["cell", "lava", "cell"], "spr": "funkenkaefer", "loot": 12, "boss": false, "tele": false},
+	{"name": "Datenegel", "el": "Wasser", "hp": 100, "move": 1.8, "atk": 2.4, "dmg": 11, "pat": ["row", "slime"], "spr": "datenegel", "loot": 13, "boss": false, "tele": false, "drain": true},
+	{"name": "Moorlibelle", "el": "Wasser", "hp": 60, "move": 0.7, "atk": 1.6, "dmg": 9, "pat": ["cell", "cell", "col"], "spr": "moorlibelle", "loot": 13, "boss": false, "tele": true},
+	{"name": "Sentinelkrabbe", "el": "Code", "hp": 150, "move": 2.2, "atk": 2.7, "dmg": 16, "pat": ["row", "col2"], "spr": "sentinelkrabbe", "loot": 15, "boss": false, "tele": false},
+	{"name": "Fehlerqualle", "el": "Elektro", "hp": 85, "move": 1.0, "atk": 2.0, "dmg": 13, "pat": ["cross", "cell"], "spr": "fehlerqualle", "loot": 15, "boss": false, "tele": true},
 ]
 
 ## Zonen: Gegner-Pools (Indizes in FOES), Boss, Wächter je Ebene, Zähigkeit, Hintergrund. Zone 2 wird nach dem Boss von Zone 1 frei.
 ## Jede Zone hat 3 Ebenen à 5 Etagen (ZoneMap), die Finalzone nur 2 („levels“).
 const ZONES := {
 	"wiesen": {"name": "Cache-Wiesen", "bg": "wiesen", "boss": 3, "guards": [18, 19], "hp_mult": 1.0,
-		"early": [0, 1, 5], "late": [0, 1, 2, 4, 5, 6], "elite": [2, 4, 6],
+		"early": [0, 1, 5], "late": [0, 1, 2, 4, 5], "elite": [2, 4, 5],
 		"desc": "Grüne Datenwiesen. Das Startgebiet.", "unlock": ""},
 	"vulkan": {"name": "Firewall-Vulkan", "bg": "vulkan", "boss": 10, "guards": [20, 21], "hp_mult": 1.25,
-		"early": [7, 9, 5], "late": [7, 8, 9, 4, 6], "elite": [8, 6, 4],
+		"early": [7, 9, 25], "late": [7, 8, 9, 6, 25], "elite": [8, 6, 25],
 		"desc": "Glühende Sicherheitsmauern. Wasser hat hier einen Vorteil.", "unlock": "wiesen"},
 	"sumpf": {"name": "Viren-Sümpfe", "bg": "sumpf", "boss": 14, "guards": [22, 23], "hp_mult": 1.5,
-		"early": [11, 12, 13], "late": [11, 12, 13, 8, 2, 6], "elite": [12, 13, 8],
+		"early": [11, 26, 27], "late": [11, 12, 13, 26, 27], "elite": [12, 13, 26],
 		"desc": "Blubbernde Sümpfe voller Viren und Glitch-Sporen. Elektro hat hier einen Vorteil.", "unlock": "vulkan"},
 	"kern": {"name": "NEST-Kern", "bg": "kern", "boss": 17, "guards": [24], "levels": 2, "hp_mult": 1.6, "final": true,
-		"early": [15, 16, 12], "late": [15, 16, 8, 13, 4], "elite": [15, 16, 8, 12],
+		"early": [15, 16, 29], "late": [15, 16, 28, 29], "elite": [15, 28, 29],
 		"desc": "Das Herz des abgestürzten Servers. Kurz, hart – und am Ende wartet der Ur-Glitch.", "unlock": "sumpf"},
 }
 const ZONE_ORDER := ["wiesen", "vulkan", "sumpf", "kern"]

@@ -59,6 +59,7 @@ func show_title() -> void:
 	var t := TitleScreen.new()
 	t.start_run.connect(_from_title)
 	t.show_intro.connect(show_opening.bind(show_title))
+	t.training.connect(start_training.bind(show_title))
 	_swap(t)
 
 
@@ -100,9 +101,36 @@ func show_starters() -> void:
 	_swap(s)
 
 
+## Nach der Starterwahl geht es direkt in den Trainingskampf (04.10.2026, Tester: „in einen Kampf geworfen werden“)
 func _first_monster(species: String) -> void:
 	SaveGame.new_game(species)
-	show_station()
+	start_training(show_station)
+
+
+## Geführter Trainingskampf gegen Bugsy (Cache-Wiesen) mit dem ersten Glitchling des Teams. Nicht speichern,
+## keine Belohnung; danach then (Station bzw. Titel). Verlieren ist im Training nicht möglich.
+func start_training(then: Callable) -> void:
+	var team := SaveGame.team()
+	if team.is_empty():
+		then.call()
+		return
+	run = RunState.from_monster(team[0], -1, "wiesen")
+	run.tutorial = true
+	run.training = true
+	var foe: Dictionary = GameData.FOES[0].duplicate(true)
+	foe.specials = [{"shape": "x", "name": "Glitchkreuz"}]   # für den Großangriff-Schritt
+	var b := BattleScene.instantiate()
+	b.setup(run, foe, "fight")
+	b.finished.connect(func(_won): _training_done(then))
+	b.gave_up.connect(_training_done.bind(then))
+	_swap(b)
+
+
+func _training_done(then: Callable) -> void:
+	SaveGame.data["tutorial_done"] = true
+	SaveGame.save_game()
+	run = null
+	then.call()
 
 
 func show_station() -> void:

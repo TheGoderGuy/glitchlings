@@ -449,7 +449,7 @@ func test_new_foes() -> void:
 	for f in GameData.FOES:
 		if not ResourceLoader.exists("res://assets/sprites/%s.png" % PixelCanvas.SPRITE_FILES[f.spr]):
 			sprites_ok = false
-	check(sprites_ok and GameData.FOES.size() == 25, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
+	check(sprites_ok and GameData.FOES.size() == 30, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
 	# Jeder Gegner lässt sich mit dem Autopilot besiegen
 	var all_end := true
 	for i in GameData.FOES.size():
@@ -787,42 +787,58 @@ func test_zone3() -> void:
 	print("  info    Sumpf-Autopilot: %d/9 Runs gewonnen" % wins)
 
 
+## Trainingskampf (04.10.2026): alle acht Lernschritte mit einem gesteuerten Spieler
+func _tut_tick(st: BattleState, tut: Tutorial, frames: int, until := -1) -> void:
+	for k in frames:
+		st.update(1.0 / 60.0)
+		tut.update(st, 1.0 / 60.0)
+		st.events.clear()
+		if until >= 0 and tut.step == until:
+			return
+
+
 func test_tutorial() -> void:
 	var run := RunState.new("Pixmiez", 1)
-	var st := BattleState.new(run, GameData.FOES[0])
+	var foe: Dictionary = GameData.FOES[0].duplicate(true)
+	foe.specials = [{"shape": "x", "name": "Glitchkreuz"}]
+	var st := BattleState.new(run, foe)
 	var tut := Tutorial.new()
 	st.e.atk_t = 0.5
 	for i in 3:
 		st.move_player(0, -1 if st.p.r > 0 else 1)
-		for k in 20:
-			st.update(1.0 / 60.0)
-			tut.update(st, 1.0 / 60.0)
-	check(st.warns.is_empty() and tut.step == Tutorial.Step.CHIP, "Tutorial: Gegner greift beim Bewegen-Üben nicht an, nach 3 Schritten weiter")
-	check(st.e.r == st.p.r, "Tutorial: Gegner steht für den ersten Schuss in deiner Reihe")
+		_tut_tick(st, tut, 20)
+	check(st.warns.is_empty() and tut.step == Tutorial.Step.CHIP and st.e.r == st.p.r, "Training: kein Angriff beim Bewegen, nach 3 Schritten Gegner in deiner Reihe")
 	st.e.frozen = 5.0
 	st.hand[0].chip = "Pixelstrahl"
 	st.hand[0].rem = 0.0
 	st.use_slot(0)
-	for k in 40:
-		st.update(1.0 / 60.0)
-		tut.update(st, 1.0 / 60.0)
-	check(tut.step == Tutorial.Step.SLOTS and st.hand[2].rem == 0.0, "Tutorial: Treffer mit dem Chip → Support-Slot ausprobieren")
-	st.use_slot(2)
-	tut.update(st, 1.0 / 60.0)
-	check(tut.step == Tutorial.Step.DODGE, "Tutorial: Support-Chip gespielt → Ausweichen üben")
+	_tut_tick(st, tut, 40, Tutorial.Step.CHIP2)
+	check(tut.step == Tutorial.Step.CHIP2 and st.hand[1].rem == 0.0, "Training: Treffer mit Angriff 1 > zweiter Angriffs-Slot")
+	st.use_slot(1)
+	_tut_tick(st, tut, 2)
+	check(tut.step == Tutorial.Step.DODGE, "Training: Angriff 2 gespielt > Ausweichen üben")
 	st.e.frozen = 0.0
 	var bot := BattleBot.new(0.0)
 	var t := 0.0
-	while tut.step == Tutorial.Step.DODGE and t < 20.0:
+	while tut.step == Tutorial.Step.DODGE and t < 25.0:
 		bot.act(st)
 		st.sp = minf(st.sp, 50.0)
-		st.update(1.0 / 60.0)
-		tut.update(st, 1.0 / 60.0)
+		_tut_tick(st, tut, 1)
 		t += 1.0 / 60.0
-	check(tut.step == Tutorial.Step.SPECIAL and st.sp == 100.0, "Tutorial: 2× ausgewichen → Signatur-Leiste voll")
+	check(tut.step == Tutorial.Step.SHIELD and st.hand[2].chip == "Firewall" and st.hand[2].rem == 0.0, "Training: 2× ausgewichen > Firewall liegt bereit")
+	st.use_slot(2)
+	_tut_tick(st, tut, 360, Tutorial.Step.ELEMENT)
+	check(tut.step == Tutorial.Step.ELEMENT and st.hand[0].chip == "Blitzcursor", "Training: Firewall blockt einen Treffer > Blitzcursor für den Element-Vorteil")
+	st.use_slot(0)
+	_tut_tick(st, tut, 90, Tutorial.Step.BIG)
+	check(tut.step == Tutorial.Step.BIG, "Training: Elektro gegen Virus trifft effektiv > Großangriff")
+	st.p.c = 1
+	st.p.r = 0     # außerhalb des Glitchkreuzes (X-Form)
+	_tut_tick(st, tut, 360, Tutorial.Step.SPECIAL)
+	check(tut.step == Tutorial.Step.SPECIAL and st.sp == 100.0, "Training: goldenen Feldern ausgewichen > Signatur-Leiste voll")
 	st.use_special()
 	tut.update(st, 1.0 / 60.0)
-	check(tut.just_finished and st.e.hp > 0, "Tutorial abgeschlossen, Gegner lebt noch für den freien Kampf")
+	check(tut.just_finished and st.e.hp > 0 and st.run.hp > 0, "Training: Signatur gespielt > frei kämpfen (Gegner lebt, Spieler nie besiegt)")
 
 
 func test_evolution() -> void:
@@ -1308,7 +1324,18 @@ func test_music() -> void:
 	for k in PixelCanvas.SPRITE_FILES:
 		if not ResourceLoader.exists("res://assets/sprites/%s_blink.png" % PixelCanvas.SPRITE_FILES[k]):
 			foe_no_blink.append(k)
-	check(foe_no_blink == ["bluete", "schlackwurm", "magmaskorp", "schnappkelch"], "Alle Gegner mit Augen blinzeln (ohne: %s)" % ", ".join(foe_no_blink))
+	# ohne sichtbare Augen: Glitchblüte, Schlackwurm, Magmaskorp, Schnappkelch, Datenegel (nur Saugmaul); Moorlibelle hat Facettenaugen
+	check(foe_no_blink == ["bluete", "schlackwurm", "magmaskorp", "schnappkelch", "datenegel", "moorlibelle"], "Alle Gegner mit Augen blinzeln (ohne: %s)" % ", ".join(foe_no_blink))
+	# Zonentypische Gegner (04.10.2026): jeder Pool enthält nur Gegner der eigenen Zone
+	var own := {"wiesen": [0, 1, 2, 4, 5], "vulkan": [6, 7, 8, 9, 25], "sumpf": [11, 12, 13, 26, 27], "kern": [15, 16, 28, 29]}
+	var zone_ok := true
+	for z in own:
+		for key in ["early", "late", "elite"]:
+			for i in GameData.ZONES[z][key]:
+				if not own[z].has(i):
+					zone_ok = false
+					printerr("    %s/%s: %s gehört nicht in diese Zone" % [z, key, GameData.FOES[i].name])
+	check(zone_ok, "Jede Zone hat nur ihre eigenen Gegner (Wiesen 5, Vulkan 5, Sümpfe 5, Kern 4)")
 	# Karte spielt nach einem Kampf weiter statt neu zu beginnen
 	Music.play("map")
 	await get_tree().create_timer(0.6).timeout

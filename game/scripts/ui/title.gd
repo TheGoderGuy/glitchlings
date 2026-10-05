@@ -3,6 +3,7 @@ extends PixelCanvas
 
 signal start_run
 signal show_intro
+signal training
 
 enum Page { MAIN, OPTIONS, KEYS }
 
@@ -20,16 +21,25 @@ var title_msg_t := 0.0
 const LOGO_EGG := preload("res://assets/logo/digiei_64.png")
 
 
+## Hauptmenü als Kennungen: Training nur mit Spielstand, Beenden nicht im Browser (Tab schließen)
+func _main_ids() -> Array:
+	var ids := ["play"]
+	if SaveGame.has_save():
+		ids.append("training")
+	ids.append_array(["handbook", "options"])
+	if not OS.has_feature("web"):
+		ids.append("quit")
+	return ids
+
+
 func _main_items() -> Array:
 	var play := "Neues Spiel"
 	if SaveGame.has_run():
 		play = "Run fortsetzen"
 	elif SaveGame.has_save():
 		play = "Spielen"
-	# Im Browser lässt sich das Spiel nicht beenden (Tab schließen)
-	if OS.has_feature("web"):
-		return [play, "Kampf-Handbuch", "Optionen"]
-	return [play, "Kampf-Handbuch", "Optionen", "Beenden"]
+	var names := {"play": play, "training": "Training", "handbook": "Kampf-Handbuch", "options": "Optionen", "quit": "Beenden"}
+	return _main_ids().map(func(id): return names[id])
 
 
 ## Optionen als Kennungen (Reihenfolge = Anzeige); Sprache steht oben und ist zweisprachig beschriftet
@@ -153,15 +163,17 @@ func _process(delta: float) -> void:
 	if page == Page.MAIN:
 		if Input.is_action_just_pressed("confirm"):
 			Sfx.play("confirm")
-			match sel:
-				0:
+			match _main_ids()[sel]:
+				"play":
 					start_run.emit()
-				1:
+				"training":
+					training.emit()
+				"handbook":
 					open_handbook()
-				2:
+				"options":
 					page = Page.OPTIONS
 					sel = 0
-				3:
+				"quit":
 					get_tree().quit()
 	elif page == Page.KEYS:
 		_process_keys()
@@ -181,7 +193,7 @@ func _process_options() -> void:
 	if Input.is_action_just_pressed("back") or (id == "back" and ok):
 		Sfx.play("back")
 		page = Page.MAIN
-		sel = 2
+		sel = _main_ids().find("options")
 		Settings.save_settings()
 		reset_armed = false
 		return
@@ -320,7 +332,7 @@ func _draw() -> void:
 	_draw_sprite("moth", 530, 250, true, {"bob": bob, "mod": Color(1, 1, 1, 0.55)})
 
 	if page == Page.MAIN:
-		_menu(_main_items(), sel, W / 2.0, 250, 180)
+		_menu(_main_items(), sel, W / 2.0, 246, 180, 20.0)
 		if title_msg_t > 0:
 			_text(Vector2(0, 130), title_msg, 8, Color(GameData.COL.sun, minf(1.0, title_msg_t)), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	else:

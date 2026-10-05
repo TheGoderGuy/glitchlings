@@ -64,7 +64,7 @@ const D := {
 	"Bugsy": "Bugsy", "Glitchmotte": "Glitchmoth", "Bytewurm": "Byteworm", "Kernelmantis": "Kernelmantis",
 	"Chiffrekäfer": "Cipherbeetle", "Datenwespe": "Datawasp", "Glutraupe": "Emberpillar", "Glutmilbe": "Embermite",
 	"Brandmauerassel": "Firelouse", "Aschefalter": "Cinderwing", "Glutkernskarabäus": "Embercore Scarab",
-	"Saugmücke": "Leechgnat", "Panzerschnecke": "Armorsnail", "Glitchblüte": "Glitchbloom", "Schwarmkönigin": "Swarm Queen",
+	"Saugmücke": "Leechgnat", "Funkenkäfer": "Sparkbeetle", "Datenegel": "Dataleech", "Moorlibelle": "Mirefly", "Sentinelkrabbe": "Sentinelcrab", "Fehlerqualle": "Errorjelly", "Panzerschnecke": "Armorsnail", "Glitchblüte": "Glitchbloom", "Schwarmkönigin": "Swarm Queen",
 	"Kerndrohne": "Core Drone", "Glitchspinne": "Glitchspider", "Ur-Glitch": "Ur-Glitch",
 	"Sprungschreck": "Leapfright", "Dornwurz": "Thornroot", "Schlackwurm": "Slagworm", "Magmaskorp": "Magmascorp",
 	"Schnappkelch": "Snapmaw", "Schlickkrake": "Siltkraken", "Skolopendrox": "Skolopendrox",

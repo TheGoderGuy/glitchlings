@@ -74,6 +74,7 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 	if run.tutorial and run.fights_won == 0 and type == "fight":
 		tut = Tutorial.new()
 		st.status = ""
+		skip_ready = true   # das Training erklärt die Karten selbst
 	if type in ["boss", "guard"]:
 		# Boss-/Wächter-Intro: erst Stille und Warnung, die Bossmusik setzt mit der Enthüllung ein
 		Music.stop()
@@ -126,6 +127,11 @@ func _tick_anims(dt: float) -> void:
 
 
 func _fight_over() -> void:
+	# Training: keine Entwicklung, keine Chipwahl, keine Belohnung
+	if run.training:
+		finished.emit(true)
+		set_process(false)
+		return
 	if st.outcome == "lost" or node_type == "boss":
 		finished.emit(st.outcome == "won")
 		set_process(false)
@@ -1038,11 +1044,12 @@ func _draw_tutorial() -> void:
 	var pulse := 0.5 + 0.5 * sin(anim_t * 4.0)
 	_box(r, Color(GameData.COL.panel, 0.95), GameData.COL.sun.lerp(GameData.COL.mint, pulse))
 	_text(Vector2(r.position.x + 10, r.position.y + 16), tx[0], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	# Fortschrittspunkte der vier Lernschritte
-	for i in 5:
+	# Fortschrittspunkte der Lernschritte
+	var n: int = Tutorial.LEARN_STEPS
+	for i in n:
 		var done: bool = tut.step > i
 		var cur: bool = tut.step == i
-		draw_rect(Rect2(r.end.x - 63 + i * 11, r.position.y + 9, 7, 7), GameData.COL.mint if done else (GameData.COL.sun if cur else GameData.COL.line))
+		draw_rect(Rect2(r.end.x - 8 - n * 11 + i * 11, r.position.y + 9, 7, 7), GameData.COL.mint if done else (GameData.COL.sun if cur else GameData.COL.line))
 	draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 32), T.t(tx[1]), HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 
 

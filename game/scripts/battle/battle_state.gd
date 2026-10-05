@@ -58,6 +58,8 @@ var last_chip := ""
 var decoy := 0
 var min_e_hp := 0        # Tutorial: Gegner kann nicht unter diesen Wert fallen
 var min_p_hp := 0        # Tutorial: Spieler kann nicht unter diesen Wert fallen
+var last_slot := -1      # zuletzt gespielter Slot (Tutorial)
+var last_mult := 1.0     # Element-Faktor des letzten Chip-Treffers (Tutorial: „Effektiv!“ erkennen)
 var hazards: Array = []  # Lavafelder auf der Spielerseite {c, r, t, tick}
 var decoy_t := 0.0
 var regen_t := 1.0
@@ -215,6 +217,7 @@ func use_slot(i: int) -> void:
 		s.deny = 0.25
 		return
 	var id: String = s.chip
+	last_slot = i
 	var ch: Dictionary = GameData.chip(id)
 	run.praeg[ch.el] = run.praeg.get(ch.el, 0) + (2 if run.has_mod("prisma") and ch.el != "Neutral" else 1)
 	run.chips_used += 1
@@ -616,6 +619,8 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 	if over:
 		return
 	var m := 1.0 if dot else GameData.mult(el, def.el)
+	if not dot:
+		last_mult = m
 	if m > 1.0 and run.has_mod("elementlinse"):
 		m = 2.0
 	if not dot and not in_special and run.has_mod("verstaerker"):
