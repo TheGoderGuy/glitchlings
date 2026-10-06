@@ -298,14 +298,31 @@ func _screenshot(shot: Dictionary) -> void:
 		"ending":
 			show_ending([shot.get("form", "Aurorlynx")], show_title)
 			current.seek(shot.get("t", 0.0))
-		"station", "nest", "dex", "hatch", "lab", "fusion", "upgrade":
+		"station", "nest", "dex", "hatch", "lab", "fusion", "upgrade", "home":
+			if mode == "home":
+				# mehr Bewohner für das Zuhause-Bild (nur im Speicher)
+				for sp in [["Kekso", "Cachy", 2], ["Lumi", "Lumi", 1], ["Plapperli", "Plapperli", 1], ["Brummbit", "Titanbrumm", 3], ["Bachli", "Fulgurlutra", 4], ["Maskli", "Maskli", 1], ["Kauzbit", "Orbitkauz", 4]]:
+					var mm := SaveGame.add_monster(sp[0])
+					mm.form = sp[1]
+					mm.stage = sp[2]
 			if mode == "upgrade":
 				SaveGame.data.frag = 240
 				SaveGame.data.upgrades = {"vorrat": 1, "werkbank": 1}
 			if mode == "hatch":
 				SaveGame.data.nest[0].runs_left = 0
 			show_station()
-			current.tab = {"station": 0, "nest": 1, "lab": 2, "dex": 3, "hatch": 0, "fusion": 2, "upgrade": 4}[mode]
+			current.tab = {"station": 0, "nest": 1, "lab": 2, "dex": 3, "hatch": 0, "fusion": 2, "upgrade": 4, "home": 5}[mode]
+			if mode == "home":
+				current._sync_home()
+				current.home.setup(SaveGame.team(), 7)
+				for k in int(shot.get("t", 6.0) * 60.0):
+					current.home.update(1.0 / 60.0)
+				current.anim_t = shot.get("t", 6.0)
+				if shot.has("pops"):
+					current.pet_msg = current.home.pet(current.home_sel)
+					current.pet_t = 2.0
+					for k in 20:
+						current.home.update(1.0 / 60.0)
 			if mode == "lab":
 				current.fuse_sel = [int(SaveGame.team()[1].id), int(SaveGame.team()[2].id)]
 				current.sel = SaveGame.team().size()

@@ -2273,17 +2273,38 @@ func test_station_guide() -> void:
 	var SV: GDScript = load("res://scripts/ui/station_view.gd")
 	var sv = SV.new()
 	add_child(sv)
-	check(sv.guide == 0 and sv.GUIDE.size() == 7, "Station: beim ersten Besuch startet die Führung (7 Schritte)")
+	check(sv.guide == 0 and sv.GUIDE.size() == 8, "Station: beim ersten Besuch startet die Führung (8 Schritte)")
 	sv._end_guide()
 	check(sv.guide == -1 and SaveGame.data.get("station_guide_done", false), "Station: Führung merkt sich, dass sie gezeigt wurde")
 	sv.queue_free()
 	var sv2 = SV.new()
 	add_child(sv2)
-	check(sv2.guide == -1, "Station: beim zweiten Besuch keine Führung mehr")
+	check(sv2.guide == -1 and sv2.tab == sv2.Tab.HOME and sv2.TAB_ORDER[0] == sv2.Tab.HOME, "Station: beim zweiten Besuch keine Führung mehr, sie öffnet im Reiter Zuhause")
 	check(sv2.zone_sel == 0 and SV.zone_layout("wiesen") == "3 Ebenen · 2 Wächter" and SV.zone_layout("kern") == "2 Ebenen · 1 Wächter", "Zonenwahl: startet bei der ersten offenen Zone, zeigt den Aufbau")
 	SaveGame.data.cleared = ["wiesen"]
 	check(sv2._default_zone() == 1, "Zonenwahl: springt zur nächsten noch nicht geschafften Zone")
 	sv2.queue_free()
+	# Zuhause (06.10.2026): Bewohner bleiben im Laufbereich, tun verschiedene Dinge, Streicheln gibt Herzchen und einen Text
+	var team: Array = []
+	for sp in ["Pixmiez", "Funkling", "Tröpfel", "Kekso", "Lumi", "Quakli", "Molchi", "Brummbit", "Kauzbit", "Buddli", "Maskli", "Bachli", "Plapperli", "Wolkerich"]:
+		var m := SaveGame.add_monster(sp)
+		team.append(m)
+	var hs := HomeSim.new()
+	hs.setup(team, 3)
+	var states := {}
+	var inside := true
+	for k in 60 * 60:
+		hs.update(1.0 / 60.0)
+		for r in hs.residents:
+			states[r.state] = true
+			if not HomeSim.AREA.grow(1.0).has_point(Vector2(r.x, r.y)):
+				inside = false
+	check(hs.residents.size() == HomeSim.MAX and inside, "Zuhause: höchstens %d Bewohner, alle bleiben im Laufbereich" % HomeSim.MAX)
+	check(states.has("walk") and states.has("sleep") and states.has("spot") and states.has("play"), "Zuhause: Bewohner laufen, schlafen, spielen und besuchen ihren Lieblingsplatz (%s)" % ", ".join(states.keys()))
+	var before := hs.fx.size()
+	var msg := hs.pet(0)
+	check(hs.residents[0].state == "pet" and hs.fx.size() >= before + 4 and msg.contains(T.t(hs.residents[0].form)), "Zuhause: Streicheln gibt Herzchen und eine Reaktion (%s)" % msg)
+	check(hs.order().size() == hs.residents.size(), "Zuhause: Auswahl von links nach rechts")
 
 
 ## Kampf-Handbuch (30.09.2026)

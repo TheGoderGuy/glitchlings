@@ -446,6 +446,16 @@ const D := {
 	"Der NEST ist gerettet. Aber noch sind nicht alle Glitchlings gefunden ...": "The NEST is saved. But not all Glitchlings have been found yet ...",
 	"Neu freigeschaltet: Schwierigkeit KORRUMPIERT": "Unlocked: difficulty CORRUPTED",
 	"(in den Optionen: stärkere Gegner, 50 % mehr Fragmente)": "(in the options: stronger enemies, 50% more fragments)",
+	# ---------- Zuhause in der Station (06.10.2026) ----------
+	"Zuhause": "Home", "Noch niemand zu Hause.": "Nobody is home yet.", "< > auswählen   %s streicheln": "< > choose   %s pet",
+	"%d weitere Glitchlinge ruhen sich gerade aus.": "%d more Glitchlings are resting right now.",
+	"Hier leben deine Glitchlinge, wenn sie nicht unterwegs sind. Mit < > wählst du eins aus, mit %s streichelst du es.": "This is where your Glitchlings live when they are not out on a run. Choose one with < > and pet it with %s.",
+	"%s schnurrt zufrieden.": "%s purrs happily.", "%s wedelt wild mit dem Schwanz.": "%s wags its tail wildly.", "%s blubbert fröhlich.": "%s bubbles cheerfully.",
+	"%s quiekt vergnügt.": "%s squeaks with delight.", "%s klopft glücklich mit der Pfote.": "%s thumps its paw happily.", "%s quakt begeistert.": "%s croaks excitedly.",
+	"%s schmiegt sich an dich.": "%s snuggles up to you.", "%s brummt zufrieden.": "%s grumbles contentedly.", "%s piept und plustert sich auf.": "%s beeps and puffs itself up.",
+	"%s rollt sich auf den Rücken.": "%s rolls onto its back.", "%s putzt sich verlegen die Pfoten.": "%s shyly cleans its paws.",
+	"%s schlägt einen kleinen Purzelbaum.": "%s does a little somersault.", "%s plappert: „Nochmal! Nochmal!“": "%s chatters: “Again! Again!”",
+	"%s freut sich.": "%s is happy.",
 	# ---------- Kühlwasser-See und Hochspannungs-Steppe (06.10.2026) ----------
 	"Hüterin des Kühlwasser-Sees": "Keeper of the Coolant Lake",
 	"Boss! Ab der Hälfte ihrer HP lässt sie Strömungen durch deine Reihen ziehen. Sie reißen dich mit!": "Boss! Below half HP she sends currents through your rows. They sweep you along!",

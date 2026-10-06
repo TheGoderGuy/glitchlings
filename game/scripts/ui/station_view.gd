@@ -1,11 +1,13 @@
 extends PixelCanvas
-## Station (Hub): Team, Brutnest, Monsterdex. Startet Runs und lässt bereite Eier schlüpfen.
+## Station (Hub): Zuhause, Team, Brutnest, Labor, Monsterdex, Ausbau. Startet Runs und lässt bereite Eier schlüpfen.
 
 signal start_run(monster_id: int, zone: String)
 signal to_title
 
-enum Tab { TEAM, NEST, LAB, DEX, UPGRADE }
-const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex", "Ausbau"]
+enum Tab { TEAM, NEST, LAB, DEX, UPGRADE, HOME }
+const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex", "Ausbau", "Zuhause"]
+## Reihenfolge der Reiter oben (Zuhause ganz links, 06.10.2026)
+const TAB_ORDER := [Tab.HOME, Tab.TEAM, Tab.NEST, Tab.LAB, Tab.DEX, Tab.UPGRADE]
 ## Nach Linien: Baby → Rookies → Champions → Ultras, am Ende die Fusionen
 const DEX_ORDER := [
 	"Pixmiez", "Firewallo", "Virulina", "Prismiez", "Bollwerkatz", "Toxipanth", "Prismalynx", "Bastionkatz", "Venomynx", "Aurorlynx",
@@ -41,10 +43,15 @@ var zone_pick := false       # Zonenwahl offen (nach Enter im Team-Reiter)
 var zone_sel := 0            # gewählte Zone (Index in GameData.ZONE_ORDER)
 var zone_msg := ""
 var guide := -1              # Schritt der Station-Führung (-1 = aus)
+var home := HomeSim.new()    # Zuhause: Bewohner, die herumlaufen
+var home_sel := 0            # gewählter Bewohner (Index in home.residents)
+var pet_msg := ""            # Reaktion aufs Streicheln
+var pet_t := 0.0
 
 ## Station-Führung: [Reiter, hervorgehobener Bereich, Titel, Text] – %s wird durch Tasten ersetzt
 const GUIDE := [
 	[0, "tabs", "Willkommen in der Station!", "Hier ist dein Zuhause zwischen den Runs. Mit %s wechselst du die Reiter oben."],
+	[5, "tab", "Zuhause", "Hier leben deine Glitchlinge, wenn sie nicht unterwegs sind. Mit < > wählst du eins aus, mit %s streichelst du es."],
 	[0, "team", "Team", "Das sind deine Glitchlinge. Wähle eins aus und drücke %s – dann suchst du dir eine Zone für den Run aus."],
 	[1, "tab", "Brutnest", "Nach jedem Run mit mindestens zwei Siegen bekommst du ein Ei, oder du kaufst eins für 200 Fragmente. Es schlüpft nach zwei Runs – so wächst dein Team."],
 	[2, "tab", "Labor", "Hier verschmelzen zwei Glitchlinge zu einer seltenen Fusion. Die Rezepte sind geheim, aber Gerüchte helfen dir."],
@@ -56,6 +63,8 @@ const GUIDE := [
 
 func _ready() -> void:
 	Music.play("title")
+	tab = Tab.HOME
+	_sync_home()
 	_check_hatch()
 	# Erster Besuch: kurze Führung durch die Reiter (nach dem Schlüpfen)
 	if not SaveGame.data.get("station_guide_done", false):
@@ -79,6 +88,9 @@ func _check_hatch() -> void:
 func _process(delta: float) -> void:
 	anim_t += delta
 	t_in += delta
+	if tab == Tab.HOME:
+		home.update(delta)
+		pet_t = maxf(0.0, pet_t - delta)
 	if handbook != null:
 		queue_redraw()
 		return
@@ -121,13 +133,15 @@ func _process(delta: float) -> void:
 	elif Input.is_action_just_pressed("handbook"):
 		open_handbook()
 	elif Input.is_action_just_pressed("tab_next"):
-		tab = ((tab + 1) % TAB_NAMES.size()) as Tab
+		tab = TAB_ORDER[(TAB_ORDER.find(tab) + 1) % TAB_ORDER.size()] as Tab
+		_sync_home()
 		up_msg = ""
 		nest_msg = ""
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("tab_prev"):
-		tab = ((tab + TAB_NAMES.size() - 1) % TAB_NAMES.size()) as Tab
+		tab = TAB_ORDER[(TAB_ORDER.find(tab) + TAB_ORDER.size() - 1) % TAB_ORDER.size()] as Tab
+		_sync_home()
 		up_msg = ""
 		nest_msg = ""
 		sel = 0
@@ -138,6 +152,21 @@ func _process(delta: float) -> void:
 		to_title.emit()
 	else:
 		match tab:
+			Tab.HOME:
+				var ord := home.order()
+				var n := ord.size()
+				if n > 0:
+					var pos := maxi(0, ord.find(home_sel))
+					if Input.is_action_just_pressed("move_right"):
+						home_sel = ord[(pos + 1) % n]
+						Sfx.play("select")
+					elif Input.is_action_just_pressed("move_left"):
+						home_sel = ord[(pos + n - 1) % n]
+						Sfx.play("select")
+					elif Input.is_action_just_pressed("confirm"):
+						pet_msg = home.pet(home_sel)
+						pet_t = 2.5
+						Sfx.play("pop", 0.0)
 			Tab.TEAM:
 				var n := SaveGame.team().size()
 				_nav_v(n)
@@ -236,7 +265,10 @@ func _nav_v(n: int) -> void:
 
 func _draw() -> void:
 	_draw_zone("wiesen")
-	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.45))
+	if tab == Tab.HOME:
+		_draw_home()
+	else:
+		draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.45))
 	_draw_tabs()
 	match tab:
 		Tab.TEAM:
@@ -265,10 +297,10 @@ func _draw() -> void:
 func _draw_tabs() -> void:
 	_text(Vector2(12, 22), "STATION", 16, GameData.COL.mint, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	var x := 150.0
-	for i in TAB_NAMES.size():
+	for i in TAB_ORDER:
 		var w := text_width(TAB_NAMES[i], 8, true) + 20
 		var r := Rect2(x, 8, w, 18)
-		var active := i == tab
+		var active: bool = i == tab
 		_box(r, GameData.COL.panel if active else Color(GameData.COL.bg2, 0.9), GameData.COL.sun if active else GameData.COL.line)
 		_text(Vector2(r.position.x, r.position.y + 13), TAB_NAMES[i], 8, GameData.COL.ink if active else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, w, true, active)
 		x += w + 4
@@ -329,6 +361,145 @@ func _draw_team() -> void:
 	_text(Vector2(R.position.x, R.end.y - 26), T.t("%d von %d Zonen frei") % [zones.size(), GameData.ZONE_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 	var pulse := 0.75 + 0.25 * sin(anim_t * 4.0)
 	_text(Vector2(R.position.x, R.end.y - 12), T.t("%s Mit %s eine Zone wählen") % [InputSetup.btn("A") if pad else "Enter", T.t(form)], 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+
+
+# ---------- Zuhause (06.10.2026): Bewohner laufen herum, schlafen, spielen, man kann sie streicheln ----------
+
+## Bewohner neu aufstellen, wenn sich das Team geändert hat (Schlüpfen, Fusion)
+func _sync_home() -> void:
+	var ids: Array = SaveGame.team().slice(0, HomeSim.MAX).map(func(m): return int(m.id))
+	var have: Array = home.residents.map(func(r): return r.id)
+	if ids != have:
+		home.setup(SaveGame.team())
+		home_sel = 0
+
+
+func _draw_home() -> void:
+	_draw_home_props()
+	# Bewohner von hinten nach vorn
+	var idx: Array = range(home.residents.size())
+	idx.sort_custom(func(a, b): return home.residents[a].y < home.residents[b].y)
+	for i in idx:
+		var r: Dictionary = home.residents[i]
+		var sc := 2 if int(r.stage) == 1 else 1
+		var hop := roundf(sin(clampf(r.hop / 0.35, 0.0, 1.0) * PI) * 6.0) if r.hop > 0 else 0.0
+		var fy: float = r.y - hop
+		if r.fly:
+			fy -= 30.0 + roundf(sin(anim_t * 2.0 + r.id) * 3.0)
+		var sw := 30.0 if sc == 2 else 22.0 + 6.0 * (int(r.stage) - 2)
+		draw_rect(Rect2(roundi(r.x - sw / 2.0), roundi(r.y - 2), roundi(sw), 4), Color(0.05, 0.02, 0.12, 0.3))
+		var sleeping: bool = r.state == "sleep"
+		_draw_sprite(r.form, roundf(r.x), roundf(fy), r.flip, {"scale": sc, "phase": r.id * 0.37, "anim": not sleeping, "blink": sleeping})
+		if i == home_sel:
+			var top: float = fy - sprite(r.form).n * sc + sprite(r.form).foot * sc - 6.0 - (2.0 if sin(anim_t * 6.0) > 0 else 0.0)
+			_draw_marker(Vector2(roundf(r.x), roundf(top)))
+	for f in home.fx:
+		_draw_home_fx(f)
+	# Infozeile unten: gewählter Bewohner bzw. Reaktion aufs Streicheln
+	var B := Rect2(150, 36, 340, 24)
+	_box(B, Color(GameData.COL.panel, 0.9), GameData.COL.line)
+	if home.residents.is_empty():
+		_text(Vector2(B.position.x, B.position.y + 16), "Noch niemand zu Hause.", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, B.size.x)
+		return
+	var r: Dictionary = home.residents[mini(home_sel, home.residents.size() - 1)]
+	var line: String = pet_msg if pet_t > 0.0 else "%s · %s · %s" % [T.t(r.form), T.t(GameData.STAGE_NAMES[int(r.stage)]), T.t(r.el)]
+	_text(Vector2(B.position.x, B.position.y + 16), line, 8, GameData.COL.ink if pet_t > 0.0 else GameData.EL[r.el], HORIZONTAL_ALIGNMENT_CENTER, B.size.x, true, pet_t > 0.0)
+	var pad: bool = InputSetup.pad
+	_text(Vector2(0, 74), T.t("< > auswählen   %s streicheln") % (InputSetup.btn("A") if pad else "Enter"), 8, Color(GameData.COL.sun, 0.85), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	if SaveGame.team().size() > HomeSim.MAX:
+		_text(Vector2(0, 88), T.t("%d weitere Glitchlinge ruhen sich gerade aus.") % (SaveGame.team().size() - HomeSim.MAX), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+
+
+## Kleiner hüpfender Pfeil über dem gewählten Bewohner
+func _draw_marker(p: Vector2) -> void:
+	for i in 4:
+		draw_rect(Rect2(p.x - 4 + i, p.y - 6 + i, 9 - i * 2, 1), GameData.COL.dark)
+	for i in 3:
+		draw_rect(Rect2(p.x - 3 + i, p.y - 5 + i, 7 - i * 2, 1), GameData.COL.sun)
+
+
+## Lieblingsplätze: Teich (Wasser), Lagerfeuer (Feuer), Blitzableiter (Elektro), Datenbaum (Code), Pilzkreis (Virus), Bit-Ball (Neutral)
+func _draw_home_props() -> void:
+	var t := anim_t
+	# Datenbaum (hinten): Stamm, Krone mit blinkenden Bits
+	var tb := Vector2(492, 246)
+	draw_rect(Rect2(tb.x - 3, tb.y - 34, 6, 34), Color("#4A3A5A"))
+	draw_circle(tb + Vector2(0, -46), 22, Color("#1F5A4E"))
+	draw_circle(tb + Vector2(-12, -38), 14, Color("#2C6A55"))
+	draw_circle(tb + Vector2(12, -40), 15, Color("#2C6A55"))
+	for i in 9:
+		var on := fmod(t * 1.3 + i * 0.37, 1.0) < 0.5
+		var q := tb + Vector2(-16 + (i * 13) % 32, -60 + (i * 7) % 26)
+		draw_rect(Rect2(roundi(q.x), roundi(q.y), 2, 2), Color("#6EE7C5", 0.9 if on else 0.25))
+	# Blitzableiter: dünner Mast, oben knistert es
+	var lr := Vector2(398, 254)
+	draw_rect(Rect2(lr.x - 1, lr.y - 40, 2, 40), Color("#5A5A6A"))
+	draw_rect(Rect2(lr.x - 5, lr.y - 2, 10, 2), Color("#3A3A48"))
+	draw_circle(lr + Vector2(0, -42), 3, Color("#FFE45C", 0.6 + 0.4 * sin(t * 9.0)))
+	if fmod(t, 1.6) < 0.12:
+		draw_line(lr + Vector2(0, -44), lr + Vector2(-5, -52), Color("#FFF6A8"), 1)
+		draw_line(lr + Vector2(-5, -52), lr + Vector2(2, -58), Color("#FFF6A8"), 1)
+	# Bit-Ball (Neutral): hüpft, wenn jemand damit spielt
+	var playing := home.residents.any(func(r): return r.state == "spot" and r.el == "Neutral")
+	var bh := absf(sin(t * 4.0)) * 10.0 if playing else 0.0
+	var bc := Vector2(338, 288 - bh)
+	draw_rect(Rect2(334, 286, 8, 2), Color(0.05, 0.02, 0.12, 0.3))
+	draw_circle(bc + Vector2(0, -4), 4, Color("#FF8FD8"))
+	draw_rect(Rect2(bc.x - 2, bc.y - 6, 2, 2), Color.WHITE)
+	# Teich (Wasser)
+	var pc := Vector2(104, 328)
+	for k in 3:
+		var w := 62.0 - k * 6.0
+		var h := 12.0 - k * 2.0
+		draw_rect(Rect2(pc.x - w, pc.y - h + k, w * 2, h * 2 - k * 2), [Color("#14304A"), Color("#1E4A72"), Color("#2E6A9A")][k])
+	for i in 4:
+		var x := pc.x - 40 + fposmod(t * 8.0 + i * 23.0, 80.0)
+		draw_rect(Rect2(roundi(x), roundi(pc.y - 4 + (i % 2) * 6), 8, 1), Color("#8FE3FF", 0.6))
+	# Lagerfeuer (Feuer)
+	var fc := Vector2(566, 318)
+	draw_rect(Rect2(fc.x - 12, fc.y - 3, 24, 4), Color("#5A3A2A"))
+	draw_rect(Rect2(fc.x - 9, fc.y - 6, 18, 3), Color("#7A4A32"))
+	for i in 3:
+		var fh := 10.0 + 5.0 * absf(sin(t * 9.0 + i * 1.7))
+		draw_rect(Rect2(roundi(fc.x - 7 + i * 5), roundi(fc.y - 6 - fh), 4, roundi(fh)), Color("#FF8A4C"))
+		draw_rect(Rect2(roundi(fc.x - 6 + i * 5), roundi(fc.y - 6 - fh * 0.6), 2, roundi(fh * 0.6)), Color("#FFD84D"))
+	draw_circle(fc + Vector2(0, -8), 22, Color("#FF8A4C", 0.08 + 0.03 * sin(t * 7.0)))
+	# Pilzkreis (Virus)
+	var mc := Vector2(270, 336)
+	for i in 6:
+		var a := i * TAU / 6.0
+		var q := mc + Vector2(cos(a) * 24.0, sin(a) * 7.0)
+		draw_rect(Rect2(roundi(q.x) - 1, roundi(q.y) - 4, 2, 4), Color("#D8D0C0"))
+		draw_rect(Rect2(roundi(q.x) - 3, roundi(q.y) - 7, 6, 3), Color("#B060E0") if i % 2 else Color("#7BD35A"))
+
+
+func _draw_home_fx(f: Dictionary) -> void:
+	var a: float = clampf(f.t / f.max, 0.0, 1.0)
+	var q := Vector2(roundf(f.x), roundf(f.y))
+	match f.kind:
+		"heart":
+			# Herz aus Pixeln (doppelte Größe), dunkler Rand
+			var rows := [[1, 2, 4, 5], [0, 1, 2, 3, 4, 5, 6], [0, 1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5], [2, 3, 4], [3]]
+			for y in rows.size():
+				for x in rows[y]:
+					draw_rect(Rect2(q.x - 7 + x * 2, q.y - 5 + y * 2, 2, 2), Color("#FF5C8A", a) if not (y == 1 and x == 1) else Color(1, 1, 1, a))
+		"zzz":
+			_text(q, "z" if a > 0.5 else "Z", 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_LEFT, -1, true)
+		"note":
+			draw_rect(Rect2(q.x, q.y - 6, 1, 6), Color(GameData.COL.sun, a))
+			draw_rect(Rect2(q.x - 2, q.y - 1, 3, 2), Color(GameData.COL.sun, a))
+			draw_rect(Rect2(q.x + 1, q.y - 6, 2, 1), Color(GameData.COL.sun, a))
+		"drop":
+			draw_rect(Rect2(q.x, q.y, 2, 2), Color("#8FE3FF", a))
+		"ember":
+			draw_rect(Rect2(q.x, q.y, 2, 2), Color("#FFB347", a))
+		"spark":
+			draw_rect(Rect2(q.x, q.y, 1, 3), Color("#FFF6A8", a))
+			draw_rect(Rect2(q.x - 1, q.y + 1, 3, 1), Color("#FFF6A8", a))
+		"bit":
+			draw_rect(Rect2(q.x, q.y, 2, 2), Color("#6EE7C5", a))
+		"bubble":
+			draw_arc(q, 2.0, 0, TAU, 8, Color("#C77DFF", a), 1)
 
 
 # ---------- Zonenwahl ----------
@@ -462,7 +633,7 @@ func _end_guide() -> void:
 ## Rechteck eines Reiters oben (wie in _draw_tabs)
 func _tab_rect(i: int) -> Rect2:
 	var x := 150.0
-	for k in TAB_NAMES.size():
+	for k in TAB_ORDER:
 		var w := text_width(TAB_NAMES[k], 8, true) + 20
 		if k == i:
 			return Rect2(x, 8, w, 18)
@@ -476,7 +647,7 @@ func _draw_guide() -> void:
 	var hl := Rect2()
 	match g[1]:
 		"tabs":
-			hl = _tab_rect(0).merge(_tab_rect(TAB_NAMES.size() - 1))
+			hl = _tab_rect(TAB_ORDER[0]).merge(_tab_rect(TAB_ORDER[-1]))
 		"tab":
 			hl = _tab_rect(g[0])
 		"team":
@@ -497,9 +668,9 @@ func _draw_guide() -> void:
 	match guide:
 		0:
 			txt = txt % keys_tabs
-		1:
+		1, 2:
 			txt = txt % key_ok
-		6:
+		7:
 			txt = txt % [key_ok, key_help, InputSetup.btn("Back") if pad else InputSetup.key_label("handbook")]
 	var B := Rect2(196, 214 if g[1] != "team" else 200, 420, 110)
 	_box(B, Color(GameData.COL.panel, 0.97), GameData.COL.sun)
