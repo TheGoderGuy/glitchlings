@@ -423,7 +423,8 @@ const D := {
 	"In einer stürmischen Nacht landet etwas auf deinem Desktop ...": "On a stormy night, something lands on your desktop ...",
 	"Du bist jetzt Operator. Zieh die Glitchlings auf, trainiere sie und bring den NEST zurück ins Netz.": "You are now the Operator. Raise the Glitchlings, train them and bring the NEST back online.",
 	"NEST-Server v3.1 ... online": "NEST server v3.1 ... online",
-	"Zonen: Cache-Wiesen, Firewall-Vulkan, Viren-Sümpfe, NEST-Kern": "Zones: Cache Meadows, Firewall Volcano, Virus Swamps, NEST Core",
+	"Zonen: Cache-Wiesen, Firewall-Vulkan, Kühlwasser-See,": "Zones: Cache Meadows, Firewall Volcano, Coolant Lake,",
+	"       Viren-Sümpfe, Hochspannungs-Steppe, NEST-Kern": "       Virus Swamps, High Voltage Steppe, NEST Core",
 	"Bewohner: 4.096 Glitchlings": "Residents: 4,096 Glitchlings", "Status: alles friedlich": "Status: all peaceful",
 	"SYSTEMABSTURZ": "SYSTEM CRASH",
 

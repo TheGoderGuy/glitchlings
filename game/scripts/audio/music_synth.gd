@@ -159,10 +159,12 @@ const TRACKS := {
 	"opening": {
 		"bpm": 96, "loud": 0.15, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings", "oneshot": true,
 		"sections": [
-			{"name": "world", "chords": ["C", "Am", "F", "G"], "fill": false, "melody": [
+			{"name": "world", "chords": ["C", "Am", "F", "C", "Dm", "G"], "fill": false, "melody": [
 				"E5 - - - G5 - - - C6 - - - B5 - G5 -",
 				"A5 - - - - - - - E5 - - - C5 - - -",
 				"F5 - - - A5 - - - C6 - - - A5 - F5 -",
+				"E5 - - - G5 - - - E6 - - - D6 - C6 -",
+				"D6 - - - - - - - A5 - - - F5 - - -",
 				"G5 - - - - - - - D5 - - - . . . ."]},
 			{"name": "corrupt", "chords": ["Am", "Bb", "E"], "lead": "brass", "arp": "none", "drums": "timp_build", "melody": [
 				"A4 - - - - - - - C5 - - - B4 - - -",

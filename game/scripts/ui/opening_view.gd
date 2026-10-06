@@ -8,8 +8,8 @@ signal finished
 
 ## Bilder: Dauer, Bildunterschrift, weiches Ein-/Ausblenden
 const PANELS := [
-	{"id": "boot", "dur": 6.0, "text": "", "fade_in": false, "fade_out": false},
-	{"id": "world", "dur": 10.0, "text": "Tief im Netz lag der NEST: eine Welt voller kleiner digitaler Wesen, der Glitchlings.", "fade_in": true, "fade_out": false},
+	{"id": "boot", "dur": 7.0, "text": "", "fade_in": false, "fade_out": false},
+	{"id": "world", "dur": 15.0, "text": "Tief im Netz lag der NEST: eine Welt voller kleiner digitaler Wesen, der Glitchlings.", "fade_in": true, "fade_out": false},
 	{"id": "corrupt", "dur": 7.5, "text": "Doch im Kern erwachte ein Fehler. Er kopierte sich wieder und wieder ...", "fade_in": false, "fade_out": false},
 	{"id": "crash", "dur": 2.5, "text": "", "fade_in": false, "fade_out": false},
 	{"id": "flight", "dur": 7.5, "text": "Die Glitchlings flohen in alle Geräte, die sie finden konnten. Zurück blieben wilde, korrupte Daten.", "fade_in": true, "fade_out": true},
@@ -17,7 +17,7 @@ const PANELS := [
 	{"id": "room", "dur": 8.5, "text": "In einer stürmischen Nacht landet etwas auf deinem Desktop ...", "fade_in": true, "fade_out": true},
 	{"id": "egg", "dur": 9.0, "text": "Du bist jetzt Operator. Zieh die Glitchlings auf, trainiere sie und bring den NEST zurück ins Netz.", "fade_in": true, "fade_out": false},
 ]
-const BOOT_LINES := ["NEST-Server v3.1 ... online", "Zonen: Cache-Wiesen, Firewall-Vulkan, Viren-Sümpfe, NEST-Kern", "Bewohner: 4.096 Glitchlings", "Status: alles friedlich"]
+const BOOT_LINES := ["NEST-Server v3.1 ... online", "Zonen: Cache-Wiesen, Firewall-Vulkan, Kühlwasser-See,", "       Viren-Sümpfe, Hochspannungs-Steppe, NEST-Kern", "Bewohner: 4.096 Glitchlings", "Status: alles friedlich"]
 const BOOT_TYPE_START := 1.5
 const FLEE := ["Pixmiez", "Funkling", "Tröpfel", "Kekso", "Lumi", "Quakli", "Molchi", "Brummbit"]
 
@@ -184,7 +184,7 @@ func _draw_boot() -> void:
 			var l := T.t(l0)
 			var s: String = l.substr(0, clampi(budget, 0, l.length()))
 			budget -= l.length()
-			_text(Vector2(x, y), "> " + s, 8, green, HORIZONTAL_ALIGNMENT_LEFT, -1, false)
+			_text(Vector2(x, y), ("  " if l0.begins_with(" ") else "> ") + s, 8, green, HORIZONTAL_ALIGNMENT_LEFT, -1, false)
 			if budget < 0:
 				break
 			y += 18

@@ -3,7 +3,7 @@ tags: [produktion, story, godot]
 ---
 # Opening-Szene (Kino-Intro)
 
-Läuft beim **neuen Spiel** (kein Spielstand) vor der Starterwahl, **ca. 56 s**, jederzeit überspringbar (Esc/Start). Enter/A zeigt den Text sofort bzw. blättert weiter, die Musik springt dabei mit. In den Optionen: **„Intro ansehen“**.
+Läuft beim **neuen Spiel** (kein Spielstand) vor der Starterwahl, **ca. 62 s** (vorher 56 s), jederzeit überspringbar (Esc/Start). Enter/A zeigt den Text sofort bzw. blättert weiter, die Musik springt dabei mit. In den Optionen: **„Intro ansehen“**.
 
 - Code: `game/scripts/ui/opening_view.gd`
 - Screenshot: `--mode=opening --t=<Sekunde>`
@@ -20,8 +20,8 @@ Läuft beim **neuen Spiel** (kein Spielstand) vor der Starterwahl, **ca. 56 s**,
 ## Ablauf
 | # | Bild | Dauer | Text | Musik / Ton |
 |---|---|---|---|---|
-| 1 | Kaltstart: schwarz, blinkender Cursor, dann tippt das Terminal den NEST hoch (inklusive NEST-Kern) | 6 s | (Terminal) | Ticks, keine Musik |
-| 2 | **Kamerafahrt** über den NEST: Cache-Wiesen, Vulkan, Sümpfe, am Ende der Kern-Turm. 13 Glitchlinge mit Idle-Animation, Datenfunken im Vordergrund | 10 s | „Tief im Netz lag der NEST …“ | ruhig, Flöte + Glockenspiel (C-Dur) |
+| 1 | Kaltstart: schwarz, blinkender Cursor, dann tippt das Terminal den NEST hoch (alle 6 Zonen, auf zwei Zeilen) | 7 s | (Terminal) | Ticks, keine Musik |
+| 2 | **Kamerafahrt** über den NEST: Cache-Wiesen, Vulkan, Kühlwasser-See, Sümpfe, Hochspannungs-Steppe, am Ende der Kern-Turm (seit 06.10.2026 alle 6 Zonen, ein Takt je Zone). 20 Glitchlinge mit Idle-Animation, Datenfunken im Vordergrund | 15 s | „Tief im Netz lag der NEST …“ | ruhig, Flöte + Glockenspiel (C-Dur) |
 | 3 | **Der Fehler**: Das Turm-Leuchtfeuer flackert rot, hinter dem Turm steigt der **Ur-Glitch als Silhouette** auf (nur Umriss und glühende Augen). Rote Korruption frisst sich ins Bild, die Glitchlinge zittern | 7,5 s | „Doch im Kern erwachte ein Fehler …“ | Blech in a-Moll, Pauken bauen auf, Warntöne |
 | 4 | **Absturz**: Weißblitz, SYSTEMABSTURZ mit Farbversatz, dann schrumpft das Bild wie ein alter Röhrenmonitor zu einer Linie und einem Punkt | 2,5 s | – | ein Schlag, dann Stille |
 | 5 | **Flucht**: 8 Glitchlinge sammeln sich und schießen als Lichtspuren in alle Richtungen davon; danach tauchen Bugsy, Bytewurm, Glitchmotte und Glitchspinne auf | 7,5 s | „Die Glitchlings flohen …“ | treibend mit Schlagzeug, Wusch je Flucht |
@@ -37,3 +37,15 @@ Läuft beim **neuen Spiel** (kein Spielstand) vor der Starterwahl, **ca. 56 s**,
 ## Ideen
 - Gemalte Schlüsselbilder (PixelLab) für Panorama oder Zimmer wären möglich; aktuell ist alles prozedural gezeichnet.
 - Die Starterwahl könnte als „drei Signale aus dem Ei“ inszeniert werden.
+
+## Umbau auf 6 Zonen (06.10.2026)
+Wunsch des Produzenten: Im Intro sollen alle 6 Zonen vorkommen.
+
+- **Weltstreifen** (`cinema_canvas.gd`, `WORLD`): 6 Zonen à 640 px, die Kamera fährt bis 3200 px, der Kern-Turm steht bei 3520 px.
+- **Neue Bewohner:**
+  - See: Tröpfel (vorher in den Sümpfen), Bachli, Kaskadi, Perlhopp
+  - Steppe: Plapperli (fliegt), Blinki, Zackdachs, Overclocko
+  - Die Bewohner von Sümpfen und Kern sind entsprechend nach rechts gerückt.
+- **Musik:** Der Abschnitt „world“ im Stück `opening` hat jetzt 6 statt 4 Takte (C, Am, F, C, Dm, G), also 15 s, und bleibt taktgenau zu den Bildern.
+- **Startzeilen:** Das Terminal nennt alle 6 Zonen auf zwei Zeilen. Das erste Bild dauert dafür 7 statt 6 s.
+- **Ende:** Die Heilungswelle fährt über denselben Streifen zurück. Die Datenblumen reichen jetzt über alle 6 Zonen. Die Dauer bleibt 10 s, damit die Musik passt, die Kamera fährt deshalb etwas schneller.

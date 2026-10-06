@@ -300,7 +300,7 @@ func _draw_heal() -> void:
 	if t > dur - 2.5:
 		front = lerpf(110.0, -140.0, _smooth((t - (dur - 2.5)) / 1.6))
 	# rechts der Welle ist alles heil: Datenblumen sprießen
-	for i in 60:
+	for i in 90:
 		var wx := 30.0 + i * 41.0 + float((i * 17) % 23)
 		var sx := wx - roundf(cam)
 		if sx < front + 4.0 or sx > W + 4:

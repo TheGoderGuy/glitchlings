@@ -7,17 +7,19 @@ const EGG := preload("res://assets/sprites/egg_s.png")
 const TYPE_SPEED := 38.0   # Zeichen pro Sekunde
 const FADE := 0.5
 const LB := 40.0           # Höhe der Kinobalken
-## Kamerafahrt: die vier Zonen nebeneinander, der Kern-Turm ganz rechts
-const WORLD := [["wiesen", 0.0], ["vulkan", 640.0], ["sumpf", 1280.0], ["kern", 1920.0]]
-const WORLD_CAM_END := 1920.0
-const TOWER_X := 2240.0
+## Kamerafahrt: alle sechs Zonen nebeneinander (seit 06.10.2026), der Kern-Turm ganz rechts
+const WORLD := [["wiesen", 0.0], ["vulkan", 640.0], ["see", 1280.0], ["sumpf", 1920.0], ["steppe", 2560.0], ["kern", 3200.0]]
+const WORLD_CAM_END := 3200.0
+const TOWER_X := 3520.0
 const GROUND := 268.0
 ## Bewohner der Welt: [Form, Weltposition x, Skalierung, schwebt]
 const RESIDENTS := [
 	["Pixmiez", 140.0, 2, false], ["Lumi", 260.0, 2, false], ["Kekso", 380.0, 2, false], ["Funkling", 500.0, 2, false],
 	["Buddli", 780.0, 2, false], ["Molchi", 910.0, 2, false], ["Glutbyte", 1070.0, 1, false],
-	["Quakli", 1400.0, 2, false], ["Tröpfel", 1520.0, 2, false], ["Maskli", 1650.0, 2, false], ["Pufferling", 1790.0, 1, false],
-	["Kauzbit", 2010.0, 2, true], ["Brummbit", 2110.0, 2, false],
+	["Tröpfel", 1400.0, 2, false], ["Bachli", 1520.0, 2, false], ["Kaskadi", 1670.0, 1, false], ["Perlhopp", 1820.0, 1, false],
+	["Quakli", 2040.0, 2, false], ["Maskli", 2170.0, 2, false], ["Pufferling", 2310.0, 1, false],
+	["Plapperli", 2660.0, 2, true], ["Blinki", 2800.0, 1, false], ["Zackdachs", 2950.0, 1, false], ["Overclocko", 3090.0, 1, false],
+	["Kauzbit", 3290.0, 2, true], ["Brummbit", 3390.0, 2, false],
 ]
 
 var shake := 0.0
@@ -72,7 +74,8 @@ func _draw_world(cam: float, corrupt: float, silhouette := 0.0, residents := tru
 		if x > -W and x < W:
 			draw_texture(zone_texture(z[0]), Vector2(x, 0))
 	# weiche Datennebel an den Zonengrenzen
-	for s in [640.0, 1280.0, 1920.0]:
+	for zi in range(1, WORLD.size()):
+		var s: float = WORLD[zi][1]
 		var sx: float = s - cam
 		if sx < -60 or sx > W + 60:
 			continue
