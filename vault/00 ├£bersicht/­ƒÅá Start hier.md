@@ -45,6 +45,7 @@ Monster-Sammelspiel für **Steam** (Premium, Godot) mit Roguelite-Kämpfen, Evol
 - [[Tech Stack]]
 - [[KPIs & Metriken]]
 - [[Risiken]]
+- [[TCG-App Konzept]] – Nebenprojekt: Sammelkarten-App mit Glitchlings × ViMOn (Planung)
 
 ### Datenbank
 - [[Monster-Übersicht]]

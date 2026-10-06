@@ -8,8 +8,8 @@ const MAX := 12
 const AREA := Rect2(36, 242, 568, 96)
 ## Lieblingsplätze je Element (Fußposition); die Requisiten zeichnet die Station an diese Stellen
 const SPOTS := {
-	"Feuer": Vector2(536, 318), "Wasser": Vector2(172, 324), "Elektro": Vector2(380, 256),
-	"Code": Vector2(470, 252), "Virus": Vector2(270, 332), "Neutral": Vector2(318, 288),
+	"Feuer": Vector2(536, 318), "Wasser": Vector2(150, 330), "Elektro": Vector2(380, 256),
+	"Code": Vector2(470, 252), "Virus": Vector2(270, 334), "Neutral": Vector2(318, 288),
 }
 ## Linien, die schweben statt zu laufen
 const FLYERS := ["Kauzbit", "Plapperli"]

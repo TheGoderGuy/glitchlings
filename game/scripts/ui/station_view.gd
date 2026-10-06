@@ -26,6 +26,12 @@ const DEX_ORDER := [
 	"Wolkerich", "Spukatz", "Wolperling", "Schlummerbit", "Pustebacke"]
 const HATCH_REVEAL := 2.2
 ## Vorladen! Texturen, die erst in _draw() zum ersten Mal geladen werden, erscheinen weiß.
+## Zuhause: Requisiten (zugeschnitten) und das flackernde Lagerfeuer
+const HOME_TEX := {"baum": preload("res://assets/sprites/home/baum.png"), "blitz": preload("res://assets/sprites/home/blitz.png"),
+	"ball": preload("res://assets/sprites/home/ball.png"), "teich": preload("res://assets/sprites/home/teich.png"), "pilze": preload("res://assets/sprites/home/pilze.png")}
+const FIRE_FRAMES := [preload("res://assets/sprites/anim/home_feuer_48_idle_0.png"), preload("res://assets/sprites/anim/home_feuer_48_idle_1.png"),
+	preload("res://assets/sprites/anim/home_feuer_48_idle_2.png"), preload("res://assets/sprites/anim/home_feuer_48_idle_3.png"),
+	preload("res://assets/sprites/anim/home_feuer_48_idle_4.png"), preload("res://assets/sprites/anim/home_feuer_48_idle_5.png")]
 const EGG_TEX := {"egg_g": preload("res://assets/sprites/egg_g.png"), "egg_s": preload("res://assets/sprites/egg_s.png"), "egg_e": preload("res://assets/sprites/egg_e.png")}
 
 var tab := Tab.TEAM
@@ -426,110 +432,31 @@ func _draw_marker(p: Vector2) -> void:
 		draw_rect(Rect2(p.x - 3 + i, p.y - 5 + i, 7 - i * 2, 1), GameData.COL.sun)
 
 
-## Lieblingsplätze: Teich (Wasser), Lagerfeuer (Feuer), Blitzableiter (Elektro), Datenbaum (Code), Pilzkreis (Virus), Bit-Ball (Neutral)
+## Lieblingsplätze (PixelLab, 06.10.2026): Teich (Wasser), Lagerfeuer (Feuer), Blitzableiter (Elektro),
+## Datenbaum (Code), Pilzkreis (Virus), Bit-Ball (Neutral). Position = Mitte unten.
 func _draw_home_props() -> void:
-	var t := anim_t
-	# Datenbaum (hinten): Stamm, Krone mit blinkenden Bits
-	var tb := Vector2(492, 246)
-	draw_rect(Rect2(tb.x - 3, tb.y - 34, 6, 34), Color("#4A3A5A"))
-	draw_circle(tb + Vector2(0, -46), 22, Color("#1F5A4E"))
-	draw_circle(tb + Vector2(-12, -38), 14, Color("#2C6A55"))
-	draw_circle(tb + Vector2(12, -40), 15, Color("#2C6A55"))
-	for i in 9:
-		var on := fmod(t * 1.3 + i * 0.37, 1.0) < 0.5
-		var q := tb + Vector2(-16 + (i * 13) % 32, -60 + (i * 7) % 26)
-		draw_rect(Rect2(roundi(q.x), roundi(q.y), 2, 2), Color("#6EE7C5", 0.9 if on else 0.25))
-	# Blitzableiter: dünner Mast, oben knistert es
-	var lr := Vector2(398, 254)
-	draw_rect(Rect2(lr.x - 1, lr.y - 40, 2, 40), Color("#5A5A6A"))
-	draw_rect(Rect2(lr.x - 5, lr.y - 2, 10, 2), Color("#3A3A48"))
-	draw_circle(lr + Vector2(0, -42), 3, Color("#FFE45C", 0.6 + 0.4 * sin(t * 9.0)))
-	if fmod(t, 1.6) < 0.12:
-		draw_line(lr + Vector2(0, -44), lr + Vector2(-5, -52), Color("#FFF6A8"), 1)
-		draw_line(lr + Vector2(-5, -52), lr + Vector2(2, -58), Color("#FFF6A8"), 1)
-	# Bit-Ball (Neutral): hüpft, wenn jemand damit spielt
+	_prop(HOME_TEX.baum, Vector2(492, 252))
+	_prop(HOME_TEX.blitz, Vector2(398, 260))
+	if fmod(anim_t, 1.6) < 0.1:
+		draw_circle(Vector2(398, 212), 6, Color("#FFF6A8", 0.35))
+	# Bit-Ball hüpft, wenn ein Neutral-Glitchling damit spielt
 	var playing := home.residents.any(func(r): return r.state == "spot" and r.el == "Neutral")
-	var bh := absf(sin(t * 4.0)) * 10.0 if playing else 0.0
-	var bc := Vector2(338, 288 - bh)
-	draw_rect(Rect2(334, 286, 8, 2), Color(0.05, 0.02, 0.12, 0.3))
-	draw_circle(bc + Vector2(0, -4), 4, Color("#FF8FD8"))
-	draw_rect(Rect2(bc.x - 2, bc.y - 6, 2, 2), Color.WHITE)
-	_draw_pond(Vector2(100, 328), t)
-	# Pilzkreis (Virus)
-	var mc := Vector2(270, 336)
-	for i in 6:
-		var a := i * TAU / 6.0
-		var q := mc + Vector2(cos(a) * 24.0, sin(a) * 7.0)
-		draw_rect(Rect2(roundi(q.x) - 1, roundi(q.y) - 4, 2, 4), Color("#D8D0C0"))
-		draw_rect(Rect2(roundi(q.x) - 3, roundi(q.y) - 7, 6, 3), Color("#B060E0") if i % 2 else Color("#7BD35A"))
+	var bh := roundf(absf(sin(anim_t * 4.0)) * 10.0) if playing else 0.0
+	draw_rect(Rect2(332, 290, 12, 2), Color(0.05, 0.02, 0.12, 0.3))
+	_prop(HOME_TEX.ball, Vector2(338, 291 - bh))
+	_prop(HOME_TEX.teich, Vector2(100, 342))
+	_prop(HOME_TEX.pilze, Vector2(270, 344))
 
 
-## Pixel-Ellipse aus Zeilen (Mitte c, Halbachsen a/b)
-func _pixel_oval(c: Vector2, a: float, b: float, col: Color) -> void:
-	for y in range(-int(b), int(b) + 1):
-		var w := roundf(a * sqrt(maxf(0.0, 1.0 - pow(float(y) / b, 2))))
-		draw_rect(Rect2(c.x - w, c.y + y, w * 2, 1), col)
+func _prop(tex: Texture2D, bottom: Vector2) -> void:
+	draw_texture(tex, Vector2(roundf(bottom.x - tex.get_width() / 2.0), roundf(bottom.y - tex.get_height())))
 
 
-## Teich: ovale Wasserfläche mit Ufersteinen, Schilf, Seerose und wanderndem Glanz
-func _draw_pond(c: Vector2, t: float) -> void:
-	_pixel_oval(c + Vector2(0, 1), 58, 13, Color("#1A3A2A"))          # dunkles Ufer
-	_pixel_oval(c, 54, 11, Color("#14304A"))
-	_pixel_oval(c + Vector2(0, -1), 48, 8, Color("#1E4A72"))
-	_pixel_oval(c + Vector2(-6, -3), 30, 4, Color("#2E6A9A"))
-	# Glanzlinien ziehen langsam übers Wasser
-	for i in 3:
-		var x := c.x - 34 + fposmod(t * 6.0 + i * 25.0, 68.0)
-		draw_rect(Rect2(roundi(x), roundi(c.y - 5 + i * 4), 6, 1), Color("#8FE3FF", 0.7))
-	# Ringe, wo ein Tropfen fällt
-	var rt := fmod(t * 0.6, 1.0)
-	draw_arc(c + Vector2(18, 2), 2.0 + rt * 10.0, 0, TAU, 14, Color("#8FE3FF", 0.6 * (1.0 - rt)), 1)
-	# Seerose
-	_pixel_oval(c + Vector2(-26, 3), 6, 2, Color("#3E8A4A"))
-	draw_rect(Rect2(c.x - 27, c.y + 1, 3, 2), Color("#FF8FD8"))
-	# Ufersteine
-	for s in [Vector2(-56, 2), Vector2(-48, 9), Vector2(50, 6), Vector2(56, -1), Vector2(30, 12)]:
-		draw_rect(Rect2(c.x + s.x - 3, c.y + s.y - 2, 6, 4), Color("#5A5A6A"))
-		draw_rect(Rect2(c.x + s.x - 2, c.y + s.y - 2, 4, 1), Color("#7A7A8A"))
-	# Schilf mit Kolben, wiegt sich leicht
-	for k in 4:
-		var rx := c.x + 40 + k * 4
-		var sway := roundf(sin(t * 1.4 + k) * 1.0)
-		var hgt := 14 + (k % 2) * 5
-		draw_rect(Rect2(rx, c.y - hgt, 1, hgt), Color("#4F8A3A"))
-		if k % 2 == 0:
-			draw_rect(Rect2(rx - 1 + sway, c.y - hgt - 4, 3, 5), Color("#7A4A2A"))
-
-
-## Lagerfeuer: Steinring, gekreuzte Scheite, Flamme aus drei Farbschichten, Glut und Lichtschein
+## Lagerfeuer: 6 flackernde Bilder (10 Bilder/s) und ein warmer Lichtschein
 func _draw_campfire(c: Vector2, t: float) -> void:
-	draw_circle(c + Vector2(0, -10), 30, Color("#FF8A4C", 0.07 + 0.03 * sin(t * 7.0)))
-	# Steinring
-	for i in 8:
-		var a := i * TAU / 8.0
-		var q := c + Vector2(cos(a) * 14.0, sin(a) * 4.0)
-		draw_rect(Rect2(roundi(q.x) - 3, roundi(q.y) - 2, 6, 4), Color("#4A4652"))
-		draw_rect(Rect2(roundi(q.x) - 2, roundi(q.y) - 2, 4, 1), Color("#6A6672"))
-	# gekreuzte Holzscheite
-	for d in [-1, 1]:
-		for k in 16:
-			draw_rect(Rect2(c.x - 8 + k, c.y - 2 - roundi(d * (k - 8) * 0.35), 2, 3), Color("#6A4228") if k % 5 else Color("#4A2E1C"))
-	# Flamme: Zeilen von unten nach oben, Breite schrumpft, flackert seitlich
-	var h := 18.0 + 3.0 * sin(t * 11.0) + 2.0 * sin(t * 17.0)
-	for layer in 3:
-		var col: Color = [Color("#E8481E"), Color("#FF8A2E"), Color("#FFE27A")][layer]
-		var lh := h * (1.0 - layer * 0.28)
-		var lw := 7.0 - layer * 2.0
-		for y in int(lh):
-			var k := float(y) / lh
-			var w := roundf(lw * (1.0 - k * k))
-			var sway := roundf(sin(t * 8.0 + y * 0.5) * k * 2.0)
-			draw_rect(Rect2(c.x - w + sway, c.y - 4 - y, w * 2 + 1, 1), col)
-	# aufsteigende Funken
-	for i in 3:
-		var ph := fmod(t * 0.9 + i * 0.33, 1.0)
-		var q := c + Vector2(sin(t * 3.0 + i * 2.0) * 5.0, -22.0 - ph * 24.0)
-		draw_rect(Rect2(roundi(q.x), roundi(q.y), 1, 1), Color("#FFD84D", 1.0 - ph))
+	draw_circle(c + Vector2(0, -12), 30, Color("#FF8A4C", 0.07 + 0.03 * sin(t * 7.0)))
+	var fr: Texture2D = FIRE_FRAMES[int(t * 10.0) % FIRE_FRAMES.size()]
+	draw_texture(fr, Vector2(roundf(c.x - fr.get_width() / 2.0), roundf(c.y + 4 - fr.get_height())))
 
 
 func _draw_home_fx(f: Dictionary) -> void:

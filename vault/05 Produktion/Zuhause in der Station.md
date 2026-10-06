@@ -25,6 +25,13 @@ Wunsch des Produzenten: „Station-Bewohner, die herumlaufen“. Entscheidungen:
 - **Streicheln:** Mit < > wählst du einen Glitchling (Pfeil über dem Kopf), mit Enter/A streichelst du ihn. Er hüpft zweimal, Herzchen steigen auf, und oben steht eine Reaktion je Tierart, z. B. „Pixmiez schnurrt zufrieden.“ oder „Plapperli plappert: Nochmal! Nochmal!“.
 - **Station-Führung:** Der neue Schritt 2/8 erklärt das Zuhause.
 
+## Requisiten (06.10.2026, Produzent: „sehen aus wie Artefakte“)
+Die zuerst aus Rechtecken gezeichneten Lieblingsplätze wirkten neben den Sprites wie Bildfehler. Jetzt sind alle sechs mit PixelLab Pro Flash gezeichnet. Stilreferenz war Bachli_32, auf 32 Farben reduziert und auf den Inhalt zugeschnitten: `game/assets/sprites/home/` (Teich, Pilzkreis, Datenbaum, Blitzableiter, Ball).
+
+- Das **Lagerfeuer** hat 6 flackernde Bilder (`anim/home_feuer_48_idle_*`).
+- Der Ball wurde ein zweites Mal gezeichnet, mit Sternen statt Querstreifen, damit er nicht an einen Pokéball erinnert.
+- Etwa 36 Generierungen.
+
 ## Technik
 - `scripts/meta/home_sim.gd` (`HomeSim`): Simulation ohne Grafik, damit sie testbar ist.
   - Funktionen: `setup(team, seed)`, `update(dt)`, `pet(i)`, `order()`.
