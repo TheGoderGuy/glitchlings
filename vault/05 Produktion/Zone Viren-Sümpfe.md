@@ -3,7 +3,7 @@ tags: [produktion, zone, gegner, steam]
 ---
 # Zone 3: Viren-Sümpfe (29.09.2026)
 
-Wird frei, sobald der Glutkernskarabäus (Firewall-Vulkan) besiegt ist. Gegner 50 % zäher als in Zone 1, viel Virus → **Elektro hat einen Vorteil**.
+Seit 06.10.2026 **Zone 4**: wird frei, sobald die Tiefenschlange (Kühlwasser-See) besiegt ist (vorher direkt nach dem Vulkan, siehe [[Zonen See und Steppe]]). Gegner 50 % zäher als in Zone 1, viel Virus → **Elektro hat einen Vorteil**.
 Daten: `GameData.ZONES.sumpf`, Gegner-Indizes 11–14. Sprites per PixelLab (Stilreferenz Chiffrekäfer); Panzerschnecke, Glitchblüte und Schwarmkönigin am 29.09.2026 ohne Werbe-/Pop-up-Motive neu gezeichnet, 32 Farben, Namen geprüft.
 
 | Gegner | Element | HP | Mechanik |

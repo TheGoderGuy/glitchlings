@@ -51,6 +51,15 @@ func _upgrade() -> void:
 	for k in ["frag", "recipes", "hints", "cleared"]:
 		if not data.has(k):
 			data[k] = 0 if k == "frag" else []
+	# Neue Zonen See und Steppe (06.10.2026): was vorher frei war, bleibt frei
+	if not data.has("zones_v2"):
+		data.zones_v2 = true
+		var keep: Array = []
+		if data.cleared.has("vulkan"):
+			keep.append("sumpf")
+		if data.cleared.has("sumpf"):
+			keep.append("kern")
+		data.legacy_zones = keep
 	# Element „Licht“ heißt seit 29.09.2026 „Elektro“
 	for m in data.get("team", []):
 		if m.praeg.has("Licht"):
@@ -138,7 +147,7 @@ func reset() -> void:
 
 ## Neues Spiel mit dem gewählten Starter
 func new_game(starter: String) -> Dictionary:
-	data = {"version": VERSION, "team": [], "nest": [], "dex": {}, "next_id": 1, "stats": {"runs": 0, "wins": 0}, "frag": 0, "recipes": [], "hints": [], "cleared": []}
+	data = {"version": VERSION, "team": [], "nest": [], "dex": {}, "next_id": 1, "stats": {"runs": 0, "wins": 0}, "frag": 0, "recipes": [], "hints": [], "cleared": [], "zones_v2": true, "legacy_zones": []}
 	var m := add_monster(starter)
 	save_game()
 	return m
@@ -340,7 +349,7 @@ func zone_unlocked(z: String) -> bool:
 	if not zone_in_build(z):
 		return false
 	var need: String = GameData.ZONES[z].unlock
-	return need == "" or data.get("cleared", []).has(need)
+	return need == "" or data.get("cleared", []).has(need) or data.get("legacy_zones", []).has(z)
 
 
 ## Testfassung (Web-Spieltest, 01.10.2026): nur die ersten zwei Zonen spielbar.

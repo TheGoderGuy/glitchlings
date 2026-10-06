@@ -165,7 +165,11 @@ const SPRITE_FILES := {"bug": "bug_64", "moth": "moth_64", "wurm": "bytewurm_64"
 	"drohne": "kerndrohne_64", "spinne": "glitchspinne_64", "urglitch": "urglitch_96",
 	"sprungschreck": "sprungschreck_80", "dornwurz": "dornwurz_80", "schlackwurm": "schlackwurm_80", "magmaskorp": "magmaskorp_80",
 	"schnappkelch": "schnappkelch_80", "schlickkrake": "schlickkrake_80", "skolopendrox": "skolopendrox_80",
-	"funkenkaefer": "funkenkaefer_64", "datenegel": "datenegel_64", "moorlibelle": "moorlibelle_64", "sentinelkrabbe": "sentinelkrabbe_64", "fehlerqualle": "fehlerqualle_64"}
+	"funkenkaefer": "funkenkaefer_64", "datenegel": "datenegel_64", "moorlibelle": "moorlibelle_64", "sentinelkrabbe": "sentinelkrabbe_64", "fehlerqualle": "fehlerqualle_64",
+	"kabelaal": "kabelaal_64", "frostkrill": "frostkrill_64", "tauchkaefer": "tauchkaefer_64", "frostanemone": "frostanemone_64",
+	"tiefenschlange": "tiefenschlange_96", "schraubenrochen": "schraubenrochen_80", "frostnarwal": "frostnarwal_80",
+	"ampereameise": "ampereameise_64", "spulenwurm": "spulenwurm_64", "mastgeier": "mastgeier_64", "blitzfarn": "blitzfarn_64",
+	"donnerkondor": "donnerkondor_96", "donnerbock": "donnerbock_80", "trafokaefer": "trafokaefer_80"}
 static var _sprites := {}
 const IDLE_FPS := 10.0  # Bilder pro Sekunde der Idle-Animationen (Produzent: 10 sieht am besten aus)
 
@@ -436,6 +440,14 @@ const ZONE_PAL := {
 		"ground": "#0A1424", "grass": "#1E4A6A", "flower": ["#4CC3F0", "#FF5470", "#FFD84D"]},
 	"kern_boss": {"sky0": "#0A0210", "sky1": "#2A0A30", "far": "#1E0A28", "near": "#2A1038", "edge": "#FF5470",
 		"ground": "#140818", "grass": "#3A1A4A", "flower": ["#4CC3F0", "#FF5470", "#FFD84D"]},
+	"see": {"sky0": "#0A1426", "sky1": "#1E4060", "far": "#14304A", "near": "#1A3C58", "edge": "#8FE3FF",
+		"ground": "#0E2A44", "grass": "#2E6A8A", "flower": ["#8FE3FF", "#4CB8F0", "#FFFFFF"], "water": true},
+	"see_boss": {"sky0": "#060A1E", "sky1": "#1A2458", "far": "#121A40", "near": "#18224E", "edge": "#4CF0D8",
+		"ground": "#0A1434", "grass": "#24407A", "flower": ["#4CF0D8", "#8FE3FF", "#C77DFF"], "water": true},
+	"steppe": {"sky0": "#14121E", "sky1": "#3A3A50", "far": "#2A2A34", "near": "#3A3A2A", "edge": "#FFE45C",
+		"ground": "#2A2814", "grass": "#7A6E2E", "flower": ["#FFE45C", "#FFF6A8", "#4CC3F0"], "pylons": true},
+	"steppe_boss": {"sky0": "#100A18", "sky1": "#2E2448", "far": "#221A30", "near": "#2E2638", "edge": "#FFF6A8",
+		"ground": "#1E1828", "grass": "#5A4E2E", "flower": ["#FFE45C", "#C77DFF", "#FFF6A8"], "pylons": true},
 	"vulkan_boss": {"sky0": "#200606", "sky1": "#6A1A10", "far": "#3A1010", "near": "#4A1612", "edge": "#FFB347",
 		"ground": "#2E0C0A", "grass": "#7A2A12", "flower": ["#FFD84D", "#FF8A4C", "#FF5470"]},
 }
@@ -468,10 +480,44 @@ static func zone_texture(zone: String) -> ImageTexture:
 	for x in W:
 		var yf := roundi(172 + 12 * sin(x * 0.013) + 7 * sin(x * 0.031 + 1.0))
 		img.fill_rect(Rect2i(x, yf, 1, H - yf), Color(P.far))
+	if P.get("pylons", false):
+		var mast := Color(P.far).darkened(0.4)
+		var tips: Array = []
+		for bx in [70, 250, 430, 600]:
+			var by := roundi(172 + 12 * sin(bx * 0.013) + 7 * sin(bx * 0.031 + 1.0)) + 4
+			var mh := 64
+			for y in mh:
+				var half := 1 + int(7.0 * y / mh)
+				img.set_pixel(bx - half, by - mh + y, mast)
+				img.set_pixel(bx + half, by - mh + y, mast)
+				if y % 7 == 0:
+					img.fill_rect(Rect2i(bx - half, by - mh + y, half * 2 + 1, 1), mast)
+			img.fill_rect(Rect2i(bx - 13, by - mh + 9, 27, 2), mast)
+			img.fill_rect(Rect2i(bx - 9, by - mh + 20, 19, 2), mast)
+			tips.append(Vector2i(bx, by - mh + 10))
+		# durchhängende Leitungen von Mast zu Mast
+		for i in tips.size() - 1:
+			var a: Vector2i = tips[i]
+			var b: Vector2i = tips[i + 1]
+			for side in [-12, 12]:
+				for x in range(a.x + side, b.x + side):
+					var t := float(x - a.x - side) / float(b.x - a.x)
+					var y := roundi(lerpf(a.y, b.y, t) + 16.0 * sin(t * PI))
+					if x >= 0 and x < W:
+						img.set_pixel(x, y, mast.lightened(0.15))
 	for x in W:
 		var yn := roundi(214 + 10 * sin(x * 0.02 + 2.0) + 6 * sin(x * 0.047))
 		img.fill_rect(Rect2i(x, yn, 1, H - yn), Color(P.near))
 		img.set_pixel(x, yn, Color(P.edge))
+	if P.get("water", false):
+		var wy := 236
+		var wcol := Color(P.near).darkened(0.25)
+		img.fill_rect(Rect2i(0, wy, W, 286 - wy), wcol)
+		img.fill_rect(Rect2i(0, wy, W, 1), Color(P.edge).darkened(0.2))
+		for i in 110:
+			var lx := rng.randi_range(0, W - 12)
+			var ly := rng.randi_range(wy + 3, 284)
+			img.fill_rect(Rect2i(lx, ly, rng.randi_range(4, 14), 1), wcol.lerp(Color(P.edge), rng.randf_range(0.2, 0.5)))
 	# Wiese unten mit Grasbüscheln
 	img.fill_rect(Rect2i(0, 286, W, H - 286), Color(P.ground))
 	for i in 140:
@@ -500,6 +546,17 @@ static func zone_texture(zone: String) -> ImageTexture:
 ## Zonen-Hintergrund plus aufsteigende Datenpartikel
 func _draw_zone(zone: String) -> void:
 	draw_texture(zone_texture(zone), Vector2.ZERO)
+	if zone.begins_with("steppe"):
+		# Wetterleuchten: alle paar Sekunden ein Blitz am Himmel
+		var lt := fmod(anim_t, 4.7)
+		if lt < 0.18:
+			draw_rect(Rect2(0, 0, W, 230), Color(1, 1, 0.85, 0.12 * (1.0 - lt / 0.18)))
+			var bx := 90.0 + fmod(floorf(anim_t / 4.7) * 211.0, 460.0)
+			var prev := Vector2(bx, 0)
+			for i in 6:
+				var q := Vector2(bx + sin(i * 2.3 + bx) * 14.0, 22.0 + i * 24.0)
+				draw_line(prev, q, Color(1, 1, 0.8, 0.8 * (1.0 - lt / 0.18)), 2)
+				prev = q
 	var dust := Color("#FF5470", 0.5) if zone.ends_with("boss") else Color("#B8FFE9", 0.45)
 	for i in 22:
 		var x := fmod(i * 97.3 + 13.0 + sin(anim_t * 0.7 + i) * 6.0, W)

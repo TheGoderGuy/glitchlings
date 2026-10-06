@@ -405,12 +405,12 @@ func _screenshot(shot: Dictionary) -> void:
 				cs2.e.atk_t = 99.0
 				cs2.e.move_t = 99.0
 				var sl: bool = run.map.zone == "sumpf"
-				var hk := "slime" if sl else "lava"
+				var hk: String = {"sumpf": "slime", "see": "current", "steppe": "spark"}.get(run.map.zone, "lava")
 				for wi in 3:
-					cs2.warns.append({"cells": [Vector2i(wi, 0)], "t": [0.72, 0.45, 0.08][wi], "max": 0.9, "dmg": 0, "lava": true, "kind": hk})
-				cs2.hazards.append({"c": 0, "r": 2, "t": 2.5, "tick": 0.3, "kind": hk, "seed": 5})
+					cs2.warns.append({"cells": [Vector2i(wi, 0)], "t": [0.72, 0.45, 0.08][wi], "max": 0.9, "dmg": 0, "lava": true, "kind": hk, "dir": 1})
+				cs2.hazards.append({"c": 0, "r": 2, "t": 2.5, "tick": 0.3, "kind": hk, "seed": 5, "dir": -1})
 				cs2.hazards.append({"c": 2, "r": 2, "t": 0.35, "tick": 0.3, "kind": hk, "seed": 9})
-				cs2.vfx_add("erupt", 1, 2, 0.45, {"slime": sl})
+				cs2.vfx_add("erupt", 1, 2, 0.45, {"slime": sl, "kind": hk})
 				cs2.vfx[-1].t = 0.3
 				match run.map.zone:
 					"vulkan":
@@ -421,7 +421,7 @@ func _screenshot(shot: Dictionary) -> void:
 					_:
 						cs2.e.frozen = 2.0
 			if shot.has("pops"):
-				var pk: String = "spore" if run.map.zone == "sumpf" else "milbe"
+				var pk: String = {"sumpf": "spore", "see": "bubble"}.get(run.map.zone, "milbe")
 				current.st.pops.append({"c": 0, "r": 0, "t": 2.5, "max": 3.0, "kind": pk})
 				current.st.pops.append({"c": 2, "r": 1, "t": 0.8, "max": 3.0, "kind": pk})
 			if shot.has("lava"):

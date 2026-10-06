@@ -384,15 +384,24 @@ func _draw_zone_pick() -> void:
 	var n: int = GameData.ZONE_ORDER.size()
 	var cw := 146.0
 	var gap := 8.0
-	var x0 := (W - n * cw - (n - 1) * gap) / 2.0
+	var vis := mini(n, 4)
+	var first := clampi(zone_sel - 1, 0, n - vis)
+	var x0 := (W - vis * cw - (vis - 1) * gap) / 2.0
 	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
-	for i in n:
+	# Blätterpfeile, wenn links/rechts weitere Zonen liegen
+	var blink := 0.6 + 0.4 * sin(anim_t * 5.0)
+	if first > 0:
+		_text(Vector2(4, 182), "<", 16, Color(GameData.COL.sun, blink), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	if first + vis < n:
+		_text(Vector2(W - 16, 182), ">", 16, Color(GameData.COL.sun, blink), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	for j in vis:
+		var i := first + j
 		var z: String = GameData.ZONE_ORDER[i]
 		var Z: Dictionary = GameData.ZONES[z]
 		var open := SaveGame.zone_unlocked(z)
 		var done: bool = SaveGame.data.get("cleared", []).has(z)
 		var active := i == zone_sel
-		var r := Rect2(x0 + i * (cw + gap), 60 - (4 if active else 0), cw, 236)
+		var r := Rect2(x0 + j * (cw + gap), 60 - (4 if active else 0), cw, 236)
 		_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
 		# Landschaft als Ausschnitt der Zonen-Kulisse (1:1, nicht skaliert)
 		var img := Rect2(r.position.x + 4, r.position.y + 4, cw - 8, 78)
@@ -404,9 +413,9 @@ func _draw_zone_pick() -> void:
 		else:
 			_draw_lock(img.get_center())
 		_text(Vector2(r.position.x, r.position.y + 98), Z.name, 8, GameData.COL.ink if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw, true, true)
-		# Gefahr: 1–4 Kästchen
+		# Gefahr: ein Kästchen je Zone
 		for k in n:
-			draw_rect(Rect2(r.get_center().x - 22 + k * 12, r.position.y + 106, 8, 5), GameData.COL.coral if k <= i else GameData.COL.dark)
+			draw_rect(Rect2(r.get_center().x - (n * 10 - 3) / 2.0 + k * 10, r.position.y + 106, 7, 5), GameData.COL.coral if k <= i else GameData.COL.dark)
 		_text(Vector2(r.position.x, r.position.y + 124), zone_layout(z), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
 		var desc: String = T.t(Z.desc) if open else T.t("Gesperrt. Besiege den Boss von %s, um diese Zone freizuschalten.") % T.t(GameData.ZONES[Z.unlock].name)
 		if not SaveGame.zone_in_build(z):

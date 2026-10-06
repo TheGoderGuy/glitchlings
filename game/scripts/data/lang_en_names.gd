@@ -78,6 +78,12 @@ const D := {
 
 	# ---------- Zonen ----------
 	"Cache-Wiesen": "Cache Meadows", "Firewall-Vulkan": "Firewall Volcano", "Viren-Sümpfe": "Virus Swamps", "NEST-Kern": "NEST Core",
+	"Kühlwasser-See": "Coolant Lake", "Hochspannungs-Steppe": "High Voltage Steppe",
+	"Kabelaal": "Cableel", "Frostkrill": "Frostkrill", "Tauchkäfer": "Divebeetle", "Frostanemone": "Frostanemone", "Tiefenschlange": "Deepserpent",
+	"Schraubenrochen": "Screwray", "Frostnarwal": "Frostwhal", "Ampereameise": "Ampant", "Spulenwurm": "Coilworm", "Mastgeier": "Pylonvulture",
+	"Blitzfarn": "Boltfern", "Donnerkondor": "Thundercondor", "Donnerbock": "Thunderbuck", "Trafokäfer": "Gridbeetle",
+	"Sturzflut": "Flash Flood", "Flutring": "Flood Ring", "Sogwirbel": "Undertow", "Eisbohrer": "Ice Drill", "Himmelsriss": "Sky Rift",
+	"Hornsturm": "Horn Storm", "Kurzschlusskreis": "Short Circuit Ring",
 
 	# ---------- Chips ----------
 	"Pixelstrahl": "Pixel Beam", "Byteschlag": "Byte Strike", "Firewall": "Firewall", "Bug-Mine": "Bug Mine",

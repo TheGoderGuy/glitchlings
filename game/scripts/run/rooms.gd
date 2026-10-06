@@ -122,6 +122,40 @@ const EVENTS := {
 		"title": "Kernspeicher", "zone": "kern",
 		"text": "Ein Speicherturm voller alter Chips, die seit dem Absturz hier liegen. Manche sind beschädigt, andere perfekt erhalten.",
 	},
+	# ---------- Kühlwasser-See (06.10.2026) ----------
+	"kuehlrohr": {
+		"title": "Kühlrohr-Leck", "zone": "see",
+		"text": "Aus einem dicken Kühlrohr zischt eiskaltes Wasser. Darin treiben Eissplitter, scharf wie Daten-Klingen.",
+	},
+	"eisscholle": {
+		"title": "Treibende Eisscholle", "zone": "see",
+		"text": "Auf einer Eisscholle treibt ein eingefrorener Chip vorbei. Das Eis knackt verdächtig.",
+	},
+	"taucherglocke": {
+		"title": "Taucherglocke", "zone": "see",
+		"text": "Eine alte Taucherglocke liegt im flachen Wasser. Drinnen ist noch Luft – und eine kleine Werkbank.",
+	},
+	"spiegelsee": {
+		"title": "Stiller Spiegelsee", "zone": "see",
+		"text": "Das Wasser ist so still, dass sich der ganze Server-Himmel darin spiegelt. Dein Glitchling sieht darin ein anderes Ich.",
+	},
+	# ---------- Hochspannungs-Steppe (06.10.2026) ----------
+	"umspannwerk": {
+		"title": "Verlassenes Umspannwerk", "zone": "steppe",
+		"text": "Mitten in der Steppe brummt ein Umspannwerk. Die Spulen sind noch geladen, die Luft knistert.",
+	},
+	"gewitter": {
+		"title": "Aufziehendes Gewitter", "zone": "steppe",
+		"text": "Schwarze Wolken türmen sich auf. Blitze schlagen in die Masten ein, einer nach dem anderen.",
+	},
+	"datenherde": {
+		"title": "Wilde Datenherde", "zone": "steppe",
+		"text": "Eine Herde grasender Datenbüffel zieht vorbei. Ein Jungtier hat sich in einer alten Leitung verfangen.",
+	},
+	"relaisturm": {
+		"title": "Relaisturm", "zone": "steppe",
+		"text": "Ein hoher Relaisturm sendet noch immer Signale. Von oben sieht man die ganze Steppe.",
+	},
 }
 
 
@@ -282,6 +316,46 @@ static func event_options(run: RunState, key: String) -> Array:
 			return [
 				{"id": "dance", "label": T.t("Mittanzen"), "desc": T.t("Heilt 30 %% deiner max. HP (%d).") % roundi(run.max_hp * 0.3), "enabled": run.hp < run.max_hp},
 				{"id": "catch", "label": T.t("Einfangen"), "desc": T.t("Ladungsfeld ins Deck und +%d Elektro-Prägung.") % EVENT_PRAEG, "enabled": true},
+			]
+		"kuehlrohr":
+			return [
+				{"id": "seal", "label": T.t("Abdichten (−10 HP)"), "desc": T.t("Frostsplitter kommt in dein Deck."), "enabled": run.hp > 10},
+				{"id": "cool", "label": T.t("Abkühlen"), "desc": T.t("+%d Wasser-Prägung (zählt für die Evolution).") % EVENT_PRAEG, "enabled": true},
+			]
+		"eisscholle":
+			return [
+				{"id": "break", "label": T.t("Herausbrechen"), "desc": T.t("Meist ein seltener Chip. Manchmal kippt die Scholle (−12 HP)."), "enabled": run.hp > 12},
+				{"id": "float", "label": T.t("Auf der Scholle ausruhen"), "desc": T.t("+15 HP."), "enabled": run.hp < run.max_hp},
+			]
+		"taucherglocke":
+			return [
+				{"id": "tinker", "label": T.t("Chip verbessern"), "desc": T.t("Wähle einen Chip, der stärker wird und schneller lädt."), "enabled": not run.upgradable().is_empty()},
+				{"id": "salvage", "label": T.t("Ausräumen"), "desc": T.t("+25 Fragmente."), "enabled": true},
+			]
+		"spiegelsee":
+			return [
+				{"id": "look", "label": T.t("Hineinschauen"), "desc": T.t("+%d Code-Prägung (zählt für die Evolution).") % EVENT_PRAEG, "enabled": true},
+				{"id": "wish", "label": T.t("Wunsch (20 Fragmente)"), "desc": T.t("+10 max. HP."), "enabled": run.frag >= 20},
+			]
+		"umspannwerk":
+			return [
+				{"id": "charge", "label": T.t("Aufladen (−10 HP)"), "desc": T.t("+%d Elektro-Prägung, und im nächsten Kampf startet die Signatur-Leiste halb voll.") % EVENT_PRAEG, "enabled": run.hp > 10},
+				{"id": "copper", "label": T.t("Kupfer abbauen"), "desc": T.t("+30 Fragmente."), "enabled": true},
+			]
+		"gewitter":
+			return [
+				{"id": "shelter", "label": T.t("Unterstellen"), "desc": T.t("+15 HP."), "enabled": run.hp < run.max_hp},
+				{"id": "catch", "label": T.t("Blitz einfangen (−12 HP)"), "desc": T.t("Kettenblitz kommt in dein Deck."), "enabled": run.hp > 12},
+			]
+		"datenherde":
+			return [
+				{"id": "free", "label": T.t("Befreien"), "desc": T.t("+8 max. HP – die Herde dankt es dir."), "enabled": true},
+				{"id": "follow", "label": T.t("Den Spuren folgen"), "desc": T.t("+25 Fragmente."), "enabled": true},
+			]
+		"relaisturm":
+			return [
+				{"id": "climb", "label": T.t("Hochklettern (−8 HP)"), "desc": T.t("Von oben siehst du eine Abkürzung: Der nächste Gegner startet mit 25 % weniger HP."), "enabled": run.hp > 8 and not run.foe_weak},
+				{"id": "jam", "label": T.t("Signal stören"), "desc": T.t("+%d Virus-Prägung (zählt für die Evolution).") % EVENT_PRAEG, "enabled": true},
 			]
 		"logbuch":
 			return [
@@ -485,6 +559,59 @@ static func event_apply(run: RunState, key: String, id: String) -> String:
 		["nestbewohner", "guide"]:
 			run.foe_weak = true
 			return T.t("Sie zeigen dir einen Lüftungsschacht. Der nächste Gegner wird überrascht.")
+		["kuehlrohr", "seal"]:
+			run.hp -= 10
+			run.deck.append("Frostsplitter")
+			return T.t("Du drückst das Leck zu. Ein Eissplitter bleibt hängen: Frostsplitter kommt in dein Deck (−10 HP).")
+		["kuehlrohr", "cool"]:
+			return _imprint(run, "Wasser", T.t("%s lässt sich vom kalten Wasser umspülen.") % T.t(run.species))
+		["eisscholle", "break"]:
+			if run.rng.randf() < 0.6:
+				var c := run.random_chip("Selten")
+				run.deck.append(c)
+				return T.t("Krach! %s ist frei und kommt in dein Deck.") % T.chip(c)
+			run.hp -= 12
+			return T.t("Platsch! Die Scholle kippt: −12 HP.")
+		["eisscholle", "float"]:
+			return T.t("Die Scholle schaukelt sanft: +%d HP.") % run.heal(15)
+		["taucherglocke", "tinker"]:
+			return "upgrade"
+		["taucherglocke", "salvage"]:
+			run.frag += 25
+			return T.t("Unter der Werkbank liegen 25 Fragmente.")
+		["spiegelsee", "look"]:
+			return _imprint(run, "Code", T.t("Im Spiegelbild leuchten Schaltkreise auf."))
+		["spiegelsee", "wish"]:
+			run.frag -= 20
+			run.max_hp += 10
+			run.hp += 10
+			return T.t("Die Fragmente versinken glitzernd: +10 max. HP.")
+		["umspannwerk", "charge"]:
+			run.hp -= 10
+			run.sp_bonus = true
+			return _imprint(run, "Elektro", T.t("Bzzzt! %s ist bis in die Schwanzspitze geladen (−10 HP).") % T.t(run.species))
+		["umspannwerk", "copper"]:
+			run.frag += 30
+			return T.t("Aus den alten Spulen gewinnst du 30 Fragmente.")
+		["gewitter", "shelter"]:
+			return T.t("Unter einem Felsvorsprung wartest du das Gewitter ab: +%d HP.") % run.heal(15)
+		["gewitter", "catch"]:
+			run.hp -= 12
+			run.deck.append("Kettenblitz")
+			return T.t("Zack! Der Blitz trifft – und bleibt als Kettenblitz in deinem Deck (−12 HP).")
+		["datenherde", "free"]:
+			run.max_hp += 8
+			run.hp += 8
+			return T.t("Das Jungtier stupst %s dankbar an: +8 max. HP.") % T.t(run.species)
+		["datenherde", "follow"]:
+			run.frag += 25
+			return T.t("Die Spuren führen zu 25 Fragmenten im hohen Gras.")
+		["relaisturm", "climb"]:
+			run.hp -= 8
+			run.foe_weak = true
+			return T.t("Von oben siehst du einen Schleichweg. Der nächste Gegner wird überrascht (−8 HP).")
+		["relaisturm", "jam"]:
+			return _imprint(run, "Virus", T.t("Rauschen! %s verzerrt das Signal.") % T.t(run.species))
 		["kernspeicher", "salvage"]:
 			run.hp -= 12
 			var c := run.random_chip("Episch")

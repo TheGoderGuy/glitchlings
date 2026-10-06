@@ -258,6 +258,34 @@ const FOES := [
 	{"name": "Moorlibelle", "el": "Wasser", "hp": 60, "move": 0.7, "atk": 1.6, "dmg": 9, "pat": ["cell", "cell", "col"], "spr": "moorlibelle", "loot": 13, "boss": false, "tele": true},
 	{"name": "Sentinelkrabbe", "el": "Code", "hp": 150, "move": 2.2, "atk": 2.7, "dmg": 16, "pat": ["row", "col2"], "spr": "sentinelkrabbe", "loot": 15, "boss": false, "tele": false},
 	{"name": "Fehlerqualle", "el": "Elektro", "hp": 85, "move": 1.0, "atk": 2.0, "dmg": 13, "pat": ["cross", "cell"], "spr": "fehlerqualle", "loot": 15, "boss": false, "tele": true},
+	# --- Kühlwasser-See (06.10.2026, Index 30–36): Strömung reißt den Spieler mit ---
+	{"name": "Kabelaal", "el": "Wasser", "hp": 90, "move": 1.2, "atk": 2.3, "dmg": 12, "pat": ["row", "current"], "spr": "kabelaal", "loot": 13, "boss": false, "tele": true},
+	{"name": "Frostkrill", "el": "Wasser", "hp": 55, "move": 0.6, "atk": 1.5, "dmg": 8, "pat": ["cell", "cell", "row"], "spr": "frostkrill", "loot": 13, "boss": false, "tele": false},
+	{"name": "Tauchkäfer", "el": "Code", "hp": 145, "move": 2.2, "atk": 2.8, "dmg": 15, "pat": ["col2", "current"], "spr": "tauchkaefer", "loot": 14, "boss": false, "tele": false},
+	{"name": "Frostanemone", "el": "Wasser", "hp": 115, "move": 99.0, "atk": 2.2, "dmg": 13, "pat": ["cross", "pop", "cross"], "spr": "frostanemone", "loot": 14, "boss": false, "tele": false, "stationary": true, "pop_kind": "bubble"},
+	{"name": "Tiefenschlange", "el": "Wasser", "hp": 560, "move": 1.8, "atk": 2.0, "dmg": 18, "pat": ["row", "current", "col", "cross"], "spr": "tiefenschlange", "title": "Hüterin des Kühlwasser-Sees", "loot": 45, "boss": true, "tele": false, "minion": "current",
+		"phase2": ["wall", "current", "col2", "row"], "phase3": ["cross", "current", "wall", "col2"],
+		"specials": [{"shape": "wave", "name": "Sturzflut"}, {"shape": "ring", "name": "Flutring"}]},
+	{"name": "Schraubenrochen", "el": "Wasser", "hp": 330, "move": 1.4, "atk": 2.2, "dmg": 16, "pat": ["row", "current", "cell"], "spr": "schraubenrochen",
+		"title": "Der Sog unter der Oberfläche", "loot": 26, "boss": true, "guard": true, "tele": true, "minion": "none",
+		"phase2": ["current", "col2", "row"], "specials": [{"shape": "pull", "name": "Sogwirbel"}]},
+	{"name": "Frostnarwal", "el": "Code", "hp": 380, "move": 1.6, "atk": 2.2, "dmg": 17, "pat": ["col", "row", "current"], "spr": "frostnarwal",
+		"title": "Der Eisbrecher des Sees", "loot": 30, "boss": true, "guard": true, "tele": false, "minion": "none",
+		"phase2": ["col2", "cross", "current", "row"], "specials": [{"shape": "chase", "name": "Eisbohrer"}]},
+	# --- Hochspannungs-Steppe (06.10.2026, Index 37–43): Spannungsfelder schaden, laden aber Chips doppelt so schnell ---
+	{"name": "Ampereameise", "el": "Elektro", "hp": 70, "move": 0.6, "atk": 1.5, "dmg": 10, "pat": ["cell", "row", "cell"], "spr": "ampereameise", "loot": 15, "boss": false, "tele": false},
+	{"name": "Spulenwurm", "el": "Elektro", "hp": 120, "move": 1.6, "atk": 2.4, "dmg": 14, "pat": ["col", "spark"], "spr": "spulenwurm", "loot": 15, "boss": false, "tele": false},
+	{"name": "Mastgeier", "el": "Elektro", "hp": 95, "move": 1.0, "atk": 2.0, "dmg": 13, "pat": ["cross", "cell"], "spr": "mastgeier", "loot": 15, "boss": false, "tele": true},
+	{"name": "Blitzfarn", "el": "Elektro", "hp": 125, "move": 99.0, "atk": 2.2, "dmg": 14, "pat": ["cross", "spark", "cross"], "spr": "blitzfarn", "loot": 16, "boss": false, "tele": false, "stationary": true},
+	{"name": "Donnerkondor", "el": "Elektro", "hp": 650, "move": 1.7, "atk": 1.9, "dmg": 19, "pat": ["row", "spark", "col2", "cross"], "spr": "donnerkondor", "title": "Herr der Hochspannungs-Steppe", "loot": 55, "boss": true, "tele": true, "minion": "spark",
+		"phase2": ["cross", "spark", "wall", "col"], "phase3": ["col2", "spark", "cross", "wall"],
+		"specials": [{"shape": "checker", "name": "Gewitterfront"}, {"shape": "chase", "name": "Himmelsriss"}]},
+	{"name": "Donnerbock", "el": "Elektro", "hp": 400, "move": 1.3, "atk": 2.1, "dmg": 17, "pat": ["row", "spark", "col"], "spr": "donnerbock",
+		"title": "Der Hornsturm der Steppe", "loot": 34, "boss": true, "guard": true, "tele": false, "minion": "none",
+		"phase2": ["wall", "spark", "row"], "specials": [{"shape": "sweep", "name": "Hornsturm"}]},
+	{"name": "Trafokäfer", "el": "Code", "hp": 460, "move": 1.6, "atk": 2.1, "dmg": 18, "pat": ["col2", "spark", "row"], "spr": "trafokaefer",
+		"title": "Das Umspannwerk auf Beinen", "loot": 38, "boss": true, "guard": true, "tele": false, "minion": "none",
+		"phase2": ["cross", "spark", "col2", "wall"], "specials": [{"shape": "ring", "name": "Kurzschlusskreis"}]},
 ]
 
 ## Zonen: Gegner-Pools (Indizes in FOES), Boss, Wächter je Ebene, Zähigkeit, Hintergrund. Zone 2 wird nach dem Boss von Zone 1 frei.
@@ -269,14 +297,20 @@ const ZONES := {
 	"vulkan": {"name": "Firewall-Vulkan", "bg": "vulkan", "boss": 10, "guards": [20, 21], "hp_mult": 1.25,
 		"early": [7, 9, 25], "late": [7, 8, 9, 6, 25], "elite": [8, 6, 25],
 		"desc": "Glühende Sicherheitsmauern. Wasser hat hier einen Vorteil.", "unlock": "wiesen"},
+	"see": {"name": "Kühlwasser-See", "bg": "see", "boss": 34, "guards": [35, 36], "hp_mult": 1.4,
+		"early": [30, 31, 33], "late": [30, 31, 32, 33], "elite": [32, 33, 30],
+		"desc": "Der riesige Kühlsee unter dem Server. Strömungen reißen dich mit. Code hat hier einen Vorteil.", "unlock": "vulkan"},
 	"sumpf": {"name": "Viren-Sümpfe", "bg": "sumpf", "boss": 14, "guards": [22, 23], "hp_mult": 1.5,
 		"early": [11, 26, 27], "late": [11, 12, 13, 26, 27], "elite": [12, 13, 26],
-		"desc": "Blubbernde Sümpfe voller Viren und Glitch-Sporen. Elektro hat hier einen Vorteil.", "unlock": "vulkan"},
-	"kern": {"name": "NEST-Kern", "bg": "kern", "boss": 17, "guards": [24], "levels": 2, "hp_mult": 1.6, "final": true,
+		"desc": "Blubbernde Sümpfe voller Viren und Glitch-Sporen. Elektro hat hier einen Vorteil.", "unlock": "see"},
+	"steppe": {"name": "Hochspannungs-Steppe", "bg": "steppe", "boss": 41, "guards": [42, 43], "hp_mult": 1.65,
+		"early": [37, 38, 39], "late": [37, 38, 39, 40], "elite": [38, 40, 39],
+		"desc": "Grasland unter Dauergewitter. Spannungsfelder kosten HP, laden deine Chips aber doppelt so schnell. Virus hat hier einen Vorteil.", "unlock": "sumpf"},
+	"kern": {"name": "NEST-Kern", "bg": "kern", "boss": 17, "guards": [24], "levels": 2, "hp_mult": 1.75, "final": true,
 		"early": [15, 16, 29], "late": [15, 16, 28, 29], "elite": [15, 28, 29],
-		"desc": "Das Herz des abgestürzten Servers. Kurz, hart – und am Ende wartet der Ur-Glitch.", "unlock": "sumpf"},
+		"desc": "Das Herz des abgestürzten Servers. Kurz, hart – und am Ende wartet der Ur-Glitch.", "unlock": "steppe"},
 }
-const ZONE_ORDER := ["wiesen", "vulkan", "sumpf", "kern"]
+const ZONE_ORDER := ["wiesen", "vulkan", "see", "sumpf", "steppe", "kern"]
 ## Elemente, durch die der Ur-Glitch wechselt
 const SHIFT_ELEMENTS := ["Virus", "Feuer", "Wasser", "Elektro", "Code"]
 

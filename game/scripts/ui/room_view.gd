@@ -56,6 +56,10 @@ func _intro() -> String:
 			return "Eine kühle Nische im Vulkangestein. Das Knistern der Glut klingt fast gemütlich."
 		"kern":
 			return "Eine stille Wartungsnische im Kern. Die Lüfter laufen noch. Ein letztes Durchatmen."
+		"see":
+			return "Ein flacher Felsen am Ufer des Kühlsees. Das Wasser plätschert leise gegen den Stein."
+		"steppe":
+			return "Ein Unterstand neben einem stillgelegten Strommast. Draußen grollt der Donner, hier drinnen ist es trocken."
 		"sumpf":
 			return "Ein trockener Baumstumpf mitten im Moor. Glühwürmchen summen, kein Virus weit und breit."
 	return "Ein ruhiger Cache-Winkel. Die Lüfter summen leise. Zeit zum Durchatmen."
@@ -319,6 +323,19 @@ func _draw_scene() -> void:
 				var x := fmod(i * 67.3 + 11.0, W)
 				var y := H - fmod(anim_t * (22.0 + i % 4 * 7.0) + i * 37.0, H)
 				draw_rect(Rect2(roundi(x), roundi(y), 1, 3), Color(Color("#4CC3F0") if i % 3 else Color("#FF5470"), 0.6))
+		"see":
+			# aufsteigende Luftblasen
+			for i in 12:
+				var x := fmod(i * 59.3 + 17.0, W) + sin(anim_t * 1.2 + i) * 3.0
+				var y := H - fmod(anim_t * (14.0 + i % 4 * 5.0) + i * 43.0, H)
+				draw_arc(Vector2(roundi(x), roundi(y)), 1.5 + i % 3, 0, TAU, 8, Color("#8FE3FF", 0.45), 1)
+		"steppe":
+			# Funken, die im Wind treiben
+			for i in 14:
+				var x := fmod(i * 83.7 + anim_t * (30.0 + i % 3 * 12.0), W)
+				var y := 140.0 + fmod(i * 41.0, 120.0) + sin(anim_t * 2.0 + i) * 6.0
+				if sin(anim_t * 9.0 + i * 2.3) > 0.2:
+					draw_rect(Rect2(roundi(x), roundi(y), 2, 1), Color("#FFE45C", 0.7))
 		"sumpf":
 			# Glühwürmchen
 			for i in 9:
@@ -335,7 +352,8 @@ const FEET_Y := 264.0
 
 func _draw_prop(kind: String, x: float, g: float) -> void:
 	var t := anim_t
-	if kind in ["werkbank", "pusteblumen", "obsidian", "glutkaefer", "wrack", "gluehwuermer", "logbuch", "nestbewohner", "kernspeicher"]:
+	if kind in ["werkbank", "pusteblumen", "obsidian", "glutkaefer", "wrack", "gluehwuermer", "logbuch", "nestbewohner", "kernspeicher",
+			"kuehlrohr", "eisscholle", "taucherglocke", "spiegelsee", "umspannwerk", "gewitter", "datenherde", "relaisturm"]:
 		_draw_prop_new(kind, x, g)
 		return
 	match kind:
@@ -460,6 +478,106 @@ func _draw_prop(kind: String, x: float, g: float) -> void:
 func _draw_prop_new(kind: String, x: float, g: float) -> void:
 	var t := anim_t
 	match kind:
+		"kuehlrohr":
+			# Rohr mit Leck: Wasserstrahl, Eissplitter am Boden
+			draw_rect(Rect2(x - 26, g - 30, 30, 8), Color("#5A6A7A"))
+			draw_rect(Rect2(x - 26, g - 30, 30, 2), Color("#8A9AAA"))
+			draw_rect(Rect2(x + 2, g - 32, 4, 12), Color("#4A5A6A"))
+			for i in 7:
+				var ph := fmod(t * 1.6 + i / 7.0, 1.0)
+				var q := Vector2(x + 7 + ph * 20.0, g - 27 + ph * ph * 24.0)
+				draw_rect(Rect2(roundi(q.x), roundi(q.y), 2, 2), Color("#8FE3FF", 1.0 - ph * 0.6))
+			draw_rect(Rect2(x - 2, g - 2, 38, 2), Color("#2E7FC4", 0.6))
+			for i in 3:
+				draw_rect(Rect2(x + 12 + i * 7, g - 6 - (i % 2) * 2, 2, 5 + (i % 2) * 2), Color("#BFF4FF"))
+		"eisscholle":
+			# Eisscholle mit eingefrorenem Chip, schaukelt auf dem Wasser
+			var bob := roundi(sin(t * 1.5) * 1.5)
+			draw_rect(Rect2(x - 26, g - 3, 52, 3), Color("#2E7FC4", 0.7))
+			draw_rect(Rect2(x - 18, g - 11 + bob, 36, 9), Color("#DFF6FF"))
+			draw_rect(Rect2(x - 18, g - 3 + bob, 36, 1), Color("#8FC8E8"))
+			draw_rect(Rect2(x - 5, g - 9 + bob, 10, 6), Color("#2E7A5A"))
+			draw_rect(Rect2(x - 4, g - 8 + bob, 8, 1), Color("#6EE7C5"))
+			draw_rect(Rect2(x - 6, g - 10 + bob, 12, 8), Color("#BFF4FF", 0.45))
+			if fmod(t, 1.8) < 0.15:
+				draw_rect(Rect2(x + 3, g - 9 + bob, 1, 2), Color.WHITE)
+		"taucherglocke":
+			# Messing-Glocke mit Bullauge, Luftblasen steigen auf
+			draw_rect(Rect2(x - 22, g - 3, 44, 3), Color("#2E7FC4", 0.6))
+			draw_rect(Rect2(x - 14, g - 30, 28, 28), Color("#B07A3A"))
+			draw_rect(Rect2(x - 10, g - 34, 20, 4), Color("#B07A3A"))
+			draw_rect(Rect2(x - 14, g - 30, 28, 2), Color("#D8A85A"))
+			draw_circle(Vector2(x, g - 17), 6, Color("#3A2A1A"))
+			draw_circle(Vector2(x, g - 17), 5, Color("#2E7FC4"))
+			draw_rect(Rect2(x - 3, g - 20, 2, 2), Color("#8FE3FF"))
+			for i in 4:
+				var ph := fmod(t * 0.7 + i * 0.25, 1.0)
+				draw_arc(Vector2(x + 8 + sin(ph * 6.0 + i) * 3.0, g - 36 - ph * 30.0), 1.5 + ph, 0, TAU, 8, Color("#8FE3FF", 1.0 - ph), 1)
+		"spiegelsee":
+			# stiller See mit funkelndem Spiegelbild und Schaltkreis-Schimmer
+			draw_rect(Rect2(x - 22, g - 8, 44, 2), Color("#0E2A44"))
+			draw_rect(Rect2(x - 26, g - 6, 52, 6), Color("#0E2A44"))
+			draw_rect(Rect2(x - 24, g - 5, 48, 4), Color("#1E4060"))
+			for i in 5:
+				var a := 0.3 + 0.7 * absf(sin(t * 1.3 + i * 1.7))
+				draw_rect(Rect2(x - 20 + i * 9, g - 5 + (i % 2) * 2, 1, 1), Color(1, 1, 1, a))
+			draw_rect(Rect2(x - 6, g - 3, 12, 1), Color("#6EE7C5", 0.3 + 0.3 * sin(t * 2.0)))
+		"umspannwerk":
+			# Kasten mit drei Kupferspulen, dazwischen springt ein Lichtbogen
+			draw_rect(Rect2(x - 18, g - 22, 36, 22), Color("#4A4E5A"))
+			draw_rect(Rect2(x - 18, g - 22, 36, 2), Color("#6A6E7A"))
+			draw_rect(Rect2(x - 10, g - 14, 20, 2), Color("#2A2E3A"))
+			draw_rect(Rect2(x - 10, g - 10, 20, 2), Color("#2A2E3A"))
+			for i in 3:
+				draw_rect(Rect2(x - 14 + i * 11, g - 34, 6, 12), Color("#B87333"))
+				for k in 4:
+					draw_rect(Rect2(x - 14 + i * 11, g - 33 + k * 3, 6, 1), Color("#7A4A22"))
+			if fmod(t, 0.9) < 0.3:
+				var prev := Vector2(x - 11, g - 35)
+				for k in 1 + 4:
+					var q := Vector2(x - 11 + k * 5.5, g - 37 - (3 if k % 2 == 0 else 0) + sin(t * 40.0 + k) * 2.0)
+					draw_line(prev, q, Color("#FFF6A8"), 1)
+					prev = q
+		"gewitter":
+			# Mast unter einer Gewitterwolke, alle 1,5 s schlägt ein Blitz ein
+			draw_rect(Rect2(x - 1, g - 34, 2, 34), Color("#3A3A44"))
+			draw_rect(Rect2(x - 8, g - 30, 16, 2), Color("#3A3A44"))
+			for i in 4:
+				draw_circle(Vector2(x - 14 + i * 9, g - 62 + (i % 2) * 3), 8, Color("#2A2838"))
+			var lt := fmod(t, 1.5)
+			if lt < 0.14:
+				var prev := Vector2(x - 4, g - 56)
+				for k in 4:
+					var q := Vector2(x + (3 if k % 2 == 0 else -3), g - 50 + k * 4.5)
+					draw_line(prev, q, Color("#FFF6A8"), 2)
+					prev = q
+				draw_circle(Vector2(x, g - 34), 5, Color("#FFF6A8", 0.6))
+		"datenherde":
+			# Büffel-Jungtier, das sich in einer Leitung verfangen hat
+			var wig := roundi(sin(t * 6.0) * 1.0)
+			draw_rect(Rect2(x - 12, g - 16, 20, 10), Color("#6A4A32"))
+			draw_rect(Rect2(x - 12, g - 16, 20, 2), Color("#8A6A4A"))
+			draw_rect(Rect2(x + 6 + wig, g - 20, 9, 8), Color("#6A4A32"))
+			draw_rect(Rect2(x + 7 + wig, g - 23, 2, 3), Color("#D8D0C0"))
+			draw_rect(Rect2(x + 12 + wig, g - 23, 2, 3), Color("#D8D0C0"))
+			draw_rect(Rect2(x + 12 + wig, g - 17, 1, 1), Color.BLACK)
+			for i in 4:
+				draw_rect(Rect2(x - 10 + i * 5, g - 6, 2, 6), Color("#4A3222"))
+			# Leitung um das Bein, glimmt
+			draw_rect(Rect2(x - 22, g - 4, 18, 2), Color("#2A2A30"))
+			draw_rect(Rect2(x - 7, g - 6, 6, 2), Color("#FFE45C", 0.5 + 0.5 * sin(t * 4.0)))
+		"relaisturm":
+			# Gittermast mit blinkendem Licht, Signalwellen breiten sich aus
+			for y in 46:
+				var half := 1 + int(6.0 * y / 46.0)
+				draw_rect(Rect2(x - half, g - 46 + y, 1, 1), Color("#4A4A58"))
+				draw_rect(Rect2(x + half, g - 46 + y, 1, 1), Color("#4A4A58"))
+				if y % 6 == 0:
+					draw_rect(Rect2(x - half, g - 46 + y, half * 2 + 1, 1), Color("#4A4A58"))
+			draw_rect(Rect2(x - 1, g - 50, 3, 3), Color("#FF5470") if fmod(t, 1.0) < 0.5 else Color("#5A2A30"))
+			for i in 2:
+				var ph := fmod(t * 0.6 + i * 0.5, 1.0)
+				draw_arc(Vector2(x, g - 49), 4.0 + ph * 24.0, -PI * 0.8, -PI * 0.2, 12, Color("#FFE45C", 1.0 - ph), 1)
 		"werkbank":
 			# Tisch mit Schraubstock, Hammer und einem Chip, der aufblitzt
 			draw_rect(Rect2(x - 20, g - 20, 40, 4), Color("#7A5038"))

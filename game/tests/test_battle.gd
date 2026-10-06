@@ -67,6 +67,7 @@ func _ready() -> void:
 	test_ps_buttons()
 	test_sprite_colors()
 	test_station_guide()
+	test_new_zones()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -363,7 +364,7 @@ func test_new_events() -> void:
 		for o in Rooms.event_options(run, key):
 			if o.label == "" or o.desc == "":
 				all_ok = false
-	check(all_ok and Rooms.EVENTS.size() == 26, "26 Ereignisse, alle Optionen beschriftet")
+	check(all_ok and Rooms.EVENTS.size() == 34, "34 Ereignisse, alle Optionen beschriftet")
 	# Zonen-Ereignisse
 	var zv := Rooms.events_for_zone("vulkan")
 	var zs := Rooms.events_for_zone("sumpf")
@@ -450,7 +451,7 @@ func test_new_foes() -> void:
 	for f in GameData.FOES:
 		if not ResourceLoader.exists("res://assets/sprites/%s.png" % PixelCanvas.SPRITE_FILES[f.spr]):
 			sprites_ok = false
-	check(sprites_ok and GameData.FOES.size() == 30, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
+	check(sprites_ok and GameData.FOES.size() == 44, "Alle %d Gegner haben ein Sprite" % GameData.FOES.size())
 	# Jeder Gegner lässt sich mit dem Autopilot besiegen
 	var all_end := true
 	for i in GameData.FOES.size():
@@ -713,10 +714,13 @@ func test_zone3() -> void:
 	SaveGame.persist = false
 	SaveGame.new_game("Lumi")
 	SaveGame.data.cleared = ["wiesen"]
-	check(not SaveGame.zone_unlocked("sumpf"), "Viren-Sümpfe erst nach dem Vulkan")
+	check(not SaveGame.zone_unlocked("sumpf") and not SaveGame.zone_unlocked("see"), "Kühlwasser-See und Viren-Sümpfe erst nach dem Vulkan")
 	var rv := RunState.from_monster(SaveGame.team()[0], 1, "vulkan")
 	var sum := SaveGame.record_run(rv, true)
-	check(sum.get("unlocked", "") == "sumpf" and SaveGame.zone_unlocked("sumpf"), "Vulkan-Boss besiegt: Viren-Sümpfe frei")
+	check(sum.get("unlocked", "") == "see" and SaveGame.zone_unlocked("see") and not SaveGame.zone_unlocked("sumpf"), "Vulkan-Boss besiegt: Kühlwasser-See frei")
+	var rsee := RunState.from_monster(SaveGame.team()[0], 3, "see")
+	var sum2 := SaveGame.record_run(rsee, true)
+	check(sum2.get("unlocked", "") == "sumpf" and SaveGame.zone_unlocked("sumpf"), "See-Boss besiegt: Viren-Sümpfe frei")
 	var rs := RunState.from_monster(SaveGame.team()[0], 2, "sumpf")
 	check(rs.foe_for({"type": "boss"}).name == "Schwarmkönigin", "Boss der Sümpfe: Schwarmkönigin")
 	SaveGame.data = real_data
@@ -1291,11 +1295,11 @@ func test_english() -> void:
 ## Web-Testfassung: nur Cache-Wiesen und Firewall-Vulkan spielbar
 func test_testbuild() -> void:
 	var saved: Dictionary = SaveGame.data.duplicate(true)
-	SaveGame.data = {"cleared": ["wiesen", "vulkan", "sumpf"]}
+	SaveGame.data = {"cleared": ["wiesen", "vulkan", "see", "sumpf", "steppe"]}
 	SaveGame.force_test = true
 	var tb := SaveGame.zone_unlocked("vulkan") and not SaveGame.zone_unlocked("sumpf") and not SaveGame.zone_unlocked("kern") 		and SaveGame._newly_unlocked("vulkan") == "" and SaveGame.unlocked_zones() == ["wiesen", "vulkan"]
 	SaveGame.force_test = false
-	var full := SaveGame.zone_unlocked("kern") and SaveGame._newly_unlocked("vulkan") == "sumpf"
+	var full := SaveGame.zone_unlocked("kern") and SaveGame._newly_unlocked("vulkan") == "see"
 	SaveGame.data = saved
 	check(tb and full, "Testfassung: nur zwei Zonen, keine Freischaltung von Zone 3; normale Fassung unverändert")
 
@@ -1325,10 +1329,11 @@ func test_music() -> void:
 	for k in PixelCanvas.SPRITE_FILES:
 		if not ResourceLoader.exists("res://assets/sprites/%s_blink.png" % PixelCanvas.SPRITE_FILES[k]):
 			foe_no_blink.append(k)
-	# ohne sichtbare Augen: Glitchblüte, Schlackwurm, Magmaskorp, Schnappkelch, Datenegel (nur Saugmaul); Moorlibelle hat Facettenaugen
-	check(foe_no_blink == ["bluete", "schlackwurm", "magmaskorp", "schnappkelch", "datenegel", "moorlibelle"], "Alle Gegner mit Augen blinzeln (ohne: %s)" % ", ".join(foe_no_blink))
+	# ohne sichtbare Augen: Glitchblüte, Schlackwurm, Magmaskorp, Schnappkelch, Datenegel (nur Saugmaul); Moorlibelle hat Facettenaugen;
+	# See/Steppe (06.10.2026): Frostkrill (winzige Facettenaugen), Frostanemone, Spulenwurm, Blitzfarn (ohne Augen), Schraubenrochen und Frostnarwal (Linsen)
+	check(foe_no_blink == ["bluete", "schlackwurm", "magmaskorp", "schnappkelch", "datenegel", "moorlibelle", "frostkrill", "frostanemone", "schraubenrochen", "frostnarwal", "spulenwurm", "blitzfarn"], "Alle Gegner mit Augen blinzeln (ohne: %s)" % ", ".join(foe_no_blink))
 	# Zonentypische Gegner (04.10.2026): jeder Pool enthält nur Gegner der eigenen Zone
-	var own := {"wiesen": [0, 1, 2, 4, 5], "vulkan": [6, 7, 8, 9, 25], "sumpf": [11, 12, 13, 26, 27], "kern": [15, 16, 28, 29]}
+	var own := {"wiesen": [0, 1, 2, 4, 5], "vulkan": [6, 7, 8, 9, 25], "see": [30, 31, 32, 33], "sumpf": [11, 12, 13, 26, 27], "steppe": [37, 38, 39, 40], "kern": [15, 16, 28, 29]}
 	var zone_ok := true
 	for z in own:
 		for key in ["early", "late", "elite"]:
@@ -1336,7 +1341,7 @@ func test_music() -> void:
 				if not own[z].has(i):
 					zone_ok = false
 					printerr("    %s/%s: %s gehört nicht in diese Zone" % [z, key, GameData.FOES[i].name])
-	check(zone_ok, "Jede Zone hat nur ihre eigenen Gegner (Wiesen 5, Vulkan 5, Sümpfe 5, Kern 4)")
+	check(zone_ok, "Jede Zone hat nur ihre eigenen Gegner (Wiesen 5, Vulkan 5, See 4, Sümpfe 5, Steppe 4, Kern 4)")
 	# Karte spielt nach einem Kampf weiter statt neu zu beginnen
 	Music.play("map")
 	await get_tree().create_timer(0.6).timeout
@@ -1471,7 +1476,7 @@ func test_finale() -> void:
 	rk.heal(roundi(rk.max_hp * 0.3))
 	rk.add_module(rk.roll_module())
 	check(rk.map.level == 1 and rk.map.floors[-1][0].type == "boss" and rk.map.floors[4].all(func(n): return n.type == "rest"), "NEST-Kern Ebene 2: Rast vor dem Ur-Glitch")
-	check(GameData.ZONE_ORDER[-1] == "kern" and Z.unlock == "sumpf", "NEST-Kern wird nach den Viren-Sümpfen frei")
+	check(GameData.ZONE_ORDER[-1] == "kern" and Z.unlock == "steppe", "NEST-Kern wird nach der Hochspannungs-Steppe frei")
 	var boss := rk.foe_for({"type": "boss"})
 	check(boss.name == "Ur-Glitch" and boss.get("final", false), "Endboss: Ur-Glitch (%d HP)" % boss.hp)
 	# Elementwechsel
@@ -1502,9 +1507,9 @@ func test_finale() -> void:
 	check(lava_ok and st.pops.any(func(q): return q.kind == "milbe"), "Ur-Glitch-Diener passen zum Element (Feuer: Lava, Code: Bitmilben)")
 	# Spielstand: Ende erreicht → Korrumpiert frei
 	var saved: Dictionary = SaveGame.data.duplicate(true)
-	SaveGame.data.cleared = ["wiesen", "vulkan", "sumpf"]
+	SaveGame.data.cleared = ["wiesen", "vulkan", "see", "sumpf", "steppe"]
 	SaveGame.data.erase("game_cleared")
-	check(SaveGame.zone_unlocked("kern") and not SaveGame.game_cleared(), "Nach den Sümpfen ist der Kern offen, das Spiel aber noch nicht durch")
+	check(SaveGame.zone_unlocked("kern") and not SaveGame.game_cleared(), "Nach der Steppe ist der Kern offen, das Spiel aber noch nicht durch")
 	var rw := RunState.new("Pixmiez", 22)
 	rw.map = ZoneMap.generate(rw.rng, "kern")
 	var sum := SaveGame.record_run(rw, true)
@@ -2143,6 +2148,87 @@ func test_ps_buttons() -> void:
 	InputSetup.pad_style = old
 	var ff := PixelCanvas._ps_font()
 	check(ok_ps and ok_x and ff.has_char(0xE000) and ff.has_char(0xE003) and PixelCanvas.font().fallbacks.has(ff), "PS-Controller: ✕ ○ □ △ als eigene Pixel-Symbole, L1/R1/Options")
+
+
+## Kühlwasser-See und Hochspannungs-Steppe (06.10.2026)
+func test_new_zones() -> void:
+	check(GameData.ZONE_ORDER == ["wiesen", "vulkan", "see", "sumpf", "steppe", "kern"], "Zonen: Wiesen > Vulkan > See > Sümpfe > Steppe > Kern")
+	var bosses_ok: bool = GameData.FOES[GameData.ZONES.see.boss].name == "Tiefenschlange" and GameData.FOES[GameData.ZONES.steppe.boss].name == "Donnerkondor" 		and GameData.ZONES.see.guards.all(func(g): return GameData.FOES[g].get("guard", false)) and GameData.ZONES.steppe.guards.all(func(g): return GameData.FOES[g].get("guard", false))
+	check(bosses_ok, "See: Tiefenschlange + 2 Wächter, Steppe: Donnerkondor + 2 Wächter")
+	# Strömung: reißt den Spieler in Strömungsrichtung bis an den Rand, ohne Schaden
+	var cs := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[30])
+	cs.e.atk_t = 99.0
+	cs.e.move_t = 99.0
+	cs.p.c = 0
+	cs.p.r = 1
+	var hp0: int = cs.run.hp
+	cs.warns.append({"cells": [Vector2i(0, 1), Vector2i(1, 1), Vector2i(2, 1)], "t": 0.05, "max": 0.9, "dmg": 0, "lava": true, "kind": "current", "dir": 1})
+	step(cs, 2.2)
+	check(cs.p.c == 2 and cs.run.hp == hp0 and cs.hazards.all(func(h): return h.kind == "current"), "Strömung reißt den Spieler bis an den Rand (ohne Schaden)")
+	# Spannungsfeld: kostet HP, Chips laden doppelt so schnell
+	var sp := BattleState.new(RunState.new("Funkling", 1), GameData.FOES[38])
+	sp.e.atk_t = 99.0
+	sp.e.move_t = 99.0
+	var ref := BattleState.new(RunState.new("Funkling", 1), GameData.FOES[38])
+	ref.e.atk_t = 99.0
+	ref.e.move_t = 99.0
+	sp.hazards.append({"c": sp.p.c, "r": sp.p.r, "t": 4.0, "tick": 0.0, "kind": "spark", "seed": 1})
+	sp.hand[0].rem = 2.0
+	ref.hand[0].rem = 2.0
+	var hp1: int = sp.run.hp
+	step(sp, 0.5)
+	step(ref, 0.5)
+	check(sp.run.hp < hp1 and absf((2.0 - sp.hand[0].rem) - 2.0 * (2.0 - ref.hand[0].rem)) < 0.05, "Spannungsfeld: kostet HP, Chips laden doppelt so schnell")
+	# Großangriff Welle (Tiefenschlange): Spalte für Spalte
+	var ws := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[34])
+	ws.def = GameData.FOES[34].duplicate(true)
+	ws.def.specials = [{"shape": "wave", "name": "Sturzflut"}]
+	ws.start_special()
+	var first: Array = ws.warns[-1].cells
+	check(first.size() == 3 and first.all(func(c): return c.x == 2) and ws.delayed.size() == 2, "Großangriff Sturzflut: Welle Spalte für Spalte")
+	# Alte Spielstände: freie Zonen bleiben frei
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.data = {"version": SaveGame.VERSION, "team": [], "nest": [], "dex": {}, "cleared": ["wiesen", "vulkan", "sumpf"]}
+	SaveGame._upgrade()
+	var keep := SaveGame.zone_unlocked("sumpf") and SaveGame.zone_unlocked("kern") and SaveGame.zone_unlocked("see") and SaveGame.zone_unlocked("steppe")
+	SaveGame.data = saved
+	check(keep, "Alter Spielstand: Sümpfe und Kern bleiben frei, See und Steppe kommen dazu")
+	# Komplette Runs durch See und Steppe (Autopilot, 0,25 s Reaktion)
+	for zone in ["see", "steppe"]:
+		var stuck := 0
+		var wins := 0
+		for sv in 6:
+			seed(sv)
+			var rz := RunState.new(["Lumi", "Pixmiez", "Brummbit"][sv % 3], sv)
+			rz.map = ZoneMap.generate(rz.rng, zone)
+			var bot := BattleBot.new(0.25)
+			while true:
+				var ch := rz.next_choices()
+				if ch.is_empty():
+					break
+				var node := rz.enter(ch[0])
+				if node.type in ["fight", "elite", "glitch", "guard", "boss"]:
+					var s := BattleState.new(rz, rz.foe_for(node))
+					var t := 0.0
+					while not s.over and t < 180.0:
+						bot.act(s)
+						s.update(1.0 / 30.0)
+						t += 1.0 / 30.0
+					if not s.over:
+						stuck += 1
+						break
+					if s.outcome == "lost":
+						break
+					if node.type == "boss":
+						wins += 1
+						break
+					if node.type == "guard":
+						rz.next_level()
+						rz.heal(roundi(rz.max_hp * 0.3))
+						rz.add_module(rz.roll_module())
+					rz.heal(10)
+		check(stuck == 0, "%s-Runs: kein Kampf hängt" % GameData.ZONES[zone].name)
+		print("  info    %s-Autopilot: %d/6 Runs gewonnen" % [GameData.ZONES[zone].name, wins])
 
 
 ## Stilregel: jedes Sprite höchstens 32 Farben – Grundbild, Blinzel-Bild, Idle- und Angriffs-Frames zusammen (30.09./05.10.2026)

@@ -303,6 +303,106 @@ const TRACKS := {
 				"D6 - - - - - - - A5 - C6 - F#6 - - -"]},
 		],
 	},
+	# ---------- Kühlwasser-See (06.10.2026): ruhig, fließend, e-Moll ----------
+	"map_see": {
+		"bpm": 92, "loud": 0.17, "lead": "lead_soft", "bass": "half", "arp": "arp16", "stabs": "", "drums": "see_map", "counter": "strings",
+		"sections": [
+			{"name": "A", "chords": ["Em", "C", "G", "D", "Em", "C", "Am", "B"], "melody": [
+				"E5 - - - G5 - B5 - A5 - G5 - F#5 - E5 -",
+				"G5 - - - - - E5 - C5 - - - E5 - G5 -",
+				"B5 - - - A5 - G5 - D5 - - - G5 - B5 -",
+				"A5 - - - - - - - F#5 - - - D5 - - -",
+				"E5 - - - B5 - - - A5 - G5 - E5 - G5 -",
+				"C6 - - - B5 - G5 - E5 - - - G5 - C6 -",
+				"B5 - - - A5 - E5 - C5 - - - E5 - A5 -",
+				"B5 - - - - - - - D#5 - - - F#5 - - -"]},
+			{"name": "B", "chords": ["C", "D", "Bm", "Em", "Am", "D", "C", "B"], "melody": [
+				"G5 - - - E5 - - - C6 - - - B5 - G5 -",
+				"A5 - - - F#5 - - - D6 - - - C6 - A5 -",
+				"B5 - - - - - F#5 - D5 - - - F#5 - B5 -",
+				"G5 - - - - - E5 - B4 - - - E5 - - -",
+				"E5 - A5 - C6 - - - B5 - A5 - E5 - - -",
+				"F#5 - A5 - D6 - - - C6 - A5 - F#5 - - -",
+				"G5 - - - E5 - G5 - C6 - - - B5 - A5 -",
+				"B5 - - - - - - - . . . . F#5 - D#5 -"]},
+		],
+	},
+	"battle_see": {
+		"bpm": 166, "loud": 0.21, "lead": "lead_sq", "bass": "octave8", "arp": "arp16", "stabs": "x.....x...x.....", "drums": "see", "counter": "brass",
+		"sections": [
+			{"name": "intro", "chords": ["Am", "E"], "melody": [
+				"A4 . C5 . E5 . A5 . G#5 . E5 . B4 . G#4 .",
+				"A4 - - - C5 - - - B4 - - - E5 - - -"]},
+			{"name": "A", "chords": ["Am", "F", "G", "E", "Am", "F", "Dm", "E"], "melody": [
+				"E5 - A5 - C6 - - - B5 - A5 - G#5 - A5 -",
+				"A5 - - - F5 - - - C5 - F5 - A5 - C6 -",
+				"B5 - - - G5 - - - D5 - G5 - B5 - D6 -",
+				"B5 - - - - - - - G#5 - - - E5 - - -",
+				"A5 . A5 . C6 . A5 . E6 - - - D6 - C6 -",
+				"C6 - - - A5 - F5 - A5 - - - C6 - F6 -",
+				"D6 - - - C6 - - - A5 - D6 - F6 - - -",
+				"E6 - - - - - - - G#5 - - - B5 - - -"]},
+			{"name": "B", "chords": ["F", "G", "Em", "Am", "Dm", "E", "F", "E"], "melody": [
+				"A5 - - - C6 - F6 - - - C6 - A5 - - -",
+				"B5 - - - D6 - G6 - - - D6 - B5 - - -",
+				"G5 - - - B5 - E6 - - - B5 - G5 - E5 -",
+				"A5 - - - - - - - C6 - - - E6 - - -",
+				"F6 - - - E6 - D6 - A5 - - - D6 - F6 -",
+				"E6 - - - - - - - G#5 - - - B5 - D6 -",
+				"C6 - - - A5 - F5 - C6 - - - F6 - - -",
+				"E6 - - - - - - - B5 - D6 - G#6 - - -"]},
+		],
+	},
+	# ---------- Hochspannungs-Steppe (06.10.2026): weit, heldenhaft, D-Dur ----------
+	"map_steppe": {
+		"bpm": 112, "loud": 0.18, "lead": "brass", "bass": "bounce", "arp": "arp8", "stabs": "", "drums": "steppe_map", "counter": "strings",
+		"sections": [
+			{"name": "A", "chords": ["D", "C", "G", "D", "D", "C", "G", "A"], "melody": [
+				"D5 - - - F#5 - A5 - - - F#5 - A5 - D6 -",
+				"C6 - - - - - G5 - E5 - - - G5 - C6 -",
+				"B5 - - - A5 - G5 - D5 - - - G5 - B5 -",
+				"A5 - - - - - - - F#5 - - - D5 - - -",
+				"D6 - - - C6 - A5 - F#5 - A5 - D6 - - -",
+				"E6 - - - D6 - C6 - G5 - - - C6 - E6 -",
+				"D6 - - - B5 - G5 - B5 - - - D6 - G6 -",
+				"E6 - - - - - - - C#6 - - - A5 - - -"]},
+			{"name": "B", "chords": ["Bm", "G", "D", "A", "Bm", "G", "Em", "A"], "melody": [
+				"F#5 - - - B5 - - - D6 - - - C#6 - B5 -",
+				"G5 - - - B5 - - - D6 - - - B5 - G5 -",
+				"A5 - - - F#5 - - - D5 - - - F#5 - A5 -",
+				"E5 - - - - - - - A5 - - - C#6 - - -",
+				"D6 - - - C#6 - B5 - F#5 - - - B5 - D6 -",
+				"D6 - - - B5 - G5 - D5 - - - G5 - B5 -",
+				"E6 - - - D6 - B5 - G5 - - - B5 - E6 -",
+				"C#6 - - - - - - - . . . . A5 - C#6 -"]},
+		],
+	},
+	"battle_steppe": {
+		"bpm": 176, "loud": 0.21, "lead": "lead_sq", "bass": "octave8", "arp": "arp16", "stabs": "x.x...x.x.x...x.", "drums": "steppe", "counter": "brass",
+		"sections": [
+			{"name": "intro", "chords": ["Bm", "F#"], "melody": [
+				"B4 . D5 . F#5 . B5 . A#5 . F#5 . C#5 . A#4 .",
+				"B4 - - - D5 - - - C#5 - - - F#5 - - -"]},
+			{"name": "A", "chords": ["Bm", "G", "A", "F#", "Bm", "G", "Em", "F#"], "melody": [
+				"F#5 - B5 - D6 - - - C#6 - B5 - A#5 - B5 -",
+				"B5 - - - G5 - - - D5 - G5 - B5 - D6 -",
+				"C#6 - - - A5 - - - E5 - A5 - C#6 - E6 -",
+				"C#6 - - - - - - - A#5 - - - F#5 - - -",
+				"B5 . B5 . D6 . B5 . F#6 - - - E6 - D6 -",
+				"D6 - - - B5 - G5 - B5 - - - D6 - G6 -",
+				"E6 - - - D6 - - - B5 - E6 - G6 - - -",
+				"F#6 - - - - - - - A#5 - - - C#6 - - -"]},
+			{"name": "B", "chords": ["G", "A", "D", "Bm", "Em", "F#", "G", "F#"], "melody": [
+				"B5 - - - D6 - G6 - - - D6 - B5 - - -",
+				"C#6 - - - E6 - A6 - - - E6 - C#6 - - -",
+				"A5 - - - D6 - F#6 - - - D6 - A5 - F#5 -",
+				"B5 - - - - - - - D6 - - - F#6 - - -",
+				"G6 - - - F#6 - E6 - B5 - - - E6 - G6 -",
+				"F#6 - - - - - - - A#5 - - - C#6 - E6 -",
+				"D6 - - - B5 - G5 - D6 - - - G6 - - -",
+				"F#6 - - - - - - - C#6 - E6 - A#6 - - -"]},
+		],
+	},
 	# ---------- Finale: NEST-Kern ----------
 	"map_kern": {
 		"bpm": 100, "loud": 0.17, "lead": "lead_soft", "bass": "bounce", "arp": "arp16", "stabs": "", "drums": "map", "counter": "strings",
@@ -409,6 +509,10 @@ const DRUMS := {
 	"vulkan": {"k": "x.x...x.x.x...x.", "s": "....x.......x...", "h": "x.xxx.xxx.xxx.xx", "t": "......x.......x.", "vol": 1.0},
 	"sumpf_map": {"k": "x.....x...x.....", "s": "....x.......x..x", "h": "x..x..x.x..x..x.", "vol": 0.5},
 	"sumpf": {"k": "x..x....x..x....", "s": "....x.......x...", "h": "x.xxx.xxx.xxx.xx", "vol": 0.95},
+	"see_map": {"k": "x.......x.......", "s": "............x...", "h": "..x...x...x...x.", "vol": 0.45},
+	"see": {"k": "x...x.x.x...x.x.", "s": "....x.......x...", "h": "x.xxx.xxx.xxx.xx", "vol": 0.95},
+	"steppe_map": {"k": "x.....x.x.......", "s": "....x.......x...", "h": "x.x.x.x.x.x.x.x.", "t": "..............x.", "vol": 0.55},
+	"steppe": {"k": "x.x...x.x.x...x.", "s": "....x.......x..x", "h": "xxxxxxxxxxxxxxxx", "t": "......x.......x.", "vol": 1.0},
 }
 
 var L := PackedFloat32Array()

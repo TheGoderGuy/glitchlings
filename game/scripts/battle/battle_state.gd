@@ -62,7 +62,11 @@ var min_e_hp := 0        # Tutorial: Gegner kann nicht unter diesen Wert fallen
 var min_p_hp := 0        # Tutorial: Spieler kann nicht unter diesen Wert fallen
 var last_slot := -1      # zuletzt gespielter Slot (Tutorial)
 var last_mult := 1.0     # Element-Faktor des letzten Chip-Treffers (Tutorial: „Effektiv!“ erkennen)
-var hazards: Array = []  # Lavafelder auf der Spielerseite {c, r, t, tick}
+var hazards: Array = []  # Flächen auf der Spielerseite {c, r, t, tick, kind: lava | slime | current | spark}
+## Flächenarten mit Dauer (s) und Farbe beim Entstehen
+const HAZARD_DUR := {"lava": 3.0, "slime": 4.0, "current": 4.0, "spark": 4.0}
+const HAZARD_COL := {"lava": Color("#FF7A1F"), "slime": Color("#7BD35A"), "current": Color("#4CB8F0"), "spark": Color("#FFE45C")}
+var push_t := 0.5         # Strömung: Zeit bis zum nächsten Mitreißen
 var decoy_t := 0.0
 var regen_t := 1.0
 var banner := {}
@@ -130,6 +134,10 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 			status = "Endboss! Der Ur-Glitch wechselt ständig sein Element. Achte oben rechts darauf!"
 		elif def.get("minion", "pop") == "mix":
 			status = "Boss! Sie verschleimt Felder und streut Glitch-Sporen. Und jeder Treffer heilt sie!"
+		elif def.get("minion", "pop") == "current":
+			status = "Boss! Ab der Hälfte ihrer HP lässt sie Strömungen durch deine Reihen ziehen. Sie reißen dich mit!"
+		elif def.get("minion", "pop") == "spark":
+			status = "Boss! Ab der Hälfte seiner HP lädt er Felder auf. Sie kosten HP, aber deine Chips laden dort doppelt so schnell."
 		else:
 			status = "Boss! Ab der Hälfte seiner HP schickt er Bitmilben. Tritt drauf, bevor sie platzen!"
 	elif def.get("glitch", false):
@@ -869,7 +877,18 @@ func burst(x: float, y: float, color: Color, n: int) -> void:
 
 
 func on_slime(c: int, r: int) -> bool:
-	return hazards.any(func(hz): return hz.c == c and hz.r == r and hz.get("kind", "lava") == "slime")
+	return on_hazard(c, r, "slime")
+
+
+func on_hazard(c: int, r: int, kind: String) -> bool:
+	return not _hazard_at(c, r, kind).is_empty()
+
+
+func _hazard_at(c: int, r: int, kind: String) -> Dictionary:
+	for hz in hazards:
+		if hz.c == c and hz.r == r and hz.get("kind", "lava") == kind:
+			return hz
+	return {}
 
 
 ## Ur-Glitch: nächstes Element (nie dasselbe), mit Hinweis, was jetzt stark ist
@@ -946,7 +965,7 @@ func _update_logic(dt: float) -> void:
 			var h := run.heal(2 if run.stage >= 3 else 1)
 			float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
 
-	var rate: float = mon.rech * (2.0 if oc > 0 else 1.0)
+	var rate: float = mon.rech * (2.0 if oc > 0 else 1.0) * (2.0 if on_hazard(p.c, p.r, "spark") else 1.0)
 	for i in hand.size():
 		var s: Dictionary = hand[i]
 		if s.rem > 0:
@@ -1095,13 +1114,21 @@ func _update_logic(dt: float) -> void:
 				var minion: String = def.get("minion", "pop")
 				if minion == "shift":
 					# Ur-Glitch: Diener passend zum aktuellen Element
-					minion = {"Feuer": "lava", "Virus": "slime"}.get(def.el, "pop")
+					minion = {"Feuer": "lava", "Virus": "slime", "Wasser": "current", "Elektro": "spark"}.get(def.el, "pop")
 				if minion == "mix":
 					minion = "slime" if rng.randf() < 0.5 else "pop"
 				if minion == "slime":
 					var sc: Array = [Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2)), Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2))]
 					events.append("warn")
 					warns.append({"cells": sc, "t": 0.9, "max": 0.9, "dmg": 0, "lava": true, "kind": "slime"})
+				elif minion == "current":
+					var row := rng.randi_range(0, 2)
+					events.append("warn")
+					warns.append({"cells": [Vector2i(0, row), Vector2i(1, row), Vector2i(2, row)], "t": 0.9, "max": 0.9, "dmg": 0, "lava": true, "kind": "current", "dir": 1 if rng.randf() < 0.5 else -1})
+				elif minion == "spark":
+					var spc: Array = [Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2)), Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2))]
+					events.append("warn")
+					warns.append({"cells": spc, "t": 0.9, "max": 0.9, "dmg": 0, "lava": true, "kind": "spark"})
 				elif minion == "lava":
 					var cells: Array = []
 					for k in 2:
@@ -1118,11 +1145,13 @@ func _update_logic(dt: float) -> void:
 			warns.remove_at(i)
 			events.append("strike")
 			if w.get("lava", false):
-				var slime: bool = w.get("kind", "lava") == "slime"
+				var hk: String = w.get("kind", "lava")
 				for cell in w.cells:
-					hazards.append({"c": cell.x, "r": cell.y, "t": 4.0 if slime else 3.0, "tick": 0.0, "kind": "slime" if slime else "lava", "seed": randi() % 1000})
-					fx_cell(cell.x, cell.y, Color("#7BD35A") if slime else GameData.EL.Feuer, 0.3)
-					vfx_add("erupt", cell.x, cell.y, 0.45, {"slime": slime})
+					# eine Zelle hat höchstens eine Fläche (die neue ersetzt die alte)
+					hazards = hazards.filter(func(h0): return not (h0.c == cell.x and h0.r == cell.y))
+					hazards.append({"c": cell.x, "r": cell.y, "t": HAZARD_DUR[hk], "tick": 0.0, "kind": hk, "dir": w.get("dir", 1), "seed": randi() % 1000})
+					fx_cell(cell.x, cell.y, HAZARD_COL[hk], 0.3)
+					vfx_add("erupt", cell.x, cell.y, 0.45, {"slime": hk == "slime", "kind": hk})
 				events.append("hit")
 				continue
 			var hit := false
@@ -1147,9 +1176,31 @@ func _update_logic(dt: float) -> void:
 					if heal_e > 0:
 						e.hp += heal_e
 						float_at(3 + e.c, e.r, "+%d" % heal_e, Color("#7BD35A"))
+	# Strömung: reißt den Spieler alle 0,7 s ein Feld mit (bis an den Rand)
+	var cur := _hazard_at(p.c, p.r, "current")
+	if cur.is_empty():
+		push_t = 0.5
+	else:
+		push_t -= dt
+		if push_t <= 0:
+			push_t = 0.7
+			var nc: int = p.c + int(cur.get("dir", 1))
+			if nc >= 0 and nc <= 2:
+				p.c = nc
+				pend_move = null
+				float_at(p.c, p.r, "Strömung!", GameData.EL.Wasser)
+				events.append("move")
 	for i in range(hazards.size() - 1, -1, -1):
 		var hz: Dictionary = hazards[i]
 		hz.t -= dt
+		if hz.c == p.c and hz.r == p.r and hz.get("kind", "lava") == "spark":
+			# Spannungsfeld: kostet etwas HP, dafür laden die Chips doppelt so schnell (siehe rate)
+			hz.tick -= dt
+			if hz.tick <= 0:
+				hz.tick = 0.6
+				hurt_player(maxi(2, roundi(def.dmg * 0.2)))
+				if over:
+					return
 		if hz.c == p.c and hz.r == p.r and hz.get("kind", "lava") == "lava":
 			hz.tick -= dt
 			if hz.tick <= 0:
@@ -1269,6 +1320,18 @@ func _enemy_attack() -> void:
 			if nb != Vector2i(p.c, p.r):
 				cells.append(nb)
 			warn = 0.8
+		"current":
+			# Strömung: die Reihe des Spielers reißt ihn mit (Kühlwasser-See)
+			for c in 3:
+				cells.append(Vector2i(c, p.r))
+			warn = 0.8
+		"spark":
+			# Spannungsfeld: Feld des Spielers + ein weiteres laden sich auf (Hochspannungs-Steppe)
+			cells.append(Vector2i(p.c, p.r))
+			var n2 := Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2))
+			if n2 != Vector2i(p.c, p.r):
+				cells.append(n2)
+			warn = 0.8
 		"lava":
 			# Feld des Spielers + ein weiteres wird zu Lava
 			cells.append(Vector2i(p.c, p.r))
@@ -1291,7 +1354,8 @@ func _enemy_attack() -> void:
 	if mon.passive in ["Eulenblick", "Mischwesen"]:
 		warn += 0.3
 	events.append("warn")
-	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg, "lava": kind == "lava" or kind == "slime", "kind": "slime" if kind == "slime" else "lava"})
+	var area: bool = HAZARD_DUR.has(kind)
+	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg, "lava": area, "kind": kind if area else "lava", "dir": (1 if rng.randf() < 0.5 else -1) if kind == "current" else 1})
 
 
 func _spawn_pop() -> void:
@@ -1308,7 +1372,7 @@ func _spawn_pop() -> void:
 	var cell: Vector2i = free[rng.randi_range(0, free.size() - 1)]
 	events.append("pop")
 	# Aussehen: Glitch-Spore im Sumpf, sonst Bitmilbe (kleiner Krabbel-Bot)
-	var kind := "spore" if run.map.zone == "sumpf" else "milbe"
+	var kind: String = {"sumpf": "spore", "see": "bubble"}.get(run.map.zone, "milbe")
 	if def.get("shift", false):
 		kind = "milbe" if def.el == "Code" else "spore"
 	kind = def.get("pop_kind", kind)
@@ -1402,6 +1466,15 @@ func start_special() -> void:
 					_sp_warn(_cells_where(func(c, r): return r == row), warn, dmg)
 				else:
 					_sp_later(0.55 * i, func(): return _cells_where(func(c, r): return r == row), warn, dmg)
+			total = warn + 1.1
+		"wave":
+			# Welle: Spalte für Spalte von vorn nach hinten (Tiefenschlange)
+			for i in 3:
+				var col := 2 - i
+				if i == 0:
+					_sp_warn(_cells_where(func(c, r): return c == col), warn, dmg)
+				else:
+					_sp_later(0.55 * i, func(): return _cells_where(func(c, r): return c == col), warn, dmg)
 			total = warn + 1.1
 		"chase":
 			# Hatz: drei Einschläge, die dem Spieler folgen

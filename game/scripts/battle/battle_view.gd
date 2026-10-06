@@ -470,16 +470,21 @@ func _draw_arena_overlays() -> void:
 				_text(rect.position + Vector2(0, 26), "!!", 16, Color(1, 1, 1, minf(1.0, 0.5 + k)), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true, true)
 				continue
 			if w.get("lava", false):
-				_draw_ground_warn(rect, k, w.get("kind", "lava") == "slime", cell)
+				_draw_ground_warn(rect, k, w.get("kind", "lava"), cell, int(w.get("dir", 1)))
 				continue
 			draw_rect(rect, Color(GameData.COL.coral, a))
 			_text(rect.position + Vector2(0, 26), "!", 16, Color(1, 1, 1, minf(1.0, 0.4 + k)), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x, true, true)
 	for hz in st.hazards:
 		var rect := cell_rect(hz.c, hz.r)
-		if hz.get("kind", "lava") == "slime":
-			_draw_slime_pool(rect, hz)
-		else:
-			_draw_lava_pool(rect, hz)
+		match hz.get("kind", "lava"):
+			"slime":
+				_draw_slime_pool(rect, hz)
+			"current":
+				_draw_current_pool(rect, hz)
+			"spark":
+				_draw_spark_pool(rect, hz)
+			_:
+				_draw_lava_pool(rect, hz)
 	for q in st.parts:
 		if q.has("cell"):
 			draw_rect(cell_rect(q.c, q.r), Color(q.color, q.t / q.max * 0.8))
@@ -1053,7 +1058,18 @@ func _draw_minion(q: Dictionary) -> void:
 	var fast := fmod(anim_t, 0.5 - 0.35 * k) < 0.12
 	var cx := roundf(rect.get_center().x)
 	var fy := roundf(rect.position.y + FEET - 6)
-	if q.get("kind", "milbe") == "spore":
+	var mk: String = q.get("kind", "milbe")
+	if mk == "bubble":
+		# Glitch-Blase: schwillt an, kurz vor dem Platzen hell
+		var brad := roundf(7.0 + 5.0 * k + sin(anim_t * 6.0) * 1.0)
+		var bc := Vector2(cx, fy - brad - 2)
+		draw_circle(bc, brad + 1.0, Color(WATER_DARK, 0.9))
+		draw_circle(bc, brad, Color(WATER_LIGHT, 0.7) if fast else Color(WATER_MID, 0.55))
+		draw_arc(bc, brad, 0, TAU, 20, WATER_LIGHT, 1)
+		draw_rect(Rect2(roundi(bc.x - brad * 0.5), roundi(bc.y - brad * 0.55), 3, 2), Color(1, 1, 1, 0.9))
+		_px(bc + Vector2(2, 1), 2, Color("#FF5470", 0.85))
+		_px(bc + Vector2(-2, 3), 2, Color("#C77DFF", 0.7))
+	elif mk == "spore":
 		# pulsierende Spore, die anschwillt
 		var rad := roundf(6.0 + 4.0 * k + sin(anim_t * 8.0) * 1.0)
 		var c := Vector2(cx, fy - rad)
@@ -1588,10 +1604,11 @@ func _draw_vfx() -> void:
 			"erupt":
 				var fp := Vector2(cen.x, feet_y(v.r) - 6)
 				var slime: bool = v.get("slime", false)
-				var c1: Color = SLIME_MID if slime else LAVA_GLOW
-				var c2: Color = SLIME_LIGHT if slime else LAVA_HOT
-				if not slime and k < 0.3:
-					draw_circle(fp, 10 + k * 40, Color(LAVA_HOT, 0.5 * (1.0 - k / 0.3)))
+				var hk: String = v.get("kind", "slime" if slime else "lava")
+				var c1: Color = {"slime": SLIME_MID, "current": WATER_MID, "spark": VOLT_MID}.get(hk, LAVA_GLOW)
+				var c2: Color = {"slime": SLIME_LIGHT, "current": WATER_LIGHT, "spark": VOLT_HOT}.get(hk, LAVA_HOT)
+				if hk in ["lava", "spark"] and k < 0.3:
+					draw_circle(fp, 10 + k * 40, Color(c2, 0.5 * (1.0 - k / 0.3)))
 				for i in 7:
 					var ang := -PI * (0.15 + 0.7 * i / 6.0) + rng.randf_range(-0.15, 0.15)
 					var sp := rng.randf_range(40.0, 70.0) * (0.6 if slime else 1.0)
@@ -1615,6 +1632,12 @@ const LAVA_HOT := Color("#FFD24D")
 const SLIME_DARK := Color("#2F5E22")
 const SLIME_MID := Color("#5FA83E")
 const SLIME_LIGHT := Color("#A8F07A")
+const WATER_DARK := Color("#123A66")
+const WATER_MID := Color("#2E7FC4")
+const WATER_LIGHT := Color("#8FE3FF")
+const VOLT_DARK := Color("#4A3C0E")
+const VOLT_MID := Color("#E8C230")
+const VOLT_HOT := Color("#FFF6A8")
 
 
 ## Feste Zufallsformen je Feld (Risse, Adern, Pfützen), damit nichts flackert
@@ -1631,11 +1654,33 @@ func _blob_rect(r: Rect2, col: Color, cut := 3.0) -> void:
 
 
 ## Warnung vor Lava (Risse, die immer heller glühen) bzw. Schleim (blubbernde, wachsende Pfütze)
-func _draw_ground_warn(rect: Rect2, k: float, slime: bool, cell: Vector2i) -> void:
+func _draw_ground_warn(rect: Rect2, k: float, kind: String, cell: Vector2i, dir := 1) -> void:
+	var slime := kind == "slime"
 	var c := rect.get_center() + Vector2(0, 4)
 	var danger := 0.35 + 0.35 * k * (0.6 + 0.4 * sin(anim_t * 26.0))
 	draw_rect(rect, Color(GameData.COL.coral, 0.10 + 0.12 * k))
 	draw_rect(rect, Color(GameData.COL.coral, danger), false, 1)
+	if kind == "current":
+		# Strömung: Wasser steigt, Pfeile zeigen, wohin es dich reißt
+		var lvl := (rect.size.y - 6) * (0.2 + 0.7 * k)
+		draw_rect(Rect2(rect.position.x + 3, rect.end.y - 3 - lvl, rect.size.x - 6, lvl), Color(WATER_MID, 0.3 + 0.35 * k))
+		draw_line(Vector2(rect.position.x + 3, rect.end.y - 3 - lvl), Vector2(rect.end.x - 3, rect.end.y - 3 - lvl), Color(WATER_LIGHT, 0.6 + 0.4 * k), 1)
+		for i in 2:
+			var off := fposmod(anim_t * 30.0 * dir + i * rect.size.x / 2.0, rect.size.x - 20) + 10
+			_chevron(Vector2(rect.position.x + off, c.y), dir, Color(WATER_LIGHT, 0.4 + 0.6 * k))
+		return
+	if kind == "spark":
+		# Spannungsfeld: immer mehr Funken zucken über das Feld
+		var rng3 := _cell_rng(cell, 17)
+		draw_rect(rect.grow(-3), Color(VOLT_MID, 0.08 + 0.2 * k))
+		draw_rect(rect, Color(VOLT_MID, 0.3 + 0.5 * k), false, 1)
+		for i in 2 + int(k * 3.0):
+			var a := c + Vector2(rng3.randf_range(-22, 22), rng3.randf_range(-13, 13))
+			var b := a + Vector2(rng3.randf_range(-16, 16), rng3.randf_range(-10, 10))
+			var on := sin(anim_t * 40.0 + i * 2.0) > -0.3
+			_zigzag(a, b, int(anim_t * 20.0) + i, Color(VOLT_HOT, (0.5 + 0.5 * k) * (1.0 if on else 0.35)), 1.0, 4)
+		draw_circle(c, 2.0 + 4.0 * k, Color(VOLT_HOT, 0.4 + 0.5 * k))
+		return
 	if slime:
 		var rad := 4.0 + 17.0 * k
 		draw_circle(c, rad + 1, Color(SLIME_DARK.darkened(0.4), 0.8))
@@ -1703,6 +1748,48 @@ func _draw_lava_pool(rect: Rect2, hz: Dictionary) -> void:
 		for i in 2:
 			var t3 := fmod(anim_t * 1.3 + i * 0.5 + hz.c * 0.2, 1.0)
 			_px(Vector2(inner.position.x + 14 + i * 40, inner.position.y + 6 - t3 * 26.0), 2, Color(LAVA_HOT, (1.0 - t3) * fade))
+
+
+## Strömung (Kühlwasser-See): Wasserfläche mit Wellen, die in Strömungsrichtung ziehen
+func _draw_current_pool(rect: Rect2, hz: Dictionary) -> void:
+	var fade := minf(1.0, hz.t / 0.5)
+	var dir: int = int(hz.get("dir", 1))
+	var inner := rect.grow(-3)
+	_blob_rect(inner, Color(WATER_DARK, 0.9 * fade))
+	_blob_rect(inner.grow(-2), Color(WATER_MID, 0.8 * fade))
+	for row in 3:
+		var y := roundf(inner.position.y + 8 + row * (inner.size.y - 16) / 2.0)
+		for i in 3:
+			var x := roundf(inner.position.x + 6 + fposmod(anim_t * 26.0 * dir + i * inner.size.x / 3.0 + row * 9.0, inner.size.x - 12))
+			draw_line(Vector2(x - 5, y), Vector2(x, y - 2), Color(WATER_LIGHT, 0.8 * fade), 1)
+			draw_line(Vector2(x, y - 2), Vector2(x + 5, y), Color(WATER_LIGHT, 0.8 * fade), 1)
+	_chevron(inner.get_center() + Vector2(dir * 6, 0), dir, Color(1, 1, 1, 0.75 * fade))
+
+
+## Spannungsfeld (Hochspannungs-Steppe): glühende Platte mit zuckenden Blitzen; „x2“ = Chips laden hier doppelt so schnell
+func _draw_spark_pool(rect: Rect2, hz: Dictionary) -> void:
+	var fade := minf(1.0, hz.t / 0.5)
+	var inner := rect.grow(-3)
+	var pulse := 0.6 + 0.4 * absf(sin(anim_t * 9.0 + hz.c))
+	_blob_rect(inner, Color(VOLT_DARK, 0.85 * fade))
+	_blob_rect(inner.grow(-3), Color(VOLT_MID, 0.35 * pulse * fade))
+	var rng := _cell_rng(Vector2i(hz.c, hz.r), hz.get("seed", 0))
+	var live := int(anim_t * 9.0) % 3
+	for i in 3:
+		var a := Vector2(rng.randf_range(inner.position.x + 4, inner.end.x - 4), rng.randf_range(inner.position.y + 4, inner.end.y - 4))
+		var b := Vector2(rng.randf_range(inner.position.x + 4, inner.end.x - 4), rng.randf_range(inner.position.y + 4, inner.end.y - 4))
+		_zigzag(a, b, int(anim_t * 15.0) * 3 + i, Color(VOLT_HOT, fade * (1.0 if i == live else 0.4)), 2.0 if i == live else 1.0, 5)
+	for i in 4:
+		var ph := fmod(anim_t * 1.7 + i * 0.25, 1.0)
+		_px(Vector2(inner.position.x + 6 + i * (inner.size.x - 12) / 3.0, inner.end.y - 4 - ph * 14.0), 2, Color(VOLT_HOT, (1.0 - ph) * fade))
+	_text(Vector2(inner.end.x - 20, inner.position.y + 13), "x2", 8, Color(VOLT_HOT, fade), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+
+
+## Richtungspfeil aus Pixeln (">" bzw. "<")
+func _chevron(q: Vector2, dir: int, col: Color, s := 2.0) -> void:
+	for i in 4:
+		_px(q + Vector2(-dir * i * s, -i * s), s, col)
+		_px(q + Vector2(-dir * i * s, i * s), s, col)
 
 
 ## Giftschleim: unregelmäßige Pfütze aus Kreisen mit Blasen und Glanzlichtern
