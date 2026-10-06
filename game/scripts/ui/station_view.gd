@@ -379,8 +379,14 @@ func _draw_home() -> void:
 	# Bewohner von hinten nach vorn
 	var idx: Array = range(home.residents.size())
 	idx.sort_custom(func(a, b): return home.residents[a].y < home.residents[b].y)
+	# Das Lagerfeuer steht in der Tiefe: vor allen, die weiter hinten stehen
+	const FIRE := Vector2(566, 318)
+	var fire_done := false
 	for i in idx:
 		var r: Dictionary = home.residents[i]
+		if not fire_done and r.y > FIRE.y:
+			_draw_campfire(FIRE, anim_t)
+			fire_done = true
 		var sc := 2 if int(r.stage) == 1 else 1
 		var hop := roundf(sin(clampf(r.hop / 0.35, 0.0, 1.0) * PI) * 6.0) if r.hop > 0 else 0.0
 		var fy: float = r.y - hop
@@ -393,6 +399,8 @@ func _draw_home() -> void:
 		if i == home_sel:
 			var top: float = fy - sprite(r.form).n * sc + sprite(r.form).foot * sc - 6.0 - (2.0 if sin(anim_t * 6.0) > 0 else 0.0)
 			_draw_marker(Vector2(roundf(r.x), roundf(top)))
+	if not fire_done:
+		_draw_campfire(FIRE, anim_t)
 	for f in home.fx:
 		_draw_home_fx(f)
 	# Infozeile unten: gewählter Bewohner bzw. Reaktion aufs Streicheln
@@ -446,24 +454,7 @@ func _draw_home_props() -> void:
 	draw_rect(Rect2(334, 286, 8, 2), Color(0.05, 0.02, 0.12, 0.3))
 	draw_circle(bc + Vector2(0, -4), 4, Color("#FF8FD8"))
 	draw_rect(Rect2(bc.x - 2, bc.y - 6, 2, 2), Color.WHITE)
-	# Teich (Wasser)
-	var pc := Vector2(104, 328)
-	for k in 3:
-		var w := 62.0 - k * 6.0
-		var h := 12.0 - k * 2.0
-		draw_rect(Rect2(pc.x - w, pc.y - h + k, w * 2, h * 2 - k * 2), [Color("#14304A"), Color("#1E4A72"), Color("#2E6A9A")][k])
-	for i in 4:
-		var x := pc.x - 40 + fposmod(t * 8.0 + i * 23.0, 80.0)
-		draw_rect(Rect2(roundi(x), roundi(pc.y - 4 + (i % 2) * 6), 8, 1), Color("#8FE3FF", 0.6))
-	# Lagerfeuer (Feuer)
-	var fc := Vector2(566, 318)
-	draw_rect(Rect2(fc.x - 12, fc.y - 3, 24, 4), Color("#5A3A2A"))
-	draw_rect(Rect2(fc.x - 9, fc.y - 6, 18, 3), Color("#7A4A32"))
-	for i in 3:
-		var fh := 10.0 + 5.0 * absf(sin(t * 9.0 + i * 1.7))
-		draw_rect(Rect2(roundi(fc.x - 7 + i * 5), roundi(fc.y - 6 - fh), 4, roundi(fh)), Color("#FF8A4C"))
-		draw_rect(Rect2(roundi(fc.x - 6 + i * 5), roundi(fc.y - 6 - fh * 0.6), 2, roundi(fh * 0.6)), Color("#FFD84D"))
-	draw_circle(fc + Vector2(0, -8), 22, Color("#FF8A4C", 0.08 + 0.03 * sin(t * 7.0)))
+	_draw_pond(Vector2(100, 328), t)
 	# Pilzkreis (Virus)
 	var mc := Vector2(270, 336)
 	for i in 6:
@@ -471,6 +462,74 @@ func _draw_home_props() -> void:
 		var q := mc + Vector2(cos(a) * 24.0, sin(a) * 7.0)
 		draw_rect(Rect2(roundi(q.x) - 1, roundi(q.y) - 4, 2, 4), Color("#D8D0C0"))
 		draw_rect(Rect2(roundi(q.x) - 3, roundi(q.y) - 7, 6, 3), Color("#B060E0") if i % 2 else Color("#7BD35A"))
+
+
+## Pixel-Ellipse aus Zeilen (Mitte c, Halbachsen a/b)
+func _pixel_oval(c: Vector2, a: float, b: float, col: Color) -> void:
+	for y in range(-int(b), int(b) + 1):
+		var w := roundf(a * sqrt(maxf(0.0, 1.0 - pow(float(y) / b, 2))))
+		draw_rect(Rect2(c.x - w, c.y + y, w * 2, 1), col)
+
+
+## Teich: ovale Wasserfläche mit Ufersteinen, Schilf, Seerose und wanderndem Glanz
+func _draw_pond(c: Vector2, t: float) -> void:
+	_pixel_oval(c + Vector2(0, 1), 58, 13, Color("#1A3A2A"))          # dunkles Ufer
+	_pixel_oval(c, 54, 11, Color("#14304A"))
+	_pixel_oval(c + Vector2(0, -1), 48, 8, Color("#1E4A72"))
+	_pixel_oval(c + Vector2(-6, -3), 30, 4, Color("#2E6A9A"))
+	# Glanzlinien ziehen langsam übers Wasser
+	for i in 3:
+		var x := c.x - 34 + fposmod(t * 6.0 + i * 25.0, 68.0)
+		draw_rect(Rect2(roundi(x), roundi(c.y - 5 + i * 4), 6, 1), Color("#8FE3FF", 0.7))
+	# Ringe, wo ein Tropfen fällt
+	var rt := fmod(t * 0.6, 1.0)
+	draw_arc(c + Vector2(18, 2), 2.0 + rt * 10.0, 0, TAU, 14, Color("#8FE3FF", 0.6 * (1.0 - rt)), 1)
+	# Seerose
+	_pixel_oval(c + Vector2(-26, 3), 6, 2, Color("#3E8A4A"))
+	draw_rect(Rect2(c.x - 27, c.y + 1, 3, 2), Color("#FF8FD8"))
+	# Ufersteine
+	for s in [Vector2(-56, 2), Vector2(-48, 9), Vector2(50, 6), Vector2(56, -1), Vector2(30, 12)]:
+		draw_rect(Rect2(c.x + s.x - 3, c.y + s.y - 2, 6, 4), Color("#5A5A6A"))
+		draw_rect(Rect2(c.x + s.x - 2, c.y + s.y - 2, 4, 1), Color("#7A7A8A"))
+	# Schilf mit Kolben, wiegt sich leicht
+	for k in 4:
+		var rx := c.x + 40 + k * 4
+		var sway := roundf(sin(t * 1.4 + k) * 1.0)
+		var hgt := 14 + (k % 2) * 5
+		draw_rect(Rect2(rx, c.y - hgt, 1, hgt), Color("#4F8A3A"))
+		if k % 2 == 0:
+			draw_rect(Rect2(rx - 1 + sway, c.y - hgt - 4, 3, 5), Color("#7A4A2A"))
+
+
+## Lagerfeuer: Steinring, gekreuzte Scheite, Flamme aus drei Farbschichten, Glut und Lichtschein
+func _draw_campfire(c: Vector2, t: float) -> void:
+	draw_circle(c + Vector2(0, -10), 30, Color("#FF8A4C", 0.07 + 0.03 * sin(t * 7.0)))
+	# Steinring
+	for i in 8:
+		var a := i * TAU / 8.0
+		var q := c + Vector2(cos(a) * 14.0, sin(a) * 4.0)
+		draw_rect(Rect2(roundi(q.x) - 3, roundi(q.y) - 2, 6, 4), Color("#4A4652"))
+		draw_rect(Rect2(roundi(q.x) - 2, roundi(q.y) - 2, 4, 1), Color("#6A6672"))
+	# gekreuzte Holzscheite
+	for d in [-1, 1]:
+		for k in 16:
+			draw_rect(Rect2(c.x - 8 + k, c.y - 2 - roundi(d * (k - 8) * 0.35), 2, 3), Color("#6A4228") if k % 5 else Color("#4A2E1C"))
+	# Flamme: Zeilen von unten nach oben, Breite schrumpft, flackert seitlich
+	var h := 18.0 + 3.0 * sin(t * 11.0) + 2.0 * sin(t * 17.0)
+	for layer in 3:
+		var col: Color = [Color("#E8481E"), Color("#FF8A2E"), Color("#FFE27A")][layer]
+		var lh := h * (1.0 - layer * 0.28)
+		var lw := 7.0 - layer * 2.0
+		for y in int(lh):
+			var k := float(y) / lh
+			var w := roundf(lw * (1.0 - k * k))
+			var sway := roundf(sin(t * 8.0 + y * 0.5) * k * 2.0)
+			draw_rect(Rect2(c.x - w + sway, c.y - 4 - y, w * 2 + 1, 1), col)
+	# aufsteigende Funken
+	for i in 3:
+		var ph := fmod(t * 0.9 + i * 0.33, 1.0)
+		var q := c + Vector2(sin(t * 3.0 + i * 2.0) * 5.0, -22.0 - ph * 24.0)
+		draw_rect(Rect2(roundi(q.x), roundi(q.y), 1, 1), Color("#FFD84D", 1.0 - ph))
 
 
 func _draw_home_fx(f: Dictionary) -> void:
