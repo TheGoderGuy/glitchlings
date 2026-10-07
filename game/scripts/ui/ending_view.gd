@@ -28,9 +28,9 @@ const CREATOR := "TheGoderGuy"
 const ROLES := ["Idee · Produktion · Game Design · Programmierung", "Pixel-Art-Regie · Musik und Sound"]
 ## Zweite Abspann-Karte: [Überschrift, Zeile]
 const THANKS := [
-	["Monster und Gegner", "erstellt mit PixelLab"],
+	["Monster, Gegner und Requisiten", "erstellt mit PixelLab"],
 	["Schriften", "Pixeloid Sans von GGBotNet · Silkscreen von Jason Kottke (SIL Open Font License)"],
-	["Engine", "Godot 4"],
+	["Engine", "Godot 4 (MIT-Lizenz) · alle Lizenztexte in LIZENZEN.txt"],
 	["Besonderer Dank", "an alle Spieltester und an dich, Operator"],
 ]
 const PARADE := ["Aurorlynx", "Leviamander", "Myzelgrizz", "Orbitkauz", "Lunaflut", "Hydradrak"]

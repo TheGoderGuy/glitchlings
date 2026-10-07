@@ -18,21 +18,17 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 | `assets/sprites/` | Alle Sprites als PNG (Originalgröße, x4/x8 vergrößert, Blinzel-Frames) |
 | `tests/` | Automatische Tests mit jsdom (`cd tests && npm install && npm test`) |
 
-## Aktueller Stand
-- **Kampf:** 3×3-Raster pro Seite, Echtzeit, 15 Chips (Godot: 27), 3 Gegner + Boss (Prototyp: Pop-Up-Tyrann; Godot: Kernelmantis), Run = 3 Kämpfe + Boss, nach jedem Kampf 1-aus-3-Chipwahl.
-  Godot: **kein Vormerken** ladender Chips mehr (30.09.2026, Produzent: zu früh gedrückt = hinderlich) – die Karte blinkt nur rot.
-  Godot-Controller (30.09.2026): Chips X/A/B (PS □/✕/○), Signatur Y/RT (PS △/R2), Menü A/B – vom Produzenten so gewünscht (vorher Signatur auf A). PS-Controller werden erkannt (Name/Sony-ID) und zeigen eigene Pixel-Symbole ✕○□△ (PUA U+E000–E003, `InputSetup.btn()`), L1/R1/Options.
-  Steuerung: Wischen / Feld antippen (Direktsprung), WASD + J/K/L, ladende Chips vormerken, Leertaste = Signatur-Attacke. Deck-Ansicht pausiert, „Als Nächstes“ zeigt den nächsten Chip.
-- **Station (Meta):** Godot: Zuhause (Bewohner laufen herum, streicheln), Team, Brutnest, Labor, Monsterdex, Ausbau. Prototyp: Team (mit ♥-Bindung und Pflege-Ansicht), Brutnest (Echtzeit-Eier, simulierte Werbung halbiert Restzeit 1×/Ei), Expeditionen (5 Element-Zonen, Echtzeit), Labor (versteckte Fusionsrezepte, Fehlversuche kostenlos + Gerücht), Monsterdex. Speicherstand in localStorage (`glitchlings-proto-v1`).
-- **Monster:** 45 im Monsterdex. Spielbare Babys: Pixmiez (Katze), Funkling (Welpe), Tröpfel (Axolotl), Kekso (Hamster), Lumi (Hase), Quakli (Frosch), Molchi (Salamander), Brummbit (Bär, Tank), Kauzbit (Robo-Eule) + 4 Fusionen.
-- **Elemente (Godot):** Feuer, Wasser, Code, **Elektro** (früher „Licht“), Virus, Neutral.
-- **Evolution:** Prägung = Element der gespielten Chips. Stufen im Prototyp: Rookie 100, Champion 250, Ultra 500 Prägung, +10 HP je Stufe.
-  **Godot (29.09.2026):** nur Element-Chips zählen, Rookie 12 / Champion 35 / **Ultra 80**, alle 9 Linien bis Ultra (21 Ultras, 96 px), 76 Formen im Dex.
-  Nur die **Feuer-Linie (Katze)** hat alle 4 Stufen: Pixmiez → Blazebit → Glutluchs → Pyrolynx (Tabelle `UP` im Code).
-  **Funkling- & Tröpfel-Linie** (27.09.2026, PixelLab): Babys Funkling (Welpe) + Tröpfel (Axolotl) 32 px, Rookies Glutbyte, Overclocko, Kaskadi, Pufferling 64 px, Champions Magmawulf (← Glutbyte) und Tsunamander (← Kaskadi) 80 px. Übrige Champions + alle Ultras fehlen noch.
-  **Hamster/Hase/Frosch-Redesign** (27.09.2026): Kekso → Tracko/Cachy, Lumi → Blinki/Screenshina, Quakli (früher Spamlet) → Virulurch/Hüpfbyte als Tiere (Baby 32, Rookie 64). Gegner „Spamlet“ gibt es in Godot nicht mehr (ersetzt durch Bytewurm, 29.09.2026).
-  Testknopf „Evolution beschleunigen“ hat je Entwicklungsrichtung einen eigenen Knopf.
-  Testfunktionen im Team-Tab („Prototyp-Test“): „Evolution beschleunigen“ (je Richtung ein Knopf) und „Alle Monster freischalten“ (alle 29 Formen einmal ins Team, Dex komplett).
+## Aktueller Stand (Godot, 07.10.2026)
+- **Kampf:** 3×3-Raster je Seite, Echtzeit, **45 Chips** in **2× Angriff (geteilter Stapel) + 1× Support**, Signatur-Attacke, Passiv je Linie, 22 Module. Effekte je Chip, Flächen: Lava, Giftschleim, Strömung, Spannungsfelder. Wächter und Bosse mit Phasen und goldenen Großangriffen.
+  Steuerung: WASD/Pfeile + J/K/L, Leertaste = Signatur, frei belegbar; Controller Chips X/A/B (PS □/✕/○), Signatur Y/RT, eigene PS-Symbole (`InputSetup.btn()`). **Kein Vormerken** ladender Chips (Karte blinkt nur rot).
+- **Run:** Zonenkarte mit 3 Ebenen × 5 Etagen (Kern 2), Kampf/Elite/Glitch-Elite/Ereignis/Rast/Händler, Wächter am Ebenenende, Boss mit Intro. Nach jedem Kampf 1-aus-3-Chipwahl, verbesserte Chips (`Name+`).
+- **Zonen (linear):** Cache-Wiesen > Firewall-Vulkan > Kühlwasser-See > Viren-Sümpfe > Hochspannungs-Steppe > NEST-Kern (Endboss Ur-Glitch), danach Abspann und Weiterspielen.
+- **Glitchlinge:** 13 Linien bis Ultra plus Fusionen, **102 Formen** im Dex. Babys: Pixmiez (Katze), Funkling (Welpe), Tröpfel (Axolotl), Kekso (Hamster), Lumi (Hase), Quakli (Frosch), Molchi (Salamander), Brummbit (Bär), Kauzbit (Robo-Eule), Buddli (Dachs), Maskli (Waschbär), Bachli (Otter), Plapperli (Ara).
+  **Evolution:** Prägung = Element der gespielten Element-Chips (Rookie 12, Champion 35, Ultra 80, 2 Chips Vorsprung), dauerhaft pro Monster gespeichert.
+- **Elemente:** Feuer, Wasser, Code, Elektro, Virus, Neutral (Feuer > Code > Wasser > Feuer, Elektro <> Virus).
+- **Station:** Zuhause (Bewohner laufen herum, streicheln), Team (Zonenwahl), Brutnest (Eier nach Runs oder für 200 Fragmente), Labor (geheime Fusionen), Monsterdex, Ausbau. Führung beim ersten Besuch.
+- **Rahmen:** Kino-Intro und -Ende, Training nach der Starterwahl, Kampf-Handbuch, DE/EN, Schwierigkeiten Entspannt bis Korrumpiert, Musik und Sounds selbst synthetisiert (Platzhalter), 325 Tests.
+- **Browser-Prototyp** (`prototype/`): alter Stand mit Pop-Up-Tyrann, Echtzeit-Eiern und Expeditionen, nur noch Referenz.
 
 ## Getroffene Entscheidungen (nicht ohne Rückfrage ändern)
 1. **Art Direction „Tier + digitales Merkmal“** – echte Tier-Monster im Digimon-/Yu-Gi-Oh-Stil. Das Digitale zeigt sich NUR als Körpermerkmal (Leuchtlinien, Muster, Energie, Element-Effekte), **keine Gegenstands-/Kostüm-Konzepte** (keine Pop-up-Fenster, Trojaner-Holzpferde, Detektivmützen, Embleme o. Ä.; Entscheidung 27.09.2026). Rüstung ab Champion/Ultra ist ok, wenn sie organisch/kreaturhaft wirkt. **Maschinen-Tiere sind erlaubt** (Robo-Eule-Linie, Mecha-Bär, später Mecha-Champions der Code-Richtungen) – Tierform bleibt immer erkennbar; Gegenstände als Körper (Fenster, Holzpferd) bleiben verboten. Spieler-Monster basieren auf Tieren (Fuchs, Welpe/Wolf, Axolotl, Hamster, Hase, Frosch). **Gegner sind digitale Monster und Maschinen** (Insekten, Würmer, Mecha-Tiere, Pflanzen-Monster) als korrumpierte Daten – **keine Internet-/Werbe-Anspielungen** (keine Pop-ups, Spam, Werbebanner, Cookies, Captchas, Ladebalken, „Gratis“; Entscheidung 29.09.2026). Technische Begriffe (Bug, Virus, Code, Cache, Firewall, Kernel) sind ok.
@@ -104,8 +100,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] **Englisch** (01.10.2026): Sprache in den Optionen (erster Start: Systemsprache), `T.t()` mit deutschen Texten als Schlüssel, englische Tabellen `scripts/data/lang_en_*.gd`, eigene englische Monsternamen (namecheck-geprüft), interne IDs bleiben deutsch, Test prüft Vollständigkeit, `node game/tools/lang_keys.js --missing`, Screenshots mit `--lang=en`, 278 Tests – `vault/05 Produktion/Englisch.md`
 - [x] Idle-Animationen: **alle 132 Figuren** (30.09.2026, Otter + Ara 03.10., neue Zonengegner 04.10.), 6 Bilder, 10 Bilder/s (`tools/sprites/node/anim_frames.js`, entfernt jetzt auch mitgemalte Hintergründe) – `vault/05 Produktion/Idle-Animationen.md`
 - [x] **Angriffsanimationen** (05.10.2026): alle 132 Figuren, 6 Bilder (PixelLab `animate_image`, Prompt „big exaggerated attack …“), eigener Glitchling bei Angriffs-Chips + Signatur (0,36 s), Gegner holen synchron zur Warnung aus und schlagen beim Einschlag zu, Vorschnellen bleibt; `anim_frames.js --kind atk`, Screenshot `--atkpose=0–1`, Test prüft 32 Farben inkl. Angriff + jede Figur hat eine, 312 Tests – `vault/05 Produktion/Angriffsanimationen.md`
-- [ ] Browser-Prototyp hat noch Spamlet/Pop-Up-Tyrann (nur Referenz)
-- [ ] Phase 4: Steam-Seite + Demo
+- [ ] Phase 4: Steam-Seite + Demo – offene Punkte stehen in `vault/05 Produktion/Roadmap.md` (Stand 07.10.2026)
+- [x] **Aufräumen** (07.10.2026): Roadmap auf den echten Stand, `LIZENZEN.txt` (Schriften OFL, Godot MIT, Engine-Bibliotheken; `godot --headless --path game --script res://tools/write_licenses.gd`) liegt jedem Build bei, Abspann nennt sie
 
 **Aus der Mobile-Phase (weiterhin gültig für Inhalte)**
 - [x] PixelLab-MCP anbinden (Abo Tier 1 seit 27.09.2026: 2.000 Generierungen/Monat, Reset am 27.; Pro-Flash-Bild kostet 5, egal welche Größe)

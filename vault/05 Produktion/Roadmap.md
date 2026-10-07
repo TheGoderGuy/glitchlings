@@ -3,41 +3,55 @@ tags: [produktion, roadmap]
 ---
 # Roadmap (Steam, Godot)
 
-> Neu seit 28.09.2026, siehe [[Steam-Neuausrichtung]]. Kein fester Zeitplan, jede Phase endet mit einer Ja/Nein-Frage.
+> Seit 28.09.2026, siehe [[Steam-Neuausrichtung]]. Kein fester Zeitplan, jede Phase endet mit einer Ja/Nein-Frage.
+> **Stand: 07.10.2026.** Phasen 1–3 und der größte Teil der Inhalte aus Phase 5 sind fertig. Der nächste große Block ist Spieltest, dann Steam-Technik und die Steam-Seite.
 
-## Phase 1: Kampf-Kern in Godot
-**Frage: Fühlt sich der Kampf mit Controller besser an als im Browser-Prototyp?**
-- [x] Godot-Projekt, 640×360, Pixel-perfekte Skalierung (28.09.2026)
-- [x] 3×3-Raster, Bewegung, Chips mit Ladezeit, 1 Monster (Pixmiez), 1 Gegner
-- [x] Controller + Tastatur
-- [x] Spielgefühl: Treffer-Feedback, Screenshake, Hitstop, Sounds (Platzhalter, synthetisiert)
-- [x] Titelbildschirm, Optionen (Vollbild, Lautstärke, Bildschirmwackeln), Pause-Menü
-- [x] Musik (4 Platzhalter-Stücke)
-- [ ] Angriffs- und Idle-Animationen
-- [x] Alle 15 Chips, 3 Gegner, Boss aus dem Prototyp übernehmen
-- [x] Pixel-Schrift Silkscreen (SIL OFL, kommerziell frei; Lizenz in `game/assets/fonts/OFL.txt`)
+## Phase 1: Kampf-Kern in Godot ✔
+**Frage: Fühlt sich der Kampf mit Controller besser an als im Browser-Prototyp?** Ja, seitdem wird nur noch in Godot entwickelt.
+- [x] Godot-Projekt, 640×360, pixelgenaue Skalierung (28.09.2026)
+- [x] 3×3-Raster, Bewegung, Chips mit Ladezeit, Controller und Tastatur, Spielgefühl (Treffer, Wackeln, Hitstop)
+- [x] Titel, Optionen, Pause, Pixelschriften Silkscreen + Pixeloid Sans (SIL OFL)
+- [x] Idle-Animationen (30.09.) und Angriffsanimationen (05.10.) für alle Figuren – [[Idle-Animationen]], [[Angriffsanimationen]]
+- [x] Rollen-Slots (2× Angriff, 1× Support), Karten mit Trefferbild – [[Rollen-Slots und Einstieg]]
+- [x] Effekte je Chip, Flächeneffekte (Lava, Schleim, Strömung, Spannungsfelder) – [[Tester-Feedback Training, Effekte, Gegner]]
 
-## Phase 2: Ein kompletter Run
-**Frage: Will man direkt noch einen Run starten?**
-- [x] Zonenkarte mit Verzweigungen (Kampf, Elite, Ereignis, Rast, Datenhändler, Boss) – 28.09.2026, Details: [[Zonenkarte]]
-- [x] Chipwahl, Deck-Ansicht, Prägung & Evolution während des Runs – [[Evolution im Run]]
-- [x] Zone 1 komplett mit Hintergrund und Musik (Platzhalter-Chiptune, 28.09.2026)
+## Phase 2: Ein kompletter Run ✔
+**Frage: Will man direkt noch einen Run starten?** Laut Testern ja; offen ist noch die Lesbarkeit im Bosskampf.
+- [x] Zonenkarte mit Verzweigungen, Ebenen und Wächtern – [[Zonenkarte]], [[Ebenen und Wächter]]
+- [x] Chipwahl, Deckbau (verbesserte Chips, Synergien), Module – [[Deckbau und Station-Ausbau]], [[Module]]
+- [x] Evolution im Run bis Ultra – [[Evolution im Run]]
+- [x] Trainingskampf nach der Starterwahl, Kampf-Handbuch
 
-## Phase 3: Hub & Meta (Vertical Slice)
+## Phase 3: Hub & Meta ✔
 **Frage: Zieht die Station den Spieler zurück in den nächsten Run?**
-- [ ] Station: Team, Brutnest (fortschrittsbasiert), Labor, Dex
-- [ ] Speicherstände, Optionsmenü
-- [ ] Idle-/Angriffsanimationen für alle bisherigen Monster
-- [ ] Playtest mit 5–10 Leuten
+- [x] Station: Zuhause, Team, Brutnest (eine Ei-Sorte, nach Runs), Labor (Fusionen), Monsterdex, Ausbau – [[Station]], [[Zuhause in der Station]]
+- [x] Spielstand mit Übertragung alter Stände, Run speichern und fortsetzen, Spiel zurücksetzen
+- [x] Optionen: Sprache DE/EN, Schwierigkeit (Entspannt bis Korrumpiert), Tastenbelegung, VSync – [[Englisch]], [[Tastenbelegung]], [[Performance]]
+- [x] Spieltest-Pakete: Windows-Zip und Web-Fassung (itch.io) – [[Externer Spieltest]], [[Web-Spieltest]]
+- [ ] **Spieltest mit dem aktuellen Stand** (6 Zonen, neue Effekte, Zuhause); die Web-Testfassung zeigt bisher nur Wiesen und Vulkan
+- [ ] Kampf-Lesbarkeit nach dem Test entscheiden (Zielvorschau, Boss-Atempausen, Boss-Element am Boss, ggf. feste Hauptkarte)
 
 ## Phase 4: Steam-Seite & Demo
-- [ ] Gewerbe, Steamworks-Konto, Capsule-Art, Trailer
-- [ ] Steam-Seite live → Wunschlisten sammeln
-- [ ] Demo (Zone 1) für ein Steam Next Fest
+- [x] Logo und alle Steam-Kapseln – [[Logo]]
+- [x] Kino-Intro und -Ende (Material für den Trailer) – [[Opening-Szene]], [[Finale und Ende]]
+- [ ] Gewerbe und Steamworks-Konto (Produzent)
+- [ ] Store-Texte DE/EN, 5+ Screenshots, Trailer
+- [ ] Fragebogen zu KI-Inhalten (PixelLab-Grafiken; Nutzungsrechte geklärt am 03.10.)
+- [ ] Steam-Seite live, Wunschlisten sammeln
+- [ ] Demo (z. B. Wiesen + Vulkan) für ein Steam Next Fest
 
 ## Phase 5: Produktion
-- [ ] 5 Zonen, ~100 Monster-Formen, ~80 Chips, Story-Bosse, Endgame
-- [ ] Achievements, Steam Cloud, Lokalisierung DE/EN
+- [x] 6 Zonen (Wiesen, Vulkan, Kühlwasser-See, Sümpfe, Hochspannungs-Steppe, NEST-Kern) – [[Zonen See und Steppe]]
+- [x] 102 Glitchling-Formen in 13 Linien plus Fusionen, 44 Gegner, Wächter und Bosse
+- [x] 45 Chips, 22 Module, 34 Ereignisse, Story-Bosse mit Intros, Ende mit Abspann
+- [x] Lokalisierung DE/EN
+- [ ] Endgame nach dem Abspann (bisher nur die Schwierigkeit „Korrumpiert“)
+- [ ] Legendäre Glitchlinge (gestrichen, bis es einen Plan gibt)
+- [ ] Errungenschaften, Steam Cloud, Steam-Overlay (Steamworks-Anbindung)
+- [ ] Steam Deck prüfen (Textgröße, Controller, Leistung), Controller-Tasten frei belegbar
+- [ ] Echte Musik und Soundeffekte (bisher selbst synthetisierte Platzhalter)
+- [ ] Balancing über alle 6 Zonen nach dem Spieltest
 
 ## Phase 6: Release
 - [ ] Optional Early Access, danach 1.0
+- [x] Lizenzdatei `LIZENZEN.txt` (Schriften, Godot MIT, Engine-Bibliotheken) liegt jedem Build bei (07.10.2026)
