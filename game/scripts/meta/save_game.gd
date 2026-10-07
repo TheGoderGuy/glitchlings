@@ -267,6 +267,8 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 		m.runs = int(m.runs) + 1
 		if won:
 			m.wins = int(m.wins) + 1
+			if run.protocol > 0:
+				m.protocol_best = maxi(int(m.get("protocol_best", 0)), run.protocol)
 	for f in run.forms_seen:
 		if see(f):
 			sum.new_dex.append(f)
@@ -277,6 +279,10 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 		if not data.cleared.has(z):
 			data.cleared.append(z)
 			sum.unlocked = _newly_unlocked(z)
+		# Glitch-Protokoll auf der höchsten freien Stufe geschafft: nächste Stufe frei
+		if run.protocol > 0 and run.protocol >= protocol_unlocked() and protocol_unlocked() < GameData.PROTOCOLS.size():
+			data.protocol_max = run.protocol + 1
+			sum.protocol_up = data.protocol_max
 		# Finale geschafft: Spiel durchgespielt, Schwierigkeit „Korrumpiert“ frei
 		if GameData.ZONES[z].get("final", false) and not data.get("game_cleared", false):
 			data.game_cleared = true
@@ -343,6 +349,18 @@ func download_log() -> void:
 ## Ende erreicht (Ur-Glitch besiegt)?
 func game_cleared() -> bool:
 	return data.get("game_cleared", false)
+
+
+## Glitch-Protokolle: nach dem Abspann ist Stufe 1 frei, jede auf der höchsten Stufe geschaffte Zone schaltet die nächste frei
+func protocol_unlocked() -> int:
+	if not game_cleared():
+		return 0
+	return clampi(int(data.get("protocol_max", 1)), 1, GameData.PROTOCOLS.size())
+
+
+## Gewählte Stufe für den nächsten Run (0 = aus)
+func protocol_choice() -> int:
+	return clampi(int(data.get("protocol_sel", 0)), 0, protocol_unlocked())
 
 
 func zone_unlocked(z: String) -> bool:

@@ -145,6 +145,8 @@ func start_run(monster_id: int, zone := "wiesen", seed_value := -1) -> void:
 	run.difficulty = Settings.difficulty if Settings.difficulty < 3 or SaveGame.game_cleared() else 2
 	run.tutorial = not SaveGame.data.get("tutorial_done", false)
 	run.apply_station(SaveGame.data.get("upgrades", {}))
+	run.protocol = SaveGame.protocol_choice()
+	run.apply_protocol()
 	show_map()
 
 
@@ -348,6 +350,11 @@ func _screenshot(shot: Dictionary) -> void:
 				current.tab = current.GUIDE[current.guide][0]
 			if shot.has("zones"):
 				current.zone_pick = true
+			if shot.has("protocol"):
+				SaveGame.data.game_cleared = true
+				SaveGame.data.protocol_max = 10
+				SaveGame.data.protocol_sel = shot.protocol
+				SaveGame.team()[0].protocol_best = 4
 		"map", "mappause":
 			if shot.has("glitchnode"):
 				run.map.floors[run.floor_idx + 1][0].type = "glitch"

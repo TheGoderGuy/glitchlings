@@ -347,6 +347,8 @@ func _draw_team() -> void:
 	_text(Vector2(R.position.x, R.position.y + 176), form, 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, 180, true, true)
 	_text(Vector2(R.position.x, R.position.y + 190), "%s · %s · %d HP" % [T.t(GameData.STAGE_NAMES[int(m.stage)]), T.t(F.el), int(M.hp) + 10 * (int(m.stage) - 1)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, 180)
 	_text(Vector2(R.position.x, R.position.y + 204), T.t("Runs %d · Siege %d") % [int(m.runs), int(m.wins)], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, 180)
+	if int(m.get("protocol_best", 0)) > 0:
+		_text(Vector2(R.position.x, R.position.y + 218), T.t("Protokoll-Abzeichen: Stufe %d") % int(m.protocol_best), 8, Color("#FF5470"), HORIZONTAL_ALIGNMENT_CENTER, 180, true, true)
 	# Details rechts
 	var x := R.position.x + 190
 	var w := R.size.x - 204
@@ -559,6 +561,12 @@ func _default_zone() -> int:
 
 func _process_zone_pick() -> void:
 	var n: int = GameData.ZONE_ORDER.size()
+	var pmax := SaveGame.protocol_unlocked()
+	if pmax > 0 and (Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down")):
+		var d := 1 if Input.is_action_just_pressed("move_up") else -1
+		SaveGame.data["protocol_sel"] = clampi(SaveGame.protocol_choice() + d, 0, pmax)
+		Sfx.play("select")
+		return
 	if Input.is_action_just_pressed("move_right"):
 		zone_sel = (zone_sel + 1) % n
 		zone_msg = ""
@@ -637,8 +645,18 @@ func _draw_zone_pick() -> void:
 		var boss: String = T.t(GameData.FOES[Z.boss].name) if done else "???"
 		_text(Vector2(r.position.x, r.end.y - 10), T.t("Endboss:" if Z.get("final", false) else "Boss:") + " " + boss, 8, GameData.COL.coral if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
 	var pad: bool = InputSetup.pad
+	# Glitch-Protokoll (nach dem Abspann): Stufe mit Hoch/Runter
+	var pmax := SaveGame.protocol_unlocked()
+	if pmax > 0:
+		var pl := SaveGame.protocol_choice()
+		if pl == 0:
+			_text(Vector2(0, 308), T.t("Glitch-Protokoll: aus   (Hoch/Runter: Stufe 1–%d)") % pmax, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+		else:
+			var P: Dictionary = GameData.PROTOCOLS[pl - 1]
+			_text(Vector2(0, 304), T.t("Glitch-Protokoll %d/%d: %s · +%d %% Fragmente") % [pl, pmax, T.t(P.name), pl * 5], 8, Color("#FF5470"), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, 316), T.t("%s (und alle Stufen darunter)") % T.t(P.desc), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 	var foot := zone_msg if zone_msg != "" else T.t("< > Zone wählen   %s losziehen   %s zurück") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"]
-	_text(Vector2(0, 322), foot, 8, GameData.COL.coral if zone_msg != "" else GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	_text(Vector2(0, 334 if pmax > 0 else 322), foot, 8, GameData.COL.coral if zone_msg != "" else GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_lock(c: Vector2) -> void:

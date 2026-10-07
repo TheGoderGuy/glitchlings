@@ -45,7 +45,7 @@ tags: [produktion, roadmap]
 - [x] 102 Glitchling-Formen in 13 Linien plus Fusionen, 44 Gegner, Wächter und Bosse
 - [x] 45 Chips, 22 Module, 34 Ereignisse, Story-Bosse mit Intros, Ende mit Abspann
 - [x] Lokalisierung DE/EN
-- [ ] Endgame nach dem Abspann (bisher nur die Schwierigkeit „Korrumpiert“)
+- [x] Endgame nach dem Abspann: [[Glitch-Protokolle]] (10 Stufen, 07.10.2026)
 - [ ] Legendäre Glitchlinge (gestrichen, bis es einen Plan gibt)
 - [ ] Errungenschaften, Steam Cloud, Steam-Overlay (Steamworks-Anbindung)
 - [ ] Steam Deck prüfen (Textgröße, Controller, Leistung), Controller-Tasten frei belegbar

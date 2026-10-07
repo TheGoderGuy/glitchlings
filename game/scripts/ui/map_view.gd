@@ -140,7 +140,10 @@ func _draw() -> void:
 	var ch := run.next_choices()
 	var target := Vector2i(run.floor_idx + 1, ch[sel]) if not ch.is_empty() else Vector2i(-9, -9)
 	_text(Vector2(0, 22), T.t(m.zone_name).to_upper(), 16, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
-	_text(Vector2(0, 34), T.t("Ebene %d von %d") % [m.level + 1, m.levels], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	var lvl_line: String = T.t("Ebene %d von %d") % [m.level + 1, m.levels]
+	if run.protocol > 0:
+		lvl_line += "  ·  " + T.t("Protokoll %d") % run.protocol
+	_text(Vector2(0, 34), lvl_line, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 	# Wege
 	for f in m.floors.size() - 1:

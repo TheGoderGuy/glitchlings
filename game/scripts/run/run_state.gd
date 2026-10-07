@@ -42,6 +42,7 @@ const DIFF_HP := [0.8, 1.0, 1.25, 1.5]
 const DIFF_DMG := [0.7, 1.0, 1.25, 1.4]
 const DIFF_WARN := [0.25, 0.0, -0.1, -0.15]   # Sekunden mehr/weniger Vorwarnung
 const DIFF_LOOT := [1.0, 1.0, 1.0, 1.5]      # Korrumpiert lohnt sich: mehr Fragmente
+var protocol := 0         # Glitch-Protokoll (0 = aus, 1–10), siehe GameData.PROTOCOLS
 
 
 func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
@@ -243,7 +244,31 @@ func _apply_difficulty(d: Dictionary) -> Dictionary:
 	d.dmg = maxi(1, roundi(d.dmg * DIFF_DMG[difficulty]))
 	d.warn_bonus = DIFF_WARN[difficulty]
 	d.loot = roundi(d.loot * DIFF_LOOT[difficulty])
+	if protocol > 0:
+		var big: bool = d.get("boss", false)   # Bosse und Wächter
+		d.hp = roundi(d.hp * 1.15 * (1.2 if protocol >= 5 and big else 1.0))
+		if protocol >= 3:
+			d.atk = float(d.atk) * 0.9
+		if protocol >= 6:
+			d.warn_bonus = float(d.warn_bonus) - 0.1
+		if protocol >= 8:
+			d.dmg = maxi(1, roundi(d.dmg * 1.15))
+		if protocol >= 10 and big:
+			d.sp_every = BattleState.SPECIAL_EVERY * 0.7
+		d.loot = roundi(d.loot * (1.0 + 0.05 * protocol))
 	return d
+
+
+## Rastplatz-Heilung (Anteil der max. HP); Protokoll 2 halbiert sie
+func rest_heal() -> int:
+	return roundi(max_hp * Rooms.REST_HEAL * (0.5 if protocol >= 2 else 1.0))
+
+
+## Protokoll 7: weniger max. HP zum Start (nach dem Station-Ausbau anwenden)
+func apply_protocol() -> void:
+	if protocol >= 7:
+		max_hp = roundi(max_hp * 0.85)
+		hp = mini(hp, max_hp)
 
 
 func _base_foe(node: Dictionary) -> Dictionary:
@@ -403,7 +428,7 @@ func to_dict() -> Dictionary:
 		"forms_seen": forms_seen.duplicate(), "tutorial": tutorial, "last_foe": last_foe,
 		"elapsed_ms": Time.get_ticks_msec() - start_ms, "chips_used": chips_used, "fights_won": fights_won,
 		"sp_bonus": sp_bonus, "foe_weak": foe_weak, "seen_events": seen_events.duplicate(),
-		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty, "loot_mult": loot_mult,
+		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty, "protocol": protocol, "loot_mult": loot_mult,
 		"zone": map.zone, "level": map.level, "floors": map.floors.duplicate(true),
 		"floor_idx": floor_idx, "pos": pos, "path": p,
 		# 64-Bit-Werte als Text, JSON-Zahlen sind nur Gleitkomma
@@ -437,6 +462,7 @@ static func from_dict(d: Dictionary) -> RunState:
 	r.modules = Array(d.modules)
 	r.backup_used = bool(d.backup_used)
 	r.difficulty = int(d.difficulty)
+	r.protocol = int(d.get("protocol", 0))
 	r.loot_mult = float(d.get("loot_mult", 1.0))
 	var m := ZoneMap.new()
 	m.zone = d.zone

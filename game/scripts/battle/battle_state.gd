@@ -1149,7 +1149,7 @@ func _update_logic(dt: float) -> void:
 				for cell in w.cells:
 					# eine Zelle hat höchstens eine Fläche (die neue ersetzt die alte)
 					hazards = hazards.filter(func(h0): return not (h0.c == cell.x and h0.r == cell.y))
-					hazards.append({"c": cell.x, "r": cell.y, "t": HAZARD_DUR[hk], "tick": 0.0, "kind": hk, "dir": w.get("dir", 1), "seed": randi() % 1000})
+					hazards.append({"c": cell.x, "r": cell.y, "t": HAZARD_DUR[hk] * (1.5 if run.protocol >= 9 else 1.0), "tick": 0.0, "kind": hk, "dir": w.get("dir", 1), "seed": randi() % 1000})
 					fx_cell(cell.x, cell.y, HAZARD_COL[hk], 0.3)
 					vfx_add("erupt", cell.x, cell.y, 0.45, {"slime": hk == "slime", "kind": hk})
 				events.append("hit")

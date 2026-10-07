@@ -446,6 +446,16 @@ const D := {
 	"Der NEST ist gerettet. Aber noch sind nicht alle Glitchlings gefunden ...": "The NEST is saved. But not all Glitchlings have been found yet ...",
 	"Neu freigeschaltet: Schwierigkeit KORRUMPIERT": "Unlocked: difficulty CORRUPTED",
 	"(in den Optionen: stärkere Gegner, 50 % mehr Fragmente)": "(in the options: stronger enemies, 50% more fragments)",
+	# ---------- Glitch-Protokolle (07.10.2026) ----------
+	"Zähe Daten": "Tough Data", "Gegner +15 % HP": "Enemies +15% HP", "Kurze Rast": "Short Rest", "Rastplätze heilen nur halb so viel": "Rest sites heal only half as much",
+	"Unruhe": "Restless", "Gegner greifen 10 % schneller an": "Enemies attack 10% faster", "Knappe Kasse": "Tight Budget", "Händlerpreise +25 %": "Shop prices +25%",
+	"Starke Wächter": "Strong Guardians", "Wächter und Bosse +20 % HP": "Guardians and bosses +20% HP", "Hektik": "Rush", "Warnungen 0,1 s kürzer": "Warnings 0.1 s shorter",
+	"Angeschlagen": "Battered", "Start mit 15 % weniger max. HP": "Start with 15% less max HP", "Harte Treffer": "Hard Hits", "Gegner verursachen +15 % Schaden": "Enemies deal +15% damage",
+	"Zähe Flächen": "Lingering Fields", "Lava, Schleim, Strömung und Spannungsfelder halten 50 % länger": "Lava, slime, currents and charged fields last 50% longer",
+	"Glitch-Sturm": "Glitch Storm", "Großangriffe kommen 30 % öfter": "Big attacks come 30% more often",
+	"Protokoll %d": "Protocol %d", "Protokoll-Abzeichen: Stufe %d": "Protocol badge: level %d",
+	"Glitch-Protokoll: aus   (Hoch/Runter: Stufe 1–%d)": "Glitch Protocol: off   (Up/Down: level 1–%d)",
+	"Glitch-Protokoll %d/%d: %s · +%d %% Fragmente": "Glitch Protocol %d/%d: %s · +%d%% fragments", "%s (und alle Stufen darunter)": "%s (and all levels below)",
 	# ---------- Zuhause in der Station (06.10.2026) ----------
 	"Zuhause": "Home", "%s ist eingezogen! Alle freuen sich.": "%s has moved in! Everyone is happy.",
 	"Morgen": "Morning", "Tag": "Day", "Abend": "Evening", "Nacht": "Night", "Noch niemand zu Hause.": "Nobody is home yet.", "< > auswählen   %s streicheln": "< > choose   %s pet",

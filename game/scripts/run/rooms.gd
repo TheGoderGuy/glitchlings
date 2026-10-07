@@ -162,7 +162,7 @@ const EVENTS := {
 # ---------- Rastplatz ----------
 
 static func rest_options(run: RunState) -> Array:
-	var h := roundi(run.max_hp * REST_HEAL)
+	var h := run.rest_heal()
 	return [
 		{"id": "heal", "label": T.t("Ausruhen"), "desc": T.t("Heilt %d HP.") % h, "enabled": run.hp < run.max_hp},
 		{"id": "upgrade", "label": T.t("Chip verbessern"), "desc": T.t("Ein Chip wird stärker und lädt schneller (z. B. Glutball > Glutball+)."), "enabled": not run.upgradable().is_empty()},
@@ -173,7 +173,7 @@ static func rest_options(run: RunState) -> Array:
 static func rest_apply(run: RunState, id: String) -> String:
 	match id:
 		"heal":
-			return T.t("%s ruht sich aus: +%d HP.") % [T.t(run.species), run.heal(roundi(run.max_hp * REST_HEAL))]
+			return T.t("%s ruht sich aus: +%d HP.") % [T.t(run.species), run.heal(run.rest_heal())]
 		"remove":
 			return "remove"
 		"upgrade":
@@ -635,7 +635,8 @@ static func _combo_suffix(run: RunState, chip: String) -> String:
 
 ## Preis nach Rabattchip-Modul
 static func price(run: RunState, base: int) -> int:
-	return roundi(base * 0.75) if run.has_mod("rabattchip") else base
+	var b := float(base) * (1.25 if run.protocol >= 4 else 1.0)   # Protokoll 4: Knappe Kasse
+	return roundi(b * 0.75) if run.has_mod("rabattchip") else roundi(b)
 
 
 static func shop_init(run: RunState, node: Dictionary) -> void:

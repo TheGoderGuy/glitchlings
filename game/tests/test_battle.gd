@@ -68,6 +68,7 @@ func _ready() -> void:
 	test_sprite_colors()
 	test_station_guide()
 	test_new_zones()
+	test_protocols()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -2229,6 +2230,42 @@ func test_new_zones() -> void:
 					rz.heal(10)
 		check(stuck == 0, "%s-Runs: kein Kampf hängt" % GameData.ZONES[zone].name)
 		print("  info    %s-Autopilot: %d/6 Runs gewonnen" % [GameData.ZONES[zone].name, wins])
+
+
+## Glitch-Protokolle (07.10.2026): Endgame-Stufen nach dem Abspann
+func test_protocols() -> void:
+	check(GameData.PROTOCOLS.size() == 10, "Glitch-Protokolle: 10 Stufen")
+	var r0 := RunState.new("Pixmiez", 4)
+	var r9 := RunState.new("Pixmiez", 4)
+	r9.protocol = 10
+	var f0 := r0.foe_for({"type": "fight"})
+	var f9 := r9.foe_for({"type": "fight"})
+	var b0 := r0.foe_for({"type": "boss"})
+	var b9 := r9.foe_for({"type": "boss"})
+	var foe_ok: bool = f9.hp == roundi(f0.hp * 1.15) and is_equal_approx(f9.atk, f0.atk * 0.9) and f9.dmg == maxi(1, roundi(f0.dmg * 1.15)) 		and is_equal_approx(f9.warn_bonus, f0.warn_bonus - 0.1) and f9.loot == roundi(f0.loot * 1.5) and not f9.has("sp_every") 		and b9.hp == roundi(b0.hp * 1.15 * 1.2) and is_equal_approx(b9.sp_every, BattleState.SPECIAL_EVERY * 0.7)
+	check(foe_ok, "Protokoll 10: Gegner zäher, schneller, härter, kürzere Warnungen, Bosse +20 % HP und öfter Großangriffe, +50 % Fragmente")
+	var hp_before := r9.max_hp
+	r9.apply_protocol()
+	check(r9.rest_heal() == roundi(r9.max_hp * Rooms.REST_HEAL * 0.5) and Rooms.price(r9, 40) == 50 and r9.max_hp == roundi(hp_before * 0.85), "Protokoll: Rast halb, Preise +25 %, Start mit weniger max. HP")
+	var hz := BattleState.new(r9, GameData.FOES[7])
+	hz.e.atk_t = 99.0
+	hz.warns.append({"cells": [Vector2i(0, 0)], "t": 0.02, "max": 0.9, "dmg": 0, "lava": true, "kind": "lava"})
+	step(hz, 0.05)
+	check(not hz.hazards.is_empty() and hz.hazards[0].t > 4.0, "Protokoll 9: Flächen halten 50 % länger")
+	# Freischalten: erst nach dem Abspann, jede auf der höchsten Stufe geschaffte Zone öffnet die nächste
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.persist = false
+	SaveGame.new_game("Lumi")
+	var locked := SaveGame.protocol_unlocked() == 0 and SaveGame.protocol_choice() == 0
+	SaveGame.data.game_cleared = true
+	SaveGame.data.protocol_sel = 5
+	var first := SaveGame.protocol_unlocked() == 1 and SaveGame.protocol_choice() == 1
+	var rp := RunState.from_monster(SaveGame.team()[0], 2, "wiesen")
+	rp.protocol = 1
+	var sum := SaveGame.record_run(rp, true)
+	var up := SaveGame.protocol_unlocked() == 2 and int(sum.get("protocol_up", 0)) == 2 and int(SaveGame.team()[0].protocol_best) == 1
+	SaveGame.data = saved
+	check(locked and first and up, "Protokoll: gesperrt bis zum Abspann, dann Stufe 1; geschaffte Stufe schaltet die nächste frei und gibt ein Abzeichen")
 
 
 ## Stilregel: jedes Sprite höchstens 32 Farben – Grundbild, Blinzel-Bild, Idle- und Angriffs-Frames zusammen (30.09./05.10.2026)

@@ -310,6 +310,19 @@ const ZONES := {
 		"early": [15, 16, 29], "late": [15, 16, 28, 29], "elite": [15, 28, 29],
 		"desc": "Das Herz des abgestürzten Servers. Kurz, hart – und am Ende wartet der Ur-Glitch.", "unlock": "steppe"},
 }
+## Glitch-Protokolle (07.10.2026): Endgame nach dem Abspann. Stufen bauen aufeinander auf, jede gibt +5 % Fragmente.
+const PROTOCOLS := [
+	{"name": "Zähe Daten", "desc": "Gegner +15 % HP"},
+	{"name": "Kurze Rast", "desc": "Rastplätze heilen nur halb so viel"},
+	{"name": "Unruhe", "desc": "Gegner greifen 10 % schneller an"},
+	{"name": "Knappe Kasse", "desc": "Händlerpreise +25 %"},
+	{"name": "Starke Wächter", "desc": "Wächter und Bosse +20 % HP"},
+	{"name": "Hektik", "desc": "Warnungen 0,1 s kürzer"},
+	{"name": "Angeschlagen", "desc": "Start mit 15 % weniger max. HP"},
+	{"name": "Harte Treffer", "desc": "Gegner verursachen +15 % Schaden"},
+	{"name": "Zähe Flächen", "desc": "Lava, Schleim, Strömung und Spannungsfelder halten 50 % länger"},
+	{"name": "Glitch-Sturm", "desc": "Großangriffe kommen 30 % öfter"},
+]
 const ZONE_ORDER := ["wiesen", "vulkan", "see", "sumpf", "steppe", "kern"]
 ## Elemente, durch die der Ur-Glitch wechselt
 const SHIFT_ELEMENTS := ["Virus", "Feuer", "Wasser", "Elektro", "Code"]
