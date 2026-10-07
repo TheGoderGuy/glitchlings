@@ -56,6 +56,10 @@ static func args() -> Dictionary:
 			shot.font = a.substr(7)
 		elif a.begins_with("--guide="):
 			shot.guide = int(a.substr(8))
+		elif a.begins_with("--daytime="):
+			shot.daytime = a.substr(10)
+		elif a == "--welcome":
+			shot.welcome = true
 		elif a.begins_with("--atkpose="):
 			shot.atkpose = float(a.substr(10))
 		elif a.begins_with("--chip="):

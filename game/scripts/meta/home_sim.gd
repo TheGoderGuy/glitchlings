@@ -22,8 +22,18 @@ const PET_TEXT := {
 	"Otter": "%s schlägt einen kleinen Purzelbaum.", "Ara": "%s plappert: „Nochmal! Nochmal!“",
 }
 
+## Tageszeiten (07.10.2026): wechseln mit jedem Run; nachts wird mehr geschlafen, tagsüber mehr gespielt.
+## Anteile für walk, idle, sleep, spot; der Rest ist Spielen.
+const DAYTIMES := ["morgen", "tag", "abend", "nacht"]
+const DAY_MOOD := {
+	"morgen": [0.40, 0.18, 0.10, 0.18], "tag": [0.42, 0.14, 0.04, 0.20],
+	"abend": [0.34, 0.18, 0.14, 0.20], "nacht": [0.22, 0.14, 0.42, 0.12],
+}
+
 var residents: Array = []
 var fx: Array = []        # kleine Effekte {kind, x, y, t, max, vx, vy}
+var daytime := "nacht"
+var newcomer := -1        # Index des Bewohners, der gerade einzieht
 var rng := RandomNumberGenerator.new()
 
 
@@ -46,13 +56,41 @@ func setup(team: Array, seed_v := 0) -> void:
 		})
 
 
+static func daytime_for(runs: int) -> String:
+	return DAYTIMES[posmod(runs, DAYTIMES.size())]
+
+
+## Einzug (07.10.2026): Der Neue kommt von links herein, alle anderen drehen sich um und freuen sich
+func welcome(id: int) -> void:
+	for i in residents.size():
+		if residents[i].id == id:
+			newcomer = i
+			var r: Dictionary = residents[i]
+			_leave_partner(r)
+			r.x = AREA.position.x - 50.0
+			r.y = AREA.get_center().y
+			r.flip = false
+			r.speed = 34.0
+			r.tx = AREA.position.x + 150.0
+			r.ty = AREA.get_center().y
+			r.state = "arrive"
+			r.t = 99.0
+	for j in residents.size():
+		if j != newcomer:
+			var o: Dictionary = residents[j]
+			_leave_partner(o)
+			o.state = "greet"
+			o.t = rng.randf_range(4.0, 5.5)
+			o.hop = 0.0
+
+
 func update(dt: float) -> void:
 	for i in residents.size():
 		var r: Dictionary = residents[i]
 		r.hop = maxf(0.0, r.hop - dt)
 		r.t -= dt
 		match r.state:
-			"walk", "go_spot", "go_play":
+			"walk", "go_spot", "go_play", "arrive":
 				var d := Vector2(r.tx - r.x, r.ty - r.y)
 				var step: float = r.speed * dt
 				if d.length() <= step:
@@ -73,6 +111,15 @@ func update(dt: float) -> void:
 				if r.hop <= 0.0 and fmod(r.t, 0.7) < 0.05:
 					r.hop = 0.3
 				_emit(r, "note", 0.5, dt)
+				if r.t <= 0:
+					_choose(i)
+			"greet":
+				# zum Neuen schauen, hüpfen, Noten
+				if newcomer >= 0 and newcomer < residents.size():
+					r.flip = residents[newcomer].x < r.x
+				if r.hop <= 0.0 and fmod(r.t + r.id * 0.3, 0.8) < 0.05:
+					r.hop = 0.3
+				_emit(r, "note", 0.6, dt)
 				if r.t <= 0:
 					_choose(i)
 			"pet":
@@ -139,15 +186,16 @@ func _choose(i: int) -> void:
 	var r: Dictionary = residents[i]
 	_leave_partner(r)
 	var roll := rng.randf()
-	if roll < 0.42:
+	var m: Array = DAY_MOOD.get(daytime, DAY_MOOD.nacht)
+	if roll < m[0]:
 		_walk_to(r, _free_spot(i), "walk")
-	elif roll < 0.55:
+	elif roll < m[0] + m[1]:
 		r.state = "idle"
 		r.t = rng.randf_range(1.5, 4.0)
-	elif roll < 0.68 and not r.fly:
+	elif roll < m[0] + m[1] + m[2] and not r.fly:
 		r.state = "sleep"
 		r.t = rng.randf_range(6.0, 10.0)
-	elif roll < 0.88:
+	elif roll < m[0] + m[1] + m[2] + m[3]:
 		var s: Vector2 = SPOTS.get(r.el, SPOTS.Neutral)
 		_walk_to(r, s + Vector2(rng.randf_range(-14, 14), rng.randf_range(-4, 4)), "go_spot")
 	else:
@@ -197,6 +245,10 @@ func _arrive(i: int) -> void:
 			r.t = rng.randf_range(4.0, 7.0)
 			# Feuer schaut zum Lagerfeuer (rechts), Wasser zum Teich (links)
 			r.flip = {"Feuer": false, "Wasser": true}.get(r.el, r.flip)
+		"arrive":
+			# angekommen: Freudensprünge mit Herzchen
+			newcomer = -1
+			pet(i)
 		"go_play":
 			r.state = "play"
 			r.t = 3.2

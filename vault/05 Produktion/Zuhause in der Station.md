@@ -47,7 +47,16 @@ Die zuerst aus Rechtecken gezeichneten Lieblingsplätze wirkten neben den Sprite
   - Die Station öffnet im Reiter Zuhause.
   - **325 Prüfungen.**
 
+## Tageszeiten und Einzug (07.10.2026, Wunsch des Produzenten)
+- **Tageszeit** wechselt mit jedem Run: Morgen, Tag, Abend, Nacht (`HomeSim.daytime_for(runs)`).
+  - Licht als weicher Farbverlauf über die Kulisse, dazu tiefe Morgensonne, hohe Mittagssonne, Abendsonne bzw. Mondsichel.
+  - Die Tageszeit steht oben links.
+  - Verhalten (`DAY_MOOD`): Nachts wird viel geschlafen, tagsüber mehr gelaufen und gespielt (im Test über 20× so viel Schlaf nachts).
+- **Einzug:** Wer neu im Team ist (Schlüpfen, Fusion), kommt beim nächsten Besuch im Zuhause von links hereingelaufen.
+  - Alle anderen drehen sich zu ihm, hüpfen und machen Noten.
+  - Bei der Ankunft gibt es Freudensprünge mit Herzchen, oben steht „X ist eingezogen! Alle freuen sich.“
+  - Wer schon begrüßt wurde, merkt sich der Spielstand (`home_seen`). Alte Spielstände starten ohne Begrüßungswelle.
+- Screenshot: `--mode=home --daytime=morgen|tag|abend|nacht`, `--welcome`.
+
 ## Ideen für später
-- Tageszeit (Morgen, Tag, Abend), passend zur echten Uhrzeit oder zum Run-Zähler.
-- Neu geschlüpfte Glitchlinge kommen mit einer kleinen Szene ins Zuhause gelaufen.
 - Bewohner reagieren auf Fusionen und Entwicklungen (Glitzern, „Wow!“).

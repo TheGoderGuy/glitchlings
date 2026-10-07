@@ -315,6 +315,11 @@ func _screenshot(shot: Dictionary) -> void:
 			if mode == "home":
 				current._sync_home()
 				current.home.setup(SaveGame.team(), 7)
+				current.home.daytime = shot.get("daytime", current.home.daytime)
+				if shot.has("welcome"):
+					current.home.welcome(current.home.residents[-1].id)
+					current.pet_msg = T.t("%s ist eingezogen! Alle freuen sich.") % T.t(current.home.residents[-1].form)
+					current.pet_t = 4.0
 				for k in int(shot.get("t", 6.0) * 60.0):
 					current.home.update(1.0 / 60.0)
 				current.anim_t = shot.get("t", 6.0)

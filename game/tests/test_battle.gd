@@ -2305,6 +2305,30 @@ func test_station_guide() -> void:
 	var msg := hs.pet(0)
 	check(hs.residents[0].state == "pet" and hs.fx.size() >= before + 4 and msg.contains(T.t(hs.residents[0].form)), "Zuhause: Streicheln gibt Herzchen und eine Reaktion (%s)" % msg)
 	check(hs.order().size() == hs.residents.size(), "Zuhause: Auswahl von links nach rechts")
+	# Tageszeiten wechseln mit jedem Run, nachts wird mehr geschlafen als tagsüber
+	check(HomeSim.daytime_for(0) == "morgen" and HomeSim.daytime_for(1) == "tag" and HomeSim.daytime_for(3) == "nacht" and HomeSim.daytime_for(4) == "morgen", "Zuhause: Tageszeit wechselt mit jedem Run (Morgen, Tag, Abend, Nacht)")
+	var sleep_t := {}
+	for dt in ["tag", "nacht"]:
+		var hd := HomeSim.new()
+		hd.setup(team, 5)
+		hd.daytime = dt
+		var n := 0
+		for k in 60 * 90:
+			hd.update(1.0 / 60.0)
+			n += hd.residents.filter(func(r): return r.state == "sleep").size()
+		sleep_t[dt] = n
+	check(sleep_t.nacht > sleep_t.tag * 2, "Zuhause: nachts schlafen deutlich mehr Bewohner (%d gegen %d)" % [sleep_t.nacht, sleep_t.tag])
+	# Einzug: der Neue kommt von links herein, die anderen begrüßen ihn, am Ziel gibt es Herzchen
+	var hw := HomeSim.new()
+	hw.setup(team, 9)
+	var nid: int = hw.residents[-1].id
+	hw.welcome(nid)
+	var greet: bool = hw.residents.slice(0, -1).all(func(r): return r.state == "greet") and hw.residents[-1].x < HomeSim.AREA.position.x
+	for k in 60 * 8:
+		hw.update(1.0 / 60.0)
+		if hw.residents[-1].state == "pet":
+			break
+	check(greet and hw.residents[-1].state == "pet" and hw.fx.any(func(f): return f.kind == "heart"), "Zuhause: Einzug von links, alle begrüßen den Neuen, Herzchen bei der Ankunft")
 
 
 ## Kampf-Handbuch (30.09.2026)

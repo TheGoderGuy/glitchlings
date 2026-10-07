@@ -447,7 +447,8 @@ const D := {
 	"Neu freigeschaltet: Schwierigkeit KORRUMPIERT": "Unlocked: difficulty CORRUPTED",
 	"(in den Optionen: stärkere Gegner, 50 % mehr Fragmente)": "(in the options: stronger enemies, 50% more fragments)",
 	# ---------- Zuhause in der Station (06.10.2026) ----------
-	"Zuhause": "Home", "Noch niemand zu Hause.": "Nobody is home yet.", "< > auswählen   %s streicheln": "< > choose   %s pet",
+	"Zuhause": "Home", "%s ist eingezogen! Alle freuen sich.": "%s has moved in! Everyone is happy.",
+	"Morgen": "Morning", "Tag": "Day", "Abend": "Evening", "Nacht": "Night", "Noch niemand zu Hause.": "Nobody is home yet.", "< > auswählen   %s streicheln": "< > choose   %s pet",
 	"%d weitere Glitchlinge ruhen sich gerade aus.": "%d more Glitchlings are resting right now.",
 	"Hier leben deine Glitchlinge, wenn sie nicht unterwegs sind. Mit < > wählst du eins aus, mit %s streichelst du es.": "This is where your Glitchlings live when they are not out on a run. Choose one with < > and pet it with %s.",
 	"%s schnurrt zufrieden.": "%s purrs happily.", "%s wedelt wild mit dem Schwanz.": "%s wags its tail wildly.", "%s blubbert fröhlich.": "%s bubbles cheerfully.",

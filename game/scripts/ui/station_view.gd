@@ -272,6 +272,7 @@ func _nav_v(n: int) -> void:
 func _draw() -> void:
 	_draw_zone("wiesen")
 	if tab == Tab.HOME:
+		_draw_daytime(home.daytime)
 		_draw_home()
 	else:
 		draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.45))
@@ -378,6 +379,25 @@ func _sync_home() -> void:
 	if ids != have:
 		home.setup(SaveGame.team())
 		home_sel = 0
+	home.daytime = HomeSim.daytime_for(int(SaveGame.data.get("stats", {}).get("runs", 0)))
+	# Einzug: wer neu im Team ist, kommt beim nächsten Besuch im Zuhause hereingelaufen
+	var all_ids: Array = SaveGame.team().map(func(m): return int(m.id))
+	if not SaveGame.data.has("home_seen"):
+		SaveGame.data["home_seen"] = all_ids
+		return
+	if tab != Tab.HOME:
+		return
+	var seen: Array = SaveGame.data.home_seen
+	for id in ids:
+		if not seen.has(id):
+			home.welcome(id)
+			home_sel = ids.find(id)
+			pet_msg = T.t("%s ist eingezogen! Alle freuen sich.") % T.t(SaveGame.monster(id).form)
+			pet_t = 4.5
+			Sfx.play("evolve", 0.0)
+	if all_ids.any(func(i): return not seen.has(i)):
+		SaveGame.data["home_seen"] = all_ids
+		SaveGame.save_game()
 
 
 func _draw_home() -> void:
@@ -422,6 +442,42 @@ func _draw_home() -> void:
 	_text(Vector2(0, 74), T.t("< > auswählen   %s streicheln") % (InputSetup.btn("A") if pad else "Enter"), 8, Color(GameData.COL.sun, 0.85), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	if SaveGame.team().size() > HomeSim.MAX:
 		_text(Vector2(0, 88), T.t("%d weitere Glitchlinge ruhen sich gerade aus.") % (SaveGame.team().size() - HomeSim.MAX), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+
+
+## Licht der Tageszeit über der (nächtlichen) Wiesen-Kulisse, dazu Sonne bzw. Mond
+func _draw_daytime(dt: String) -> void:
+	match dt:
+		"morgen":
+			_grad(Color("#FFB38A"), 0.22, 0.06)
+			_sun(Vector2(96, 150), Color("#FFD9A0"))
+			draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 0.05))
+		"tag":
+			_grad(Color("#7CC0FF"), 0.50, 0.0)
+			_grad(Color("#B8F07A"), 0.0, 0.16)
+			draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 0.09))
+			_sun(Vector2(540, 64), Color("#FFF2A0"))
+		"abend":
+			_grad(Color("#B04A8A"), 0.22, 0.04)
+			_grad(Color("#FF8A3A"), 0.06, 0.16)
+			_sun(Vector2(548, 142), Color("#FFB060"))
+		_:
+			# Mondsichel
+			draw_circle(Vector2(92, 62), 22, Color("#E8ECFF", 0.08))
+			draw_circle(Vector2(92, 62), 10, Color("#E8ECFF"))
+			draw_circle(Vector2(97, 59), 9, Color("#161230"))
+	_text(Vector2(12, 42), T.t({"morgen": "Morgen", "tag": "Tag", "abend": "Abend", "nacht": "Nacht"}[dt]), 8, Color(GameData.COL.muted, 0.9))
+
+
+## Senkrechter Farbverlauf über das ganze Bild (oben a0, unten a1), in 4-px-Streifen
+func _grad(col: Color, a0: float, a1: float) -> void:
+	for i in 90:
+		draw_rect(Rect2(0, i * 4, W, 4), Color(col, lerpf(a0, a1, i / 89.0)))
+
+
+func _sun(c: Vector2, col: Color) -> void:
+	draw_circle(c, 30, Color(col, 0.12))
+	draw_circle(c, 20, Color(col, 0.2))
+	draw_circle(c, 12, col)
 
 
 ## Kleiner hüpfender Pfeil über dem gewählten Bewohner
