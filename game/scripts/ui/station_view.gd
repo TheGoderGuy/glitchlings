@@ -23,7 +23,10 @@ const DEX_ORDER := [
 	"Maskli", "Plätschbär", "Klaubär", "Flutmaske", "Nachtmaske", "Hydrocyon", "Virocyon",
 	"Bachli", "Strudli", "Knisterli", "Wogotter", "Lutrion", "Hydrolutra", "Fulgurlutra",
 	"Plapperli", "Surrfeder", "Glutfeder", "Sturmschwinge", "Flammschwinge", "Fulgopsitta", "Heliopsitta",
-	"Wolkerich", "Spukatz", "Wolperling", "Schlummerbit", "Pustebacke"]
+	"Wolkerich", "Spukatz", "Wolperling", "Schlummerbit", "Pustebacke",
+	# Legendäre (07.10.2026): Champion und Ultra je Fabelwesen
+	"Glimmhirsch", "Lumicervus", "Glutkirin", "Pyrokirin", "Sternwal", "Astralwal",
+	"Toxilisk", "Miasmalisk", "Funkengreif", "Donnergryph", "Chiffrasphinx", "Algosphinx"]
 const HATCH_REVEAL := 2.2
 ## Vorladen! Texturen, die erst in _draw() zum ersten Mal geladen werden, erscheinen weiß.
 ## Zuhause: Requisiten (zugeschnitten) und das flackernde Lagerfeuer
@@ -776,7 +779,7 @@ func _draw_nest() -> void:
 	_text(Vector2(R.position.x, R.position.y + 22), "Brutnest", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 	_text(Vector2(R.position.x, R.position.y + 38), T.t("Ein Ei gibt es nach jedem Run mit mindestens %d gewonnenen Kämpfen.") % SaveGame.EGG_MIN_WINS, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 	var eggs := SaveGame.nest()
-	var slots := SaveGame.nest_slots()
+	var slots := maxi(SaveGame.nest_slots(), eggs.size())   # ein leuchtendes Ei darf zusätzlich liegen
 	var sw := 140.0 if slots <= 3 else 116.0
 	var gap := 170.0 if slots <= 3 else 128.0
 	for i in slots:
@@ -789,8 +792,17 @@ func _draw_nest() -> void:
 		var left := int(e.runs_left)
 		var wob := roundi(sin(anim_t * (10.0 if left <= 1 else 4.0) + i) * (2.0 if left <= 1 else 0.0))
 		draw_rect(Rect2(r.get_center().x - 26, r.position.y + 112, 52, 4), Color(0.05, 0.02, 0.12, 0.35))
-		_draw_egg(Vector2(r.get_center().x + wob, r.position.y + 114), 2)
-		_text(Vector2(r.position.x, r.position.y + 136), "Ei", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+		var shine: bool = e.get("legend", false)
+		if shine:
+			# leuchtendes Ei: goldener Schein und Strahlen
+			var c := Vector2(r.get_center().x, r.position.y + 84)
+			draw_circle(c, 34 + 3 * sin(anim_t * 3.0), Color("#FFE27A", 0.12))
+			draw_circle(c, 24, Color("#FFE27A", 0.18))
+			for k in 8:
+				var a := k * TAU / 8.0 + anim_t * 0.6
+				draw_line(c + Vector2(cos(a), sin(a)) * 26.0, c + Vector2(cos(a), sin(a)) * 40.0, Color("#FFE27A", 0.35), 2)
+		_draw_egg(Vector2(r.get_center().x + wob, r.position.y + 114), 2, shine)
+		_text(Vector2(r.position.x, r.position.y + 136), "Leuchtendes Ei" if shine else "Ei", 8, Color("#FFE27A") if shine else GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 		var txt := T.t("schlüpft nach dem nächsten Run") if left == 1 else (T.t("bereit!") if left <= 0 else T.t("noch %d Runs") % left)
 		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 152), txt, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	# Ei kaufen
@@ -813,7 +825,8 @@ func _draw_dex() -> void:
 		var known: bool = SaveGame.data.get("dex", {}).has(f)
 		var cell := Rect2(R.position.x + 8 + (i % 6) * 98, R.position.y + 8 + (i / 6 - first_row) * 96, 94, 92)
 		var active := i == sel
-		_box(cell, GameData.COL.panel.lightened(0.06) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
+		var legend := GameData.legend_of(f) != ""
+		_box(cell, GameData.COL.panel.lightened(0.06) if active else GameData.COL.bg2, GameData.COL.sun if active else (Color("#C9A43A") if legend else GameData.COL.line))
 		var F: Dictionary = GameData.FORMS[f]
 		var feet := cell.position.y + 77
 		if known:
@@ -821,6 +834,15 @@ func _draw_dex() -> void:
 		else:
 			_draw_sprite(f, cell.get_center().x, feet, false, {"scale": 1, "flash": true, "mod": Color(0.2, 0.17, 0.34, 0.95), "clip_top": cell.position.y + 2})
 		_text(Vector2(cell.position.x, cell.end.y - 6), f if known else "???", 8, GameData.EL[F.el] if known else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cell.size.x)
+	# Gerücht: gewählter Legendärer noch unbekannt und seine Zone schon erreichbar
+	if sel < DEX_ORDER.size():
+		var lg := GameData.legend_of(DEX_ORDER[sel])
+		if lg != "" and not SaveGame.data.get("dex", {}).has(DEX_ORDER[sel]):
+			var zone: String = GameData.LEGENDS[lg].zone
+			var rumor: String = (T.t("Gerücht: ") + T.t(GameData.LEGENDS[lg].rumor)) if SaveGame.zone_unlocked(zone) else T.t("Legendär. Ein Gerücht darüber hörst du in %s.") % T.t(GameData.ZONES[zone].name)
+			var B := Rect2(R.position.x + 8, R.end.y - 34, R.size.x - 16, 30)
+			_box(B, Color(GameData.COL.dark, 0.95), Color("#C9A43A"))
+			draw_multiline_string(font(), B.position + Vector2(8, 12), rumor, HORIZONTAL_ALIGNMENT_CENTER, B.size.x - 16, tsz(8), 2, Color("#FFE27A"), TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 
 
 func _draw_lab() -> void:
@@ -917,11 +939,11 @@ func _draw_fusion() -> void:
 			_text(Vector2(0, 296), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
-func _draw_egg(feet: Vector2, scale: int) -> void:
+func _draw_egg(feet: Vector2, scale: int, shine := false) -> void:
 	var tex: Texture2D = EGG_TEX.egg_s
 	var size := tex.get_width() * scale
 	draw_set_transform(Vector2(roundi(feet.x - size / 2.0), roundi(feet.y - size)), 0, Vector2(scale, scale))
-	draw_texture(tex, Vector2.ZERO)
+	draw_texture(tex, Vector2.ZERO, Color(1.25, 1.1, 0.55) if shine else Color.WHITE)
 	draw_set_transform(Vector2.ZERO)
 
 

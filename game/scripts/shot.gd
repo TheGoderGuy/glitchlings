@@ -60,6 +60,8 @@ static func args() -> Dictionary:
 			shot.daytime = a.substr(10)
 		elif a.begins_with("--protocol="):
 			shot.protocol = int(a.substr(11))
+		elif a == "--legendegg":
+			shot.legendegg = true
 		elif a == "--welcome":
 			shot.welcome = true
 		elif a.begins_with("--atkpose="):

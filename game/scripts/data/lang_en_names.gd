@@ -13,7 +13,7 @@ const D := {
 
 	# ---------- Tiere ----------
 	"Katze": "Cat", "Welpe": "Puppy", "Axolotl": "Axolotl", "Hamster": "Hamster", "Hase": "Hare", "Frosch": "Frog",
-	"Salamander": "Salamander", "Bär": "Bear", "Robo-Eule": "Robo-owl", "Dachs": "Badger", "Waschbär": "Raccoon", "Otter": "Otter", "Ara": "Macaw",
+	"Salamander": "Salamander", "Bär": "Bear", "Robo-Eule": "Robo-owl", "Dachs": "Badger", "Waschbär": "Raccoon", "Otter": "Otter", "Ara": "Macaw", "Hirsch": "Stag", "Kirin": "Kirin", "Wal": "Whale", "Basilisk": "Basilisk", "Greif": "Griffin", "Sphinx": "Sphinx",
 	"Axolotl × Hamster": "Axolotl × Hamster", "Hase × Eule": "Hare × Owl", "Bär × Hamster": "Bear × Hamster",
 	"Hamster × Frosch": "Hamster × Frog", "Katze × Frosch": "Cat × Frog",
 
@@ -79,6 +79,8 @@ const D := {
 	# ---------- Zonen ----------
 	"Cache-Wiesen": "Cache Meadows", "Firewall-Vulkan": "Firewall Volcano", "Viren-Sümpfe": "Virus Swamps", "NEST-Kern": "NEST Core",
 	"Kühlwasser-See": "Coolant Lake", "Hochspannungs-Steppe": "High Voltage Steppe",
+	"Glimmhirsch": "Glimmerstag", "Lumicervus": "Lumicervus", "Glutkirin": "Emberkirin", "Pyrokirin": "Pyrokirin", "Sternwal": "Starwhale", "Astralwal": "Astralwhale",
+	"Toxilisk": "Toxilisk", "Miasmalisk": "Miasmalisk", "Funkengreif": "Sparkgriffin", "Donnergryph": "Thundergryph", "Chiffrasphinx": "Ciphersphinx", "Algosphinx": "Algosphinx",
 	"Kabelaal": "Cableel", "Frostkrill": "Frostkrill", "Tauchkäfer": "Divebeetle", "Frostanemone": "Frostanemone", "Tiefenschlange": "Deepserpent",
 	"Schraubenrochen": "Screwray", "Frostnarwal": "Frostwhal", "Ampereameise": "Ampant", "Spulenwurm": "Coilworm", "Mastgeier": "Pylonvulture",
 	"Blitzfarn": "Boltfern", "Donnerkondor": "Thundercondor", "Donnerbock": "Thunderbuck", "Trafokäfer": "Gridbeetle",

@@ -43,6 +43,11 @@ const DIFF_DMG := [0.7, 1.0, 1.25, 1.4]
 const DIFF_WARN := [0.25, 0.0, -0.1, -0.15]   # Sekunden mehr/weniger Vorwarnung
 const DIFF_LOOT := [1.0, 1.0, 1.0, 1.5]      # Korrumpiert lohnt sich: mehr Fragmente
 var protocol := 0         # Glitch-Protokoll (0 = aus, 1–10), siehe GameData.PROTOCOLS
+## Legendäre (07.10.2026): Werte für die geheimen Bedingungen
+var pushed := 0           # wie oft eine Strömung den Spieler mitgerissen hat
+var boss_heal := false    # im Bosskampf einen Heilpatch benutzt
+var boss_spark_t := 0.0   # Sekunden auf Spannungsfeldern im Bosskampf
+var final_sig := false    # Ur-Glitch mit der Signatur-Attacke besiegt
 
 
 func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
@@ -428,7 +433,8 @@ func to_dict() -> Dictionary:
 		"forms_seen": forms_seen.duplicate(), "tutorial": tutorial, "last_foe": last_foe,
 		"elapsed_ms": Time.get_ticks_msec() - start_ms, "chips_used": chips_used, "fights_won": fights_won,
 		"sp_bonus": sp_bonus, "foe_weak": foe_weak, "seen_events": seen_events.duplicate(),
-		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty, "protocol": protocol, "loot_mult": loot_mult,
+		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty, "protocol": protocol,
+		"pushed": pushed, "boss_heal": boss_heal, "boss_spark_t": boss_spark_t, "final_sig": final_sig, "loot_mult": loot_mult,
 		"zone": map.zone, "level": map.level, "floors": map.floors.duplicate(true),
 		"floor_idx": floor_idx, "pos": pos, "path": p,
 		# 64-Bit-Werte als Text, JSON-Zahlen sind nur Gleitkomma
@@ -463,6 +469,10 @@ static func from_dict(d: Dictionary) -> RunState:
 	r.backup_used = bool(d.backup_used)
 	r.difficulty = int(d.difficulty)
 	r.protocol = int(d.get("protocol", 0))
+	r.pushed = int(d.get("pushed", 0))
+	r.boss_heal = bool(d.get("boss_heal", false))
+	r.boss_spark_t = float(d.get("boss_spark_t", 0.0))
+	r.final_sig = bool(d.get("final_sig", false))
 	r.loot_mult = float(d.get("loot_mult", 1.0))
 	var m := ZoneMap.new()
 	m.zone = d.zone

@@ -54,6 +54,10 @@ func _draw() -> void:
 		lines.append([T.t("Neue Zone frei: %s!") % T.t(GameData.ZONES[summary.unlocked].name), GameData.COL.coral])
 	if summary.get("game_cleared", false):
 		lines.append(["Der NEST ist gerettet! Neue Schwierigkeit: Korrumpiert", GameData.COL.sun])
+	if summary.get("legend", "") != "":
+		lines.append(["Ein leuchtendes Ei ist erschienen! Etwas Legendäres wartet im Brutnest.", Color("#FFE27A")])
+	if int(summary.get("protocol_up", 0)) > 0:
+		lines.append([T.t("Glitch-Protokoll %d freigeschaltet!") % int(summary.protocol_up), Color("#FF5470")])
 	if int(summary.get("frag_banked", 0)) > 0:
 		lines.append([T.t("+%d Fragmente auf die Station gerettet") % int(summary.frag_banked), GameData.COL.sun])
 	var egg: Dictionary = summary.get("egg", {})

@@ -12,7 +12,7 @@ const SPOTS := {
 	"Code": Vector2(470, 252), "Virus": Vector2(270, 334), "Neutral": Vector2(318, 288),
 }
 ## Linien, die schweben statt zu laufen
-const FLYERS := ["Kauzbit", "Plapperli"]
+const FLYERS := ["Kauzbit", "Plapperli", "Sternwal"]
 ## Reaktion aufs Streicheln je Tierart (bei Fusionen zählt das erste Tier)
 const PET_TEXT := {
 	"Katze": "%s schnurrt zufrieden.", "Welpe": "%s wedelt wild mit dem Schwanz.", "Axolotl": "%s blubbert fröhlich.",
@@ -20,6 +20,8 @@ const PET_TEXT := {
 	"Salamander": "%s schmiegt sich an dich.", "Bär": "%s brummt zufrieden.", "Robo-Eule": "%s piept und plustert sich auf.",
 	"Dachs": "%s rollt sich auf den Rücken.", "Waschbär": "%s putzt sich verlegen die Pfoten.",
 	"Otter": "%s schlägt einen kleinen Purzelbaum.", "Ara": "%s plappert: „Nochmal! Nochmal!“",
+	"Hirsch": "%s neigt sanft das Geweih.", "Kirin": "%s schnaubt kleine Funken.", "Wal": "%s singt ein leises Walsignal.",
+	"Basilisk": "%s blinzelt dich ganz vorsichtig an.", "Greif": "%s plustert stolz die Federn auf.", "Sphinx": "%s stellt dir ein Rätsel und schnurrt.",
 }
 
 ## Tageszeiten (07.10.2026): wechseln mit jedem Run; nachts wird mehr geschlafen, tagsüber mehr gespielt.

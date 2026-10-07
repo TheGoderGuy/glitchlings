@@ -459,6 +459,43 @@ const MONS := {
 		"passive": "Spuk", "passive_desc": "Weicht 20 % aller Treffer aus.",
 		"trait": "Fusion. Halb Geist, halb Katze.", "evo": {},
 	},
+	# --- Legendäre (07.10.2026): je Zone ein Fabelwesen, schlüpfen als Champion, Ultra ab 80 Element-Chips ---
+	"Glimmhirsch": {
+		"hp": 110, "move": 0.11, "rech": 1.0, "el": "Neutral", "animal": "Hirsch", "legend": true,
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Doppelklick", "Blitzcursor", "Wasserstrahl", "Heilpatch", "Firewall"],
+		"passive": "Lichtschein", "passive_desc": "Heilt alle 6 s 4 HP, auch mitten im Kampf.",
+		"trait": "Legendär. Ein Hirsch aus Licht, der sich nur den Jüngsten zeigt.", "evo": {},
+	},
+	"Glutkirin": {
+		"hp": 105, "move": 0.11, "rech": 1.0, "el": "Feuer", "animal": "Kirin", "legend": true,
+		"deck": ["Glutball", "Glutball", "Flammenwelle", "Glutklinge", "Funkenregen", "Byteschlag", "Heilpatch", "Hitzeschild"],
+		"passive": "Glutmähne", "passive_desc": "Wer den Kirin trifft, fängt Feuer.",
+		"trait": "Legendär. Ein Drachenpferd aus dem Herzen des Vulkans.", "evo": {},
+	},
+	"Sternwal": {
+		"hp": 125, "move": 0.17, "rech": 1.0, "el": "Wasser", "animal": "Wal", "legend": true,
+		"deck": ["Wasserstrahl", "Wasserstrahl", "Flutwelle", "Frostsplitter", "Tsunami", "Pixelstrahl", "Heilpatch", "Blubberschild"],
+		"passive": "Sternenmeer", "passive_desc": "Schwebt über allem: Lava, Schleim, Strömung und Spannungsfelder wirken nicht.",
+		"trait": "Legendär. Ein Wal, der zwischen den Sternen schwimmt.", "evo": {},
+	},
+	"Toxilisk": {
+		"hp": 105, "move": 0.12, "rech": 1.0, "el": "Virus", "animal": "Basilisk", "legend": true,
+		"deck": ["Virusspritzer", "Virusspritzer", "Seuche", "Sporenfalle", "Bug-Mine", "Parasit", "Heilpatch", "Firewall"],
+		"passive": "Bannblick", "passive_desc": "Sein Blick lähmt: Gegner greifen 15 % langsamer an.",
+		"trait": "Legendär. Wer ihm in die Augen sieht, erstarrt.", "evo": {},
+	},
+	"Funkengreif": {
+		"hp": 100, "move": 0.12, "rech": 1.0, "el": "Elektro", "animal": "Greif", "legend": true,
+		"deck": ["Blitzcursor", "Blitzcursor", "Kettenblitz", "Blitzlanze", "Kurzschluss", "Magnetfeld", "Heilpatch", "Ladungsfeld"],
+		"passive": "Sturmschwingen", "passive_desc": "Bewegt sich doppelt so schnell.",
+		"trait": "Legendär. Halb Adler, halb Löwe, ganz Gewitter.", "evo": {},
+	},
+	"Chiffrasphinx": {
+		"hp": 115, "move": 0.13, "rech": 1.0, "el": "Code", "animal": "Sphinx", "legend": true,
+		"deck": ["Pixelstrahl", "Laserschuss", "Debugger", "Datenfresser", "Mini-Bot", "Geschützturm", "Heilpatch", "Kopierschutz"],
+		"passive": "Rätselwächter", "passive_desc": "Jeder 3. Treffer prallt an ihr ab.",
+		"trait": "Legendär. Die Hüterin der Rätsel im NEST-Kern.", "evo": {},
+	},
 }
 
 ## Fusionsrezepte (Linien, egal welche Stufe). need_form: eine bestimmte Form muss dabei sein.
@@ -470,6 +507,31 @@ const RECIPES := [
 	{"a": "Quakli", "b": "Pixmiez", "r": "Spukatz", "need_form": "Virulina", "hint": "Ein Giftfrosch und ein Kätzchen … aber nur, wenn die Katze selbst Gift im Blut hat."},
 ]
 const FUSION_COST := 100
+
+## Legendäre: je Zone ein Fabelwesen mit geheimer Bedingung beim Sieg über den Zonen-Boss.
+## Erfüllt: ein leuchtendes Ei im Brutnest (schlüpft nach 1 Run). Gerüchte stehen im Monsterdex.
+const LEGENDS := {
+	"Glimmhirsch": {"zone": "wiesen", "cond": "baby",
+		"rumor": "Ein Hirsch aus Licht soll sich zeigen, wenn ein ganz junger Glitchling den Herrscher der Wiesen bezwingt."},
+	"Glutkirin": {"zone": "vulkan", "cond": "fire6",
+		"rumor": "Im Vulkan wartet ein Wesen aus Glut auf jemanden, dessen Deck selbst lichterloh brennt."},
+	"Sternwal": {"zone": "see", "cond": "nopush",
+		"rumor": "Der Sternwal kommt nur zu denen, die sich im See von keiner Strömung mitreißen lassen."},
+	"Toxilisk": {"zone": "sumpf", "cond": "noheal",
+		"rumor": "Der Blick des Basilisken prüft, wer die Königin des Sumpfs ganz ohne Heilpatch besiegt."},
+	"Funkengreif": {"zone": "steppe", "cond": "spark10",
+		"rumor": "Wer im Kampf gegen den Donnerkondor lange auf geladenem Boden ausharrt, dem erscheint der Greif."},
+	"Chiffrasphinx": {"zone": "kern", "cond": "sigkill",
+		"rumor": "Die Sphinx verlangt: Der letzte Schlag gegen den Ur-Glitch muss deine Signatur-Attacke sein."},
+}
+## Ultra-Form → zugehöriger Legendärer (für Dex und Gerüchte)
+static func legend_of(form: String) -> String:
+	if LEGENDS.has(form):
+		return form
+	for L in LEGENDS:
+		if FORMS[L].up == form:
+			return L
+	return ""
 
 ## Alle Formen: Sprite-Datei, Stufe (1 Baby, 2 Rookie, 3 Champion), Element, nächste Stufe
 const FORMS := {
@@ -510,6 +572,18 @@ const FORMS := {
 	"Radarkauz": {"spr": "Radarkauz_80", "stage": 3, "el": "Code", "up": "Orbitkauz"},
 	"Wolkerich": {"spr": "Wolkerich_80", "stage": 3, "el": "Wasser", "up": ""},
 	"Spukatz": {"spr": "Spukatz_80", "stage": 3, "el": "Virus", "up": ""},
+	"Glimmhirsch": {"spr": "Glimmhirsch_80", "stage": 3, "el": "Neutral", "up": "Lumicervus"},
+	"Glutkirin": {"spr": "Glutkirin_80", "stage": 3, "el": "Feuer", "up": "Pyrokirin"},
+	"Sternwal": {"spr": "Sternwal_80", "stage": 3, "el": "Wasser", "up": "Astralwal"},
+	"Toxilisk": {"spr": "Toxilisk_80", "stage": 3, "el": "Virus", "up": "Miasmalisk"},
+	"Funkengreif": {"spr": "Funkengreif_80", "stage": 3, "el": "Elektro", "up": "Donnergryph"},
+	"Chiffrasphinx": {"spr": "Chiffrasphinx_80", "stage": 3, "el": "Code", "up": "Algosphinx"},
+	"Lumicervus": {"spr": "Lumicervus_96", "stage": 4, "el": "Neutral", "up": ""},
+	"Pyrokirin": {"spr": "Pyrokirin_96", "stage": 4, "el": "Feuer", "up": ""},
+	"Astralwal": {"spr": "Astralwal_96", "stage": 4, "el": "Wasser", "up": ""},
+	"Miasmalisk": {"spr": "Miasmalisk_96", "stage": 4, "el": "Virus", "up": ""},
+	"Donnergryph": {"spr": "Donnergryph_96", "stage": 4, "el": "Elektro", "up": ""},
+	"Algosphinx": {"spr": "Algosphinx_96", "stage": 4, "el": "Code", "up": ""},
 	"Wolperling": {"spr": "Wolperling_80", "stage": 3, "el": "Elektro", "up": ""},
 	"Schlummerbit": {"spr": "Schlummerbit_80", "stage": 3, "el": "Elektro", "up": ""},
 	# --- Dachs ---
@@ -689,6 +763,19 @@ const SPECIALS := {
 	"Flammschwinge": {"name": "Feuerfächer", "el": "Feuer", "anim": "field", "hits": [20, 20], "burn": 6, "desc": "Fächert Glutfedern übers ganze Feld: 2 × 20 + langer Brand."},
 	"Heliopsitta": {"name": "Sonnensturz", "el": "Feuer", "anim": "jump", "hits": [70, 30], "burn": 8, "desc": "Stürzt herab wie eine kleine Sonne: 70 + 30 + sehr langer Brand."},
 	"Schlummerbit": {"name": "Schlaflied", "el": "Elektro", "anim": "field", "hits": [20], "stun": 3.0, "heal": 30, "desc": "Ein Schlaflied übers ganze Feld: 20 Schaden, der Gegner schläft 3 s, du heilst 30 HP."},
+	# --- Legendäre (07.10.2026) ---
+	"Glimmhirsch": {"name": "Lichtsprung", "el": "Neutral", "anim": "jump", "hits": [45], "heal": 25, "desc": "Springt im Lichtbogen zum Gegner: 45 Schaden, heilt 25 HP."},
+	"Lumicervus": {"name": "Sonnengeweih", "el": "Neutral", "anim": "field", "hits": [65], "heal": 45, "desc": "Das Geweih strahlt übers ganze Feld: 65 Schaden, heilt 45 HP."},
+	"Glutkirin": {"name": "Feuerhuf", "el": "Feuer", "anim": "field", "hits": [25, 25], "burn": 6, "desc": "Stampft Feuer übers Feld: 2 × 25 + langer Brand."},
+	"Pyrokirin": {"name": "Höllenhuf", "el": "Feuer", "anim": "field", "hits": [30, 30, 30], "burn": 8, "desc": "Ein Ritt durch Flammen: 3 × 30 + sehr langer Brand."},
+	"Sternwal": {"name": "Sternenflut", "el": "Wasser", "anim": "field", "hits": [45], "bubble": 40, "bubble_t": 5.0, "desc": "Eine Flut voller Sterne: 45 Schaden aufs ganze Feld, Schutzblase (40, 5 s)."},
+	"Astralwal": {"name": "Nebelgesang", "el": "Wasser", "anim": "field", "hits": [65], "stun": 1.5, "bubble": 60, "bubble_t": 6.0, "desc": "Ein Lied aus dem All: 65 Schaden, friert 1,5 s ein, Schutzblase (60, 6 s)."},
+	"Toxilisk": {"name": "Bannstrahl", "el": "Virus", "anim": "row", "hits": [40], "poison": 6, "stun": 1.5, "desc": "Versteinernder Blick: 40 Schaden, Gift und 1,5 s Starre."},
+	"Miasmalisk": {"name": "Steinerner Blick", "el": "Virus", "anim": "field", "hits": [55], "poison": 8, "stun": 2.0, "desc": "Der Blick trifft das ganze Feld: 55 Schaden, starkes Gift, 2 s Starre."},
+	"Funkengreif": {"name": "Sturzflug", "el": "Elektro", "anim": "jump", "hits": [20, 20, 20], "stun": 0.5, "desc": "Blitzschneller Sturzflug: 3 × 20, betäubt kurz."},
+	"Donnergryph": {"name": "Donnersturz", "el": "Elektro", "anim": "jump", "hits": [28, 28, 28], "stun": 1.0, "desc": "Sturz aus dem Gewitter: 3 × 28, betäubt 1 s."},
+	"Chiffrasphinx": {"name": "Rätselstrahl", "el": "Code", "anim": "row", "hits": [45], "shield": 5.0, "desc": "Ein Strahl aus Glyphen: 45 Schaden, Firewall-Schild (5 s)."},
+	"Algosphinx": {"name": "Ur-Algorithmus", "el": "Code", "anim": "field", "hits": [60], "shield": 6.0, "recharge": true, "desc": "Uralter Code: 60 Schaden aufs ganze Feld, Schild (6 s), alle Chips sofort geladen."},
 	"Pustebacke": {"name": "Gasexplosion", "el": "Virus", "anim": "field", "hits": [15, 15], "poison": 10, "desc": "Platzt fast vor Gas: Giftwolke übers ganze Feld, 2 × 15 + langes Gift."},
 	"Pilzbrumm": {"name": "Sporenwolke", "el": "Virus", "anim": "field", "hits": [20], "poison": 6, "desc": "Giftige Sporenwolke übers ganze Feld: 20 + Gift."},
 	"Sporenpranke": {"name": "Giftpranke", "el": "Virus", "anim": "jump", "hits": [50], "poison": 8, "knock": true, "desc": "Pilzbesetzter Prankenhieb: 50 + langes Gift, stößt zurück."},

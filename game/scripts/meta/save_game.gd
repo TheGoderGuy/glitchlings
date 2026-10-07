@@ -279,6 +279,10 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 		if not data.cleared.has(z):
 			data.cleared.append(z)
 			sum.unlocked = _newly_unlocked(z)
+		# Legendäre: geheime Bedingung der Zone erfüllt → leuchtendes Ei
+		var lg := _legend_check(run)
+		if lg != "":
+			sum.legend = lg
 		# Glitch-Protokoll auf der höchsten freien Stufe geschafft: nächste Stufe frei
 		if run.protocol > 0 and run.protocol >= protocol_unlocked() and protocol_unlocked() < GameData.PROTOCOLS.size():
 			data.protocol_max = run.protocol + 1
@@ -349,6 +353,36 @@ func download_log() -> void:
 ## Ende erreicht (Ur-Glitch besiegt)?
 func game_cleared() -> bool:
 	return data.get("game_cleared", false)
+
+
+## Legendäre (07.10.2026): prüft die geheime Bedingung der gerade geschafften Zone; Treffer legt ein leuchtendes Ei ins Nest
+## (auch wenn es voll ist) und merkt sich den Legendären, damit es ihn nur einmal gibt.
+func _legend_check(run: RunState) -> String:
+	for L in GameData.LEGENDS:
+		var D: Dictionary = GameData.LEGENDS[L]
+		if D.zone != run.map.zone or data.get("legends", []).has(L):
+			continue
+		var ok := false
+		match D.cond:
+			"baby":
+				ok = run.stage == 1
+			"fire6":
+				ok = run.deck.filter(func(c): return GameData.chip(c).el == "Feuer").size() >= 6
+			"nopush":
+				ok = run.pushed == 0
+			"noheal":
+				ok = not run.boss_heal
+			"spark10":
+				ok = run.boss_spark_t >= 10.0
+			"sigkill":
+				ok = run.final_sig
+		if ok:
+			if not data.has("legends"):
+				data["legends"] = []
+			data.legends.append(L)
+			data.nest.append({"species": L, "runs_left": 1, "legend": true})
+			return L
+	return ""
 
 
 ## Glitch-Protokolle: nach dem Abspann ist Stufe 1 frei, jede auf der höchsten Stufe geschaffte Zone schaltet die nächste frei

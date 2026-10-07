@@ -312,6 +312,8 @@ func _screenshot(shot: Dictionary) -> void:
 				SaveGame.data.upgrades = {"vorrat": 1, "werkbank": 1}
 			if mode == "hatch":
 				SaveGame.data.nest[0].runs_left = 0
+			if shot.has("legendegg"):
+				SaveGame.data.nest.append({"species": "Sternwal", "runs_left": 1, "legend": true})
 			show_station()
 			current.tab = {"station": 0, "nest": 1, "lab": 2, "dex": 3, "hatch": 0, "fusion": 2, "upgrade": 4, "home": 5}[mode]
 			if mode == "home":

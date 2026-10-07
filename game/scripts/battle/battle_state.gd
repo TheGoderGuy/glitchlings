@@ -67,6 +67,8 @@ var hazards: Array = []  # Flächen auf der Spielerseite {c, r, t, tick, kind: l
 const HAZARD_DUR := {"lava": 3.0, "slime": 4.0, "current": 4.0, "spark": 4.0}
 const HAZARD_COL := {"lava": Color("#FF7A1F"), "slime": Color("#7BD35A"), "current": Color("#4CB8F0"), "spark": Color("#FFE45C")}
 var push_t := 0.5         # Strömung: Zeit bis zum nächsten Mitreißen
+var light_t := 6.0        # Lichtschein (Glimmhirsch-Linie): Zeit bis zur nächsten Heilung
+var riddle := 0           # Rätselwächter (Chiffrasphinx-Linie): Treffer-Zähler
 var decoy_t := 0.0
 var regen_t := 1.0
 var banner := {}
@@ -200,7 +202,7 @@ func move_player(dc: int, dr: int) -> void:
 		return
 	p.c = c
 	p.r = r
-	p.cd = mon.move * (0.5 if mon.passive in ["Hasenhaken", "Mischwesen"] else 1.0)
+	p.cd = mon.move * (0.5 if mon.passive in ["Hasenhaken", "Mischwesen", "Sturmschwingen"] else 1.0)
 	if run.has_mod("reflexbooster"):
 		p.cd *= 0.75
 	if not run.has_mod("schleimschuhe") and (on_slime(p.c, p.r) or on_slime(p.c - dc, p.r - dr)):
@@ -233,6 +235,8 @@ func use_slot(i: int) -> void:
 	run.chips_used += 1
 	if GameData.base_chip(id) == "Eisfeld":
 		run.eis += 1
+	if GameData.base_chip(id) == "Heilpatch" and def.boss and not def.get("guard", false):
+		run.boss_heal = true
 	# Hamstern (Kekso-Linie): Chip kommt gleich wieder statt auf den Ablagestapel
 	var ro := GameData.role(id)
 	if mon.passive in ["Hamstern", "Winterschlaf"] and rng.randf() < 0.25:
@@ -767,6 +771,13 @@ func hurt_player(d: int) -> int:
 		events.append("dodge")
 		float_at(p.c, p.r, "Spuk!", GameData.EL.Virus)
 		return 0
+	if mon.passive == "Rätselwächter":
+		riddle += 1
+		if riddle % 3 == 0:
+			events.append("block")
+			float_at(p.c, p.r, "Rätselwächter!", GameData.EL.Code)
+			burst(p.c + 0.5, p.r + 0.5, GameData.EL.Code, 12)
+			return 0
 	if decoy > 0 and decoy_t > 0:
 		decoy -= 1
 		events.append("block")
@@ -810,6 +821,9 @@ func hurt_player(d: int) -> int:
 		d = maxi(1, roundi(d * 0.75))
 	if run.has_mod("panzerplatte"):
 		d = maxi(1, d - 2)
+	if mon.passive == "Glutmähne":
+		e.burn = maxi(e.burn, 3)
+		float_at(3 + e.c, e.r, "Glutmähne", GameData.EL.Feuer)
 	if mon.passive in ["Giftbaut", "Schwebegas"]:
 		e.poison = maxi(e.poison, 3)
 		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
@@ -843,6 +857,8 @@ func _win() -> void:
 		return
 	over = true
 	outcome = "won"
+	if def.get("final", false) and in_special:
+		run.final_sig = true
 	events.append("win")
 	loot_gained = roundi(def.loot * (1.3 if run.has_mod("sammler") else 1.0) * run.loot_mult)
 	run.frag += loot_gained
@@ -885,6 +901,8 @@ func on_hazard(c: int, r: int, kind: String) -> bool:
 
 
 func _hazard_at(c: int, r: int, kind: String) -> Dictionary:
+	if mon.passive == "Sternenmeer":
+		return {}   # Sternwal-Linie schwebt über allen Flächen
 	for hz in hazards:
 		if hz.c == c and hz.r == r and hz.get("kind", "lava") == kind:
 			return hz
@@ -965,6 +983,11 @@ func _update_logic(dt: float) -> void:
 			var h := run.heal(2 if run.stage >= 3 else 1)
 			float_at(p.c, p.r, "+%d" % h, GameData.COL.mint)
 
+	if mon.passive == "Lichtschein" and run.hp < run.max_hp:
+		light_t -= dt
+		if light_t <= 0:
+			light_t = 6.0
+			float_at(p.c, p.r, "+%d" % run.heal(4), GameData.COL.mint)
 	var rate: float = mon.rech * (2.0 if oc > 0 else 1.0) * (2.0 if on_hazard(p.c, p.r, "spark") else 1.0)
 	for i in hand.size():
 		var s: Dictionary = hand[i]
@@ -1103,7 +1126,7 @@ func _update_logic(dt: float) -> void:
 			if e.sp_t <= 0:
 				e.sp_t = def.get("sp_every", SPECIAL_EVERY) * (0.7 if phase == 3 else 1.0)
 				start_special()
-		e.atk_t -= edt
+		e.atk_t -= edt * (0.85 if mon.passive == "Bannblick" else 1.0)   # Bannblick: Gegner 15 % langsamer
 		if e.atk_t <= 0:
 			e.atk_t = 1.5 if phase == 3 else def.atk
 			_enemy_attack()
@@ -1188,12 +1211,15 @@ func _update_logic(dt: float) -> void:
 			if nc >= 0 and nc <= 2:
 				p.c = nc
 				pend_move = null
+				run.pushed += 1
 				float_at(p.c, p.r, "Strömung!", GameData.EL.Wasser)
 				events.append("move")
 	for i in range(hazards.size() - 1, -1, -1):
 		var hz: Dictionary = hazards[i]
 		hz.t -= dt
-		if hz.c == p.c and hz.r == p.r and hz.get("kind", "lava") == "spark":
+		if hz.c == p.c and hz.r == p.r and hz.get("kind", "lava") == "spark" and mon.passive != "Sternenmeer":
+			if def.boss and not def.get("guard", false):
+				run.boss_spark_t += dt
 			# Spannungsfeld: kostet etwas HP, dafür laden die Chips doppelt so schnell (siehe rate)
 			hz.tick -= dt
 			if hz.tick <= 0:
@@ -1201,7 +1227,7 @@ func _update_logic(dt: float) -> void:
 				hurt_player(maxi(2, roundi(def.dmg * 0.2)))
 				if over:
 					return
-		if hz.c == p.c and hz.r == p.r and hz.get("kind", "lava") == "lava":
+		if hz.c == p.c and hz.r == p.r and hz.get("kind", "lava") == "lava" and mon.passive != "Sternenmeer":
 			hz.tick -= dt
 			if hz.tick <= 0:
 				hz.tick = 0.6

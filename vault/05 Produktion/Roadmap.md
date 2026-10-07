@@ -46,7 +46,7 @@ tags: [produktion, roadmap]
 - [x] 45 Chips, 22 Module, 34 Ereignisse, Story-Bosse mit Intros, Ende mit Abspann
 - [x] Lokalisierung DE/EN
 - [x] Endgame nach dem Abspann: [[Glitch-Protokolle]] (10 Stufen, 07.10.2026)
-- [ ] Legendäre Glitchlinge (gestrichen, bis es einen Plan gibt)
+- [x] [[Legendäre]]: 6 Fabelwesen mit geheimen Bedingungen, Champion + Ultra (07.10.2026)
 - [ ] Errungenschaften, Steam Cloud, Steam-Overlay (Steamworks-Anbindung)
 - [ ] Steam Deck prüfen (Textgröße, Controller, Leistung), Controller-Tasten frei belegbar
 - [ ] Echte Musik und Soundeffekte (bisher selbst synthetisierte Platzhalter)

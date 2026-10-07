@@ -69,6 +69,7 @@ func _ready() -> void:
 	test_station_guide()
 	test_new_zones()
 	test_protocols()
+	test_legends()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -888,7 +889,7 @@ func test_evolution() -> void:
 	var fair := true
 	for sp in GameData.MONS:
 		var M: Dictionary = GameData.MONS[sp]
-		if M.get("fusion", false):
+		if M.get("fusion", false) or M.get("legend", false):
 			continue
 		for el in M.evo:
 			var n: int = M.deck.filter(func(c): return GameData.CHIPS[c].el == el).size()
@@ -960,8 +961,8 @@ func test_new_lines() -> void:
 			if not GameData.FORMS.has(M.evo[el]) or GameData.FORMS[M.evo[el]].el != el:
 				ok = false
 				printerr("    Richtung passt nicht: %s %s → %s" % [sp, el, M.evo[el]])
-	var lines: int = GameData.MONS.keys().filter(func(k): return not GameData.MONS[k].get("fusion", false)).size()
-	check(ok and lines == 13, "13 Linien + Fusionen, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
+	var lines: int = GameData.MONS.keys().filter(func(k): return not GameData.MONS[k].get("fusion", false) and not GameData.MONS[k].get("legend", false)).size()
+	check(ok and lines == 13, "13 Linien + Fusionen + Legendäre, alle Evolutionsrichtungen gültig (%d Formen)" % GameData.FORMS.size())
 	# Passive
 	var st := BattleState.new(RunState.new("Brummbit", 1), GameData.FOES[0])
 	st.reflex = 0
@@ -2266,6 +2267,59 @@ func test_protocols() -> void:
 	var up := SaveGame.protocol_unlocked() == 2 and int(sum.get("protocol_up", 0)) == 2 and int(SaveGame.team()[0].protocol_best) == 1
 	SaveGame.data = saved
 	check(locked and first and up, "Protokoll: gesperrt bis zum Abspann, dann Stufe 1; geschaffte Stufe schaltet die nächste frei und gibt ein Abzeichen")
+
+
+## Legendäre (07.10.2026): je Zone ein Fabelwesen mit geheimer Bedingung
+func test_legends() -> void:
+	var data_ok := GameData.LEGENDS.size() == 6
+	for L in GameData.LEGENDS:
+		var U: String = GameData.FORMS[L].up
+		data_ok = data_ok and GameData.FORMS[L].stage == 3 and U != "" and GameData.FORMS[U].stage == 4 and GameData.SPECIALS.has(L) and GameData.SPECIALS.has(U) 			and GameData.MONS[L].get("legend", false) and GameData.legend_of(U) == L and not SaveGame.EGG_SPECIES.has(L)
+	check(data_ok, "Legendäre: 6 Fabelwesen, je Champion + Ultra mit Signatur, nicht aus normalen Eiern")
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.persist = false
+	SaveGame.new_game("Lumi")
+	var got := {}
+	var conds := {"wiesen": func(r): pass, "vulkan": func(r): r.deck = ["Glutball", "Glutball", "Flammenwelle", "Glutklinge", "Funkenregen", "Feuersbrunst", "Heilpatch", "Firewall"],
+		"see": func(r): r.pushed = 0, "sumpf": func(r): r.boss_heal = false, "steppe": func(r): r.boss_spark_t = 12.0, "kern": func(r): r.final_sig = true}
+	for z in conds:
+		var r := RunState.from_monster(SaveGame.team()[0], 3, z)
+		r.stage = 1 if z == "wiesen" else 2
+		conds[z].call(r)
+		var sum := SaveGame.record_run(r, true)
+		got[z] = sum.get("legend", "")
+	var all6: bool = got.wiesen == "Glimmhirsch" and got.vulkan == "Glutkirin" and got.see == "Sternwal" and got.sumpf == "Toxilisk" and got.steppe == "Funkengreif" and got.kern == "Chiffrasphinx"
+	check(all6, "Legendäre: alle 6 Bedingungen geben ihr leuchtendes Ei (%s)" % str(got))
+	var eggs: Array = SaveGame.nest().filter(func(e): return e.get("legend", false))
+	check(eggs.size() == 6 and SaveGame.nest().size() > SaveGame.nest_slots(), "Leuchtende Eier liegen auch über den Nestplätzen hinaus im Brutnest")
+	# jeder Legendäre nur einmal; Bedingung nicht erfüllt = kein Ei
+	var r2 := RunState.from_monster(SaveGame.team()[0], 4, "wiesen")
+	r2.stage = 1
+	var r3 := RunState.from_monster(SaveGame.team()[0], 5, "see")
+	r3.pushed = 2
+	SaveGame.data.legends.erase("Sternwal")
+	check(SaveGame.record_run(r2, true).get("legend", "") == "" and SaveGame.record_run(r3, true).get("legend", "") == "", "Legendäre: nur einmal, und nur wenn die Bedingung erfüllt ist")
+	# Schlüpfen: Champion-Stufe, Ultra ab 80 Element-Chips
+	for e in SaveGame.nest():
+		e.runs_left = 0
+	var h := SaveGame.hatch_next()
+	var hm := SaveGame.monster(int(h.get("id", -1)))
+	var rl := RunState.from_monster(hm, 6)
+	check(hm.get("stage", 0) == 3 and GameData.LEGENDS.has(hm.form) and rl.evo_need() == GameData.EVO_AT[4], "Legendäre schlüpfen als Champion und entwickeln sich ab %d Element-Chips zur Ultra-Form" % GameData.EVO_AT[4])
+	SaveGame.data = saved
+	# Passive
+	var sw := BattleState.new(RunState.new("Sternwal", 1), GameData.FOES[7])
+	sw.e.atk_t = 99.0
+	sw.hazards.append({"c": sw.p.c, "r": sw.p.r, "t": 3.0, "tick": 0.0, "kind": "lava", "seed": 1})
+	var hp0: int = sw.run.hp
+	step(sw, 1.0)
+	var rw := BattleState.new(RunState.new("Chiffrasphinx", 1), GameData.FOES[0])
+	var dealt: Array = []
+	for k in 3:
+		dealt.append(rw.hurt_player(5))
+	var gk := BattleState.new(RunState.new("Glutkirin", 1), GameData.FOES[0])
+	gk.hurt_player(5)
+	check(sw.run.hp == hp0 and dealt[2] == 0 and dealt[0] > 0 and gk.e.burn > 0, "Passive: Sternenmeer ignoriert Lava, Rätselwächter wehrt jeden 3. Treffer ab, Glutmähne setzt den Angreifer in Brand")
 
 
 ## Stilregel: jedes Sprite höchstens 32 Farben – Grundbild, Blinzel-Bild, Idle- und Angriffs-Frames zusammen (30.09./05.10.2026)
