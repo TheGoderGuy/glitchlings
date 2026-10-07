@@ -12,6 +12,7 @@ tags: [produktion, roadmap]
 - [x] 3×3-Raster, Bewegung, Chips mit Ladezeit, Controller und Tastatur, Spielgefühl (Treffer, Wackeln, Hitstop)
 - [x] Titel, Optionen, Pause, Pixelschriften Silkscreen + Pixeloid Sans (SIL OFL)
 - [x] Idle-Animationen (30.09.) und Angriffsanimationen (05.10.) für alle Figuren – [[Idle-Animationen]], [[Angriffsanimationen]]
+- [x] Kampf-Animationen: Materialisieren/Zerfall, Signatur-Einblendung, Siegerpose, Treffer-Reaktion (07.10.) – [[Kampf-Animationen]]
 - [x] Rollen-Slots (2× Angriff, 1× Support), Karten mit Trefferbild – [[Rollen-Slots und Einstieg]]
 - [x] Effekte je Chip, Flächeneffekte (Lava, Schleim, Strömung, Spannungsfelder) – [[Tester-Feedback Training, Effekte, Gegner]]
 

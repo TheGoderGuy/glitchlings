@@ -64,6 +64,8 @@ static func args() -> Dictionary:
 			shot.legendegg = true
 		elif a == "--welcome":
 			shot.welcome = true
+		elif a.begins_with("--anim="):
+			shot.anim = a.substr(7)
 		elif a.begins_with("--atkpose="):
 			shot.atkpose = float(a.substr(10))
 		elif a.begins_with("--chip="):

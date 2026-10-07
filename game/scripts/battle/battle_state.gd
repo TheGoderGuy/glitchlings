@@ -828,6 +828,9 @@ func hurt_player(d: int) -> int:
 		e.poison = maxi(e.poison, 3)
 		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
 	run.hp = maxi(min_p_hp, run.hp - d)
+	# Schwerer Treffer: kurzer Bildstopp (07.10.2026)
+	if d >= 18:
+		freeze = maxf(freeze, 0.07)
 	# Backup-Kern: einmal pro Run weiterkämpfen statt verlieren
 	if run.hp <= 0 and run.has_mod("backupkern") and not run.backup_used:
 		run.backup_used = true

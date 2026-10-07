@@ -416,6 +416,23 @@ func _screenshot(shot: Dictionary) -> void:
 					cs.update(1.0 / 60.0)
 					tt += 1.0 / 60.0
 				cs.events.clear()
+			if shot.has("anim"):
+				# Kampf-Animationen prüfen: --anim=mat|dissolve|win|cutin --t=Sekunden seit Beginn
+				var at: float = shot.get("t", 0.3)
+				current.st.warns.clear()
+				current.st.e.atk_t = 99.0
+				match shot.anim:
+					"mat":
+						current.mat_t = maxf(0.001, current.MAT_TIME - at)
+					"dissolve", "win":
+						current.st.over = true
+						current.st.outcome = "won"
+						current.end_timer = current.END_WIN - at
+					"cutin":
+						current.cutin_t = maxf(0.001, current.CUTIN - at)
+					"hurt":
+						current.p_hurt = 0.3 - at
+						current.st.p.flash = 0.0
 			if shot.has("atkpose"):
 				# Angriffsanimation prüfen: Spieler und Gegner beim gleichen Fortschritt (0–1)
 				var ak: float = shot.atkpose

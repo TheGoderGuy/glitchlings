@@ -46,6 +46,18 @@ var tut: Tutorial = null
 # Animations-Timer (prozedural, nur Versatz – keine Skalierung, damit Pixel scharf bleiben)
 var p_lunge := 0.0      # Vorschnellen beim Angriff
 var p_knock := 0.0      # Zurückweichen bei Treffer
+## Kampf-Animationen (07.10.2026): Materialisieren/Defragmentieren, Signatur-Einblendung, Siegerpose, Treffer-Reaktion
+const MAT_TIME := 0.7      # Gegner setzt sich zu Kampfbeginn aus Pixeln zusammen
+const END_WIN := 1.5       # Sieg: Gegner zerfällt, Glitchling jubelt (vorher 0,65 s)
+const END_LOSE := 0.65
+const CUTIN := 0.85        # Signatur-Einblendung, der Kampf steht so lange still
+var mat_t := 0.0
+var e_pix: Array = []      # Pixel des Gegners [x, y, Farbe, Zufall] relativ zur linken oberen Ecke (2er-Raster)
+var e_pix_size := 2
+var dis_origin := Vector2.ZERO   # Position des Gegners beim Sieg (Zerfall startet dort)
+var dis_set := false
+var cutin_t := 0.0
+var p_hurt := 0.0          # Treffer-Reaktion: Zittern und roter Nachglimm-Ton
 var p_hop := 0.0        # kleiner Hüpfer beim Bewegen
 var e_knock := 0.0
 var e_strike := 0.0     # Gegner schnellt beim Zuschlagen vor
@@ -91,6 +103,32 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 		_set_mode(Mode.READY if _needs_ready() else Mode.FIGHT)
 	for i in 3:
 		prev_chips[i] = st.hand[i].chip
+	_build_enemy_pixels()
+	# Bosse und Wächter haben ihr eigenes Intro, alle anderen materialisieren sich
+	if not type in ["boss", "guard"]:
+		mat_t = MAT_TIME
+
+
+## Pixel des Gegner-Sprites einmal auslesen (gespiegelt wie im Kampf), für Materialisieren und Zerfall
+func _build_enemy_pixels() -> void:
+	e_pix.clear()
+	var s := sprite(st.def.spr)
+	var img: Image = s.tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	var sc: int = 2 if s.n <= 32 else 1
+	var stepw := 2
+	e_pix_size = stepw * sc
+	var rng := RandomNumberGenerator.new()
+	rng.seed = st.def.spr.hash()
+	for y in range(0, s.n, stepw):
+		for x in range(0, s.n, stepw):
+			var c := img.get_pixel(x, y)
+			if c.a < 0.5:
+				c = img.get_pixel(mini(x + 1, s.n - 1), mini(y + 1, s.n - 1))
+				if c.a < 0.5:
+					continue
+			e_pix.append([float((s.n - stepw - x) * sc), float(y * sc), c, rng.randf()])
 
 
 # ---------- Ablauf ----------
@@ -109,11 +147,13 @@ func _animate_event(ev: String) -> void:
 			e_knock = KNOCK * (1.5 if ev == "hit_big" else 1.0)
 		"hurt":
 			p_knock = KNOCK
+			p_hurt = 0.3
+		"special":
+			# Signatur-Einblendung: der Kampf steht kurz still (Ton spielt _process wie bisher)
+			cutin_t = CUTIN
 		"strike":
 			e_strike = 0.12
 			e_atk_post = E_ATK_POST
-		"special":
-			p_atk = ATK_TIME
 		"move":
 			p_hop = 0.09
 			var fy := feet_y(last_cell.y)
@@ -128,6 +168,8 @@ func _tick_anims(dt: float) -> void:
 	p_atk = maxf(0.0, p_atk - dt)
 	e_atk_post = maxf(0.0, e_atk_post - dt)
 	p_knock = maxf(0.0, p_knock - dt)
+	p_hurt = maxf(0.0, p_hurt - dt)
+	mat_t = maxf(0.0, mat_t - dt)
 	p_hop = maxf(0.0, p_hop - dt)
 	e_knock = maxf(0.0, e_knock - dt)
 	e_strike = maxf(0.0, e_strike - dt)
@@ -292,8 +334,16 @@ func _process_fight(delta: float) -> void:
 				st.use_slot(i)
 		if Input.is_action_just_pressed("special"):
 			st.use_special()
+		if cutin_t > 0:
+			st.pend_move = null
 	_tick_anims(delta)
 	_track_cards(delta)
+	if cutin_t > 0:
+		cutin_t = maxf(0.0, cutin_t - delta)
+		if cutin_t <= 0:
+			p_atk = ATK_TIME   # die Attacke selbst beginnt nach der Einblendung
+		queue_redraw()
+		return
 	st.advance(delta)
 	if tut != null and tut.active():
 		tut.update(st, delta)
@@ -310,7 +360,7 @@ func _process_fight(delta: float) -> void:
 	st.events.clear()
 	if st.over:
 		if end_timer < 0:
-			end_timer = 0.65
+			end_timer = END_WIN if st.outcome == "won" else END_LOSE
 			if st.outcome == "won":
 				Music.play("victory" if node_type != "boss" else "title")
 			else:
@@ -380,6 +430,8 @@ func _draw() -> void:
 	_draw_hand()
 	if tut != null and tut.active() and mode == Mode.FIGHT:
 		_draw_tutorial()
+	if cutin_t > 0:
+		_draw_cutin()
 	if st.hurt > 0:
 		var a := st.hurt / 0.3 * 0.35
 		for i in 6:
@@ -529,6 +581,15 @@ func _draw_actors() -> void:
 		pcx -= sin((1.0 - p_knock / KNOCK) * PI) * 5.0
 	if p_hop > 0:
 		pfy -= 2.0
+	# Treffer: kurzes Zittern (pixelgetreu, kein Stauchen)
+	if p_hurt > 0.12:
+		pcx += 2.0 if fmod(p_hurt, 0.06) < 0.03 else -2.0
+	# Siegerpose: zwei Freudensprünge, Funken steigen auf
+	var win_t := -1.0
+	if st.over and st.outcome == "won" and end_timer > 0:
+		win_t = END_WIN - end_timer
+		if win_t > 0.25 and win_t < 1.15:
+			pfy -= roundf(absf(sin((win_t - 0.25) / 0.45 * PI)) * 12.0)
 	for d in dust:
 		var a: float = d.t / 0.35
 		var s := 3 if a > 0.5 else 2
@@ -537,7 +598,10 @@ func _draw_actors() -> void:
 	if st.decoy > 0 and st.decoy_t > 0:
 		for k in st.decoy:
 			_draw_sprite(mkey, pcx - 16 - k * 10, pfy, false, {"scale": BABY_SCALE if run.stage == 1 else 1, "mod": Color(0.6, 1.0, 0.8, 0.35 + 0.1 * sin(anim_t * 8.0 + k))})
-	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1, "atk": (1.0 - p_atk / ATK_TIME) if p_atk > 0 else -1.0})
+	var hurt_tint := Color(1.0, 0.55, 0.55) if (p_hurt > 0 and p.flash <= 0) else Color.WHITE
+	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1, "atk": (1.0 - p_atk / ATK_TIME) if p_atk > 0 else -1.0, "mod": hurt_tint})
+	if win_t > 0.2:
+		_draw_victory_sparks(Vector2(pcx, pfy - 30), win_t)
 	var body := Vector2(gx(p.c) + CW / 2.0, feet_y(p.r) - 24)
 	if muzzle > 0:
 		# Mündungsblitz vorn am Monster
@@ -594,12 +658,19 @@ func _draw_actors() -> void:
 			ecx += sin((1.0 - e_knock / (KNOCK * 1.5)) * PI) * 6.0
 		var fade := 1.0
 		if defeated:
-			# Niederlage: blinken, absinken, verblassen
-			var k2 := clampf(1.0 - end_timer / 0.65, 0.0, 1.0)
-			fade = 1.0 - k2
-			efy += k2 * 10.0
-			if fmod(anim_t, 0.1) < 0.05:
-				fade *= 0.4
+			# Defragmentieren: der Gegner zerfällt in Datenpixel, die nach oben wegrieseln
+			if not dis_set:
+				dis_origin = Vector2(ecx, efy)
+				dis_set = true
+			var dk := END_WIN - maxf(end_timer, 0.0)
+			_shadow(dis_origin.x, dis_origin.y, roundi((44 if st.def.boss else 34) * clampf(1.0 - dk / 0.8, 0.0, 1.0)))
+			_draw_dissolve(dis_origin, dk)
+			return
+		if mat_t > 0:
+			# Materialisieren: die Pixel fliegen von außen herbei
+			_shadow(ecx, efy, roundi((44 if st.def.boss else 34) * (1.0 - mat_t / MAT_TIME)))
+			_draw_materialize(Vector2(ecx, efy), 1.0 - mat_t / MAT_TIME)
+			return
 		_shadow(ecx, efy, 44 if st.def.boss else 34)
 		var tint := Color.WHITE
 		if st.boss_phase() == 3 and sin(anim_t * 14.0) > 0.4:
@@ -617,6 +688,98 @@ func _draw_actors() -> void:
 			draw_arc(cc, rad, 0, TAU, 24, GameData.EL.Elektro, 1)
 			draw_rect(Rect2(cc.x - 32, cc.y, 64, 1), GameData.EL.Elektro)
 			draw_rect(Rect2(cc.x, cc.y - 32, 1, 64), GameData.EL.Elektro)
+
+
+## Linke obere Ecke des Gegner-Sprites für Fußposition c (wie in _draw_sprite)
+func _enemy_topleft(c: Vector2) -> Vector2:
+	var s := sprite(st.def.spr)
+	var sc: int = 2 if s.n <= 32 else 1
+	var size: int = s.n * sc
+	return Vector2(roundi(c.x - size / 2.0), roundi(c.y - size + s.foot * sc))
+
+
+## Defragmentieren: erst ein weißer Blitz, dann lösen sich die Pixel von oben nach unten und rieseln als Daten nach oben
+func _draw_dissolve(c: Vector2, t: float) -> void:
+	var tl := _enemy_topleft(c)
+	var n := float(sprite(st.def.spr).n)
+	var mint := Color("#6EE7C5")
+	for px in e_pix:
+		var start: float = 0.12 + (px[1] / maxf(1.0, n * (2.0 if n <= 32 else 1.0))) * 0.45 + px[3] * 0.15
+		var q := tl + Vector2(px[0], px[1])
+		var col: Color = px[2]
+		if t < 0.12:
+			col = Color.WHITE
+		elif t > start:
+			var k := clampf((t - start) / 0.7, 0.0, 1.0)
+			q += Vector2((px[3] - 0.5) * 30.0 * k, -k * k * 60.0 - k * 10.0)
+			col = col.lerp(mint, k)
+			col.a = 1.0 - k
+			if col.a <= 0.02:
+				continue
+		draw_rect(Rect2(roundi(q.x), roundi(q.y), e_pix_size, e_pix_size), col)
+
+
+## Materialisieren: Pixel kommen aus allen Richtungen, leuchten zuerst mint und nehmen dann ihre Farbe an
+func _draw_materialize(c: Vector2, k: float) -> void:
+	var tl := _enemy_topleft(c)
+	var mint := Color("#6EE7C5")
+	for px in e_pix:
+		var a: float = px[3] * TAU
+		var dist: float = (1.0 - k) * (1.0 - k) * (40.0 + px[3] * 50.0)
+		var q: Vector2 = tl + Vector2(px[0], px[1]) + Vector2(cos(a), sin(a)) * dist
+		var col: Color = mint.lerp(px[2], clampf((k - 0.5) * 2.0, 0.0, 1.0))
+		col.a = clampf(k * 2.0, 0.0, 1.0)
+		draw_rect(Rect2(roundi(q.x), roundi(q.y), e_pix_size, e_pix_size), col)
+
+
+## Siegerpose: Sterne und Funken steigen um den Glitchling auf
+func _draw_victory_sparks(c: Vector2, t: float) -> void:
+	for i in 10:
+		var ph := fmod(t * 0.9 + i * 0.1, 1.0)
+		var a := i * TAU / 10.0
+		var q := c + Vector2(cos(a) * (14.0 + ph * 22.0), -ph * 34.0 + sin(a) * 8.0)
+		var col: Color = [GameData.COL.sun, GameData.COL.mint, Color.WHITE][i % 3]
+		col.a = 1.0 - ph
+		if i % 3 == 0:
+			_plus(q, 2, col)
+		else:
+			draw_rect(Rect2(roundi(q.x), roundi(q.y), 2, 2), col)
+
+
+## Signatur-Einblendung: Streifen mit dem Glitchling in groß und dem Namen der Attacke
+func _draw_cutin() -> void:
+	var t := CUTIN - cutin_t
+	var S: Dictionary = run.special()
+	var el: Color = GameData.EL[S.el]
+	var slide := clampf(t / 0.14, 0.0, 1.0)
+	var out := clampf((t - (CUTIN - 0.14)) / 0.14, 0.0, 1.0)
+	draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.35 * (1.0 - out)))
+	var band_y := 112.0
+	var band_h := 128.0
+	var bx := -W * (1.0 - slide) + W * out
+	draw_rect(Rect2(bx, band_y - 4, W, band_h + 8), Color(el.darkened(0.5), 0.95))
+	draw_rect(Rect2(bx, band_y, W, band_h), Color(GameData.COL.dark, 0.92))
+	draw_rect(Rect2(bx, band_y, W, 2), el)
+	draw_rect(Rect2(bx, band_y + band_h - 2, W, 2), el)
+	# Tempolinien
+	for i in 14:
+		var ly := band_y + 8 + fmod(i * 37.0, band_h - 16)
+		var lx := fposmod(-t * 900.0 - i * 97.0, W + 120.0) - 60.0 + bx
+		draw_rect(Rect2(roundi(lx), roundi(ly), 40 + (i % 3) * 20, 1), Color(el.lightened(0.3), 0.6))
+	# Glitchling in groß (ganzzahlig), leuchtender Umriss in Element-Farbe
+	var s := sprite(run.form)
+	var sc := 4 if s.n <= 32 else (2 if s.n <= 64 else 1)
+	var drift := t * 18.0
+	var mx := bx + 170.0 + drift
+	var feet: float = band_y + band_h - 6.0
+	for o in [Vector2(-2, 0), Vector2(2, 0), Vector2(0, -2), Vector2(0, 2)]:
+		_draw_sprite(run.form, mx + o.x, feet + o.y, false, {"scale": sc, "flash": true, "mod": Color(el, 0.8), "anim": false})
+	_draw_sprite(run.form, mx, feet, false, {"scale": sc, "anim": false})
+	# Name der Attacke
+	var tx := bx + 300.0
+	_text(Vector2(tx, band_y + 48), T.t(run.form).to_upper(), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	_text(Vector2(tx, band_y + 76), T.t(S.name).to_upper() + "!", 24, el.lightened(0.25), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	_text(Vector2(tx, band_y + 96), T.t("Signatur-Attacke"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 
 
 func _proj_pos(pr: Dictionary) -> Vector2:
@@ -1037,11 +1200,15 @@ func simulate(seconds: float) -> void:
 		for ev in st.events:
 			_animate_event(ev)
 		st.events.clear()
+		if cutin_t > 0:
+			# Simulation überspringt die Einblendung
+			cutin_t = 0.0
+			p_atk = ATK_TIME
 		_tick_anims(dt)
 		anim_t += dt
 		steps += 1
 		if st.over:
-			end_timer = 0.65 if end_timer < 0 else end_timer - dt
+			end_timer = (END_WIN if st.outcome == "won" else END_LOSE) if end_timer < 0 else end_timer - dt
 	st.events.clear()
 
 
