@@ -261,11 +261,45 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 		draw_set_transform(off + Vector2(left, top), 0, Vector2(sc, sc))
 	# clip_top: alles oberhalb dieser Linie weglassen (z. B. 96er-Sprites in kleinen Kacheln)
 	var cut: int = ceili((float(opts.get("clip_top", -INF)) - top) / sc)
+	# Aura-Kontur (08.10.2026, Elite-Gegner): Silhouette des aktuellen Bildes, ein Kunstpixel nach außen versetzt
+	var outline: Color = opts.get("outline", Color.TRANSPARENT)
+	if outline.a > 0 and cut <= 0:
+		var sil := silhouette(tex)
+		for d in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(0, 1)]:
+			draw_texture(sil, d, outline)
 	if cut > 0:
 		draw_texture_rect_region(tex, Rect2(0, cut, s.n, s.n - cut), Rect2(0, cut, s.n, s.n - cut), mod)
 	else:
 		draw_texture(tex, Vector2.ZERO, mod)
 	draw_set_transform(off)
+
+
+static var _sil := {}
+
+
+## Weiße Silhouette eines Bildes (für Aura-Konturen), einmal je Bild erzeugt
+static func silhouette(tex: Texture2D) -> Texture2D:
+	var k := tex.get_rid()
+	if _sil.has(k):
+		return _sil[k]
+	var img := tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	for y in img.get_height():
+		for x in img.get_width():
+			var a := img.get_pixel(x, y).a
+			if a > 0.0:
+				img.set_pixel(x, y, Color(1, 1, 1, a))
+	var t := ImageTexture.create_from_image(img)
+	_sil[k] = t
+	return t
+
+
+## Silhouetten aller Bilder einer Figur vorab erzeugen (nicht erst im Kampf)
+static func preload_silhouettes(key: String) -> void:
+	var s := sprite(key)
+	for t in [s.tex, s.blink] + s.idle + s.atk:
+		silhouette(t)
 
 
 ## Evolutionsstand: je mögliche Richtung ein Balken (Form nur, wenn schon im Dex), Elemente ohne Wirkung, Status.

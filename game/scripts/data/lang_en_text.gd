@@ -581,4 +581,8 @@ const D := {
 	"Wirklich? %s wird wieder zum Baby. Nochmal drücken.": "Really? %s becomes a baby again. Press again.",
 	"%s hat keine Baby-Stufe.": "%s has no baby stage.", "%s ist schon ein Baby.": "%s is already a baby.",
 	"%s ist wieder %s. Alle Formen bleiben im Monsterdex.": "%s is %s again. All forms stay in the Monsterdex.",
+	# Händler, Rast und Ereignisse als Karten
+	"Pfeile wählen   %s nehmen": "Arrows choose   %s take", "%s weitergehen": "%s move on", "Modul": "Module",
+	"für den ganzen Run": "for the whole run", "Schaden %d": "Damage %d", "Laden %s s": "Charge %s s",
+	"Resonanz +%d %%": "Resonance +%d%%", "verkauft": "sold", "Reparatur": "Repair", "Verbessern": "Upgrade", "Entfernen": "Remove",
 }

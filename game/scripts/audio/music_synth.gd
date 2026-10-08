@@ -493,6 +493,150 @@ const TRACKS := {
 				"F5 - - - - - - - - - - - - - - -"]},
 		],
 	},
+	# ---------- Epische Fassungen (08.10.2026, Wunsch Produzent: „epische Musik“) ----------
+	# Eigene Kompositionen. Neu im Klang: Chor („choir“), Streicher-Ostinato („ostinato“), Melodie eine Oktave tiefer
+	# gedoppelt („double“), zweite Lead-Stimme („lead2“), Taiko-Pauken. Die alten Stücke bleiben als Dateien erhalten.
+	# Leitmotiv: Quinte–Grundton–Terz–Quinte (Titel: A4 D5 F#5 A5), die Station zitiert es ruhig in F-Dur.
+	"title_epic": {
+		"bpm": 96, "loud": 0.19, "lead": "brass", "bass": "half", "arp": "ostinato", "stabs": "", "drums": "epic_title", "counter": "strings",
+		"choir": 0.8, "double": "strings",
+		"sections": [
+			{"name": "intro", "chords": ["D", "C", "G", "A"], "drums": "timp_build", "arp": "", "melody": [
+				"D5 - - - - - - - - - - - A4 - D5 -",
+				"E5 - - - - - - - - - - - G5 - E5 -",
+				"D5 - - - - - - - B4 - - - D5 - G5 -",
+				"A5 - - - - - - - - - - - . . . ."]},
+			{"name": "A", "chords": ["D", "Bm", "G", "A", "D", "F#m", "G", "A"], "melody": [
+				"A4 - D5 - - - F#5 - A5 - - - - - - -",
+				"B5 - A5 - F#5 - - - D5 - - - F#5 - - -",
+				"G5 - - - B5 - - - D6 - - - B5 - G5 -",
+				"A5 - - - - - - - E5 - - - C#6 - - -",
+				"A4 - D5 - - - F#5 - A5 - - - D6 - - -",
+				"C#6 - - - A5 - F#5 - - - C#5 - F#5 - A5 -",
+				"B5 - - - D6 - - - G6 - - - F#6 - E6 -",
+				"E6 - - - - - - - C#6 - - - A5 - - -"]},
+			{"name": "B", "chords": ["Bm", "G", "D", "A", "Bm", "G", "Em", "A"], "melody": [
+				"F#5 - - - B5 - - - D6 - - - C#6 - B5 -",
+				"B5 - - - G5 - - - D5 - - - G5 - B5 -",
+				"A5 - - - F#5 - - - D5 - - - A5 - - -",
+				"C#6 - - - - - - - E6 - - - - - - -",
+				"D6 - - - C#6 - B5 - F#5 - - - B5 - D6 -",
+				"E6 - - - D6 - B5 - G5 - - - D6 - E6 -",
+				"G6 - - - F#6 - E6 - B5 - - - E6 - G6 -",
+				"E6 - - - - - - - C#6 - - - A5 - - -"]},
+			# Aufschwung (08.10.2026 überarbeitet, vorher ruhiger Flötenteil – Produzent: „nicht so toll“):
+			# lange, steigende Blechbögen über Taikos und vollem Chor, B-Dur als geliehener Akkord vor der Rückkehr
+			{"name": "C", "chords": ["G", "A", "F#m", "Bm", "G", "A", "Bb", "A"], "drums": "taiko", "choir": 1.0, "melody": [
+				"D5 - - - - - - - G5 - - - B5 - - -",
+				"C#6 - - - - - - - A5 - - - E5 - - -",
+				"F#5 - - - - - - - A5 - - - C#6 - - -",
+				"D6 - - - - - - - B5 - - - F#5 - - -",
+				"G5 - - - B5 - - - D6 - - - G6 - - -",
+				"E6 - - - - - - - C#6 - - - A5 - - -",
+				"F6 - - - - - - - D6 - - - Bb5 - - -",
+				"A5 - - - C#6 - - - E6 - - - - - - -"]},
+		],
+	},
+	"station": {
+		"bpm": 84, "loud": 0.15, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "home", "counter": "strings",
+		"choir": 0.25,
+		"sections": [
+			{"name": "A", "chords": ["F", "Dm", "Bb", "C", "F", "Am", "Bb", "C"], "melody": [
+				"C5 - F5 - - - A5 - C6 - - - - - - -",
+				"D6 - C6 - A5 - - - F5 - - - - - - -",
+				"D5 - - - F5 - - - Bb5 - - - A5 - G5 -",
+				"G5 - - - - - - - - - - - E5 - - -",
+				"C5 - F5 - - - A5 - C6 - - - D6 - - -",
+				"E6 - - - C6 - A5 - - - E5 - - - A5 -",
+				"D6 - - - Bb5 - - - F5 - - - G5 - A5 -",
+				"G5 - - - - - - - - - - - . . . ."]},
+			{"name": "B", "chords": ["Bb", "C", "Am", "Dm", "Gm", "C", "F", "F"], "melody": [
+				"F5 - - - Bb5 - - - D6 - - - C6 - Bb5 -",
+				"C6 - - - - - - - G5 - - - - - - -",
+				"A5 - - - C6 - - - E6 - - - D6 - C6 -",
+				"D6 - - - - - - - A5 - - - - - - -",
+				"Bb5 - - - A5 - - - G5 - - - D5 - - -",
+				"E5 - - - G5 - - - C6 - - - Bb5 - - -",
+				"A5 - - - - - - - - - - - - - - -",
+				". . . . . . . . A4 - Bb4 - B4 - - -"]},
+		],
+	},
+	"battle_epic": {
+		"bpm": 160, "loud": 0.21, "lead": "brass", "lead2": "lead_sq", "bass": "octave8", "arp": "ostinato", "stabs": "x..x..x.........",
+		"drums": "epic_battle", "counter": "brass", "choir": 0.5, "glock": false,
+		"sections": [
+			{"name": "intro", "chords": ["Em", "B"], "melody": [
+				"E5 . E5 . G5 . E5 . B5 - - - A5 . G5 .",
+				"F#5 - - - - - - - D#5 - - - B4 - - -"]},
+			{"name": "A", "chords": ["Em", "C", "D", "B", "Em", "C", "Am", "B"], "melody": [
+				"E5 - - - B4 - - - E5 - G5 - B5 - - -",
+				"C6 - - - B5 - A5 - G5 - - - E5 - - -",
+				"F#5 - - - A5 - - - D6 - - - C6 - B5 -",
+				"B5 - - - - - - - D#5 - - - F#5 - - -",
+				"G5 - - - E5 - G5 - B5 - - - E6 - - -",
+				"E6 - - - D6 - C6 - G5 - - - C6 - - -",
+				"A5 - - - C6 - - - E6 - - - D6 - C6 -",
+				"B5 - - - - - - - F#5 - - - D#6 - - -"]},
+			{"name": "B", "chords": ["C", "D", "Em", "Em", "Am", "B", "C", "B"], "melody": [
+				"G5 - - - C6 - - - E6 - - - - - D6 -",
+				"F#6 - - - - - - - E6 - D6 - A5 - - -",
+				"G6 - - - - - - - E6 - - - B5 - - -",
+				"E6 - - - D6 - B5 - G5 - - - . . . .",
+				"A5 - - - G5 - E5 - C6 - - - E6 - - -",
+				"F#5 - - - D#6 - - - B5 - - - D#6 - F#6 -",
+				"G6 - - - E6 - - - C6 - - - G5 - C6 -",
+				"B5 - - - - - - - D#6 - - - F#6 - - -"]},
+			# Mittelteil: nur Taikos, Chor schwillt an, Blech in langen Bögen (F-Dur = phrygische Wendung, dramatisch)
+			{"name": "C", "chords": ["Am", "Em", "C", "B", "Am", "Em", "F", "B"], "drums": "taiko", "stabs": "", "lead2": "", "choir": 0.9, "melody": [
+				"A5 - - - - - - - C6 - - - E6 - - -",
+				"E6 - - - - - - - B5 - - - G5 - - -",
+				"G5 - - - - - - - C6 - - - E6 - - -",
+				"D#6 - - - - - - - F#6 - - - B5 - - -",
+				"C6 - - - - - - - E6 - - - A6 - - -",
+				"G6 - - - - - - - E6 - - - B5 - - -",
+				"A5 - - - C6 - - - F6 - - - E6 - - -",
+				"D#6 - - - - - - - F#5 - - - B5 - - -"]},
+		],
+	},
+	"boss_epic": {
+		"bpm": 170, "loud": 0.21, "lead": "lead_sq", "lead2": "brass", "bass": "octave8", "arp": "ostinato", "stabs": "x.x...x...x.x...",
+		"drums": "epic_boss", "counter": "brass", "choir": 0.9, "double": "strings", "glock": false,
+		"sections": [
+			{"name": "intro", "chords": ["Cm", "Cm", "Ab", "G"], "drums": "timp_build", "arp": "", "stabs": "", "melody": [
+				"C5 - - - - - - - - - - - - - - -",
+				"Eb5 - - - - - - - D5 - - - - - - -",
+				"C5 - - - - - - - Ab4 - - - - - - -",
+				"G4 - - - - - - - B4 - - - D5 - G5 -"]},
+			{"name": "A", "chords": ["Cm", "Ab", "Fm", "G", "Cm", "Ab", "Db", "G"], "melody": [
+				"C5 - - - G5 - - - Eb5 - D5 - C5 - G4 -",
+				"Ab4 - - - C5 - - - Eb5 - - - Ab5 - G5 -",
+				"F5 - - - Ab5 - - - C6 - - - Bb5 - Ab5 -",
+				"G5 - - - - - - - B4 - - - D5 - F5 -",
+				"Eb5 - - - - - C5 - G5 - - - C6 - - -",
+				"C6 - - - Bb5 - Ab5 - Eb5 - - - Ab5 - C6 -",
+				"Db6 - - - C6 - Ab5 - F5 - - - Ab5 - Db6 -",
+				"B5 - - - - - - - D6 - - - G6 - - -"]},
+			{"name": "B", "chords": ["Ab", "Bb", "Cm", "Cm", "Fm", "G", "Ab", "G"], "melody": [
+				"Eb6 - - - - - - - C6 - - - Ab5 - - -",
+				"D6 - - - - - - - Bb5 - - - F5 - - -",
+				"G5 - - - C6 - - - Eb6 - - - G6 - - -",
+				"G6 - - - F6 - Eb6 - D6 - - - C6 - - -",
+				"Ab6 - - - G6 - F6 - C6 - - - F6 - - -",
+				"G6 - - - - - - - D6 - - - B5 - - -",
+				"C6 - - - Eb6 - - - Ab6 - - - G6 - F6 -",
+				"G6 - - - - - - - B5 - - - D6 - - -"]},
+			# Mittelteil: Chor-Choral über Taikos, das Blech übernimmt die Melodie
+			{"name": "C", "chords": ["Fm", "Cm", "Db", "G", "Fm", "Cm", "Ab", "G"], "drums": "taiko", "stabs": "", "lead": "brass", "lead2": "", "choir": 1.1, "melody": [
+				"C6 - - - - - - - Ab5 - - - F5 - - -",
+				"G5 - - - - - - - Eb5 - - - C5 - - -",
+				"Db6 - - - - - - - F6 - - - Ab5 - - -",
+				"B5 - - - - - - - D6 - - - G6 - - -",
+				"Ab6 - - - - - - - F6 - - - C6 - - -",
+				"G6 - - - - - - - Eb6 - - - C6 - - -",
+				"Eb6 - - - - - - - C6 - - - Ab5 - - -",
+				"G5 - - - B5 - - - D6 - - - F6 - - -"]},
+		],
+	},
 }
 
 ## Schlagzeug-Spuren (16 Schritte): k Kick, s Snare, h Hi-Hat, t Pauke
@@ -515,6 +659,12 @@ const DRUMS := {
 	"see": {"k": "x...x.x.x...x.x.", "s": "....x.......x...", "h": "x.xxx.xxx.xxx.xx", "vol": 0.95},
 	"steppe_map": {"k": "x.....x.x.......", "s": "....x.......x...", "h": "x.x.x.x.x.x.x.x.", "t": "..............x.", "vol": 0.55},
 	"steppe": {"k": "x.x...x.x.x...x.", "s": "....x.......x..x", "h": "xxxxxxxxxxxxxxxx", "t": "......x.......x.", "vol": 1.0},
+	# Epische Fassungen (08.10.2026): Taiko-Pauken (tf = Tonhöhe), Titel im halben Takt, Station ganz leise
+	"epic_title": {"k": "x.......x.......", "s": "........x.......", "h": "..x...x...x...x.", "t": "x.....x.x.....x.", "tf": 58.0, "vol": 0.75},
+	"home": {"k": "x.......x.......", "s": "................", "h": "....x.......x...", "vol": 0.3},
+	"taiko": {"k": "x.......x.......", "s": "................", "h": "................", "t": "x..x..x.x..x..x.", "tf": 58.0, "vol": 0.9},
+	"epic_battle": {"k": "x..x..x.x..x..x.", "s": "....x.......x...", "h": "x.x.x.x.x.x.x.x.", "t": "x.....x...x.x...", "tf": 62.0, "vol": 1.0},
+	"epic_boss": {"k": "x.xx..x.x.xx..x.", "s": "....x.......x...", "h": "xxxxxxxxxxxxxxxx", "t": "x..x..x...x..x..", "tf": 52.0, "vol": 1.0},
 }
 
 var L := PackedFloat32Array()
@@ -593,10 +743,28 @@ func _render(key: String) -> AudioStreamWAV:
 		var fill_end: bool = sec.get("fill", true)
 		# Melodie (über Taktgrenzen gebunden)
 		var notes := _parse_melody(" ".join(sec.melody), t, step)
+		var lead2: String = sec.get("lead2", tr.get("lead2", ""))
+		var dbl: String = sec.get("double", tr.get("double", ""))
 		for nt in notes:
 			_lead(lead, nt.t, nt.d, nt.m, 0.9)
-			if lead == "brass":
+			if lead == "brass" and tr.get("glock", true):
 				_glock(nt.t, nt.d, nt.m + 12, 0.18, 0.3)
+			# zweite Lead-Stimme (leiser) und Dopplung eine Oktave tiefer: macht die Melodie breiter (epische Stücke)
+			if lead2 != "":
+				_lead(lead2, nt.t, nt.d, nt.m, 0.5)
+			if dbl == "strings":
+				_strings(nt.t, nt.d, nt.m - 12, 0.6, -0.15)
+		# Chor: eine Fläche je Folge gleicher Akkorde (sonst schwillt er jeden Takt neu an)
+		var choir: float = sec.get("choir", tr.get("choir", 0.0))
+		if choir > 0.0:
+			var b0 := 0
+			while b0 < bars:
+				var b1 := b0
+				while b1 + 1 < bars and sec.chords[b1 + 1] == sec.chords[b0]:
+					b1 += 1
+				if sec.chords[b0] != "-":
+					_choir_chord(sec.chords[b0], t + b0 * bar, (b1 - b0 + 1) * bar, choir)
+				b0 = b1 + 1
 		# Gegenstimme im B-Teil
 		if sec.name == "B":
 			for nt in notes:
@@ -784,6 +952,72 @@ func _pad(chord: String, t: float, dur: float, vel: float) -> void:
 		_strings(t, dur, notes[i], vel, -0.55 + 0.55 * i)
 
 
+## Chor („Aah“): vier leicht verstimmte Sägezähne durch zwei Formantfilter (ca. 730 und 1090 Hz), langsamer Anschlag
+func _choir(t: float, dur: float, m: int, vel: float, pan: float) -> void:
+	var start := int(t * RATE)
+	var n := int(dur * RATE)
+	var f := freq(m)
+	var det := [0.993, 0.998, 1.002, 1.007]
+	var ph := [rng.randf(), rng.randf(), rng.randf(), rng.randf()]
+	var f1 := 2.0 * sin(PI * 730.0 / RATE)
+	var f2 := 2.0 * sin(PI * 1090.0 / RATE)
+	var q := 0.3
+	var l1 := 0.0
+	var b1 := 0.0
+	var l2 := 0.0
+	var b2 := 0.0
+	var g := _pan_gains(pan)
+	for i in n:
+		var idx := start + i
+		if idx >= L.size():
+			return
+		var tt := float(i) / RATE
+		var vib := 1.0 + 0.003 * sin(tt * TAU * 4.7 + m)
+		var sm := 0.0
+		for k in 4:
+			ph[k] = fmod(ph[k] + f * det[k] * vib / RATE, 1.0)
+			sm += 2.0 * ph[k] - 1.0
+		sm *= 0.25
+		l1 += f1 * b1
+		var h1 := sm - l1 - q * b1
+		b1 += f1 * h1
+		l2 += f2 * b2
+		var h2 := sm - l2 - q * b2
+		b2 += f2 * h2
+		var v := (b1 * 0.9 + b2 * 0.6 + l1 * 0.12) * 0.075 * vel * _env(i, n, 0.35, 0.3, 0.9, 0.3)
+		_write(idx, v, g, 0.3)
+
+
+## Chor-Akkord: drei Stimmen in mittlerer Lage, über das Stereofeld verteilt
+func _choir_chord(chord: String, t: float, dur: float, vel: float) -> void:
+	var notes := voicing(chord, 57)
+	for i in notes.size():
+		_choir(t, dur, notes[i], vel, -0.45 + 0.45 * i)
+
+
+## Spiccato-Streicher: kurz gestrichen, zwei verstimmte Sägezähne durch schließenden Tiefpass
+func _spiccato(t: float, dur: float, m: int, vol: float, pan: float) -> void:
+	var start := int(t * RATE)
+	var n := int(dur * RATE * 0.85)
+	var f := freq(m)
+	var ph := rng.randf()
+	var ph2 := rng.randf()
+	var lp := 0.0
+	var g := _pan_gains(pan)
+	for i in n:
+		var idx := start + i
+		if idx >= L.size():
+			return
+		var tt := float(i) / RATE
+		ph = fmod(ph + f / RATE, 1.0)
+		ph2 = fmod(ph2 + f * 1.006 / RATE, 1.0)
+		var saw := (2.0 * ph - 1.0) + (2.0 * ph2 - 1.0)
+		var cutoff := 700.0 + 2200.0 * exp(-tt * 25.0)
+		lp += (1.0 - exp(-TAU * cutoff / RATE)) * (saw - lp)
+		var v := lp * 0.05 * vol * _env(i, n, 0.004, 0.06, 0.45, 0.02)
+		_write(idx, v, g, 0.12)
+
+
 ## Glockenspiel: Sinus mit unharmonischen Obertönen, klingt aus
 func _glock(t: float, dur: float, m: int, vol: float, pan: float) -> void:
 	var start := int(t * RATE)
@@ -881,6 +1115,15 @@ func _arp_bar(style: String, chord: String, t: float, step: float) -> void:
 			var order := [0, 2, 1, 2]
 			for s in range(0, 16, 2):
 				_glock(t + s * step, step * 2, v[order[(s / 2) % 4]], 0.42, 0.4)
+		"ostinato":
+			# treibende Sechzehntel der Streicher in tiefer Lage: Grundton, Quinte, Oktave (epische Stücke)
+			var r: int = voicing(chord, 45)[0]
+			for nt in voicing(chord, 45):
+				if nt % 12 == chord_pcs(chord)[0]:
+					r = nt
+			var seq := [0, 0, 7, 0, 12, 0, 7, 0, 0, 0, 7, 0, 12, 7, 12, 7]
+			for st in 16:
+				_spiccato(t + st * step, step, r + seq[st], 0.5 if st % 4 == 0 else 0.38, 0.2 if st % 2 == 0 else -0.2)
 		"offbeat":
 			# gezupfte Akkorde auf den Offbeats (Sumpf: blubbert)
 			for s in [2, 6, 10, 14]:
@@ -916,7 +1159,7 @@ func _drum_bar(style: String, t: float, step: float, fill: bool, first: bool) ->
 		if D.h[s] == "x":
 			_hat(ts, (0.07 if s % 2 == 0 else 0.045) * vol)
 		if D.has("t") and D.t[s] == "x":
-			_tom(ts, 0.45 * vol, 70.0)
+			_tom(ts, 0.45 * vol, D.get("tf", 70.0))
 
 
 func _kick(t: float, vol: float) -> void:

@@ -64,6 +64,8 @@ static func args() -> Dictionary:
 			shot.legendegg = true
 		elif a == "--counter":
 			shot.counter = true
+		elif a == "--elite" or a == "--glitch":
+			shot.nodetype = a.substr(2)
 		elif a == "--welcome":
 			shot.welcome = true
 		elif a.begins_with("--anim="):

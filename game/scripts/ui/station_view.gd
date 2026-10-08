@@ -70,7 +70,7 @@ const GUIDE := [
 
 
 func _ready() -> void:
-	Music.play("title")
+	Music.play("station")   # eigenes ruhiges Thema für die Station (08.10.2026)
 	tab = Tab.HOME
 	_sync_home()
 	_check_hatch()

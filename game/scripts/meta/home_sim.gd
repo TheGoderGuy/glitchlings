@@ -6,6 +6,8 @@ extends RefCounted
 const MAX := 12
 ## Laufbereich (Fußpositionen) unter dem Horizont
 const AREA := Rect2(36, 242, 568, 96)
+## Gewicht der Tiefe beim Abstandhalten (kleiner = Bewohner verteilen sich vor allem nebeneinander)
+const DEPTH := 0.6
 ## Lieblingsplätze je Element (Fußposition); die Requisiten zeichnet die Station an diese Stellen
 const SPOTS := {
 	"Feuer": Vector2(536, 318), "Wasser": Vector2(150, 330), "Elektro": Vector2(380, 256),
@@ -143,6 +145,7 @@ func update(dt: float) -> void:
 			_:
 				if r.t <= 0:
 					_choose(i)
+	_separate(dt)
 	for k in range(fx.size() - 1, -1, -1):
 		var f: Dictionary = fx[k]
 		f.t -= dt
@@ -152,6 +155,41 @@ func update(dt: float) -> void:
 			f.vy += 140.0 * dt
 		if f.t <= 0:
 			fx.remove_at(k)
+
+
+## Sichtbare Breite eines Bewohners in Pixeln (Babys werden doppelt gezeichnet)
+static func width(r: Dictionary) -> float:
+	return {1: 52.0, 2: 54.0, 3: 66.0, 4: 80.0}.get(int(r.stage), 60.0)
+
+
+## Abstand halten (08.10.2026): Wer zu nah an einem anderen steht, wird sanft weggeschoben – vorher ballten sich
+## große Champions und Ultras in der Mitte und verdeckten sich. Die Tiefe (y) zählt nur wenig: Bei 80–96 px großen
+## Sprites verdecken sich zwei Bewohner auch, wenn einer etwas weiter hinten steht.
+## Laufende werden nur geschoben, wenn beide laufen; Spielpartner dürfen etwas näher zusammen.
+func _separate(dt: float) -> void:
+	var walking := ["walk", "go_spot", "go_play", "arrive"]
+	for i in residents.size():
+		for j in range(i + 1, residents.size()):
+			var a: Dictionary = residents[i]
+			var b: Dictionary = residents[j]
+			if a.state == "arrive" or b.state == "arrive":
+				continue
+			var need := (width(a) + width(b)) * (0.32 if a.partner == j else 0.45)
+			var d := Vector2(b.x - a.x, (b.y - a.y) * DEPTH)
+			var dist := d.length()
+			if dist >= need:
+				continue
+			var dir := d / dist if dist > 0.01 else Vector2(1.0 if i % 2 == 0 else -1.0, 0.0)
+			var push := minf(need - dist, 90.0 * dt)
+			var move_a := not walking.has(a.state) or walking.has(b.state)
+			var move_b := not walking.has(b.state) or walking.has(a.state)
+			var share := 0.5 if move_a and move_b else 1.0
+			if move_a:
+				a.x = _clamp_x(a, a.x - dir.x * push * share)
+				a.y = clampf(a.y - dir.y / DEPTH * push * share, AREA.position.y, AREA.end.y)
+			if move_b:
+				b.x = _clamp_x(b, b.x + dir.x * push * share)
+				b.y = clampf(b.y + dir.y / DEPTH * push * share, AREA.position.y, AREA.end.y)
 
 
 ## Streicheln: Hüpfer, Herzchen, kurze Reaktion (Text zum Anzeigen)
@@ -198,8 +236,14 @@ func _choose(i: int) -> void:
 		r.state = "sleep"
 		r.t = rng.randf_range(6.0, 10.0)
 	elif roll < m[0] + m[1] + m[2] + m[3]:
+		# am Lieblingsplatz verteilen sich mehrere Bewohner im Halbkreis statt aufeinander zu stehen
 		var s: Vector2 = SPOTS.get(r.el, SPOTS.Neutral)
-		_walk_to(r, s + Vector2(rng.randf_range(-14, 14), rng.randf_range(-4, 4)), "go_spot")
+		var there := 0
+		for j in residents.size():
+			if j != i and residents[j].el == r.el and residents[j].state in ["go_spot", "spot"]:
+				there += 1
+		var ang: float = [0.0, PI, PI * 0.5, PI * 1.5][there % 4]
+		_walk_to(r, s + Vector2(cos(ang) * 46.0, sin(ang) * 14.0) * (0.0 if there == 0 else 1.0) + Vector2(rng.randf_range(-6, 6), rng.randf_range(-3, 3)), "go_spot")
 	else:
 		# Spielpartner: jemand, der gerade nichts Wichtiges tut
 		var free: Array = []
@@ -216,8 +260,10 @@ func _choose(i: int) -> void:
 		mid.x = clampf(mid.x, AREA.position.x + 20, AREA.end.x - 20)
 		r.partner = j
 		o.partner = i
-		_walk_to(r, mid + Vector2(-18, 0), "go_play")
-		_walk_to(o, mid + Vector2(18, 0), "go_play")
+		var gap := (width(r) + width(o)) * 0.36
+		mid.x = clampf(mid.x, AREA.position.x + gap, AREA.end.x - gap)
+		_walk_to(r, mid + Vector2(-gap, 0), "go_play")
+		_walk_to(o, mid + Vector2(gap, 0), "go_play")
 
 
 ## Ein Ziel mit möglichst viel Abstand zu den anderen (sonst ballt sich alles in der Mitte)
@@ -232,7 +278,7 @@ func _free_spot(i: int) -> Vector2:
 				var o: Dictionary = residents[j]
 				var ox: float = o.tx if o.state in ["walk", "go_spot", "go_play"] else o.x
 				var oy: float = o.ty if o.state in ["walk", "go_spot", "go_play"] else o.y
-				d = minf(d, Vector2(ox - c.x, (oy - c.y) * 1.5).length())
+				d = minf(d, Vector2(ox - c.x, (oy - c.y) * DEPTH).length())
 		if d > best_d:
 			best_d = d
 			best = c
@@ -261,8 +307,14 @@ func _arrive(i: int) -> void:
 			r.t = rng.randf_range(1.0, 3.0)
 
 
+## Große Sprites dürfen nicht über den Bildrand hinaus (Bildbreite 640)
+func _clamp_x(r: Dictionary, x: float) -> float:
+	var half := width(r) / 2.0 + (10.0 if r.fly else 0.0)
+	return clampf(x, maxf(AREA.position.x, 8.0 + half), minf(AREA.end.x, 632.0 - half))
+
+
 func _walk_to(r: Dictionary, p: Vector2, state: String) -> void:
-	r.tx = clampf(p.x, AREA.position.x, AREA.end.x)
+	r.tx = _clamp_x(r, p.x)
 	r.ty = clampf(p.y, AREA.position.y, AREA.end.y)
 	r.state = state
 	r.t = 99.0

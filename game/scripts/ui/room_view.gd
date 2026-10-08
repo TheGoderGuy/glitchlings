@@ -97,7 +97,7 @@ func _process(delta: float) -> void:
 	match state:
 		State.MENU:
 			var o := _options()
-			_nav(o.size())
+			_nav_grid(_layout(o))
 			# Zurück-Taste verlässt Händler und Rastplatz (wie „Weitergehen“)
 			if Input.is_action_just_pressed("back") and type != "event":
 				Sfx.play("back")
@@ -227,7 +227,7 @@ func _draw() -> void:
 		var mw := minf(run.modules.size(), 9) * 15.0
 		_draw_module_row(run.modules, 80 - mw / 2.0, 326, 9)
 
-	var r := Rect2(160, 24, 460, 312)
+	var r := PANEL
 	_box(r, Color(GameData.COL.panel, 0.95), _type_col())
 	_text(r.position + Vector2(0, 28), T.t(_title()).to_upper(), 16, _type_col(), HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
@@ -235,13 +235,17 @@ func _draw() -> void:
 		State.MENU:
 			draw_multiline_string(font(), r.position + Vector2(24, 54), T.t(_intro()), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 4, GameData.COL.ink, wrap)
 			var o := _options()
-			# viele Einträge (Händler): enger stapeln, damit die Beschreibung unten frei bleibt
-			var step := 24 if o.size() <= 6 else 20
-			var y := r.position.y + (96 if o.size() <= 6 else 88)
+			var rects := _layout(o)
 			for i in o.size():
-				_option_row(Rect2(r.position.x + 60, y + i * step, r.size.x - 120, 17), o[i].label, i == sel, o[i].enabled)
-			if sel < o.size():
-				draw_multiline_string(font(), Vector2(r.position.x + 24, r.end.y - 40), T.t(o[sel].desc), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 3, GameData.COL.muted, wrap)
+				_draw_option_card(rects[i], o[i], i == sel)
+			# Händler: Karten sind knapp, die volle Beschreibung steht darunter
+			if type == "shop" and sel < o.size():
+				draw_multiline_string(font(), Vector2(r.position.x + 24, r.end.y - 46), T.t(o[sel].desc), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 3, GameData.COL.muted, wrap)
+			var pad: bool = InputSetup.pad
+			var hint := T.t("Pfeile wählen   %s nehmen") % (InputSetup.btn("A") if pad else "Enter")
+			if type != "event":
+				hint += "   " + T.t("%s weitergehen") % (InputSetup.btn("B") if pad else "Esc")
+			_text(Vector2(r.position.x, r.end.y - 8), hint, 8, Color(GameData.COL.sun, 0.8), HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 		State.REMOVE:
 			var q: String = {"copy": "Welchen Chip kopieren?", "upgrade": "Welchen Chip verbessern?"}.get(choose_mode, "Welchen Chip entfernen?")
 			_text(r.position + Vector2(0, 54), q, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
@@ -266,6 +270,244 @@ func _draw() -> void:
 		State.MESSAGE:
 			draw_multiline_string(font(), r.position + Vector2(24, 120), T.t(message), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 5, GameData.COL.ink, wrap)
 			_text(Vector2(r.position.x, r.end.y - 20), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+
+
+# ---------- Karten statt Liste (08.10.2026, Game-Design-Analyse „Händler, Rast und Ereignisse als Karten“) ----------
+
+const PANEL := Rect2(160, 24, 460, 312)
+
+
+## Positionen der Optionen. Händler: Angebote als Karten oben, Dienste als Knöpfe darunter. Rastplatz: große
+## Karten, „Weitergehen“ darunter. Ereignis: Karten nebeneinander unter dem Ereignistext.
+func _layout(o: Array) -> Array:
+	var r := PANEL
+	var out: Array = []
+	var x0 := r.position.x + 10
+	var wfull := r.size.x - 20
+	match type:
+		"shop":
+			var offers: Array = []
+			var rest: Array = []
+			for i in o.size():
+				if String(o[i].id).begins_with("buy_"):
+					offers.append(i)
+				else:
+					rest.append(i)
+			out.resize(o.size())
+			var n := maxi(1, offers.size())
+			var cw := (wfull - 8.0 * (n - 1)) / n
+			for k in offers.size():
+				out[offers[k]] = Rect2(x0 + k * (cw + 8), r.position.y + 70, cw, 118)
+			var m := maxi(1, rest.size())
+			var bw := (wfull - 8.0 * (m - 1)) / m
+			for k in rest.size():
+				out[rest[k]] = Rect2(x0 + k * (bw + 8), r.position.y + 196, bw, 34)
+		"event":
+			var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
+			var ih := font().get_multiline_string_size(T.t(_intro()), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 48, tsz(8), 4, wrap).y
+			var y := r.position.y + 54 + ih + 4
+			var n := maxi(1, o.size())
+			var cw := (wfull - 8.0 * (n - 1)) / n
+			for i in o.size():
+				out.append(Rect2(x0 + i * (cw + 8), y + 6, cw, minf(108.0, r.end.y - 28 - y)))
+		_:
+			var cards := maxi(1, o.filter(func(q): return q.id != "leave").size())
+			var cw := (wfull - 8.0 * (cards - 1)) / cards
+			var k := 0
+			for i in o.size():
+				if o[i].id == "leave":
+					out.append(Rect2(r.get_center().x - 80, r.position.y + 212, 160, 22))
+				else:
+					out.append(Rect2(x0 + k * (cw + 8), r.position.y + 92, cw, 104))
+					k += 1
+	return out
+
+
+## Auswahl mit allen vier Richtungen: springt zur nächsten Karte in diese Richtung
+func _nav_grid(rects: Array) -> void:
+	var dir := Vector2.ZERO
+	if Input.is_action_just_pressed("move_left"):
+		dir = Vector2.LEFT
+	elif Input.is_action_just_pressed("move_right"):
+		dir = Vector2.RIGHT
+	elif Input.is_action_just_pressed("move_up"):
+		dir = Vector2.UP
+	elif Input.is_action_just_pressed("move_down"):
+		dir = Vector2.DOWN
+	var before := sel
+	sel = nav_dir(rects, sel, dir)
+	if sel != before:
+		Sfx.play("select")
+
+
+## Nächste Karte von cur aus in Richtung dir (bleibt stehen, wenn dort keine ist)
+static func nav_dir(rects: Array, cur_i: int, dir: Vector2) -> int:
+	if dir == Vector2.ZERO or rects.is_empty():
+		return cur_i
+	var idx := clampi(cur_i, 0, rects.size() - 1)
+	var cur: Vector2 = rects[idx].get_center()
+	var best := -1
+	var best_cost := INF
+	for i in rects.size():
+		if i == idx:
+			continue
+		var d: Vector2 = rects[i].get_center() - cur
+		var along := d.dot(dir)
+		if along <= 1.0:
+			continue
+		var cost := along + absf(d.dot(Vector2(dir.y, dir.x))) * 2.0
+		if cost < best_cost:
+			best_cost = cost
+			best = i
+	return best if best >= 0 else idx
+
+
+func _draw_option_card(rc: Rect2, opt: Dictionary, active: bool) -> void:
+	var r := rc
+	if active:
+		r.position.y -= 3
+	var on: bool = opt.enabled
+	if opt.has("chip") or opt.has("module"):
+		_draw_offer_card(r, opt, active)
+		return
+	var big := r.size.y > 60
+	_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
+	var ink: Color = GameData.COL.ink if on else Color(GameData.COL.muted, 0.5)
+	var pic := _option_picto(opt)
+	var pcol: Color = pic[1] if on else Color(GameData.COL.muted, 0.5)
+	if big:
+		# große Karte: Symbol, Titel, Wirkung (Rastplatz, Ereignis)
+		_picto(pic[0], Vector2(r.get_center().x - 9, r.position.y + 10), 3, pcol)
+		var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
+		draw_multiline_string(font(true), Vector2(r.position.x + 6, r.position.y + 42), T.t(opt.label), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 12, tsz(8), 2, ink, wrap)
+		var lh := font(true).get_multiline_string_size(T.t(opt.label), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 12, tsz(8), 2, wrap).y
+		draw_multiline_string(font(), Vector2(r.position.x + 6, r.position.y + 48 + lh), T.t(opt.desc), HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 12, tsz(8), 6, GameData.COL.muted if on else Color(GameData.COL.muted, 0.5), wrap)
+		return
+	# Knopf: Symbol links, Name und Preis daneben (Händler-Dienste, Weitergehen)
+	_picto(pic[0], Vector2(r.position.x + 8, r.get_center().y - 6), 2, pcol)
+	var title := _service_name(opt.id)
+	var price := _service_price(opt.id)
+	if price != "":
+		_text(Vector2(r.position.x + 26, r.position.y + 14), title, 8, ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, active)
+		_text(Vector2(r.position.x + 26, r.position.y + 27), price, 8, GameData.COL.sun if on else Color(GameData.COL.muted, 0.5))
+	else:
+		_text(Vector2(r.position.x + 22, r.get_center().y + 4), title, 8, ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 28, true, active)
+
+
+## Angebot beim Händler: Chip- oder Modulkarte mit Preis
+func _draw_offer_card(r: Rect2, opt: Dictionary, active: bool) -> void:
+	var i := int(String(opt.id).substr(4))
+	var offer: Dictionary = node.shop.offers[i]
+	var sold: bool = offer.sold
+	var can: bool = opt.enabled
+	var price := Rooms.price(run, offer.price)
+	var a := 0.45 if sold else 1.0
+	_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
+	if opt.has("module"):
+		var M: Dictionary = GameData.MODULES[opt.module]
+		var rarc: Color = {"Gewöhnlich": GameData.COL.muted, "Selten": Color("#58B7FF"), "Episch": Color("#FFC83D")}[M.rar]
+		draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(r.size.x - 2, 4)), Color(Color(M.col), a))
+		_text(Vector2(r.position.x, r.position.y + 16), "Modul", 8, Color(GameData.COL.muted, a), HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+		_draw_module_icon(opt.module, Vector2(r.get_center().x - 7, r.position.y + 22))
+		_text(Vector2(r.position.x, r.position.y + 50), _fit_w(T.t(M.name), r.size.x - 8), 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+		_text(Vector2(r.position.x, r.position.y + 62), T.t(M.rar), 8, Color(rarc, a), HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+		_text(Vector2(r.position.x, r.position.y + 78), "für den ganzen Run", 8, Color(GameData.COL.muted, a), HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	else:
+		var id: String = opt.chip
+		var ch: Dictionary = GameData.CHIPS[id]
+		var el: Color = GameData.EL[ch.el]
+		var ro := GameData.role(id)
+		draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(r.size.x - 2, 4)), Color(el, a))
+		_text(Vector2(r.position.x, r.position.y + 16), T.t(GameData.ROLE_NAMES[ro]), 8, Color(Color(GameData.ROLE_COL[ro]), a), HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+		_text(Vector2(r.position.x, r.position.y + 30), _fit_w(T.chip(id), r.size.x - 8), 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+		_text(Vector2(r.position.x, r.position.y + 42), "%s · %s" % [T.t(ch.el), T.t(ch.rar)], 8, Color(el, a), HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+		# Trefferbild bzw. Symbol, doppelt groß, daneben die Werte
+		_draw_chip_icon(id, Vector2(r.position.x + 10, r.position.y + 50), not sold, 2)
+		var sx := r.position.x + 40
+		if int(ch.dmg) > 0:
+			_text(Vector2(sx, r.position.y + 59), T.t("Schaden %d") % ch.dmg, 8, Color(GameData.COL.ink, a))
+		else:
+			_text(Vector2(sx, r.position.y + 59), T.t(ch.cat), 8, Color(GameData.COL.ink, a))
+		_text(Vector2(sx, r.position.y + 71), T.t("Laden %s s") % T.dec(ch.cd), 8, Color(GameData.COL.muted, a))
+		# passt zum Deck? Kombo oder Resonanz
+		var tag := GameData.synergy(id, run.deck, run.modules, run.mon.passive)
+		if tag == "" and int(ch.dmg) > 0 and GameData.resonance(run.form, ch.el) > 0:
+			tag = T.t("Resonanz +%d %%") % roundi(GameData.resonance(run.form, ch.el) * 100)
+		if tag != "" and not sold:
+			_text(Vector2(r.position.x, r.position.y + 89), _fit_w(T.t(tag), r.size.x - 6), 8, Color(GameData.COL.sun, 0.75 + 0.25 * sin(anim_t * 5.0)), HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	# Preis bzw. verkauft
+	if sold:
+		_text(Vector2(r.position.x, r.end.y - 8), "verkauft", 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	else:
+		_text(Vector2(r.position.x, r.end.y - 8), T.t("%d Fragmente") % price, 8, GameData.COL.sun if can else GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+
+
+func _service_name(id: String) -> String:
+	return T.t({"repair": "Reparatur", "upgrade": "Verbessern", "remove": "Entfernen"}.get(id, "Weitergehen"))
+
+
+func _service_price(id: String) -> String:
+	match id:
+		"repair":
+			return T.t("%d Fragmente") % Rooms.price(run, Rooms.PRICE_REPAIR)
+		"upgrade":
+			return T.t("%d Fragmente") % Rooms.price(run, Rooms.PRICE_UPGRADE)
+		"remove":
+			return T.t("%d Fragmente") % Rooms.price(run, Rooms.PRICE_REMOVE)
+	return ""
+
+
+## Symbol je Option: [Piktogramm, Farbe]. Ereignisse: aus der Wirkung abgeleitet (Prägung, Modul, Chip, Fragmente …)
+func _option_picto(opt: Dictionary) -> Array:
+	match opt.id:
+		"heal", "repair":
+			return ["heart", GameData.COL.coral]
+		"upgrade", "tinker":
+			return ["star", GameData.COL.sun]
+		"remove", "clean":
+			return ["spike", GameData.COL.muted.lightened(0.3)]
+		"leave":
+			return ["arrow", GameData.COL.mint]
+	# Die Beschreibung ist schon übersetzt: deutsche und englische Stichwörter prüfen
+	var d: String = String(opt.desc).to_lower()
+	var has := func(words: Array) -> bool: return words.any(func(w): return d.contains(w))
+	if has.call(["prägung", "imprint"]):
+		for el in GameData.EL:
+			if d.contains(T.t(el).to_lower()):
+				return ["gem", GameData.EL[el]]
+		return ["gem", GameData.COL.mint]
+	if has.call(["modul", "module"]):
+		return ["gear", Color("#FF8FD8")]
+	if has.call(["chip", "verbessert", "upgrade", "deck"]):
+		return ["star", GameData.COL.sun]
+	if has.call(["signatur", "signature"]):
+		return ["bolt", Color("#FFE45C")]
+	if has.call(["gegner", "enemy"]):
+		return ["eye", GameData.COL.coral]
+	if has.call(["fragmente", "fragments"]):
+		return ["coin", GameData.COL.sun]
+	if d.contains("hp"):
+		return ["heart", GameData.COL.coral]
+	return ["arrow", GameData.COL.mint]
+
+
+## Piktogramm (6 × 6) in beliebiger Größe
+func _picto(pname: String, pos: Vector2, s: int, col: Color) -> void:
+	var pic: Array = GameData.PICTOS.get(pname, GameData.PICTOS.arrow)
+	pos = pos.round()
+	for y in 6:
+		for x in 6:
+			if pic[y][x] == "#":
+				draw_rect(Rect2(pos + Vector2(x, y) * s, Vector2(s, s)), col)
+
+
+## Text auf eine Breite kürzen (mit Punkt)
+func _fit_w(t: String, w: float) -> String:
+	if text_width(t, 8, true) <= w:
+		return t
+	while t.length() > 2 and text_width(t + ".", 8, true) > w:
+		t = t.substr(0, t.length() - 1)
+	return t + "."
 
 
 ## Chip verbessern: oben links die Karte des gewählten Chips mit alt > neu (05.10.2026, Produzent)

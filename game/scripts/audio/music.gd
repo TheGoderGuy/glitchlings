@@ -3,9 +3,12 @@ extends Node
 ## Karte und Titel spielen beim Zurückkehren dort weiter, wo sie aufgehört haben;
 ## Kampf, Boss und Siegesfanfare beginnen immer von vorn (mit ihrem Intro).
 
-const RESUME := ["map", "title"]
+const RESUME := ["map", "title", "station"]
+## Epische Fassungen (08.10.2026, Wunsch Produzent): Diese Stücke ersetzen im Spiel die alten. Die alten Dateien
+## bleiben erhalten – wer eine alte Fassung zurück will, löscht hier nur die Zeile.
+const USE := {"title": "title_epic", "battle": "battle_epic", "boss": "boss_epic"}
 ## Einblendzeit je Stück: Kämpfe starten knackig, die Karte blendet weich ein
-const FADE_IN := {"map": 1.2, "title": 1.0, "battle": 0.05, "boss": 0.05, "guard": 0.05, "opening": 0.02, "victory": 0.02, "intro": 2.0, "finale": 0.05, "ending": 0.02}
+const FADE_IN := {"map": 1.2, "title": 1.0, "station": 1.2, "battle": 0.05, "boss": 0.05, "guard": 0.05, "opening": 0.02, "victory": 0.02, "intro": 2.0, "finale": 0.05, "ending": 0.02}
 const FADE_OUT := 0.45
 
 var players: Array[AudioStreamPlayer] = []
@@ -102,6 +105,8 @@ func _resumes(key: String) -> bool:
 
 
 func play(key: String) -> void:
+	if USE.has(key) and ResourceLoader.exists(_path(USE[key])):
+		key = USE[key]
 	if key == current:
 		return
 	var path := "res://assets/music/%s.wav" % key

@@ -72,6 +72,7 @@ func _ready() -> void:
 	test_legends()
 	test_design_review()
 	test_arena_tiles()
+	test_room_cards_and_home()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -1331,7 +1332,8 @@ func test_testbuild() -> void:
 
 func test_music() -> void:
 	var ok := true
-	for key in ["title", "map", "battle", "boss", "victory", "map_vulkan", "battle_vulkan", "map_sumpf", "battle_sumpf", "intro", "map_kern", "finale", "ending"]:
+	for key in ["title", "map", "battle", "boss", "victory", "map_vulkan", "battle_vulkan", "map_sumpf", "battle_sumpf", "intro", "map_kern", "finale", "ending",
+			"title_epic", "station", "battle_epic", "boss_epic"]:
 		var path := "res://assets/music/%s.wav" % key
 		if not ResourceLoader.exists(path):
 			ok = false
@@ -1341,7 +1343,15 @@ func test_music() -> void:
 		var lb := MusicSynth.intro_frames(key) if st.stereo else 0
 		if st.get_length() < 8.0 or lb >= frames:
 			ok = false
-	check(ok, "Alle 13 Musikstücke vorhanden (inkl. Zonen, Intro, Finale, Ende), Schleifenpunkte gültig")
+	check(ok, "Alle 17 Musikstücke vorhanden (inkl. Zonen, Intro, Finale, Ende, epische Fassungen), Schleifenpunkte gültig")
+	# Epische Fassungen (08.10.2026) ersetzen im Spiel Titel, Kampf und Boss; die alten Dateien bleiben
+	var all_there := true
+	for k in Music.USE:
+		all_there = all_there and ResourceLoader.exists("res://assets/music/%s.wav" % k) and ResourceLoader.exists("res://assets/music/%s.wav" % Music.USE[k])
+	Music.play("title")
+	var cur_title: String = Music.current
+	Music.play("battle")
+	check(all_there and cur_title == "title_epic" and Music.current == "battle_epic", "Epische Musik: Titel und Kampf spielen die neuen Fassungen, die alten Dateien bleiben erhalten")
 	check(Music.zone_key("map", "vulkan") == "map_vulkan" and Music.zone_key("battle", "sumpf") == "battle_sumpf" and Music.zone_key("map", "wiesen") == "map" and Music.zone_key("battle", "wiesen") == "battle", "Zonen 2 und 3 haben eigene Karten- und Kampfmusik, Wiesen behalten die alte")
 	# Blinzel-Frames: jede Form außer den bekannten Ausnahmen
 	var no_blink: Array = []
@@ -1384,7 +1394,7 @@ func test_music() -> void:
 	Music.play("battle")
 	await get_tree().create_timer(1.0).timeout
 	var ap: AudioStreamPlayer = Music.players[Music.active]
-	check(ap.playing and ap.volume_db > -1.0 and Music.current == "battle", "Kampfmusik läuft nach schnellem Wechsel weiter (nicht stumm)")
+	check(ap.playing and ap.volume_db > -1.0 and Music.current == Music.USE.get("battle", "battle"), "Kampfmusik läuft nach schnellem Wechsel weiter (nicht stumm)")
 	# auch nach stop() und sofortigem Neustart
 	Music.stop()
 	await get_tree().create_timer(0.1).timeout
@@ -1448,7 +1458,7 @@ func test_boss_intro() -> void:
 	await get_tree().create_timer(1.0).timeout
 	check(bv.mode == bv.Mode.INTRO and run.hp == hp0 and bv.st.warns.is_empty(), "Während des Intros greift der Boss nicht an")
 	await get_tree().create_timer(bv.INTRO_END).timeout
-	check(bv.mode == bv.Mode.READY and Music.current == "boss", "Nach dem Intro: Bereit-Pause mit Bossmusik")
+	check(bv.mode == bv.Mode.READY and Music.current == Music.USE.get("boss", "boss"), "Nach dem Intro: Bereit-Pause mit Bossmusik")
 	bv.queue_free()
 	# Überspringen
 	var bv2 = load("res://scenes/battle.tscn").instantiate()
@@ -2740,3 +2750,62 @@ func _avg_color(img: Image) -> Color:
 			b += c.b
 			n += 1
 	return Color(r / n, g / n, b / n)
+
+
+## Händler, Rast und Ereignisse als Karten; Zuhause mit Abstand (08.10.2026)
+func test_room_cards_and_home() -> void:
+	var RV: GDScript = load("res://scripts/ui/room_view.gd")
+	var ok := true
+	for t in ["shop", "rest", "event"]:
+		var run := RunState.new("Pixmiez", 3)
+		run.frag = 80
+		run.enter(run.next_choices()[0])
+		run.current_node().type = t
+		var rv = RV.new()
+		rv.setup(run)
+		var o: Array = rv._options()
+		var rects: Array = rv._layout(o)
+		for i in rects.size():
+			if not RV.PANEL.encloses(rects[i]):
+				ok = false
+			for j in range(i + 1, rects.size()):
+				if rects[i].intersects(rects[j]):
+					ok = false
+		rv.free()
+	check(ok, "Händler, Rast, Ereignis: Karten liegen im Fenster und überlappen sich nicht")
+	# Navigation: rechts geht zur Karte daneben, runter vom Angebot zu den Diensten
+	var rs := RunState.new("Pixmiez", 4)
+	rs.frag = 80
+	rs.enter(rs.next_choices()[0])
+	rs.current_node().type = "shop"
+	var sv = RV.new()
+	sv.setup(rs)
+	var so: Array = sv._options()
+	var sr: Array = sv._layout(so)
+	var right: int = RV.nav_dir(sr, 0, Vector2.RIGHT)
+	var down: int = RV.nav_dir(sr, right, Vector2.DOWN)
+	var up: int = RV.nav_dir(sr, down, Vector2.UP)
+	check(right == 1 and not String(so[down].id).begins_with("buy_") and String(so[up].id).begins_with("buy_") and RV.nav_dir(sr, 0, Vector2.LEFT) == 0,
+		"Händler: Pfeile springen zur Nachbarkarte, zu den Diensten und zurück")
+	sv.free()
+	# Zuhause: nach einer Minute steht niemand mehr direkt auf einem anderen
+	var team: Array = []
+	var forms := ["Prismiez", "Glutbyte", "Bollwerkatz", "Aurorlynx", "Magmawulf", "Tsunamander", "Kaskadi", "Optikauz", "Glutfenrir", "Titanbrumm", "Firewallo"]
+	var species := ["Pixmiez", "Funkling", "Pixmiez", "Pixmiez", "Funkling", "Tröpfel", "Tröpfel", "Kauzbit", "Funkling", "Brummbit", "Pixmiez"]
+	for i in forms.size():
+		team.append({"id": i + 1, "form": forms[i], "species": species[i], "stage": GameData.FORMS[forms[i]].stage})
+	var home := HomeSim.new()
+	home.setup(team, 11)
+	for k in 60 * 60:
+		home.update(1.0 / 60.0)
+	var stacked := 0
+	for i in home.residents.size():
+		for j in range(i + 1, home.residents.size()):
+			var a: Dictionary = home.residents[i]
+			var b: Dictionary = home.residents[j]
+			if a.partner == j:
+				continue
+			var d := Vector2(b.x - a.x, (b.y - a.y) * HomeSim.DEPTH).length()
+			if d < (HomeSim.width(a) + HomeSim.width(b)) * 0.2:
+				stacked += 1
+	check(stacked <= 1, "Zuhause: Bewohner halten Abstand (%d Paare direkt übereinander)" % stacked)

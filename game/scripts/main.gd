@@ -402,6 +402,8 @@ func _screenshot(shot: Dictionary) -> void:
 			run.enter(run.next_choices()[0])
 			if floors >= run.map.boss_floor() - 1:
 				run.current_node().type = "guard" if shot.has("guard") else "boss"
+			elif shot.has("nodetype"):
+				run.current_node().type = shot.nodetype   # --elite / --glitch
 			elif run.current_node().type != "elite":
 				run.current_node().type = "fight"
 			_enter_node()

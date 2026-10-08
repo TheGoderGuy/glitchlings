@@ -92,6 +92,8 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 	st = BattleState.new(run, foe)
 	run.last_foe = foe.name
 	ArenaTiles.preload_bg(GameData.ZONES[run.map.zone].bg)
+	if foe.get("elite", false):
+		PixelCanvas.preload_silhouettes(foe.spr)
 	if run.tutorial and run.fights_won == 0 and type == "fight":
 		tut = Tutorial.new()
 		st.status = ""
@@ -653,7 +655,8 @@ func _draw_actors() -> void:
 			_shadow(ecx, efy, roundi((44 if st.def.boss else 34) * (1.0 - mat_t / MAT_TIME)))
 			_draw_materialize(Vector2(ecx, efy), 1.0 - mat_t / MAT_TIME)
 			return
-		_shadow(ecx, efy, 44 if st.def.boss else 34)
+		var elite: bool = st.def.get("elite", false)
+		_shadow(ecx, efy, 44 if st.def.boss else (40 if elite else 34))
 		var tint := Color.WHITE
 		if st.boss_phase() == 3 and sin(anim_t * 14.0) > 0.4:
 			tint = Color("#FF9DB3")
@@ -666,7 +669,14 @@ func _draw_actors() -> void:
 		if c_open:
 			tint = tint.lerp(Color("#FFD0D8"), 0.5 + 0.5 * sin(anim_t * 40.0))
 		tint.a = fade
-		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint, "atk": -1.0 if defeated else e_atk})
+		# Elite: glühende Aura-Kontur (rot), Glitch-Elite flackert magenta – sie sollen auf einen Blick gefährlich wirken
+		var aura := Color.TRANSPARENT
+		if st.def.get("glitch", false):
+			aura = Color("#FF4FD8", 0.85 if fmod(anim_t, 0.5) < 0.38 else 0.35)
+		elif elite:
+			aura = Color("#FF5A3C", 0.45 + 0.3 * sin(anim_t * 4.0))
+		aura.a *= fade
+		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint, "atk": -1.0 if defeated else e_atk, "outline": aura})
 		_draw_status_fx(ecx, efy)
 		if c_open:
 			# Fadenkreuz über dem Kopf: „jetzt zuschlagen“
