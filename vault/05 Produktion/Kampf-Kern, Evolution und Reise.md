@@ -135,6 +135,18 @@ godot --headless --path game res://tools/balance_sim.tscn -- --runs=13 --stage=1
 ```
 Optionen: `--bot=human|perfect|counter`, `--diff=0..3`, `--protocol=N`, `--zones` (einzelne Zonen wie früher), `--set=FOE_DMG:1.4` bzw. `--set=ACT_HP:1,1.4,1.85,2.3` zum Ausprobieren.
 
+## Training nachgebessert (08.10.2026, abends)
+Der Produzent meldete nach einem neuen Spiel: „Der Tutorial-Kampf fehlt“, genauer „kurz ein Kampf, dann Station“.
+
+**Nachgestellt:** Das Training startet (Neues Spiel > Intro > Starter, auch mit echten Tastendrücken). Es konnte aber rasend schnell vorbei sein:
+- Bei schnellem Drücken erledigten sich die ersten Schritte in unter einer Sekunde, die Texte blitzten nur auf.
+- Wer früh viel angriff, hatte Bugsy auf seine Mindest-HP gedrückt. Der freie Kampf endete dann mit einem einzigen Treffer.
+
+**Lösung**
+- Jeder Lernschritt bleibt mindestens 1,5 s stehen (`Tutorial.MIN_STEP`). Was in der Zeit passiert, zählt trotzdem.
+- Zum freien Kampf rappelt sich Bugsy auf 60 % HP auf, mit Banner „Frei kämpfen!“.
+- Nach dem Sieg erscheint „Training geschafft!“ (1 s länger), dann geht es zur Station.
+
 ## Tests
 359 Prüfungen, darunter `test_design_review`:
 - Schuss aus der Gegnerreihe, Stillstand beim Ausholen

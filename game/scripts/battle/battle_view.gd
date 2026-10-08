@@ -370,6 +370,10 @@ func _process_fight(delta: float) -> void:
 	if st.over:
 		if end_timer < 0:
 			end_timer = END_WIN if st.outcome == "won" else END_LOSE
+			# Training geschafft: kurzes Abschluss-Banner, bevor es zur Station geht
+			if run.training and st.outcome == "won":
+				end_timer += 1.0
+				st.banner = {"text": T.t("Training geschafft!"), "color": GameData.COL.sun, "t": 2.4, "max": 2.4}
 			if st.outcome == "won":
 				Music.play("victory" if node_type != "boss" else "title")
 			else:

@@ -585,4 +585,6 @@ const D := {
 	"Pfeile wählen   %s nehmen": "Arrows choose   %s take", "%s weitergehen": "%s move on", "Modul": "Module",
 	"für den ganzen Run": "for the whole run", "Schaden %d": "Damage %d", "Laden %s s": "Charge %s s",
 	"Resonanz +%d %%": "Resonance +%d%%", "verkauft": "sold", "Reparatur": "Repair", "Verbessern": "Upgrade", "Entfernen": "Remove",
+	# Training: Abschluss
+	"Frei kämpfen!": "Free fight!", "Training geschafft!": "Training complete!",
 }

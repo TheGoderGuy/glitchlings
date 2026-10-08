@@ -824,6 +824,9 @@ func test_tutorial() -> void:
 	var st := BattleState.new(run, foe)
 	var tut := Tutorial.new()
 	st.e.atk_t = 0.5
+	# Mindestzeit je Lernschritt (08.10.2026): Was davor passiert, zählt erst danach
+	var wait := int(Tutorial.MIN_STEP * 60.0) + 2
+	_tut_tick(st, tut, wait)
 	for i in 3:
 		st.move_player(0, -1 if st.p.r > 0 else 1)
 		_tut_tick(st, tut, 20)
@@ -832,10 +835,10 @@ func test_tutorial() -> void:
 	st.hand[0].chip = "Pixelstrahl"
 	st.hand[0].rem = 0.0
 	st.use_slot(0)
-	_tut_tick(st, tut, 40, Tutorial.Step.CHIP2)
+	_tut_tick(st, tut, wait + 40, Tutorial.Step.CHIP2)
 	check(tut.step == Tutorial.Step.CHIP2 and st.hand[1].rem == 0.0, "Training: Treffer mit Angriff 1 > zweiter Angriffs-Slot")
 	st.use_slot(1)
-	_tut_tick(st, tut, 2)
+	_tut_tick(st, tut, wait + 2, Tutorial.Step.DODGE)
 	check(tut.step == Tutorial.Step.DODGE, "Training: Angriff 2 gespielt > Ausweichen üben")
 	st.e.frozen = 0.0
 	var bot := BattleBot.new(0.0)
@@ -858,15 +861,18 @@ func test_tutorial() -> void:
 	_tut_tick(st, tut, 360, Tutorial.Step.ELEMENT)
 	check(tut.step == Tutorial.Step.ELEMENT and st.hand[0].chip == "Blitzcursor", "Training: Firewall blockt einen Treffer > Blitzcursor für den Element-Vorteil")
 	st.use_slot(0)
-	_tut_tick(st, tut, 90, Tutorial.Step.BIG)
+	_tut_tick(st, tut, wait + 90, Tutorial.Step.BIG)
 	check(tut.step == Tutorial.Step.BIG, "Training: Elektro gegen Virus trifft effektiv > Großangriff")
 	st.p.c = 1
 	st.p.r = 0     # außerhalb des Glitchkreuzes (X-Form)
 	_tut_tick(st, tut, 360, Tutorial.Step.SPECIAL)
 	check(tut.step == Tutorial.Step.SPECIAL and st.sp == 100.0, "Training: goldenen Feldern ausgewichen > Signatur-Leiste voll")
 	st.use_special()
-	tut.update(st, 1.0 / 60.0)
-	check(tut.just_finished and st.e.hp > 0 and st.run.hp > 0, "Training: Signatur gespielt > frei kämpfen (Gegner lebt, Spieler nie besiegt)")
+	var fin := false
+	for k in wait + 2:
+		tut.update(st, 1.0 / 60.0)
+		fin = fin or tut.just_finished
+	check(fin and st.e.hp >= roundi(st.e.max * 0.6) and st.run.hp > 0, "Training: Signatur gespielt > frei kämpfen (Gegner rappelt sich auf 60 % auf, Spieler nie besiegt)")
 
 
 func test_evolution() -> void:

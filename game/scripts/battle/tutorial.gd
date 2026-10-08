@@ -8,6 +8,10 @@ extends RefCounted
 
 enum Step { MOVE, CHIP, CHIP2, DODGE, COUNTER, SHIELD, ELEMENT, BIG, SPECIAL, FREE, DONE }
 const LEARN_STEPS := 9     # Fortschrittspunkte (MOVE … SPECIAL)
+## Jeder Lernschritt bleibt mindestens so lange stehen (08.10.2026, Produzent: Training war „kurz ein Kampf, dann Station“ –
+## wer schnell drückt, erledigte die ersten Schritte in unter einer Sekunde und sah die Texte nie).
+## Was in dieser Zeit passiert, zählt trotzdem (Treffer, gespielter Slot, Element-Vorteil, Signatur).
+const MIN_STEP := 1.5
 
 var step := Step.MOVE
 var moves := 0
@@ -43,6 +47,9 @@ func update(st: BattleState, dt: float) -> void:
 	# Der Gegner hält bis zum freien Kampf durch, verlieren kann man im Training nie
 	st.min_e_hp = roundi(st.e.max * 0.35) if step < Step.FREE else 0
 	st.min_p_hp = 1
+	if step_t < MIN_STEP and step < Step.FREE:
+		last_pos = pos
+		return
 	match step:
 		Step.MOVE:
 			if pos != last_pos:
@@ -76,7 +83,7 @@ func update(st: BattleState, dt: float) -> void:
 			if dodges >= 2:
 				_go(Step.COUNTER)
 				_give(st, 0, "Laserschuss")
-				st.e.atk_t = 1.5
+				st.e.atk_t = 2.0
 		Step.COUNTER:
 			# Der Gegner stellt sich in deine Reihe und holt langsamer aus als sonst; der Laserschuss trifft sofort
 			st.e.move_t = maxf(st.e.move_t, 1.0)
@@ -125,6 +132,9 @@ func update(st: BattleState, dt: float) -> void:
 				_go(Step.FREE)
 				done_t = 3.5
 				just_finished = true
+				# Bugsy rappelt sich auf: der freie Kampf soll ein richtiger kleiner Kampf sein, nicht ein einzelner Treffer
+				st.e.hp = maxi(st.e.hp, roundi(st.e.max * 0.6))
+				st.banner = {"text": T.t("Frei kämpfen!"), "color": GameData.COL.mint, "t": 1.3, "max": 1.3}
 		Step.FREE:
 			done_t -= dt
 			if done_t <= 0:
