@@ -91,6 +91,7 @@ func setup(run_state: RunState, foe: Dictionary, type := "fight") -> void:
 	node_type = type
 	st = BattleState.new(run, foe)
 	run.last_foe = foe.name
+	ArenaTiles.preload_bg(GameData.ZONES[run.map.zone].bg)
 	if run.tutorial and run.fights_won == 0 and type == "fight":
 		tut = Tutorial.new()
 		st.status = ""
@@ -458,18 +459,15 @@ func _draw() -> void:
 
 
 func _draw_arena() -> void:
-	# Sockel unter dem Spielfeld mit Schatten, damit es auf dem Hintergrund steht
-	var full := Rect2(X0 - 6, Y0 - 5, 6 * CW + GAP + 12, 3 * CH + 12)
-	draw_rect(Rect2(full.position + Vector2(4, 8), full.size), Color(0.02, 0.01, 0.06, 0.45))
-	var left := Rect2(full.position, Vector2(3 * CW + 6 + GAP / 2.0, full.size.y))
-	var right := Rect2(Vector2(left.end.x, full.position.y), Vector2(full.end.x - left.end.x, full.size.y))
-	draw_rect(left, GameData.COL.tileP.darkened(0.72))
-	draw_rect(right, GameData.COL.tileE.darkened(0.72))
-	draw_rect(Rect2(full.position, Vector2(full.size.x, 1)), Color(1, 1, 1, 0.12))
-	draw_rect(Rect2(full.position.x, full.end.y - 3, full.size.x, 3), Color(0, 0, 0, 0.35))
+	# Kampffeld (08.10.2026): einzelne Platten im Material der Zone, ohne Sockel, damit die Kulisse sichtbar bleibt
+	var bg: String = GameData.ZONES[run.map.zone].bg
 	for c in 6:
 		for r in 3:
-			_draw_panel(c, r)
+			var sr := cell_rect(c, r)
+			draw_rect(Rect2(sr.position + Vector2(3, 5), sr.size), Color(0.02, 0.01, 0.06, 0.42))
+	for c in 6:
+		for r in 3:
+			_draw_panel(c, r, bg)
 	# Mittellinie: leuchtender Datenstrom
 	var mx := X0 + 3 * CW + GAP / 2 - 1
 	draw_rect(Rect2(mx - 2, Y0 - 2, 6, 3 * CH), Color(GameData.COL.sun, 0.08))
@@ -478,35 +476,13 @@ func _draw_arena() -> void:
 		draw_rect(Rect2(mx, y, 2, 2), Color(GameData.COL.sun, a))
 
 
-## Ein Feld im Battle-Network-Stil: Fläche mit Kante, Innenplatte, Datenraster und Vorderkante
-func _draw_panel(c: int, r: int) -> void:
+## Eine Platte: Material der Zone (ArenaTiles), hintere Reihen etwas dunkler, Leuchtebene pulsiert je Platte versetzt
+func _draw_panel(c: int, r: int, bg: String) -> void:
 	var rect := cell_rect(c, r)
-	var base: Color = GameData.COL.tileP if c < 3 else GameData.COL.tileE
-	base = base.darkened(0.1 * (2 - r) / 2.0)   # hintere Reihe etwas dunkler (Tiefe)
-	var edge := 6
-	var face := Rect2(rect.position, Vector2(rect.size.x, rect.size.y - edge))
-	draw_rect(rect.grow(1), GameData.COL.dark)
-	# Vorderkante
-	draw_rect(Rect2(rect.position.x, face.end.y, rect.size.x, edge), base.darkened(0.55))
-	draw_rect(Rect2(rect.position.x, face.end.y, rect.size.x, 1), base.darkened(0.2))
-	draw_rect(Rect2(rect.position.x + 3, face.end.y + 2, rect.size.x - 6, 1), base.darkened(0.4))
-	# Fläche mit Fase
-	draw_rect(face, base)
-	var inner := face.grow(-4)
-	draw_rect(inner, base.lightened(0.07))
-	var grid := Color(base.lightened(0.3), 0.18)
-	for gx in range(int(inner.position.x) + 7, int(inner.end.x) - 2, 8):
-		draw_rect(Rect2(gx, inner.position.y + 1, 1, inner.size.y - 2), grid)
-	for gy in range(int(inner.position.y) + 6, int(inner.end.y) - 2, 7):
-		draw_rect(Rect2(inner.position.x + 1, gy, inner.size.x - 2, 1), grid)
-	draw_rect(Rect2(face.position, Vector2(face.size.x, 1)), base.lightened(0.4))
-	draw_rect(Rect2(face.position, Vector2(1, face.size.y)), base.lightened(0.22))
-	draw_rect(Rect2(face.position.x, face.end.y - 1, face.size.x, 1), base.darkened(0.3))
-	draw_rect(Rect2(face.end.x - 1, face.position.y, 1, face.size.y), base.darkened(0.3))
-	# kleine Eckmarken
-	var mk := base.lightened(0.5)
-	for p in [inner.position, Vector2(inner.end.x - 2, inner.position.y)]:
-		draw_rect(Rect2(p, Vector2(2, 2)), Color(mk, 0.7))
+	var T: Array = ArenaTiles.tile(bg, 0 if c < 3 else 1, (c * 7 + r * 5) % ArenaTiles.VARIANTS)
+	var shade := 1.0 - 0.07 * (2 - r)
+	draw_texture(T[0], rect.position, Color(shade, shade, shade))
+	draw_texture(T[1], rect.position, Color(1, 1, 1, 0.5 + 0.45 * sin(anim_t * 2.2 + c * 1.7 + r * 2.3)))
 
 
 func _draw_arena_overlays() -> void:

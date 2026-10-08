@@ -180,6 +180,7 @@ static func preload_all() -> void:
 	# der Station oder der Zonenwahl ruckelte es sonst genau beim Kampfbeginn bzw. Bildschirmwechsel
 	for z in ZONE_PAL:
 		zone_texture(z)
+		ArenaTiles.preload_bg(z)   # Kampffeld-Platten je Zone (08.10.2026)
 	for k in SPRITE_FILES:
 		sprite(k)
 	for f in GameData.FORMS:

@@ -71,6 +71,7 @@ func _ready() -> void:
 	test_protocols()
 	test_legends()
 	test_design_review()
+	test_arena_tiles()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -2700,3 +2701,42 @@ func test_design_review() -> void:
 	var S := BalanceSim.run_journey(4, 3, "perfect")
 	check(S.stuck == 0 and S.acts[3] >= 1, "Reise mit Autopilot: kein Kampf hängt, Akt 4 wird erreicht (%d/%d Siege)" % [S.wins, S.runs])
 	print("  info    Reise-Autopilot (Ultra, perfekt): %d/%d Siege, Ø %.1f s je normalem Kampf, %d Konter" % [S.wins, S.runs, S.ntime / maxf(1, S.nfights), S.counters])
+
+
+## Kampffeld (08.10.2026): Platten je Zone im Material der Zone, Seiten unterscheidbar, Größe passt zum Raster
+func test_arena_tiles() -> void:
+	var BV: GDScript = load("res://scripts/battle/battle_view.gd")
+	var t0 := Time.get_ticks_usec()
+	var ok: bool = ArenaTiles.TW == BV.CW - 4 and ArenaTiles.TH == BV.CH - 4
+	var mats := {}
+	for z in GameData.ZONE_ORDER:
+		var bg: String = GameData.ZONES[z].bg
+		ArenaTiles.preload_bg(bg)
+		var p: Image = ArenaTiles.tile(bg, 0, 0)[0].get_image()
+		var e: Image = ArenaTiles.tile(bg + "_boss", 1, 0)[0].get_image()
+		ok = ok and p.get_width() == ArenaTiles.TW and p.get_height() == ArenaTiles.TH
+		# Seiten unterscheidbar: mittlere Farbe der Fläche deutlich verschieden
+		var cp := _avg_color(p)
+		var ce := _avg_color(e)
+		if Vector3(cp.r - ce.r, cp.g - ce.g, cp.b - ce.b).length() < 0.08:
+			ok = false
+			printerr("    Seiten zu ähnlich: ", z)
+		mats[str(_avg_color(p))] = true
+	var ms := (Time.get_ticks_usec() - t0) / 1000.0
+	check(ok and mats.size() == GameData.ZONE_ORDER.size(), "Kampffeld: eigene Platten je Zone (%d Materialien), Spieler- und Gegnerseite unterscheidbar, passend zum Raster" % mats.size())
+	print("  info    Kampffeld-Platten erzeugt in %.0f ms" % ms)
+
+
+func _avg_color(img: Image) -> Color:
+	var r := 0.0
+	var g := 0.0
+	var b := 0.0
+	var n := 0
+	for y in range(2, img.get_height() - ArenaTiles.EDGE - 1):
+		for x in range(2, img.get_width() - 2):
+			var c := img.get_pixel(x, y)
+			r += c.r
+			g += c.g
+			b += c.b
+			n += 1
+	return Color(r / n, g / n, b / n)

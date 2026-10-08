@@ -38,7 +38,8 @@ tags: [produktion, roadmap]
 - [x] B Evolution mit Folgen: Resonanz, Gaben je Element, gelenkte Chipwahl, Neu prägen, neue Schwellen, große Evolutions-Szene
 - [x] Struktur: Ein Run ist eine Reise durch 4 Akte mit Weggabelung – [[Kampf-Kern, Evolution und Reise]]
 - [ ] **Spieltest mit dem neuen Kern** (Konter verstanden? Run-Länge? echte Siegquoten)
-- [ ] Linien-Chips, zwei Währungen, Kampffeld-Grafik, Gegnergrößen (Analyse Phase B/D)
+- [x] Kampffeld je Zone – [[Kampffeld]]
+- [ ] Linien-Chips, zwei Währungen, Gegnergrößen (Analyse Phase B/D)
 
 ## Phase 4: Steam-Seite & Demo
 - [x] Logo und alle Steam-Kapseln – [[Logo]]
