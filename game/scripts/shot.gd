@@ -62,6 +62,8 @@ static func args() -> Dictionary:
 			shot.protocol = int(a.substr(11))
 		elif a == "--legendegg":
 			shot.legendegg = true
+		elif a == "--counter":
+			shot.counter = true
 		elif a == "--welcome":
 			shot.welcome = true
 		elif a.begins_with("--anim="):

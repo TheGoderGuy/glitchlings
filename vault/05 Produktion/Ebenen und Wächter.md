@@ -3,6 +3,8 @@ tags: [produktion, gameplay, godot]
 ---
 # Ebenen, Wächter und Großangriffe (30.09.2026)
 
+> **Stand 08.10.2026:** Nur noch 2 Ebenen je Zone, der Wächter wird zufällig aus den beiden der Zone gewählt – siehe [[Kampf-Kern, Evolution und Reise]].
+
 **Anlass (Produzent):** „Wenn man tatsächlich mal ein nettes Deck hat, kann man es nicht ausspielen, weil die Zone zu Ende ist.“
 Entscheidung: längere Zonen mit Ebenen-Bossen dazwischen, echte Boss-Phasen, angekündigte Großangriffe, Run speichern.
 

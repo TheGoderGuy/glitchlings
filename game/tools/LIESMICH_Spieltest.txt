@@ -34,7 +34,8 @@ Kampf-Handbuch: im Titelmenü, im Pause-Menü oder jederzeit mit H.
 
 3. WAS WIR UNS WÜNSCHEN
 -----------------------
-- Spiel gern 30–60 Minuten. Ein Run durch eine Zone dauert etwa 25–35 Minuten.
+- Spiel gern 30–60 Minuten. Ein Run ist eine Reise durch bis zu vier Zonen und dauert etwa 30–45 Minuten
+  (du kannst jederzeit speichern und später weiterspielen).
 - Danach: Titelbildschirm -> Optionen -> "Spieltest-Log öffnen".
   Schick uns die Datei "spieltest_log.csv" aus dem Ordner, der sich öffnet.
   Darin steht nur: welches Monster, welche Zone, gewonnen/verloren, wie weit, wie lange.
@@ -43,19 +44,21 @@ Kampf-Handbuch: im Titelmenü, im Pause-Menü oder jederzeit mit H.
   1. War die Steuerung nach dem ersten Kampf klar? Hast du dich in der Station zurechtgefunden?
   2. Hast du freiwillig einen zweiten Run gestartet? Warum (nicht)?
   3. Was hat am meisten Spaß gemacht?
-  4. Was war frustrierend oder unklar?
+  4. Was war frustrierend oder unklar? Hast du den Konter (Fadenkreuz über dem Gegner) genutzt?
   5. Welches Monster mochtest du am liebsten, und wozu hat es sich entwickelt?
 
 
 4. GUT ZU WISSEN
 ----------------
 - Das Intro lässt sich mit Esc / Start überspringen.
-- Run starten: In der Station ein Glitchling wählen und bestätigen, dann die Zone aussuchen.
-  Neue Zonen schaltest du frei, indem du den Boss der vorherigen Zone besiegst.
-- Ein Run durch eine Zone hat 3 Ebenen. Oben auf jeder Ebene wartet ein Wächter, am Ende der Boss.
+- Run starten: In der Station ein Glitchling wählen und bestätigen, dann die Reise beginnen.
+  Jede Reise startet in den Cache-Wiesen. Nach jedem Zonen-Boss wählst du die nächste Zone,
+  bis zum NEST-Kern. Dein Deck und deine Module bleiben die ganze Reise über.
+- Jede Zone hat 2 Ebenen: oben erst ein Wächter, dann der Boss der Zone.
+- Holt ein Gegner aus, erscheint ein Fadenkreuz über ihm: Triffst du ihn genau dann, fällt sein Angriff aus (Konter).
 - Du kannst auf der Karte jederzeit beenden (Pause -> "Speichern und beenden") und später weiterspielen.
 - Der Spielstand wird automatisch gespeichert.
-- Neu anfangen: Optionen -> "Spielstand löschen" (zweimal bestätigen).
+- Neu anfangen: Optionen -> "Spiel zurücksetzen" (zweimal bestätigen).
 - In den Optionen gibt es Lautstärke, Musik, Vollbild, Schwierigkeit und Bildschirmwackeln.
 
 Viel Spaß!

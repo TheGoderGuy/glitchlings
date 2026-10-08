@@ -4,9 +4,10 @@ extends Node
 
 const VERSION := 1
 const NEST_SLOTS := 3
-## Eier (Produzent 03.10.2026): nur noch eine Sorte, schlüpft nach 2 Runs (Brutwärmer: 1).
+## Eier (Produzent 03.10.2026): nur noch eine Sorte. Seit der Reise (08.10.2026) sind Runs länger:
+## Eier schlüpfen nach dem nächsten Run, und jeder besiegte Zonen-Boss bringt ein weiteres Ei (Brutwärmer: noch eins).
 ## Seltenheiten (Gewöhnlich … Legendär) sind gestrichen, bis es einen Plan dafür gibt.
-const EGG_RUNS := 2
+const EGG_RUNS := 1
 ## Alle Babys können im Ei stecken; Arten, die noch nicht im Monsterdex (und nicht schon im Nest) sind, kommen dreimal so oft
 const EGG_SPECIES := ["Pixmiez", "Funkling", "Tröpfel", "Kekso", "Lumi", "Quakli", "Molchi", "Maskli", "Brummbit", "Kauzbit", "Buddli", "Bachli", "Plapperli"]
 const EGG_NEW_WEIGHT := 3
@@ -195,8 +196,7 @@ func nest() -> Array:
 func add_egg(rng: RandomNumberGenerator) -> Dictionary:
 	if nest().size() >= nest_slots():
 		return {}
-	var runs := maxi(1, EGG_RUNS - upgrade_level("brutwaermer"))
-	var egg := {"species": _roll_species(rng), "runs_left": runs}
+	var egg := {"species": _roll_species(rng), "runs_left": EGG_RUNS}
 	data.nest.append(egg)
 	return egg
 
@@ -256,7 +256,8 @@ func hatch_next() -> Dictionary:
 ## Überträgt das Ergebnis eines Runs auf den Spielstand und gibt eine Zusammenfassung zurück.
 func record_run(run: RunState, won: bool) -> Dictionary:
 	data.erase("run")   # der Run ist vorbei, nichts mehr fortzusetzen
-	var sum := {"evolved": run.form != run.start_form, "form": run.form, "egg": {}, "nest_full": false, "hatch_ready": 0, "new_dex": []}
+	var sum := {"evolved": run.form != run.start_form, "form": run.form, "egg": {}, "eggs": [], "nest_full": false, "hatch_ready": 0, "new_dex": [],
+		"bosses": run.bosses.duplicate(), "first_bosses": [], "legends": run.legends_won.duplicate()}
 	var m := monster(run.monster_id)
 	if not m.is_empty():
 		m.form = run.form
@@ -273,34 +274,43 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 		if see(f):
 			sum.new_dex.append(f)
 	data.stats.runs = int(data.stats.runs) + 1
-	if won:
-		data.stats.wins = int(data.stats.wins) + 1
-		var z: String = run.map.zone
+	# Reise: besuchte Zonen merken (Gerüchte im Dex), jeder besiegte Zonen-Boss zählt (Zonenkarten zeigen ihn)
+	if not data.has("visited"):
+		data["visited"] = []
+	for z in run.route:
+		if not data.visited.has(z):
+			data.visited.append(z)
+	for z in run.bosses:
 		if not data.cleared.has(z):
 			data.cleared.append(z)
-			sum.unlocked = _newly_unlocked(z)
-		# Legendäre: geheime Bedingung der Zone erfüllt → leuchtendes Ei
-		var lg := _legend_check(run)
-		if lg != "":
-			sum.legend = lg
+			sum.first_bosses.append(z)
+	if not sum.legends.is_empty():
+		sum.legend = sum.legends[0]
+	if won:
+		data.stats.wins = int(data.stats.wins) + 1
 		# Glitch-Protokoll auf der höchsten freien Stufe geschafft: nächste Stufe frei
 		if run.protocol > 0 and run.protocol >= protocol_unlocked() and protocol_unlocked() < GameData.PROTOCOLS.size():
 			data.protocol_max = run.protocol + 1
 			sum.protocol_up = data.protocol_max
-		# Finale geschafft: Spiel durchgespielt, Schwierigkeit „Korrumpiert“ frei
-		if GameData.ZONES[z].get("final", false) and not data.get("game_cleared", false):
-			data.game_cleared = true
-			sum.game_cleared = true
+	# Finale geschafft: Spiel durchgespielt, Schwierigkeit „Korrumpiert“ frei
+	if run.bosses.any(func(z): return GameData.ZONES[z].get("final", false)) and not data.get("game_cleared", false):
+		data.game_cleared = true
+		sum.game_cleared = true
 	# Eier im Nest reifen mit jedem abgeschlossenen Run (auch bei Niederlage)
 	for e in nest():
 		e.runs_left = maxi(0, int(e.runs_left) - 1)
-	# Neues Ei als Belohnung
+	# Neue Eier: eins ab EGG_MIN_WINS Siegen, eins je besiegtem Zonen-Boss, eins vom Brutwärmer
+	var n_eggs := run.bosses.size()
 	if run.fights_won >= EGG_MIN_WINS:
+		n_eggs += 1 + upgrade_level("brutwaermer")
+	for i in n_eggs:
 		var egg := add_egg(run.rng)
 		if egg.is_empty():
 			sum.nest_full = true
-		else:
-			sum.egg = egg
+			break
+		sum.eggs.append(egg)
+	if not sum.eggs.is_empty():
+		sum.egg = sum.eggs[0]
 	sum.hatch_ready = ready_eggs().size()
 	_log_run(run, won)
 	# Übrige Fragmente werden auf die Station gerettet (für das Labor)
@@ -357,7 +367,9 @@ func game_cleared() -> bool:
 
 ## Legendäre (07.10.2026): prüft die geheime Bedingung der gerade geschafften Zone; Treffer legt ein leuchtendes Ei ins Nest
 ## (auch wenn es voll ist) und merkt sich den Legendären, damit es ihn nur einmal gibt.
-func _legend_check(run: RunState) -> String:
+## Legendäre: Ist beim Sieg über den Boss der aktuellen Zone die geheime Bedingung erfüllt? Dann leuchtendes Ei
+## ins Nest (auch über die Nestplätze hinaus) und Name zurück, sonst "". Aufruf direkt nach dem Boss-Sieg.
+func legend_check(run: RunState) -> String:
 	for L in GameData.LEGENDS:
 		var D: Dictionary = GameData.LEGENDS[L]
 		if D.zone != run.map.zone or data.get("legends", []).has(L):
@@ -397,11 +409,14 @@ func protocol_choice() -> int:
 	return clampi(int(data.get("protocol_sel", 0)), 0, protocol_unlocked())
 
 
+## Seit der Reise (08.10.2026) sind alle Zonen über die Route erreichbar; gesperrt ist nur, was nicht in der Testfassung steckt
 func zone_unlocked(z: String) -> bool:
-	if not zone_in_build(z):
-		return false
-	var need: String = GameData.ZONES[z].unlock
-	return need == "" or data.get("cleared", []).has(need) or data.get("legacy_zones", []).has(z)
+	return zone_in_build(z)
+
+
+## Schon einmal betreten (Reise) oder aus alten Spielständen bekannt? Dann sind z. B. die Gerüchte der Zone lesbar.
+func zone_seen(z: String) -> bool:
+	return data.get("visited", []).has(z) or data.get("cleared", []).has(z) or data.get("legacy_zones", []).has(z)
 
 
 ## Testfassung (Web-Spieltest, 01.10.2026): nur die ersten zwei Zonen spielbar.
@@ -437,13 +452,6 @@ func unlock_full_dex() -> void:
 	save_game()
 
 
-func _newly_unlocked(cleared_zone: String) -> String:
-	for z in GameData.ZONE_ORDER:
-		if GameData.ZONES[z].unlock == cleared_zone and zone_in_build(z):
-			return z
-	return ""
-
-
 # ---------- Labor ----------
 
 func frag() -> int:
@@ -461,6 +469,40 @@ func find_recipe(a: Dictionary, b: Dictionary) -> int:
 
 ## Versucht eine Fusion. Fehlversuche kosten nichts und geben ein Gerücht fürs Rezeptbuch.
 ## Ergebnis: {"ok": bool, "msg": String, "result": Form, "new_in_dex": bool, "id": int}
+## Neu prägen (08.10.2026, Game-Design-Analyse): Ein entwickeltes Monster wird wieder zum Baby seiner Linie und
+## kann eine andere Richtung einschlagen. Lebenszeit-Prägung startet bei 0, alle Formen bleiben im Monsterdex.
+## Fusionen und Legendäre haben keine Baby-Stufe und können nicht neu geprägt werden.
+const REIMPRINT_COST := 60
+
+
+func can_reimprint(m: Dictionary) -> String:
+	if m.is_empty():
+		return T.t("Wähle genau ein Monster aus.")
+	var M: Dictionary = GameData.MONS[m.species]
+	if M.get("fusion", false) or M.get("legend", false):
+		return T.t("%s hat keine Baby-Stufe.") % T.t(m.form)
+	if int(m.stage) <= 1:
+		return T.t("%s ist schon ein Baby.") % T.t(m.form)
+	if frag() < REIMPRINT_COST:
+		return T.t("Dafür fehlen noch %d Fragmente.") % (REIMPRINT_COST - frag())
+	return ""
+
+
+func reimprint(id: int) -> Dictionary:
+	var m := monster(id)
+	var why := can_reimprint(m)
+	if why != "":
+		return {"ok": false, "msg": why}
+	data.frag = frag() - REIMPRINT_COST
+	var old: String = m.form
+	m.form = m.species
+	m.stage = 1
+	m.chips = 0
+	m.praeg = {}
+	save_game()
+	return {"ok": true, "msg": T.t("%s ist wieder %s. Alle Formen bleiben im Monsterdex.") % [T.t(old), T.t(m.species)]}
+
+
 func try_fuse(id_a: int, id_b: int, rng: RandomNumberGenerator) -> Dictionary:
 	var a := monster(id_a)
 	var b := monster(id_b)

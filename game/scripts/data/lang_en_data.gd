@@ -228,7 +228,7 @@ const D := {
 	"Jeder Run startet mit +%d max. HP.": "Every run starts with +%d max HP.",
 	"Jeder Run startet mit einem Modul (Stufe 2: auch seltene und epische).": "Every run starts with a module (level 2: rare and epic too).",
 	"+%d %% Fragmente aus Kämpfen.": "+%d%% fragments from battles.",
-	"Eier schlüpfen einen Run früher (mindestens nach 1 Run).": "Eggs hatch one run earlier (after at least 1 run).",
+	"Nach jedem Run mit mindestens 2 Siegen ein zusätzliches Ei.": "One extra egg after every run with at least 2 wins.",
 	"Ein vierter Platz im Brutnest.": "A fourth slot in the nest.",
 
 	# ---------- Zonen ----------

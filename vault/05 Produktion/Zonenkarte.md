@@ -3,6 +3,8 @@ tags: [produktion, gameplay, steam]
 ---
 # Zonenkarte (Godot, seit 28.09.2026)
 
+> **Stand 08.10.2026:** Jede Zone ist ein Akt der Reise: 2 Ebenen à 4 Etagen, Weggabelung nach dem Boss – siehe [[Kampf-Kern, Evolution und Reise]].
+
 Ein Run führt über eine verzweigte Karte durch eine Zone (zuerst **Cache-Wiesen**). Umsetzung: `game/scripts/run/`.
 
 > **Seit 30.09.2026:** 3 Ebenen × 5 Etagen mit Wächtern dazwischen, siehe [[Ebenen und Wächter]]. Der Abschnitt unten beschreibt den ursprünglichen Aufbau.

@@ -1,5 +1,5 @@
 extends PixelCanvas
-## Kampf-Handbuch: 8 Seiten zum Nachschlagen. Legt sich über jeden Bildschirm (Pause im Kampf, Karte,
+## Kampf-Handbuch: 8 Seiten zum Nachschlagen (Konter, Resonanz und Reise seit 08.10.2026). Legt sich über jeden Bildschirm (Pause im Kampf, Karte,
 ## Station, Titel) – geöffnet mit PixelCanvas.open_handbook(). < > blättern, Esc/H schließt.
 
 signal closed
@@ -7,14 +7,14 @@ signal closed
 const MapView := preload("res://scripts/ui/map_view.gd")
 
 const PAGES := [
-	{"title": "Das Spielfeld", "text": "Jede Seite hat 3 × 3 Felder: links deine, rechts die des Gegners. Du bewegst dich nur auf deinen Feldern, der Gegner nur auf seinen.\n\nDie meisten Angriffe fliegen über deine Reihe. Stell dich also in dieselbe Reihe wie der Gegner! Manche Chips treffen stattdessen eine Spalte, den Nahbereich oder sogar das ganze Feld.\n\nBewegen: {move}."},
+	{"title": "Das Spielfeld", "text": "Jede Seite hat 3 × 3 Felder: links deine, rechts die des Gegners. Du bewegst dich nur auf deinen Feldern, der Gegner nur auf seinen.\n\nDie meisten Angriffe fliegen über deine Reihe. Stell dich in die Reihe des Gegners! Aber Vorsicht: Viele Gegner schießen genauso entlang ihrer Reihe. Wer trifft, steht auch in der Schusslinie.\n\nBewegen: {move}."},
 	{"title": "Chips", "text": "Du hast drei Slots ({chips}): zwei für Angriffe und einen Support-Slot für Schutz und Heilung. Die Angriffs-Slots ziehen aus deinem Angriffsstapel, der Support-Slot aus Schilden, Heilung und Hilfen. Nach dem Einsatz kommt der nächste Chip und lädt auf – drückst du zu früh, passiert nichts.\n\nÜber den Karten steht, welcher Chip als Nächstes kommt. Ist der Support-Stapel leer, wird er neu gemischt, das dauert etwas länger.\n\nDas Bild oben rechts auf der Karte zeigt, wo ein Angriff trifft. Verbesserte Chips (z. B. Glutball+) machen mehr Schaden und laden schneller."},
-	{"title": "Ausweichen", "text": "Rote Felder mit „!“ werden gleich getroffen – geh rechtzeitig runter!\n\nGoldene Felder mit „!!“ kündigen einen Großangriff von Wächtern und Bossen an. Weichst du allen Feldern aus, ist der Gegner kurz überlastet: Er kann nichts tun, und deine Signatur-Leiste lädt.\n\nLava brennt, Schleim macht dich langsam. Bitmilben und Glitch-Sporen platzen nach kurzer Zeit – tritt drauf, bevor es knallt!"},
-	{"title": "Elemente", "text": "Feuer schlägt Code, Code schlägt Wasser, Wasser schlägt Feuer. Elektro und Virus schlagen sich gegenseitig. Neutral ist weder stark noch schwach.\n\nEin Treffer mit Element-Vorteil macht 1,5-fachen Schaden, mit Nachteil nur 0,75-fachen.\n\nDas Element des Gegners steht oben rechts im Kampf. Jede Zone verrät bei der Zonenwahl, welches Element dort hilft."},
+	{"title": "Ausweichen", "text": "Rote Felder mit „!“ werden gleich getroffen – geh rechtzeitig runter!\n\nKonter: Holt der Gegner aus, erscheint ein Fadenkreuz über ihm. Triffst du ihn genau dann, fällt sein Angriff aus, er ist kurz betäubt und dein Treffer macht 50 % mehr Schaden.\n\nGoldene Felder „!!“ sind Großangriffe von Wächtern und Bossen. Weichst du allen aus, ist der Gegner kurz überlastet. Lava brennt, Schleim macht langsam, Bitmilben und Sporen musst du zertreten."},
+	{"title": "Elemente", "text": "Feuer schlägt Code, Code schlägt Wasser, Wasser schlägt Feuer. Elektro und Virus schlagen sich gegenseitig. Neutral ist weder stark noch schwach.\n\nEin Treffer mit Element-Vorteil macht 1,5-fachen Schaden, mit Nachteil nur 0,75-fachen.\n\nDas Element des Gegners steht oben rechts im Kampf. An jeder Weggabelung siehst du, ob dein Element gegen den nächsten Boss im Vorteil ist."},
 	{"title": "Zustände und Kombos", "text": "Brand und Gift verursachen Schaden über Zeit. Eingefroren oder betäubt kann der Gegner kurz nichts tun, langsam bewegt und greift er halb so schnell an.\n\nKombos machen Chips richtig stark: Feuersbrunst trifft brennende Gegner doppelt, Datenfresser vergiftete, Frostsplitter eingefrorene sogar dreifach.\n\nIn der Chipwahl zeigt „Kombo mit …“, welcher Chip zu deinem Deck, deinen Modulen oder deinem Passiv passt."},
 	{"title": "Signatur und Passiv", "text": "Jeder Treffer lädt deine Signatur-Leiste unten rechts. Ist sie voll, löst {special} die Signatur-Attacke aus. Jede Form hat ihre eigene – oft mit Zusatzwirkung wie Einfrieren oder Heilen.\n\nDazu hat jede Linie eine passive Fähigkeit, die immer wirkt, zum Beispiel Katzenreflex (weicht dem ersten Treffer aus) oder Regeneration.\n\nBeides steht in der Station im Team-Reiter."},
-	{"title": "Entwicklung", "text": "Dein Glitchling entwickelt sich während des Runs – je nachdem, welche Chips du spielst. Nur Element-Chips zählen, Neutral nicht.\n\nRookie ab 12 gespielten Element-Chips, Champion ab 35, Ultra ab 80. Gezählt wird über alle Runs.\n\nDie Richtung bestimmt das Element, das du am meisten spielst – mit mindestens 2 Chips Vorsprung. Die Anzeige auf der Karte und in der Chipwahl zeigt, wohin es gerade geht."},
-	{"title": "Nach dem Kampf", "text": "Nach jedem Sieg wählst du einen neuen Chip für dein Deck (oder überspringst). Fragmente nimmst du mit: im Run für den Händler, danach für Labor und Ausbau.\n\nElite-Gegner sind stärker und geben ein Modul – einen passiven Bonus für den ganzen Run. Glitch-Elite ist noch härter, belohnt aber mit epischen Chips.\n\nOben auf jeder Ebene wartet ein Wächter, am Ende der Zone der Boss. Unter 50 % und 20 % HP wechseln beide in eine neue Phase."},
+	{"title": "Entwicklung", "text": "Dein Glitchling entwickelt sich je nachdem, welche Element-Chips du spielst (Neutral zählt nicht). Rookie ab {evo2}, Champion ab {evo3}, Ultra ab {evo4} – gezählt über alle Runs. Die Richtung bestimmt das meistgespielte Element.\n\nAb Rookie wirkt die Resonanz: Chips im Element deiner Form machen mehr Schaden. Dazu kommt eine Gabe, z. B. Zündeln: Feuer-Treffer setzen Brand. Beides wird mit jeder Stufe stärker."},
+	{"title": "Nach dem Kampf", "text": "Nach jedem Sieg wählst du einen neuen Chip für dein Deck oder überspringst für Fragmente. Fragmente brauchst du im Run beim Händler, danach für Labor und Ausbau.\n\nElite-Gegner sind stärker und geben ein Modul – einen Bonus für den ganzen Run. Glitch-Elite ist noch härter, belohnt aber mit epischen Chips.\n\nJede Zone hat 2 Ebenen: oben erst ein Wächter, dann der Boss. Danach wählst du die nächste Zone – bis zum NEST-Kern."},
 ]
 
 var page := 0
@@ -61,6 +61,7 @@ func page_text(i: int) -> String:
 		"move": T.t("Steuerkreuz oder linker Stick") if pad else T.t("%s oder Pfeiltasten") % InputSetup.move_keys(),
 		"chips": chips,
 		"special": InputSetup.btn("Y") if pad else InputSetup.key_text("special", "acc"),
+		"evo2": GameData.EVO_AT[2], "evo3": GameData.EVO_AT[3], "evo4": GameData.EVO_AT[4],
 	})
 
 

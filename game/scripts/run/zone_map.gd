@@ -1,11 +1,12 @@
 class_name ZoneMap
 extends RefCounted
-## Verzweigte Karte einer Ebene (ähnlich Slay the Spire): Etagen 0–4, danach der Wächter (Ebene 1 und 2)
-## bzw. der Zonenboss (letzte Ebene). Eine Zone hat 3 Ebenen, die Finalzone 2.
+## Verzweigte Karte einer Ebene (ähnlich Slay the Spire): Etagen 0–3, danach der Wächter (Ebene 1)
+## bzw. der Zonenboss (Ebene 2). Seit 08.10.2026 ist jede Zone ein Akt einer längeren Reise (siehe GameData.ACTS),
+## deshalb nur noch 2 Ebenen à 4 Etagen je Zone. Welcher der beiden Wächter einer Zone kommt, entscheidet der Zufall.
 ## Knoten: {"type": fight|elite|event|rest|shop|guard|boss, "x": 0..1, "next": [Indizes der nächsten Etage]}
 
-const FLOORS := 5   # Etagen je Ebene (ohne Wächter/Boss)
-const LEVELS := 3   # Ebenen je Zone
+const FLOORS := 4   # Etagen je Ebene (ohne Wächter/Boss)
+const LEVELS := 2   # Ebenen je Zone
 const GLITCH_CHANCE := 0.4   # Anteil der Elite-Knoten, die als Glitch-Elite erscheinen (ab Etage 5 der Zone)
 
 const TYPE_NAMES := {
@@ -43,7 +44,11 @@ static func generate(rng: RandomNumberGenerator, zone := "wiesen", level := 0) -
 			var x := (i + 0.5) / n + rng.randf_range(-0.05, 0.05)
 			row.append({"type": _roll_type(rng, f, n_floors, level), "x": clampf(x, 0.05, 0.95), "next": []})
 		m.floors.append(row)
-	m.floors.append([{"type": "boss" if m.is_last_level() else "guard", "x": 0.5, "next": []}])
+	var top := {"type": "boss" if m.is_last_level() else "guard", "x": 0.5, "next": []}
+	if top.type == "guard":
+		var guards: Array = GameData.ZONES[zone].guards
+		top.guard_i = rng.randi_range(0, guards.size() - 1)
+	m.floors.append([top])
 	for f in m.floors.size() - 1:
 		_connect(rng, m.floors[f], m.floors[f + 1])
 	return m

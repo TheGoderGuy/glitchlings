@@ -30,10 +30,16 @@ func _draw() -> void:
 	_draw_background(not won)
 	var r := Rect2(90, 24, 460, 312)
 	_box(r, GameData.COL.panel, GameData.COL.sun if won else GameData.COL.coral)
-	_text(r.position + Vector2(0, 30), "Zone gesäubert!" if won else "Run beendet", 16, GameData.COL.sun if won else GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	var final_won: bool = won and GameData.ZONES[run.map.zone].get("final", false)
+	_text(r.position + Vector2(0, 30), ("Der NEST ist gerettet!" if final_won else "Reise geschafft!") if won else "Run beendet", 16, GameData.COL.sun if won else GameData.COL.coral, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	var sub := T.t("%s ist defragmentiert. %s ist wieder sicher.") % [T.t(GameData.FOES[GameData.ZONES[run.map.zone].boss].name), T.t(run.map.zone_name)] if won else T.t("%s braucht eine Pause. Alles Gelernte bleibt!") % T.t(run.form)
 	_text(r.position + Vector2(0, 48), sub, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
-	_text(r.position + Vector2(0, 64), T.t("Ebene %d/%d · Etage %d/%d · Kämpfe %d · Chips %d · Fragmente %d") % [run.map.level + 1, run.map.levels, maxi(0, run.floor_idx + 1), run.map.floors.size(), run.fights_won, run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	# Reiseweg: besuchte Zonen, die aktuelle (nicht geschaffte) in Rot
+	var names: PackedStringArray = []
+	for z in run.route:
+		names.append(T.t(GameData.ZONES[z].name))
+	_text(r.position + Vector2(0, 62), " > ".join(names), 8, GameData.COL.mint if won else GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	_text(r.position + Vector2(0, 76), T.t("Akt %d/%d · Ebene %d · Kämpfe %d · Chips %d · Fragmente %d") % [run.act + 1, GameData.ACTS.size(), run.map.level + 1, run.fights_won, run.chips_used, run.frag], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	# Monster links
 	var cx := r.position.x + 84
 	draw_rect(Rect2(cx - 40, r.position.y + 176, 80, 5), Color(0.05, 0.02, 0.12, 0.4))
@@ -41,7 +47,7 @@ func _draw() -> void:
 	_text(Vector2(r.position.x, r.position.y + 196), run.form, 8, GameData.EL[run.form_el()], HORIZONTAL_ALIGNMENT_CENTER, 168, true, true)
 	# Was bleibt
 	var x := r.position.x + 180
-	var y := r.position.y + 92
+	var y := r.position.y + 100
 	_text(Vector2(x, y), "Was bleibt", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	y += 18
 	var lines: Array = []
@@ -50,22 +56,24 @@ func _draw() -> void:
 		lines.append([T.t("Entwicklung gespeichert: %s > %s") % [T.t(run.start_form), T.t(run.form)], GameData.EL[run.form_el()]])
 	for f in summary.get("new_dex", []):
 		lines.append([T.t("Neu im Monsterdex: %s") % T.t(f), GameData.COL.sun])
-	if summary.get("unlocked", "") != "":
-		lines.append([T.t("Neue Zone frei: %s!") % T.t(GameData.ZONES[summary.unlocked].name), GameData.COL.coral])
+	for z in summary.get("first_bosses", []):
+		lines.append([T.t("Zum ersten Mal besiegt: %s") % T.t(GameData.FOES[GameData.ZONES[z].boss].name), GameData.COL.coral])
 	if summary.get("game_cleared", false):
 		lines.append(["Der NEST ist gerettet! Neue Schwierigkeit: Korrumpiert", GameData.COL.sun])
-	if summary.get("legend", "") != "":
+	for lg in summary.get("legends", [summary.legend] if summary.get("legend", "") != "" else []):
 		lines.append(["Ein leuchtendes Ei ist erschienen! Etwas Legendäres wartet im Brutnest.", Color("#FFE27A")])
 	if int(summary.get("protocol_up", 0)) > 0:
 		lines.append([T.t("Glitch-Protokoll %d freigeschaltet!") % int(summary.protocol_up), Color("#FF5470")])
 	if int(summary.get("frag_banked", 0)) > 0:
 		lines.append([T.t("+%d Fragmente auf die Station gerettet") % int(summary.frag_banked), GameData.COL.sun])
-	var egg: Dictionary = summary.get("egg", {})
-	if not egg.is_empty():
-		lines.append([(T.t("Neues Ei (schlüpft nach %d Run)") if int(egg.runs_left) == 1 else T.t("Neues Ei (schlüpft nach %d Runs)")) % int(egg.runs_left), GameData.COL.sun])
-	elif summary.get("nest_full", false):
+	var eggs: Array = summary.get("eggs", [summary.egg] if not summary.get("egg", {}).is_empty() else [])
+	if eggs.size() == 1:
+		lines.append([(T.t("Neues Ei (schlüpft nach %d Run)") if int(eggs[0].runs_left) == 1 else T.t("Neues Ei (schlüpft nach %d Runs)")) % int(eggs[0].runs_left), GameData.COL.sun])
+	elif eggs.size() > 1:
+		lines.append([T.t("%d neue Eier (schlüpfen nach dem nächsten Run)") % eggs.size(), GameData.COL.sun])
+	if summary.get("nest_full", false):
 		lines.append(["Brutnest voll – kein neues Ei", GameData.COL.muted])
-	elif run.fights_won < SaveGame.EGG_MIN_WINS:
+	elif eggs.is_empty() and run.fights_won < SaveGame.EGG_MIN_WINS:
 		lines.append([T.t("Ab %d gewonnenen Kämpfen gibt es ein Ei") % SaveGame.EGG_MIN_WINS, GameData.COL.muted])
 	var ready: int = summary.get("hatch_ready", 0)
 	if ready > 0:

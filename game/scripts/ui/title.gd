@@ -69,7 +69,7 @@ func _option_label(id: String) -> String:
 		"reset":
 			return "Wirklich alles zurücksetzen? Nochmal drücken" if reset_armed else "Spiel zurücksetzen"
 		"zones":
-			return ("Test: Alle Zonen frei (erledigt)" if SaveGame.unlocked_zones().size() == GameData.ZONE_ORDER.size() else "Test: Alle Zonen freischalten") if SaveGame.has_save() else "Test: erst Spiel starten"
+			return ("Test: Alle Zonen-Bosse besiegt (erledigt)" if SaveGame.data.get("cleared", []).size() == GameData.ZONE_ORDER.size() else "Test: Alle Zonen-Bosse als besiegt markieren") if SaveGame.has_save() else "Test: erst Spiel starten"
 		"dex":
 			return ("Test: Monsterdex komplett (erledigt)" if SaveGame.dex_count() >= GameData.FORMS.size() else "Test: Monsterdex komplett") if SaveGame.has_save() else "Test: erst Spiel starten"
 		"intro":

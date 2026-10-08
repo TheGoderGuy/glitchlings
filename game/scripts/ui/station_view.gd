@@ -45,12 +45,11 @@ var hatch_t := 0.0
 var hatch_egg := {}
 var fuse_sel: Array = []     # IDs der gewählten Labor-Monster (max. 2)
 var fuse_msg := ""
+var reimprint_armed := -1     # Neu prägen: ID, die mit dem zweiten Druck zurückgesetzt wird (zweimal bestätigen)
 var fusion := {}             # laufende Fusions-Szene
 var up_msg := ""             # Rückmeldung im Ausbau-Reiter
 var nest_msg := ""           # Rückmeldung beim Ei-Kauf
-var zone_pick := false       # Zonenwahl offen (nach Enter im Team-Reiter)
-var zone_sel := 0            # gewählte Zone (Index in GameData.ZONE_ORDER)
-var zone_msg := ""
+var zone_pick := false       # Reiseplan offen (nach Enter im Team-Reiter)
 var guide := -1              # Schritt der Station-Führung (-1 = aus)
 var home := HomeSim.new()    # Zuhause: Bewohner, die herumlaufen
 var home_sel := 0            # gewählter Bewohner (Index in home.residents)
@@ -80,7 +79,6 @@ func _ready() -> void:
 		guide = 0
 		tab = Tab.TEAM
 	# Zonenwahl startet bei der vordersten freigeschalteten, noch nicht geschafften Zone
-	zone_sel = _default_zone()
 
 
 func _check_hatch() -> void:
@@ -180,15 +178,20 @@ func _process(delta: float) -> void:
 				var n := SaveGame.team().size()
 				_nav_v(n)
 				if Input.is_action_just_pressed("confirm") and n > 0:
-					# weiter zur Zonenwahl
+					# weiter zum Reiseplan
 					Sfx.play("confirm")
 					zone_pick = true
-					zone_msg = ""
 					t_in = 0.0
 			Tab.LAB:
-				var n := SaveGame.team().size() + 1   # letzte Zeile: „Fusionieren“
+				var n := SaveGame.team().size() + 2   # letzte Zeilen: „Fusionieren“, „Neu prägen“
+				var sel0 := sel
 				_nav_v(n)
-				if Input.is_action_just_pressed("confirm"):
+				if sel != sel0:
+					reimprint_armed = -1
+				if Input.is_action_just_pressed("confirm") and sel == SaveGame.team().size() + 1:
+					_lab_reimprint()
+				elif Input.is_action_just_pressed("confirm"):
+					reimprint_armed = -1
 					if sel < SaveGame.team().size():
 						var id := int(SaveGame.team()[sel].id)
 						if fuse_sel.has(id):
@@ -364,15 +367,22 @@ func _draw_team() -> void:
 	_text(Vector2(x, y), T.t("Passiv:") + " " + T.t(M.passive), 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	draw_multiline_string(font(), Vector2(x, y + 14), T.t(M.passive_desc), HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 3, GameData.COL.ink, wrap)
 	y += 56
+	# Element-Gabe und Resonanz der Form (ab Rookie)
+	var G := GameData.gift(form)
+	if not G.is_empty():
+		_text(Vector2(x, y), T.t("Gabe:") + " " + T.t(G.name), 8, el, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+		_text(Vector2(x, y), T.t("Resonanz: %s +%d %%") % [T.t(G.el), roundi(GameData.resonance(form, G.el) * 100)], 8, el, HORIZONTAL_ALIGNMENT_RIGHT, w)
+		draw_multiline_string(font(), Vector2(x, y + 14), G.desc, HORIZONTAL_ALIGNMENT_LEFT, w, tsz(8), 2, GameData.COL.ink, wrap)
+		y += 38
 	# Entwicklung: mögliche Richtungen mit Lebenszeit-Prägung
 	_text(Vector2(x, y), "Entwicklung", 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	var probe := RunState.from_monster(m, 1)
 	_draw_evo(probe.evo_status(), x, y + 4, w)
 	var pad: bool = InputSetup.pad
-	var zones := SaveGame.unlocked_zones()
-	_text(Vector2(R.position.x, R.end.y - 26), T.t("%d von %d Zonen frei") % [zones.size(), GameData.ZONE_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	var beaten: int = SaveGame.data.get("cleared", []).size()
+	_text(Vector2(R.position.x, R.end.y - 26), T.t("Zonen-Bosse besiegt: %d von %d") % [beaten, GameData.ZONE_ORDER.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
 	var pulse := 0.75 + 0.25 * sin(anim_t * 4.0)
-	_text(Vector2(R.position.x, R.end.y - 12), T.t("%s Mit %s eine Zone wählen") % [InputSetup.btn("A") if pad else "Enter", T.t(form)], 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	_text(Vector2(R.position.x, R.end.y - 12), T.t("%s Mit %s auf die Reise gehen") % [InputSetup.btn("A") if pad else "Enter", T.t(form)], 8, Color(GameData.COL.sun, pulse), HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 
 
 # ---------- Zuhause (06.10.2026): Bewohner laufen herum, schlafen, spielen, man kann sie streicheln ----------
@@ -549,104 +559,49 @@ func _draw_home_fx(f: Dictionary) -> void:
 			draw_arc(q, 2.0, 0, TAU, 8, Color("#C77DFF", a), 1)
 
 
-# ---------- Zonenwahl ----------
-
-func _default_zone() -> int:
-	var best := 0
-	for i in GameData.ZONE_ORDER.size():
-		var z: String = GameData.ZONE_ORDER[i]
-		if SaveGame.zone_unlocked(z):
-			best = i
-			if not SaveGame.data.get("cleared", []).has(z):
-				return i
-	return best
-
+# ---------- Reiseplan ----------
 
 func _process_zone_pick() -> void:
-	var n: int = GameData.ZONE_ORDER.size()
 	var pmax := SaveGame.protocol_unlocked()
 	if pmax > 0 and (Input.is_action_just_pressed("move_up") or Input.is_action_just_pressed("move_down")):
 		var d := 1 if Input.is_action_just_pressed("move_up") else -1
 		SaveGame.data["protocol_sel"] = clampi(SaveGame.protocol_choice() + d, 0, pmax)
 		Sfx.play("select")
 		return
-	if Input.is_action_just_pressed("move_right"):
-		zone_sel = (zone_sel + 1) % n
-		zone_msg = ""
-		Sfx.play("select")
-	elif Input.is_action_just_pressed("move_left"):
-		zone_sel = (zone_sel + n - 1) % n
-		zone_msg = ""
-		Sfx.play("select")
-	elif Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
+	if Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
 		zone_pick = false
 		Sfx.play("back")
 	elif Input.is_action_just_pressed("confirm"):
-		var z: String = GameData.ZONE_ORDER[zone_sel]
-		if not SaveGame.zone_unlocked(z):
-			zone_msg = "Nicht in dieser Testversion enthalten." if not SaveGame.zone_in_build(z) else "Noch gesperrt: Besiege zuerst den Boss der Zone davor."
-			Sfx.play("back")
-			return
 		Sfx.play("confirm")
 		zone_pick = false
 		set_process(false)
-		start_run.emit(int(SaveGame.team()[sel].id), z)
+		start_run.emit(int(SaveGame.team()[sel].id), GameData.ACTS[0][0])
 
 
-## Aufbau einer Zone als Text, z. B. „3 Ebenen · 2 Wächter“ (der Boss steht darunter)
-static func zone_layout(z: String) -> String:
-	var Z: Dictionary = GameData.ZONES[z]
-	var lv: int = Z.get("levels", ZoneMap.LEVELS)
-	return T.t("%d Ebenen · %d Wächter") % [lv, lv - 1]
-
-
+## Reiseplan (08.10.2026): Ein Run führt durch alle Akte. Je Akt eine Spalte, bei zwei Zonen wählt man unterwegs.
 func _draw_zone_pick() -> void:
 	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.97))
 	var form: String = SaveGame.team()[sel].form
-	_text(Vector2(0, 30), "Wohin geht die Reise?", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
-	_text(Vector2(0, 46), T.t("Mit %s durch eine Zone des NEST. Jede Zone hat ihre eigenen Gegner, Ereignisse und Musik.") % T.t(form), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
-	var n: int = GameData.ZONE_ORDER.size()
-	var cw := 146.0
-	var gap := 8.0
-	var vis := mini(n, 4)
-	var first := clampi(zone_sel - 1, 0, n - vis)
-	var x0 := (W - vis * cw - (vis - 1) * gap) / 2.0
-	var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
-	# Blätterpfeile, wenn links/rechts weitere Zonen liegen
-	var blink := 0.6 + 0.4 * sin(anim_t * 5.0)
-	if first > 0:
-		_text(Vector2(4, 182), "<", 16, Color(GameData.COL.sun, blink), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	if first + vis < n:
-		_text(Vector2(W - 16, 182), ">", 16, Color(GameData.COL.sun, blink), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-	for j in vis:
-		var i := first + j
-		var z: String = GameData.ZONE_ORDER[i]
-		var Z: Dictionary = GameData.ZONES[z]
-		var open := SaveGame.zone_unlocked(z)
-		var done: bool = SaveGame.data.get("cleared", []).has(z)
-		var active := i == zone_sel
-		var r := Rect2(x0 + j * (cw + gap), 60 - (4 if active else 0), cw, 236)
-		_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
-		# Landschaft als Ausschnitt der Zonen-Kulisse (1:1, nicht skaliert)
-		var img := Rect2(r.position.x + 4, r.position.y + 4, cw - 8, 78)
-		draw_texture_rect_region(zone_texture(Z.bg), img, Rect2(250, 196, img.size.x, img.size.y), Color(1, 1, 1, 1.0 if open else 0.3))
-		_text(Vector2(r.position.x + 8, r.position.y + 16), T.t("Zone %d") % (i + 1), 8, Color.WHITE)
-		if open:
-			var tag := "Geschafft!" if done else "Neu!"
-			_text(Vector2(r.position.x, r.position.y + 16), tag, 8, GameData.COL.mint if done else GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, cw - 8, true, true)
-		else:
-			_draw_lock(img.get_center())
-		_text(Vector2(r.position.x, r.position.y + 98), Z.name, 8, GameData.COL.ink if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw, true, true)
-		# Gefahr: ein Kästchen je Zone
-		for k in n:
-			draw_rect(Rect2(r.get_center().x - (n * 10 - 3) / 2.0 + k * 10, r.position.y + 106, 7, 5), GameData.COL.coral if k <= i else GameData.COL.dark)
-		_text(Vector2(r.position.x, r.position.y + 124), zone_layout(z), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
-		var desc: String = T.t(Z.desc) if open else T.t("Gesperrt. Besiege den Boss von %s, um diese Zone freizuschalten.") % T.t(GameData.ZONES[Z.unlock].name)
-		if not SaveGame.zone_in_build(z):
-			desc = T.t("Nicht in dieser Testversion enthalten. Im fertigen Spiel geht es hier weiter!")
-		draw_multiline_string(font(), Vector2(r.position.x + 8, r.position.y + 142), desc, HORIZONTAL_ALIGNMENT_CENTER, cw - 16, tsz(8), 5, GameData.COL.ink if open else GameData.COL.muted, wrap)
-		var boss: String = T.t(GameData.FOES[Z.boss].name) if done else "???"
-		_text(Vector2(r.position.x, r.end.y - 10), T.t("Endboss:" if Z.get("final", false) else "Boss:") + " " + boss, 8, GameData.COL.coral if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw)
+	_text(Vector2(0, 30), "Die Reise durch den NEST", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+	_text(Vector2(0, 46), T.t("Mit %s durch vier Akte. Nach jedem Zonen-Boss wählst du den Weg. Deck und Module bleiben bis zum Ende.") % T.t(form), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	var n: int = GameData.ACTS.size()
+	var cw := 136.0
+	var gap := 18.0
+	var x0 := (W - n * cw - (n - 1) * gap) / 2.0
+	var top := 62.0
+	var hgt := 228.0
+	for a in n:
+		var zones: Array = GameData.ACTS[a]
+		var x := x0 + a * (cw + gap)
+		var head := T.t("Akt %d") % (a + 1) if a < n - 1 else T.t("Finale")
+		var ch := (hgt - 6.0 * (zones.size() - 1)) / zones.size()
+		for k in zones.size():
+			var z: String = zones[k]
+			var done: bool = SaveGame.data.get("cleared", []).has(z)
+			var r := Rect2(x, top + k * (ch + 6.0), cw, ch)
+			_zone_card(r, z, false, head if k == 0 else "", "Boss besiegt" if done else "", GameData.COL.mint, SaveGame.zone_in_build(z), zones.size() == 1)
+		if a < n - 1:
+			_text(Vector2(x + cw, top + hgt / 2.0 + 4), ">", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, gap, true, true)
 	var pad: bool = InputSetup.pad
 	# Glitch-Protokoll (nach dem Abspann): Stufe mit Hoch/Runter
 	var pmax := SaveGame.protocol_unlocked()
@@ -658,15 +613,8 @@ func _draw_zone_pick() -> void:
 			var P: Dictionary = GameData.PROTOCOLS[pl - 1]
 			_text(Vector2(0, 304), T.t("Glitch-Protokoll %d/%d: %s · +%d %% Fragmente") % [pl, pmax, T.t(P.name), pl * 5], 8, Color("#FF5470"), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 			_text(Vector2(0, 316), T.t("%s (und alle Stufen darunter)") % T.t(P.desc), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
-	var foot := zone_msg if zone_msg != "" else T.t("< > Zone wählen   %s losziehen   %s zurück") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"]
-	_text(Vector2(0, 334 if pmax > 0 else 322), foot, 8, GameData.COL.coral if zone_msg != "" else GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
-
-
-func _draw_lock(c: Vector2) -> void:
-	draw_arc(c + Vector2(0, -6), 7.0, PI, TAU, 12, GameData.COL.ink, 3.0)
-	draw_rect(Rect2(c.x - 10, c.y - 6, 20, 16), GameData.COL.dark)
-	draw_rect(Rect2(c.x - 9, c.y - 5, 18, 14), GameData.COL.muted)
-	draw_rect(Rect2(c.x - 1, c.y, 2, 5), GameData.COL.dark)
+	var foot := T.t("%s Reise beginnen   %s zurück") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"]
+	_text(Vector2(0, 334 if pmax > 0 else 322), foot, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 # ---------- Station-Führung ----------
@@ -839,7 +787,7 @@ func _draw_dex() -> void:
 		var lg := GameData.legend_of(DEX_ORDER[sel])
 		if lg != "" and not SaveGame.data.get("dex", {}).has(DEX_ORDER[sel]):
 			var zone: String = GameData.LEGENDS[lg].zone
-			var rumor: String = (T.t("Gerücht: ") + T.t(GameData.LEGENDS[lg].rumor)) if SaveGame.zone_unlocked(zone) else T.t("Legendär. Ein Gerücht darüber hörst du in %s.") % T.t(GameData.ZONES[zone].name)
+			var rumor: String = (T.t("Gerücht: ") + T.t(GameData.LEGENDS[lg].rumor)) if SaveGame.zone_seen(zone) else T.t("Legendär. Ein Gerücht darüber hörst du in %s.") % T.t(GameData.ZONES[zone].name)
 			var B := Rect2(R.position.x + 8, R.end.y - 34, R.size.x - 16, 30)
 			_box(B, Color(GameData.COL.dark, 0.95), Color("#C9A43A"))
 			draw_multiline_string(font(), B.position + Vector2(8, 12), rumor, HORIZONTAL_ALIGNMENT_CENTER, B.size.x - 16, tsz(8), 2, Color("#FFE27A"), TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
@@ -849,9 +797,9 @@ func _draw_lab() -> void:
 	var team := SaveGame.team()
 	var L := Rect2(8, 34, 190, 306)
 	_box(L, Color(GameData.COL.panel, 0.92), GameData.COL.line)
-	var rows := team.size() + 1
+	var rows := team.size() + 2
 	var first := clampi(sel - 12, 0, maxi(0, rows - 14))
-	for i in range(first, mini(rows, first + 14)):
+	for i in range(first, mini(rows - 1, first + 14)):
 		var r := Rect2(L.position.x + 4, L.position.y + 4 + (i - first) * 21, L.size.x - 8, 19)
 		var active := i == sel
 		if i == team.size():
@@ -867,6 +815,14 @@ func _draw_lab() -> void:
 		_text(Vector2(r.position.x + 17, r.position.y + 13), m.form, 8, GameData.COL.ink if active or chosen else GameData.COL.muted, HORIZONTAL_ALIGNMENT_LEFT, -1, true, active)
 		if chosen:
 			_text(Vector2(r.position.x, r.position.y + 13), "X", 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 6, true, true)
+	# Neu prägen (08.10.2026): ein Monster zurück zum Baby
+	var ri := team.size() + 1
+	if ri >= first and ri < first + 14:
+		var r := Rect2(L.position.x + 4, L.position.y + 4 + (ri - first) * 21, L.size.x - 8, 19)
+		var active := sel == ri
+		var can := fuse_sel.size() == 1 and SaveGame.can_reimprint(SaveGame.monster(fuse_sel[0])) == ""
+		_box(r, GameData.COL.panel.lightened(0.1) if active else GameData.COL.bg2, GameData.COL.sun if active else (GameData.COL.coral if can else GameData.COL.line))
+		_text(Vector2(r.position.x, r.position.y + 13), T.t("Neu prägen (%d)") % SaveGame.REIMPRINT_COST, 8, GameData.COL.coral if can else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	# Fusionskammer
 	var R := Rect2(206, 34, 426, 150)
 	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
@@ -883,6 +839,8 @@ func _draw_lab() -> void:
 			_text(Vector2(slot.position.x, slot.get_center().y + 3), "?", 16, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, slot.size.x, true, true)
 	_text(Vector2(R.position.x, R.position.y + 84), "+", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 	var info := T.t(fuse_msg) if fuse_msg != "" else T.t("Kostet %d Fragmente, nur bei Erfolg. Beide verschmelzen.") % GameData.FUSION_COST
+	if fuse_msg == "" and sel == team.size() + 1:
+		info = T.t("Neu prägen: Ein gewähltes Monster wird wieder zum Baby und kann sich neu entwickeln. Der Monsterdex bleibt.")
 	draw_multiline_string(font(), Vector2(R.position.x + 12, R.end.y - 10), info, HORIZONTAL_ALIGNMENT_CENTER, R.size.x - 24, tsz(8), 2, GameData.COL.sun if fuse_msg != "" else GameData.COL.muted, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	# Rezeptbuch
 	var B := Rect2(206, 190, 426, 150)
@@ -905,6 +863,30 @@ func _draw_lab() -> void:
 		draw_multiline_string(font(), Vector2(B.position.x + 12, y), line, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 24, tsz(8), 2, col, wrap)
 		# Zeilenabstand nach tatsächlicher Höhe (Gerüchte brauchen oft zwei Zeilen)
 		y += font().get_multiline_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 24, tsz(8), 2, wrap).y + 5
+
+
+## Neu prägen im Labor: genau ein Monster gewählt, zweimal bestätigen
+func _lab_reimprint() -> void:
+	if fuse_sel.size() != 1:
+		fuse_msg = "Wähle genau ein Monster aus."
+		Sfx.play("back")
+		return
+	var id: int = fuse_sel[0]
+	var why := SaveGame.can_reimprint(SaveGame.monster(id))
+	if why != "":
+		fuse_msg = why
+		Sfx.play("back")
+		return
+	if reimprint_armed != id:
+		reimprint_armed = id
+		fuse_msg = T.t("Wirklich? %s wird wieder zum Baby. Nochmal drücken.") % T.t(SaveGame.monster(id).form)
+		Sfx.play("select")
+		return
+	var res := SaveGame.reimprint(id)
+	reimprint_armed = -1
+	fuse_sel = []
+	fuse_msg = res.msg
+	Sfx.play("evolve" if res.ok else "back", 0.0)
 
 
 func _draw_fusion() -> void:

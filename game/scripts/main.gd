@@ -12,6 +12,7 @@ const MapScreen := preload("res://scripts/ui/map_view.gd")
 const RoomScreen := preload("res://scripts/ui/room_view.gd")
 const ResultScreen := preload("res://scripts/ui/result_view.gd")
 const StationScreen := preload("res://scripts/ui/station_view.gd")
+const RouteScreen := preload("res://scripts/ui/route_view.gd")
 const BattleScene := preload("res://scenes/battle.tscn")
 
 var current: Node
@@ -67,7 +68,10 @@ func show_title() -> void:
 func _from_title() -> void:
 	if SaveGame.has_run():
 		run = SaveGame.load_run()
-		show_map()
+		if run.route_pending:
+			show_route()
+		else:
+			show_map()
 	elif SaveGame.has_save():
 		show_station()
 	else:
@@ -180,17 +184,38 @@ func _enter_node() -> void:
 func _battle_finished(won: bool) -> void:
 	if not won:
 		show_result(false)
-	elif run.current_node().type == "boss" and GameData.ZONES[run.map.zone].get("final", false):
-		# Ur-Glitch besiegt: Ende und Abspann, danach die Auswertung
-		show_ending([run.form], show_result.bind(true))
 	elif run.current_node().type == "boss":
-		show_result(true)
+		# Reise (08.10.2026): Boss der Zone besiegt. Legende prüfen, dann weiter in die nächste Zone
+		run.bosses.append(run.map.zone)
+		var lg := SaveGame.legend_check(run)
+		if lg != "":
+			run.legends_won.append(lg)
+		if GameData.ZONES[run.map.zone].get("final", false):
+			# Ur-Glitch besiegt: Ende und Abspann, danach die Auswertung
+			show_ending([run.form], show_result.bind(true))
+		elif run.final_act():
+			show_result(true)   # Testfassung: hier endet die Reise
+		else:
+			show_route()
 	elif run.current_node().type == "guard":
 		# Wächter besiegt: weiter auf die nächste Ebene
 		run.next_level()
 		show_map()
 	else:
 		show_map()
+
+
+## Weggabelung nach einem Zonen-Boss: nächste Zone wählen (Stand wird gesichert, falls man hier beendet)
+func show_route() -> void:
+	run.route_pending = true
+	SaveGame.save_run(run)
+	var r := RouteScreen.new()
+	r.setup(run)
+	r.chosen.connect(func(z: String):
+		run.next_act(z)
+		show_map()
+	)
+	_swap(r)
 
 
 func show_result(won: bool) -> void:
@@ -250,6 +275,8 @@ func _screenshot(shot: Dictionary) -> void:
 	run = RunState.new(shot.get("mon", "Pixmiez"), 7)
 	if shot.has("zone") or shot.has("level"):
 		run.map = ZoneMap.generate(run.rng, shot.get("zone", "wiesen"), shot.get("level", 0))
+		run.act = GameData.act_of(run.map.zone)
+		run.route = [run.map.zone]
 	# auf der Karte bis zur gewünschten Etage vorlaufen (immer erster Weg)
 	var floors: int = shot.get("floor", 0)
 	for f in floors:
@@ -433,6 +460,14 @@ func _screenshot(shot: Dictionary) -> void:
 					"hurt":
 						current.p_hurt = 0.3 - at
 						current.st.p.flash = 0.0
+			if shot.has("counter"):
+				# Konter-Fenster: Gegner holt in deiner Reihe aus, Fadenkreuz über ihm (08.10.2026)
+				var cs3: BattleState = current.st
+				cs3.e.r = cs3.p.r
+				cs3.e.atk_t = 99.0
+				cs3.e.move_t = 99.0
+				cs3.warns.clear()
+				cs3.warns.append({"cells": [Vector2i(0, cs3.p.r), Vector2i(1, cs3.p.r), Vector2i(2, cs3.p.r)], "t": 0.25, "max": 0.7, "dmg": 10, "lava": false, "atk": true, "shot": true})
 			if shot.has("atkpose"):
 				# Angriffsanimation prüfen: Spieler und Gegner beim gleichen Fortschritt (0–1)
 				var ak: float = shot.atkpose
@@ -487,7 +522,17 @@ func _screenshot(shot: Dictionary) -> void:
 				current.show_pause_for_screenshot()
 			elif mode == "evolve":
 				current.show_evolve_for_screenshot(shot.get("t", 2.6))
+		"route":
+			# Weggabelung nach dem Boss der aktuellen Zone (--zone, --form)
+			run.act = GameData.act_of(run.map.zone)
+			run.bosses = [run.map.zone]
+			run.hp = roundi(run.max_hp * 0.5)
+			show_route()
+			SaveGame.data.erase("run")
 		"result":
+			run.route = ["wiesen", "see"]
+			run.act = 1
+			run.bosses = ["wiesen"]
 			run.praeg = {"Neutral": 14, "Feuer": 9, "Elektro": 4}
 			run.chips_used = 27
 			run.fights_won = 3

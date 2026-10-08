@@ -70,6 +70,7 @@ func _ready() -> void:
 	test_new_zones()
 	test_protocols()
 	test_legends()
+	test_design_review()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -415,7 +416,7 @@ func test_difficulty() -> void:
 		var f := run.foe_for(node)
 		hp.append(f.hp)
 		dmg.append(f.dmg)
-	check(hp[0] < hp[1] and hp[1] < hp[2] and hp[1] == GameData.FOES[3].hp, "Schwierigkeit skaliert Boss-HP %s" % [hp])
+	check(hp[0] < hp[1] and hp[1] < hp[2] and hp[1] == roundi(GameData.FOES[3].hp * GameData.FOE_HP * GameData.BOSS_HP), "Schwierigkeit skaliert Boss-HP %s" % [hp])
 	check(dmg[0] < dmg[1] and dmg[1] < dmg[2], "Schwierigkeit skaliert Schaden %s" % [dmg])
 	var run2 := RunState.new("Pixmiez", 1)
 	run2.difficulty = 0
@@ -496,7 +497,7 @@ func test_meta() -> void:
 	var run2 := RunState.from_monster(SaveGame.monster(int(m.id)), 2)
 	check(run2.stage == 2 and run2.form == "Glutbyte" and run2.max_hp == 90, "Nächster Run startet als Rookie mit +10 HP")
 	run2.chips_used = GameData.EVO_AT[3] - GameData.EVO_AT[2]
-	run2.praeg = {"Feuer": 30}
+	run2.praeg = {"Feuer": GameData.EVO_AT[3] - GameData.EVO_AT[2]}
 	check(run2.try_evolve().get("to", "") == "Magmawulf", "Champion-Schwelle zählt Lebenszeit-Prägung")
 	# Eier reifen: ein Ei schlüpft, wenn seine Runs abgelaufen sind
 	SaveGame.data.nest = [{"species": "Tröpfel", "runs_left": 1}, {"species": "Pixmiez", "runs_left": 3}]
@@ -505,12 +506,12 @@ func test_meta() -> void:
 	check(SaveGame.ready_eggs().size() == 1 and int(SaveGame.nest()[1].runs_left) == 2, "Eier reifen pro Run")
 	var h := SaveGame.hatch_next()
 	check(h.get("species", "") == "Tröpfel" and SaveGame.team().size() == 2 and h.new_in_dex, "Ei schlüpft: neues Monster im Team und im Dex")
-	# Eine Ei-Sorte (03.10.2026): 2 Runs, alle Babys möglich, fehlende Arten dreifach gewichtet
+	# Eine Ei-Sorte (03.10.2026): schlüpft nach dem nächsten Run (seit der Reise 08.10.2026), alle Babys möglich, fehlende Arten dreifach gewichtet
 	SaveGame.data.nest = []
 	var ew := SaveGame.egg_weights()
-	var all_babies := ew.size() == 13 and SaveGame.EGG_RUNS == 2
+	var all_babies := ew.size() == 13 and SaveGame.EGG_RUNS == 1
 	var dex_has_tr: bool = SaveGame.data.dex.has("Tröpfel")
-	check(all_babies and ew["Tröpfel"] == (1 if dex_has_tr else 3) and ew.values().has(3), "Eier: eine Sorte (2 Runs), alle 13 Babys, fehlende Arten 3-fach")
+	check(all_babies and ew["Tröpfel"] == (1 if dex_has_tr else 3) and ew.values().has(3), "Eier: eine Sorte (1 Run), alle 13 Babys, fehlende Arten 3-fach")
 	var rng_e := RandomNumberGenerator.new()
 	rng_e.seed = 5
 	var new_hits := 0
@@ -529,7 +530,7 @@ func test_meta() -> void:
 	SaveGame._upgrade()
 	var mig: Dictionary = SaveGame.data.nest[0]
 	SaveGame.data = keep
-	check(not mig.has("rarity") and int(mig.runs_left) == 2, "Alte Eier: Seltenheit entfernt, spätestens nach 2 Runs")
+	check(not mig.has("rarity") and int(mig.runs_left) == SaveGame.EGG_RUNS, "Alte Eier: Seltenheit entfernt, spätestens nach dem nächsten Run")
 	var full_egg := {"species": "Pixmiez", "runs_left": 2}
 	SaveGame.data.nest = [full_egg.duplicate(), full_egg.duplicate(), full_egg.duplicate()]
 	var run3 := RunState.new("Pixmiez", 3)
@@ -617,21 +618,23 @@ func test_zone2() -> void:
 	var real_data := SaveGame.data.duplicate(true)
 	SaveGame.persist = false
 	SaveGame.new_game("Tröpfel")
-	check(SaveGame.unlocked_zones() == ["wiesen"], "Zu Beginn nur die Cache-Wiesen frei")
+	# Reise (08.10.2026): alle Zonen über die Route erreichbar, besiegte Bosse werden gemerkt
+	check(SaveGame.unlocked_zones() == GameData.ZONE_ORDER, "Reise: alle Zonen über die Route erreichbar")
 	var run := RunState.from_monster(SaveGame.team()[0], 1)
-	var sum := SaveGame.record_run(run, true)
-	check(sum.get("unlocked", "") == "vulkan" and SaveGame.unlocked_zones() == ["wiesen", "vulkan"], "Boss der Cache-Wiesen besiegt: Firewall-Vulkan frei")
+	run.bosses = ["wiesen"]
+	var sum := SaveGame.record_run(run, false)
+	check(sum.first_bosses == ["wiesen"] and SaveGame.data.cleared == ["wiesen"] and SaveGame.zone_seen("wiesen") and not SaveGame.zone_seen("see"), "Boss der Cache-Wiesen besiegt: gemerkt, Zone gesehen")
 	SaveGame.data.cleared = []
 	SaveGame.unlock_all_zones()
-	check(SaveGame.unlocked_zones() == GameData.ZONE_ORDER, "Testfunktion schaltet alle Zonen frei")
+	check(SaveGame.data.cleared.size() == GameData.ZONE_ORDER.size(), "Testfunktion markiert alle Zonen-Bosse als besiegt")
 	var r2 := RunState.from_monster(SaveGame.team()[0], 2, "vulkan")
-	check(r2.map.zone == "vulkan" and r2.map.zone_name == "Firewall-Vulkan", "Run im Firewall-Vulkan")
+	check(r2.map.zone == "vulkan" and r2.map.zone_name == "Firewall-Vulkan" and r2.act == 1, "Run im Firewall-Vulkan (Akt 2)")
 	var boss := r2.foe_for({"type": "boss"})
-	check(boss.name == "Glutkernskarabäus" and boss.hp == GameData.FOES[10].hp, "Boss im Vulkan: Glutkernskarabäus")
+	check(boss.name == "Glutkernskarabäus" and boss.hp == roundi(GameData.FOES[10].hp * GameData.FOE_HP * GameData.BOSS_HP), "Boss im Vulkan: Glutkernskarabäus")
 	r2.enter(r2.next_choices()[0])
 	var f := r2.foe_for({"type": "fight"})
 	var base: Dictionary = GameData.FOES.filter(func(x): return x.name == f.name)[0]
-	check([7, 9, 5].has(GameData.FOES.find(base)) and f.hp == roundi(base.hp * 1.25), "Vulkan-Gegner aus eigenem Pool, 25 %% zäher (%s %d)" % [f.name, f.hp])
+	check(GameData.ZONES.vulkan.early.has(GameData.FOES.find(base)) and f.hp == roundi(roundi(base.hp * GameData.ACT_HP[1]) * GameData.FOE_HP), "Vulkan-Gegner aus eigenem Pool, zäher im zweiten Akt (%s %d)" % [f.name, f.hp])
 	SaveGame.data = real_data
 	SaveGame.persist = true
 	# Lava: Feld des Spielers brennt, bis man es verlässt
@@ -715,14 +718,22 @@ func test_zone3() -> void:
 	var real_data := SaveGame.data.duplicate(true)
 	SaveGame.persist = false
 	SaveGame.new_game("Lumi")
-	SaveGame.data.cleared = ["wiesen"]
-	check(not SaveGame.zone_unlocked("sumpf") and not SaveGame.zone_unlocked("see"), "Kühlwasser-See und Viren-Sümpfe erst nach dem Vulkan")
-	var rv := RunState.from_monster(SaveGame.team()[0], 1, "vulkan")
-	var sum := SaveGame.record_run(rv, true)
-	check(sum.get("unlocked", "") == "see" and SaveGame.zone_unlocked("see") and not SaveGame.zone_unlocked("sumpf"), "Vulkan-Boss besiegt: Kühlwasser-See frei")
-	var rsee := RunState.from_monster(SaveGame.team()[0], 3, "see")
-	var sum2 := SaveGame.record_run(rsee, true)
-	check(sum2.get("unlocked", "") == "sumpf" and SaveGame.zone_unlocked("sumpf"), "See-Boss besiegt: Viren-Sümpfe frei")
+	# Reise: nach dem Boss der Wiesen geht es in Vulkan oder See weiter, Deck und HP bleiben, es gibt eine Verschnaufpause
+	var rv := RunState.from_monster(SaveGame.team()[0], 1)
+	check(rv.act == 0 and rv.route == ["wiesen"] and rv.act_choices() == ["vulkan", "see"] and not rv.final_act(), "Reise: Akt 1 Wiesen, danach Vulkan oder See")
+	rv.deck.append("Tsunami")
+	rv.hp = 20
+	rv.enter(rv.next_choices()[0])
+	var healed := rv.next_act("see")
+	check(rv.act == 1 and rv.map.zone == "see" and rv.map.level == 0 and rv.floor_idx == -1 and rv.route == ["wiesen", "see"] and rv.deck.has("Tsunami")
+		and healed == roundi(rv.max_hp * GameData.ACT_HEAL) and rv.hp == 20 + healed, "Reise: weiter in den See, Deck bleibt, +%d HP Verschnaufpause" % healed)
+	check(rv.act_choices() == ["sumpf", "steppe"], "Reise: Akt 3 Sümpfe oder Steppe")
+	rv.next_act("sumpf")
+	check(rv.act_choices() == ["kern"] and rv.map.zone == "sumpf", "Reise: danach der NEST-Kern")
+	rv.next_act("kern")
+	check(rv.final_act() and rv.act == 3, "Reise: der NEST-Kern ist das Finale")
+	var rd := RunState.from_dict(JSON.parse_string(JSON.stringify(rv.to_dict())))
+	check(rd.act == 3 and rd.route == ["wiesen", "see", "sumpf", "kern"], "Reise: Akt und Route werden gespeichert")
 	var rs := RunState.from_monster(SaveGame.team()[0], 2, "sumpf")
 	check(rs.foe_for({"type": "boss"}).name == "Schwarmkönigin", "Boss der Sümpfe: Schwarmkönigin")
 	SaveGame.data = real_data
@@ -832,7 +843,15 @@ func test_tutorial() -> void:
 		st.sp = minf(st.sp, 50.0)
 		_tut_tick(st, tut, 1)
 		t += 1.0 / 60.0
-	check(tut.step == Tutorial.Step.SHIELD and st.hand[2].chip == "Firewall" and st.hand[2].rem == 0.0, "Training: 2× ausgewichen > Firewall liegt bereit")
+	check(tut.step == Tutorial.Step.COUNTER and st.hand[0].chip == "Laserschuss" and st.hand[0].rem == 0.0, "Training: 2× ausgewichen > Konter üben, Laserschuss liegt bereit")
+	# Konter: im Fenster (Fadenkreuz) zuschlagen bricht den Angriff ab
+	t = 0.0
+	while tut.step == Tutorial.Step.COUNTER and t < 15.0:
+		if st.counter_open() and st.hand[0].rem <= 0:
+			st.use_slot(0)
+		_tut_tick(st, tut, 1)
+		t += 1.0 / 60.0
+	check(tut.step == Tutorial.Step.SHIELD and st.counters >= 1 and st.hand[2].chip == "Firewall" and st.hand[2].rem == 0.0, "Training: Konter gelandet > Firewall liegt bereit")
 	st.use_slot(2)
 	_tut_tick(st, tut, 360, Tutorial.Step.ELEMENT)
 	check(tut.step == Tutorial.Step.ELEMENT and st.hand[0].chip == "Blitzcursor", "Training: Firewall blockt einen Treffer > Blitzcursor für den Element-Vorteil")
@@ -866,14 +885,14 @@ func test_evolution() -> void:
 	check(r1.try_evolve().is_empty(), "Champion ohne weitere Stufe bleibt")
 	# Gleichstand wartet
 	var r2 := RunState.new("Pixmiez", 1)
-	r2.praeg = {"Virus": 6, "Code": 6}
+	r2.praeg = {"Virus": ceili(need / 2.0), "Code": ceili(need / 2.0)}
 	check(r2.try_evolve().is_empty() and r2.evo_status().reason.begins_with("Gleichstand"), "Gleichstand: Evolution wartet (keine Zufallsentscheidung)")
 	# Führung zu knapp (nur 1 Chip Vorsprung) wartet – Elemente ohne Richtung verwässern nicht
 	var r3 := RunState.new("Kekso", 1)
-	r3.praeg = {"Virus": 4, "Elektro": 3, "Code": 3, "Feuer": 3}
+	r3.praeg = {"Virus": need / 2 + 1, "Elektro": need / 2, "Code": 3, "Feuer": 3}
 	check(r3.try_evolve().is_empty() and r3.evo_status().reason.begins_with("Führung zu knapp"), "1 Chip Vorsprung: Evolution wartet")
 	var r3b := RunState.new("Kekso", 1)
-	r3b.praeg = {"Virus": 7, "Elektro": 5, "Code": 20}
+	r3b.praeg = {"Virus": need / 2 + 2, "Elektro": need / 2, "Code": 20}
 	check(r3b.try_evolve().get("to", "") == "Tracko", "2 Vorsprung reicht, viele Code-Chips (ohne Wirkung) verwässern nicht")
 	# Elemente ohne Richtung werden angezeigt, lenken aber nicht
 	var s3 := r3.evo_status()
@@ -883,7 +902,7 @@ func test_evolution() -> void:
 	r4.eis = 4
 	check(r4.try_evolve().get("to", "") == "Frostbyte", "Tröpfel mit 4× Eisfeld → Frostbyte")
 	var r5 := RunState.new("Funkling", 1)
-	r5.praeg = {"Feuer": 5, "Code": 9}
+	r5.praeg = {"Feuer": need / 3, "Code": need}
 	check(r5.try_evolve().get("to", "") == "Overclocko", "Funkling mit mehr Code als Feuer → Overclocko")
 	# Startdecks: überwiegend neutral, genau ein Chip je Richtung
 	var fair := true
@@ -1047,8 +1066,8 @@ func test_map() -> void:
 	for seed_value in 50:
 		var rng := RandomNumberGenerator.new()
 		rng.seed = seed_value
-		var m := ZoneMap.generate(rng, "wiesen", seed_value % 3)
-		var top: String = "boss" if seed_value % 3 == 2 else "guard"
+		var m := ZoneMap.generate(rng, "wiesen", seed_value % 2)
+		var top: String = "boss" if seed_value % 2 == 1 else "guard"
 		if m.floors.size() != ZoneMap.FLOORS + 1 or m.floors[-1][0].type != top:
 			ok_types = false
 		for n in m.floors[0]:
@@ -1072,7 +1091,7 @@ func test_map() -> void:
 								ok_cross = false
 			if incoming.size() != m.floors[f + 1].size():
 				ok_reach = false
-	check(ok_types, "Karte: 5 Etagen je Ebene, Ebene 1 beginnt mit Kämpfen, letzte Etage Rast, oben Wächter bzw. Boss")
+	check(ok_types, "Karte: 4 Etagen je Ebene, Ebene 1 beginnt mit Kämpfen, letzte Etage Rast, oben Wächter bzw. Boss")
 	check(ok_edges, "Karte: jeder Knoten hat einen Weg nach oben")
 	check(ok_reach, "Karte: jeder Knoten ist erreichbar")
 	check(ok_cross, "Karte: Wege kreuzen sich nicht")
@@ -1118,9 +1137,9 @@ func test_elite_scaling() -> void:
 	var elite := run.foe_for({"type": "elite"})
 	check(elite.elite and elite.name.begins_with("Elite-"), "Elite-Gegner ist markiert")
 	var base: Dictionary = GameData.FOES.filter(func(f): return f.name == normal.name)[0]
-	check(normal.hp == roundi(base.hp * 1.10), "Normale Gegner: +5 %% HP pro Etage (%s %d → %d)" % [base.name, base.hp, normal.hp])
+	check(normal.hp == roundi(roundi(base.hp * 1.10) * GameData.FOE_HP), "Normale Gegner: +5 %% HP pro Etage (%s %d → %d)" % [base.name, base.hp, normal.hp])
 	var boss := run.foe_for({"type": "boss"})
-	check(boss.boss and boss.hp == GameData.FOES[3].hp, "Boss hat seine festen Werte")
+	check(boss.boss and boss.hp == roundi(GameData.FOES[3].hp * GameData.FOE_HP * GameData.BOSS_HP), "Boss hat seine festen Werte (mal Zähigkeit)")
 
 
 ## Komplette Runs über die Karte mit Autopilot: jeder Kampf muss enden, Siegquote als Balancing-Hinweis.
@@ -1299,11 +1318,14 @@ func test_testbuild() -> void:
 	var saved: Dictionary = SaveGame.data.duplicate(true)
 	SaveGame.data = {"cleared": ["wiesen", "vulkan", "see", "sumpf", "steppe"]}
 	SaveGame.force_test = true
-	var tb := SaveGame.zone_unlocked("vulkan") and not SaveGame.zone_unlocked("sumpf") and not SaveGame.zone_unlocked("kern") 		and SaveGame._newly_unlocked("vulkan") == "" and SaveGame.unlocked_zones() == ["wiesen", "vulkan"]
+	var r := RunState.new("Pixmiez", 1)
+	var tb: bool = SaveGame.zone_unlocked("vulkan") and not SaveGame.zone_unlocked("sumpf") and not SaveGame.zone_unlocked("kern") 		and SaveGame.unlocked_zones() == ["wiesen", "vulkan"] and r.act_choices() == ["vulkan"]
+	r.next_act("vulkan")
+	tb = tb and r.final_act()
 	SaveGame.force_test = false
-	var full := SaveGame.zone_unlocked("kern") and SaveGame._newly_unlocked("vulkan") == "see"
+	var full: bool = SaveGame.zone_unlocked("kern") and not r.final_act()
 	SaveGame.data = saved
-	check(tb and full, "Testfassung: nur zwei Zonen, keine Freischaltung von Zone 3; normale Fassung unverändert")
+	check(tb and full, "Testfassung: Reise endet nach dem Vulkan; normale Fassung geht weiter")
 
 
 func test_music() -> void:
@@ -1473,11 +1495,11 @@ func test_finale() -> void:
 	var Z: Dictionary = GameData.ZONES.kern
 	var rk := RunState.new("Pixmiez", 21)
 	rk.map = ZoneMap.generate(rk.rng, "kern")
-	check(rk.map.levels == 2 and rk.map.floors.size() == 6 and rk.map.floors[-1][0].type == "guard", "NEST-Kern: 2 Ebenen, erst der Wächter")
+	check(rk.map.levels == 2 and rk.map.floors.size() == ZoneMap.FLOORS + 1 and rk.map.floors[-1][0].type == "guard", "NEST-Kern: 2 Ebenen, erst der Wächter")
 	rk.next_level()
 	rk.heal(roundi(rk.max_hp * 0.3))
 	rk.add_module(rk.roll_module())
-	check(rk.map.level == 1 and rk.map.floors[-1][0].type == "boss" and rk.map.floors[4].all(func(n): return n.type == "rest"), "NEST-Kern Ebene 2: Rast vor dem Ur-Glitch")
+	check(rk.map.level == 1 and rk.map.floors[-1][0].type == "boss" and rk.map.floors[ZoneMap.FLOORS - 1].all(func(n): return n.type == "rest"), "NEST-Kern Ebene 2: Rast vor dem Ur-Glitch")
 	check(GameData.ZONE_ORDER[-1] == "kern" and Z.unlock == "steppe", "NEST-Kern wird nach der Hochspannungs-Steppe frei")
 	var boss := rk.foe_for({"type": "boss"})
 	check(boss.name == "Ur-Glitch" and boss.get("final", false), "Endboss: Ur-Glitch (%d HP)" % boss.hp)
@@ -1514,6 +1536,7 @@ func test_finale() -> void:
 	check(SaveGame.zone_unlocked("kern") and not SaveGame.game_cleared(), "Nach der Steppe ist der Kern offen, das Spiel aber noch nicht durch")
 	var rw := RunState.new("Pixmiez", 22)
 	rw.map = ZoneMap.generate(rw.rng, "kern")
+	rw.bosses = ["wiesen", "see", "steppe", "kern"]
 	var sum := SaveGame.record_run(rw, true)
 	check(SaveGame.game_cleared() and sum.get("game_cleared", false), "Ur-Glitch besiegt: Spiel durchgespielt")
 	SaveGame.data = saved
@@ -1898,19 +1921,21 @@ func test_guards() -> void:
 			var top: Dictionary = r.map.floors[-1][0]
 			var foe := r.foe_for(top)
 			if lv < r.map.levels - 1:
-				if top.type != "guard" or not foe.get("guard", false) or foe.name != GameData.FOES[GameData.ZONES[z].guards[lv]].name:
+				# welcher der Wächter der Zone kommt, entscheidet der Zufall (08.10.2026)
+				var names: Array = GameData.ZONES[z].guards.map(func(i): return GameData.FOES[i].name)
+				if top.type != "guard" or not foe.get("guard", false) or not names.has(foe.name):
 					ok = false
 				r.next_level()
 			elif top.type != "boss" or foe.get("guard", false):
 				ok = false
 		if r.map.level != r.map.levels - 1 or r.floor_idx != -1:
 			ok = false
-	check(ok, "Jede Zone: Wächter am Ende von Ebene 1 und 2, Boss am Ende der letzten Ebene")
+	check(ok, "Jede Zone: Wächter am Ende von Ebene 1, Boss am Ende von Ebene 2")
 	var rs := RunState.new("Pixmiez", 4)
 	rs.next_level()
 	rs.enter(rs.next_choices()[0])
 	rs.enter(rs.next_choices()[0])
-	check(rs.zone_floor() == 6, "Etagen werden über die Ebenen weitergezählt (%d)" % rs.zone_floor())
+	check(rs.zone_floor() == ZoneMap.FLOORS + 1, "Etagen werden über die Ebenen weitergezählt (%d)" % rs.zone_floor())
 	# Großangriff: komplett ausweichen überlastet den Wächter
 	var run := RunState.new("Pixmiez", 5)
 	var st := BattleState.new(run, run.foe_for({"type": "guard"}))
@@ -2111,7 +2136,12 @@ func test_progression() -> void:
 	var rng2 := RandomNumberGenerator.new()
 	var egg := SaveGame.add_egg(rng2)
 	var egg2 := SaveGame.add_egg(rng2)
-	check(int(egg.runs_left) == 1 and int(egg2.runs_left) == 1, "Brutwärmer: Eier schlüpfen einen Run früher (mindestens 1)")
+	check(int(egg.runs_left) == 1 and int(egg2.runs_left) == 1, "Eier schlüpfen nach dem nächsten Run")
+	# Brutwärmer (seit der Reise 08.10.2026): ein zusätzliches Ei nach jedem Run mit mindestens 2 Siegen
+	SaveGame.data.nest = []
+	var rb := RunState.from_monster(SaveGame.team()[0], 10)
+	rb.fights_won = 3
+	check(SaveGame.record_run(rb, false).eggs.size() == 2, "Brutwärmer: zwei Eier statt einem nach einem Run ohne Boss-Sieg")
 	# Ei kaufen: 200 Fragmente, nur mit freiem Platz
 	SaveGame.data.nest = []
 	SaveGame.data.frag = 250
@@ -2286,8 +2316,7 @@ func test_legends() -> void:
 		var r := RunState.from_monster(SaveGame.team()[0], 3, z)
 		r.stage = 1 if z == "wiesen" else 2
 		conds[z].call(r)
-		var sum := SaveGame.record_run(r, true)
-		got[z] = sum.get("legend", "")
+		got[z] = SaveGame.legend_check(r)   # direkt nach dem Boss-Sieg (Reise, 08.10.2026)
 	var all6: bool = got.wiesen == "Glimmhirsch" and got.vulkan == "Glutkirin" and got.see == "Sternwal" and got.sumpf == "Toxilisk" and got.steppe == "Funkengreif" and got.kern == "Chiffrasphinx"
 	check(all6, "Legendäre: alle 6 Bedingungen geben ihr leuchtendes Ei (%s)" % str(got))
 	var eggs: Array = SaveGame.nest().filter(func(e): return e.get("legend", false))
@@ -2298,7 +2327,9 @@ func test_legends() -> void:
 	var r3 := RunState.from_monster(SaveGame.team()[0], 5, "see")
 	r3.pushed = 2
 	SaveGame.data.legends.erase("Sternwal")
-	check(SaveGame.record_run(r2, true).get("legend", "") == "" and SaveGame.record_run(r3, true).get("legend", "") == "", "Legendäre: nur einmal, und nur wenn die Bedingung erfüllt ist")
+	check(SaveGame.legend_check(r2) == "" and SaveGame.legend_check(r3) == "", "Legendäre: nur einmal, und nur wenn die Bedingung erfüllt ist")
+	r2.legends_won = ["Glimmhirsch"]
+	check(SaveGame.record_run(r2, true).get("legend", "") == "Glimmhirsch", "Run-Ende meldet das leuchtende Ei")
 	# Schlüpfen: Champion-Stufe, Ultra ab 80 Element-Chips
 	for e in SaveGame.nest():
 		e.runs_left = 0
@@ -2371,9 +2402,13 @@ func test_station_guide() -> void:
 	var sv2 = SV.new()
 	add_child(sv2)
 	check(sv2.guide == -1 and sv2.tab == sv2.Tab.HOME and sv2.TAB_ORDER[0] == sv2.Tab.HOME, "Station: beim zweiten Besuch keine Führung mehr, sie öffnet im Reiter Zuhause")
-	check(sv2.zone_sel == 0 and SV.zone_layout("wiesen") == "3 Ebenen · 2 Wächter" and SV.zone_layout("kern") == "2 Ebenen · 1 Wächter", "Zonenwahl: startet bei der ersten offenen Zone, zeigt den Aufbau")
-	SaveGame.data.cleared = ["wiesen"]
-	check(sv2._default_zone() == 1, "Zonenwahl: springt zur nächsten noch nicht geschafften Zone")
+	var started := []
+	sv2.start_run.connect(func(id, z): started.append(z))
+	sv2.zone_pick = true
+	Input.action_press("confirm")
+	sv2._process_zone_pick()
+	Input.action_release("confirm")
+	check(started == ["wiesen"], "Reiseplan: jede Reise beginnt in den Cache-Wiesen")
 	sv2.queue_free()
 	# Zuhause (06.10.2026): Bewohner bleiben im Laufbereich, tun verschiedene Dinge, Streicheln gibt Herzchen und einen Text
 	var team: Array = []
@@ -2559,3 +2594,109 @@ func test_chip_vfx() -> void:
 	var er: Array = lv.vfx.filter(func(v): return v.kind == "erupt")
 	check(lv.hazards.size() == 2 and er.size() == 2 and er.any(func(v): return v.slime) and lv.hazards.all(func(h): return h.has("seed")), "Lava und Schleim: Ausbruch beim Entstehen, Pfützen mit fester Form")
 	check(sh.vfx.any(func(v): return v.kind == "patch") and not sh.parts.any(func(q): return q.color == GameData.EL.Elektro), "Heilpatch: Pflaster und Heil-Partikel statt Elektro-Funken")
+
+
+## Game-Design-Analyse 08.10.2026: Herkunft der Gegnerangriffe, Konter, Resonanz, Gaben, gelenkte Chipwahl, Neu prägen, Reise
+func test_design_review() -> void:
+	# Schützen: „row“ trifft die Reihe des Gegners, nicht die des Spielers
+	var st := fresh()
+	st.e.frozen = 0.0
+	st.e.move_t = 99.0
+	st.e.r = 0
+	st.p.r = 2
+	st.e.atk_t = 0.01
+	step(st, 0.05)
+	var cells: Array = st.warns[0].cells
+	check(cells.all(func(c): return c.y == 0) and st.warns[0].atk and st.warns[0].shot, "Schütze schießt entlang seiner eigenen Reihe (nicht auf dein Feld)")
+	# Beim Ausholen bleibt er stehen
+	st.e.move_t = 0.0
+	step(st, 0.1)
+	check(st.e.r == 0 and st.winding_up(), "Beim Ausholen bleibt der Gegner stehen")
+	# Konter: zu früh zählt nicht, im Fenster bricht der Angriff ab
+	var sc := fresh()
+	sc.reflex = 0
+	sc.e.frozen = 0.0
+	sc.e.move_t = 99.0
+	sc.e.atk_t = 0.01
+	step(sc, 0.05)
+	sc.hit_enemy(20, "Neutral")
+	check(sc.counters == 0 and sc.winding_up(), "Treffer vor dem Konter-Fenster ist kein Konter")
+	step(sc, BattleState.WARN_TIME * BattleState.COUNTER_OPEN)
+	var hp0: int = sc.e.hp
+	var sp0: float = sc.sp
+	sc.hit_enemy(20, "Neutral")
+	check(sc.counters == 1 and not sc.winding_up() and hp0 - sc.e.hp == 30 and sc.e.frozen >= BattleState.COUNTER_STUN - 0.01 and sc.sp > sp0 + 20,
+		"Konter: Angriff fällt aus, Gegner betäubt, 50 %% mehr Schaden (%d), Signatur lädt" % (hp0 - sc.e.hp))
+	step(sc, 1.0)
+	check(sc.run.hp == sc.run.max_hp, "Nach dem Konter trifft der abgebrochene Angriff nicht mehr")
+	# Resonanz und Gaben
+	var rf := RunState.new("Funkling", 1)
+	rf.form = "Glutbyte"
+	rf.stage = 2
+	var sf := BattleState.new(rf, GameData.FOES[0])
+	sf.e.frozen = 999.0
+	var e0: int = sf.e.hp
+	sf.hit_enemy(20, "Feuer")
+	check(e0 - sf.e.hp == 24 and sf.e.burn >= 2 and GameData.gift("Glutbyte").name == "Zündeln", "Resonanz: Feuer-Chip bei Glutbyte +20 %% (%d), Gabe Zündeln setzt Brand" % (e0 - sf.e.hp))
+	var e1: int = sf.e.hp
+	sf.hit_enemy(20, "Wasser")
+	check(e1 - sf.e.hp == 20 and GameData.resonance("Glutbyte", "Wasser") == 0.0 and GameData.resonance("Pixmiez", "Neutral") == 0.0, "Keine Resonanz für fremde Elemente und Babys")
+	check(GameData.resonance("Magmawulf", "Feuer") == GameData.RESONANCE[3] and GameData.resonance("Glutfenrir", "Feuer") == GameData.RESONANCE[4], "Resonanz wächst mit der Stufe")
+	var rc := RunState.new("Pixmiez", 1)
+	rc.form = "Firewallo"
+	rc.stage = 2
+	var scd := BattleState.new(rc, GameData.FOES[0])
+	scd.reflex = 0
+	scd.shield = 4.0
+	scd.hurt_player(10)
+	check(scd.sp == float(GameData.gift("Firewallo").v), "Code-Gabe Schutzroutine: Blocken lädt die Signatur")
+	var re := RunState.new("Pixmiez", 1)
+	re.form = "Prismiez"
+	re.stage = 2
+	var se := BattleState.new(re, GameData.FOES[0])
+	se.hit_enemy(10, "Elektro")
+	check(se.e.frozen > 0.0, "Elektro-Gabe Funkenflug betäubt kurz")
+	# Chipwahl lenkt: immer mindestens ein Chip für eine Entwicklungsrichtung bzw. die Resonanz
+	var ok_baby := true
+	var ok_rookie := true
+	var rp := RunState.new("Pixmiez", 7)
+	var rg := RunState.new("Funkling", 8)
+	rg.form = "Glutbyte"
+	rg.stage = 2
+	for i in 60:
+		if not rp.roll_pick(GameData.RARITY_WEIGHT).any(func(k): return ["Code", "Virus", "Elektro"].has(GameData.CHIPS[k].el)):
+			ok_baby = false
+		if not rg.roll_pick(GameData.RARITY_WEIGHT).any(func(k): return GameData.CHIPS[k].el == "Feuer"):
+			ok_rookie = false
+	check(ok_baby and ok_rookie, "Chipwahl: immer ein Chip für die Entwicklung (Baby) bzw. die Resonanz (Rookie)")
+	# Neu prägen im Labor
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.persist = false
+	var m := SaveGame.new_game("Pixmiez")
+	m.form = "Bollwerkatz"
+	m.stage = 3
+	m.chips = 999
+	m.praeg = {"Code": 950}
+	SaveGame.see("Bollwerkatz")
+	SaveGame.data.frag = SaveGame.REIMPRINT_COST + 5
+	var res := SaveGame.reimprint(int(m.id))
+	var mm := SaveGame.monster(int(m.id))
+	check(res.ok and mm.form == "Pixmiez" and int(mm.stage) == 1 and int(mm.chips) == 0 and mm.praeg.is_empty() and SaveGame.frag() == 5 and SaveGame.data.dex.has("Bollwerkatz"),
+		"Neu prägen: zurück zum Baby, Prägung bei 0, Dex bleibt, kostet %d Fragmente" % SaveGame.REIMPRINT_COST)
+	var fu := SaveGame.add_monster("Wolkerich")
+	fu.stage = 3
+	SaveGame.data.frag = 999
+	check(not SaveGame.reimprint(int(fu.id)).ok and not SaveGame.reimprint(int(m.id)).ok, "Neu prägen: nicht für Fusionen und nicht für Babys")
+	# Run-Ende: Eier je besiegtem Zonen-Boss
+	SaveGame.data.nest = []
+	var rj := RunState.from_monster(m, 3)
+	rj.fights_won = 5
+	rj.bosses = ["wiesen", "vulkan"]
+	var sum := SaveGame.record_run(rj, false)
+	check(sum.eggs.size() == 3 and sum.first_bosses == ["wiesen", "vulkan"], "Run-Ende: ein Ei für die Siege und eins je Zonen-Boss (%d)" % sum.eggs.size())
+	SaveGame.data = saved
+	SaveGame.persist = true
+	# Ganze Reisen mit dem Autopiloten: jeder Kampf endet, die Reise führt durch alle vier Akte
+	var S := BalanceSim.run_journey(4, 3, "perfect")
+	check(S.stuck == 0 and S.acts[3] >= 1, "Reise mit Autopilot: kein Kampf hängt, Akt 4 wird erreicht (%d/%d Siege)" % [S.wins, S.runs])
+	print("  info    Reise-Autopilot (Ultra, perfekt): %d/%d Siege, Ø %.1f s je normalem Kampf, %d Konter" % [S.wins, S.runs, S.ntime / maxf(1, S.nfights), S.counters])

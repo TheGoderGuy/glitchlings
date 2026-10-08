@@ -48,6 +48,12 @@ var pushed := 0           # wie oft eine Strömung den Spieler mitgerissen hat
 var boss_heal := false    # im Bosskampf einen Heilpatch benutzt
 var boss_spark_t := 0.0   # Sekunden auf Spannungsfeldern im Bosskampf
 var final_sig := false    # Ur-Glitch mit der Signatur-Attacke besiegt
+## Reise (08.10.2026): ein Run führt durch mehrere Zonen (GameData.ACTS)
+var act := 0              # 0 Cache-Wiesen … 3 NEST-Kern
+var route: Array = []     # besuchte Zonen in Reihenfolge
+var bosses: Array = []    # Zonen, deren Boss in diesem Run besiegt wurde
+var legends_won: Array = []  # in diesem Run erfüllte Legenden-Bedingungen (leuchtende Eier)
+var route_pending := false   # Boss besiegt, die nächste Zone ist noch nicht gewählt (Weggabelung)
 
 
 func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
@@ -65,6 +71,7 @@ func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
 	else:
 		rng.randomize()
 	map = ZoneMap.generate(rng)
+	route = [map.zone]
 
 
 # ---------- Form & Evolution ----------
@@ -83,6 +90,8 @@ static func from_monster(m: Dictionary, seed_value: int = -1, zone := "wiesen") 
 	var r := RunState.new(m.species, seed_value)
 	if zone != "wiesen":
 		r.map = ZoneMap.generate(r.rng, zone)
+		r.act = GameData.act_of(zone)
+		r.route = [zone]
 	r.monster_id = int(m.id)
 	r.form = m.form
 	r.start_form = m.form
@@ -231,6 +240,34 @@ func zone_floors() -> int:
 	return map.levels * map.boss_floor()
 
 
+## Zonen, die nach dem Boss der aktuellen Zone zur Wahl stehen (leer = Reise zu Ende)
+func act_choices() -> Array:
+	if act + 1 >= GameData.ACTS.size():
+		return []
+	return GameData.ACTS[act + 1].filter(func(z): return SaveGame.zone_in_build(z))
+
+
+## Ist die aktuelle Zone die letzte der Reise (NEST-Kern, in der Testfassung die letzte freie Zone)?
+func final_act() -> bool:
+	return act_choices().is_empty()
+
+
+## Nach dem Zonen-Boss: weiter in die gewählte Zone (Akt + 1). Deck, Module, HP und Form bleiben.
+## Die Werte für die Legenden-Bedingungen gelten je Zone und starten neu. Gibt die Erholung in HP zurück.
+func next_act(zone: String) -> int:
+	act += 1
+	route_pending = false
+	route.append(zone)
+	map = ZoneMap.generate(rng, zone, 0)
+	floor_idx = -1
+	pos = -1
+	path = []
+	pushed = 0
+	boss_heal = false
+	boss_spark_t = 0.0
+	return heal(roundi(max_hp * GameData.ACT_HEAL))
+
+
 ## Nach dem Sieg über einen Wächter: Karte der nächsten Ebene
 func next_level() -> void:
 	map = ZoneMap.generate(rng, map.zone, map.level + 1)
@@ -245,8 +282,9 @@ func foe_for(node: Dictionary) -> Dictionary:
 
 
 func _apply_difficulty(d: Dictionary) -> Dictionary:
-	d.hp = roundi(d.hp * DIFF_HP[difficulty])
-	d.dmg = maxi(1, roundi(d.dmg * DIFF_DMG[difficulty]))
+	d.hp = roundi(d.hp * DIFF_HP[difficulty] * GameData.FOE_HP * (GameData.BOSS_HP if d.get("boss", false) else 1.0))
+	d.dmg = maxi(1, roundi(d.dmg * DIFF_DMG[difficulty] * GameData.FOE_DMG))
+	d.atk = float(d.atk) * GameData.FOE_TEMPO
 	d.warn_bonus = DIFF_WARN[difficulty]
 	d.loot = roundi(d.loot * DIFF_LOOT[difficulty])
 	if protocol > 0:
@@ -282,17 +320,19 @@ func _base_foe(node: Dictionary) -> Dictionary:
 		return GameData.FOES[Z.boss].duplicate(true)
 	if node.type == "guard":
 		var guards: Array = Z.guards
-		return GameData.FOES[guards[mini(map.level, guards.size() - 1)]].duplicate(true)
+		return GameData.FOES[guards[clampi(int(node.get("guard_i", mini(map.level, guards.size() - 1))), 0, guards.size() - 1)]].duplicate(true)
 	var g := zone_floor()
 	var pool: Array = Z.elite if node.type in ["elite", "glitch"] else (Z.early if g < 2 else Z.late)
 	var base: Dictionary = GameData.FOES[pool[rng.randi_range(0, pool.size() - 1)]]
 	var d := base.duplicate()
-	d.hp = roundi(base.hp * (1.0 + 0.05 * g) * Z.hp_mult)
+	var A := clampi(act, 0, GameData.ACTS.size() - 1)
+	d.hp = roundi(base.hp * (1.0 + 0.05 * g) * GameData.ACT_HP[A])
+	d.dmg = roundi(base.dmg * GameData.ACT_DMG[A])
 	d.elite = node.type in ["elite", "glitch"]
 	if d.elite:
 		d.name = "Elite-" + base.name
 		d.hp = roundi(d.hp * 1.6)
-		d.dmg = base.dmg + 4
+		d.dmg += 4
 		d.atk = base.atk * 0.85
 		d.move = base.move * 0.85
 		d.loot = base.loot * 2 + 5
@@ -330,23 +370,43 @@ func add_module(id: String) -> void:
 		modules.append(id)
 
 
-## Chipwahl nach einem Kampf (Suchalgorithmus: mindestens ein seltener oder epischer Chip)
+## Elemente, die das Monster gerade weiterbringen (08.10.2026): Baby = seine Entwicklungsrichtungen,
+## danach das Element der Form (Resonanz). Neutrale Formen: keine.
+func growth_elements() -> Array:
+	if stage == 1:
+		return mon.evo.keys()
+	var el := form_el()
+	return [] if el == "Neutral" else [el]
+
+
+## Chipwahl nach einem Kampf. Mindestens ein Chip passt zu growth_elements() (Evolution lenken, Resonanz);
+## Suchalgorithmus: mindestens ein seltener oder epischer Chip.
 func roll_pick(weights: Dictionary) -> Array:
 	var out := roll_choices(weights)
+	var grow := growth_elements()
+	if not grow.is_empty() and not out.any(func(k): return grow.has(GameData.CHIPS[k].el)):
+		var slot := rng.randi_range(0, 2)
+		var keep: Array = out.filter(func(k): return k != out[slot])
+		var fit: Array = roll_choices(weights, keep, grow)
+		if not fit.is_empty():
+			out[slot] = fit[0]
 	if has_mod("suchalgorithmus") and out.all(func(k): return GameData.CHIPS[k].rar == "Gewöhnlich"):
 		var better: Array = roll_choices({"Gewöhnlich": 0, "Selten": 3, "Episch": 1}, out.slice(0, 2))
 		out[2] = better[0]
 	return out
 
 
-func roll_choices(weights: Dictionary = GameData.RARITY_WEIGHT, exclude: Array = []) -> Array:
+## Bis zu 3 verschiedene Chips nach Seltenheit; exclude: nicht anbieten; els: nur diese Elemente
+func roll_choices(weights: Dictionary = GameData.RARITY_WEIGHT, exclude: Array = [], els: Array = []) -> Array:
 	var pool: Array = []
 	for k in GameData.CHIPS:
-		if exclude.has(k):
+		if exclude.has(k) or (not els.is_empty() and not els.has(GameData.CHIPS[k].el)):
 			continue
 		for i in weights[GameData.CHIPS[k].rar]:
 			pool.append(k)
 	var out: Array = []
+	if pool.is_empty():
+		return out
 	var guard := 0
 	while out.size() < 3 and guard < 300:
 		guard += 1
@@ -435,6 +495,7 @@ func to_dict() -> Dictionary:
 		"sp_bonus": sp_bonus, "foe_weak": foe_weak, "seen_events": seen_events.duplicate(),
 		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty, "protocol": protocol,
 		"pushed": pushed, "boss_heal": boss_heal, "boss_spark_t": boss_spark_t, "final_sig": final_sig, "loot_mult": loot_mult,
+		"act": act, "route": route.duplicate(), "bosses": bosses.duplicate(), "legends_won": legends_won.duplicate(), "route_pending": route_pending,
 		"zone": map.zone, "level": map.level, "floors": map.floors.duplicate(true),
 		"floor_idx": floor_idx, "pos": pos, "path": p,
 		# 64-Bit-Werte als Text, JSON-Zahlen sind nur Gleitkomma
@@ -474,6 +535,12 @@ static func from_dict(d: Dictionary) -> RunState:
 	r.boss_spark_t = float(d.get("boss_spark_t", 0.0))
 	r.final_sig = bool(d.get("final_sig", false))
 	r.loot_mult = float(d.get("loot_mult", 1.0))
+	# Reise: alte Spielstände (eine Zone = ein Run) bekommen den Akt ihrer Zone
+	r.act = int(d.get("act", GameData.act_of(d.zone)))
+	r.route = Array(d.get("route", [d.zone]))
+	r.bosses = Array(d.get("bosses", []))
+	r.legends_won = Array(d.get("legends_won", []))
+	r.route_pending = bool(d.get("route_pending", false))
 	var m := ZoneMap.new()
 	m.zone = d.zone
 	m.zone_name = GameData.ZONES[m.zone].name

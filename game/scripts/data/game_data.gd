@@ -288,25 +288,33 @@ const FOES := [
 		"phase2": ["cross", "spark", "col2", "wall"], "specials": [{"shape": "ring", "name": "Kurzschlusskreis"}]},
 ]
 
-## Zonen: Gegner-Pools (Indizes in FOES), Boss, Wächter je Ebene, Zähigkeit, Hintergrund. Zone 2 wird nach dem Boss von Zone 1 frei.
-## Jede Zone hat 3 Ebenen à 5 Etagen (ZoneMap), die Finalzone nur 2 („levels“).
+## Zähigkeit aller Gegner im Run (08.10.2026, Game-Design-Analyse): Vorher starben normale Gegner nach 3–8 s,
+## oft vor ihrem ersten Angriff. Gemessen mit dem „Mensch“-Bot (game/tools/balance_sim.tscn).
+## Als static var, damit die Balancing-Simulation sie zum Ausprobieren verstellen kann (--set=FOE_DMG:1.4)
+static var FOE_HP := 2.5
+static var BOSS_HP := 1.3      # Wächter und Bosse zusätzlich, damit man alle Phasen erlebt
+static var FOE_DMG := 1.25     # Gegnerschaden
+static var FOE_TEMPO := 0.85   # Angriffstakt (kleiner = öfter)
+
+## Zonen: Gegner-Pools (Indizes in FOES), Boss, Wächter (einer davon je Run), Hintergrund. Jede Zone hat 2 Ebenen à 4 Etagen
+## (ZoneMap) und ist ein Akt der Reise (ACTS). „unlock“ stammt aus der Zeit, als jede Zone ein eigener Run war.
 const ZONES := {
-	"wiesen": {"name": "Cache-Wiesen", "bg": "wiesen", "boss": 3, "guards": [18, 19], "hp_mult": 1.0,
+	"wiesen": {"name": "Cache-Wiesen", "bg": "wiesen", "boss": 3, "guards": [18, 19],
 		"early": [0, 1, 5], "late": [0, 1, 2, 4, 5], "elite": [2, 4, 5],
 		"desc": "Grüne Datenwiesen. Das Startgebiet.", "unlock": ""},
-	"vulkan": {"name": "Firewall-Vulkan", "bg": "vulkan", "boss": 10, "guards": [20, 21], "hp_mult": 1.25,
+	"vulkan": {"name": "Firewall-Vulkan", "bg": "vulkan", "boss": 10, "guards": [20, 21],
 		"early": [7, 9, 25], "late": [7, 8, 9, 6, 25], "elite": [8, 6, 25],
 		"desc": "Glühende Sicherheitsmauern. Wasser hat hier einen Vorteil.", "unlock": "wiesen"},
-	"see": {"name": "Kühlwasser-See", "bg": "see", "boss": 34, "guards": [35, 36], "hp_mult": 1.4,
+	"see": {"name": "Kühlwasser-See", "bg": "see", "boss": 34, "guards": [35, 36],
 		"early": [30, 31, 33], "late": [30, 31, 32, 33], "elite": [32, 33, 30],
 		"desc": "Der riesige Kühlsee unter dem Server. Strömungen reißen dich mit. Code hat hier einen Vorteil.", "unlock": "vulkan"},
-	"sumpf": {"name": "Viren-Sümpfe", "bg": "sumpf", "boss": 14, "guards": [22, 23], "hp_mult": 1.5,
+	"sumpf": {"name": "Viren-Sümpfe", "bg": "sumpf", "boss": 14, "guards": [22, 23],
 		"early": [11, 26, 27], "late": [11, 12, 13, 26, 27], "elite": [12, 13, 26],
 		"desc": "Blubbernde Sümpfe voller Viren und Glitch-Sporen. Elektro hat hier einen Vorteil.", "unlock": "see"},
-	"steppe": {"name": "Hochspannungs-Steppe", "bg": "steppe", "boss": 41, "guards": [42, 43], "hp_mult": 1.65,
+	"steppe": {"name": "Hochspannungs-Steppe", "bg": "steppe", "boss": 41, "guards": [42, 43],
 		"early": [37, 38, 39], "late": [37, 38, 39, 40], "elite": [38, 40, 39],
 		"desc": "Grasland unter Dauergewitter. Spannungsfelder kosten HP, laden deine Chips aber doppelt so schnell. Virus hat hier einen Vorteil.", "unlock": "sumpf"},
-	"kern": {"name": "NEST-Kern", "bg": "kern", "boss": 17, "guards": [24], "levels": 2, "hp_mult": 1.75, "final": true,
+	"kern": {"name": "NEST-Kern", "bg": "kern", "boss": 17, "guards": [24], "final": true,
 		"early": [15, 16, 29], "late": [15, 16, 28, 29], "elite": [15, 28, 29],
 		"desc": "Das Herz des abgestürzten Servers. Kurz, hart – und am Ende wartet der Ur-Glitch.", "unlock": "steppe"},
 }
@@ -324,6 +332,23 @@ const PROTOCOLS := [
 	{"name": "Glitch-Sturm", "desc": "Großangriffe kommen 30 % öfter"},
 ]
 const ZONE_ORDER := ["wiesen", "vulkan", "see", "sumpf", "steppe", "kern"]
+
+## ---------- Reise (08.10.2026, Game-Design-Analyse) ----------
+## Ein Run führt durch mehrere Zonen: Akt 1 Cache-Wiesen, Akt 2 Vulkan oder See, Akt 3 Sümpfe oder Steppe,
+## Finale NEST-Kern. Deck, Module, HP und Evolution bleiben über den ganzen Run. Nach jedem Zonen-Boss wählt man
+## die nächste Zone. Die Zähigkeit der Gegner hängt vom Akt ab, nicht mehr von der Zone.
+const ACTS := [["wiesen"], ["vulkan", "see"], ["sumpf", "steppe"], ["kern"]]
+static var ACT_HP := [1.0, 1.4, 1.85, 2.3]      # normale Gegner je Akt
+static var ACT_DMG := [1.0, 1.2, 1.4, 1.6]      # Schaden normaler Gegner je Akt
+const ACT_HEAL := 0.4                       # Erholung zwischen zwei Akten (Anteil der max. HP)
+
+
+## Akt einer Zone (0 = Cache-Wiesen … 3 = NEST-Kern)
+static func act_of(zone: String) -> int:
+	for i in ACTS.size():
+		if ACTS[i].has(zone):
+			return i
+	return 0
 ## Elemente, durch die der Ur-Glitch wechselt
 const SHIFT_ELEMENTS := ["Virus", "Feuer", "Wasser", "Elektro", "Code"]
 
@@ -459,7 +484,7 @@ const MONS := {
 		"passive": "Spuk", "passive_desc": "Weicht 20 % aller Treffer aus.",
 		"trait": "Fusion. Halb Geist, halb Katze.", "evo": {},
 	},
-	# --- Legendäre (07.10.2026): je Zone ein Fabelwesen, schlüpfen als Champion, Ultra ab 80 Element-Chips ---
+	# --- Legendäre (07.10.2026): je Zone ein Fabelwesen, schlüpfen als Champion, Ultra ab EVO_AT[4] Element-Chips ---
 	"Glimmhirsch": {
 		"hp": 110, "move": 0.11, "rech": 1.0, "el": "Neutral", "animal": "Hirsch", "legend": true,
 		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Doppelklick", "Blitzcursor", "Wasserstrahl", "Heilpatch", "Firewall"],
@@ -637,7 +662,7 @@ const FORMS := {
 	"Sumpfdrak": {"spr": "Sumpfdrak_80", "stage": 3, "el": "Virus", "up": "Hydradrak"},
 	"Lavadrak": {"spr": "Lavadrak_80", "stage": 3, "el": "Feuer", "up": "Vulkandrak"},
 	"Phönixkauz": {"spr": "Phoenixkauz_80", "stage": 3, "el": "Feuer", "up": "Infernokauz"},
-	# --- Ultras (96 px, Stufe 4, ab 80 Element-Chips) ---
+	# --- Ultras (96 px, Stufe 4, ab EVO_AT[4] Element-Chips) ---
 	"Bastionkatz": {"spr": "Bastionkatz_96", "stage": 4, "el": "Code", "up": ""},
 	"Venomynx": {"spr": "Venomynx_96", "stage": 4, "el": "Virus", "up": ""},
 	"Aurorlynx": {"spr": "Aurorlynx_96", "stage": 4, "el": "Elektro", "up": ""},
@@ -660,9 +685,10 @@ const FORMS := {
 
 const STAGE_NAMES := ["", "Baby", "Rookie", "Champion", "Ultra"]
 
-## Prägung (gespielte Chips im Run), ab der die nächste Stufe erreicht wird
-## Lebenszeit-Prägung (gespielte Chips über alle Runs): Rookie meist im ersten Run, Champion im zweiten/dritten
-const EVO_AT := {2: 12, 3: 35, 4: 80}
+## Lebenszeit-Prägung (gespielte Element-Chips über alle Runs), ab der die nächste Stufe erreicht wird.
+## Seit der Reise (08.10.2026) spielt man pro Run 300–800 Element-Chips: Rookie meist noch im ersten Akt des ersten Runs,
+## Champion nach etwa 2 Runs, Ultra nach etwa 5 Runs (vorher 12/35/80, da war Ultra nach 2–3 kurzen Zonen-Runs erreicht).
+static var EVO_AT := {2: 25, 3: 900, 4: 2700}
 ## Die führende Richtung braucht so viele Chips Vorsprung vor der zweitbesten, sonst wartet die Evolution
 const EVO_LEAD := 2
 
@@ -786,6 +812,38 @@ const SPECIALS := {
 	"Spukatz": {"name": "Spukschlag", "el": "Virus", "anim": "jump", "hits": [45], "poison": 6, "decoy": 1, "decoy_t": 6.0, "desc": "Geisterhafter Sprung: 45 + Gift, ein Abbild fängt den nächsten Treffer ab."},
 }
 
+## ---------- Resonanz und Element-Gaben (08.10.2026, Game-Design-Analyse) ----------
+## Die Evolution soll verändern, wie man spielt: Ab Rookie verstärkt die Form ihr eigenes Element.
+## Resonanz: Chips im Element der Form machen mehr Schaden (je Stufe). Gabe: eine Regel je Element, mit jeder Stufe stärker.
+## Neutrale Formen (Babys, Glimmhirsch-Linie) haben weder Resonanz noch Gabe.
+const RESONANCE := {2: 0.2, 3: 0.3, 4: 0.4}
+const GIFTS := {
+	"Feuer": {"name": "Zündeln", "desc": "Feuer-Treffer setzen den Gegner %s s in Brand.", "v": {2: 2, 3: 3, 4: 4}},
+	"Wasser": {"name": "Sog", "desc": "Wasser-Treffer verlangsamen den Gegner %s s.", "v": {2: 1.0, 3: 1.5, 4: 2.0}},
+	"Code": {"name": "Schutzroutine", "desc": "Blockst oder vermeidest du einen Treffer, lädt die Signatur um %s %%.", "v": {2: 10, 3: 15, 4: 20}},
+	"Elektro": {"name": "Funkenflug", "desc": "Elektro-Treffer betäuben den Gegner %s s.", "v": {2: 0.2, 3: 0.3, 4: 0.4}},
+	"Virus": {"name": "Ansteckung", "desc": "Virus-Treffer vergiften den Gegner %s s.", "v": {2: 2, 3: 3, 4: 4}},
+}
+
+
+## Resonanz-Bonus einer Form für ein Chip-Element (0 = keiner)
+static func resonance(form: String, chip_el: String) -> float:
+	var F: Dictionary = FORMS.get(form, {})
+	if F.is_empty() or F.el == "Neutral" or F.el != chip_el:
+		return 0.0
+	return RESONANCE.get(int(F.stage), 0.0)
+
+
+## Gabe einer Form: {} oder {name, desc (mit Wert), el, v}
+static func gift(form: String) -> Dictionary:
+	var F: Dictionary = FORMS.get(form, {})
+	if F.is_empty() or not GIFTS.has(F.el) or int(F.stage) < 2:
+		return {}
+	var G: Dictionary = GIFTS[F.el]
+	var v = G.v[clampi(int(F.stage), 2, 4)]
+	return {"name": G.name, "desc": T.t(G.desc) % T.dec(v) if v is float else T.t(G.desc) % str(v), "el": F.el, "v": v}
+
+
 const BEATS := {"Feuer": "Code", "Code": "Wasser", "Wasser": "Feuer"}
 const RARITY_WEIGHT := {"Gewöhnlich": 6, "Selten": 3, "Episch": 1}
 
@@ -821,7 +879,7 @@ const STATION_UPGRADES := [
 	{"id": "vorrat", "name": "Vorratslager", "costs": [100, 200, 350], "desc": "Jeder Run startet mit +%d max. HP."},
 	{"id": "modulschacht", "name": "Modulschacht", "costs": [220, 420], "desc": "Jeder Run startet mit einem Modul (Stufe 2: auch seltene und epische)."},
 	{"id": "filter", "name": "Fragmentfilter", "costs": [150, 300], "desc": "+%d %% Fragmente aus Kämpfen."},
-	{"id": "brutwaermer", "name": "Brutwärmer", "costs": [180], "desc": "Eier schlüpfen einen Run früher (mindestens nach 1 Run)."},
+	{"id": "brutwaermer", "name": "Brutwärmer", "costs": [180], "desc": "Nach jedem Run mit mindestens 2 Siegen ein zusätzliches Ei."},
 	{"id": "nestplatz", "name": "Nest-Erweiterung", "costs": [150], "desc": "Ein vierter Platz im Brutnest."},
 ]
 

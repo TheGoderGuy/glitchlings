@@ -140,7 +140,7 @@ func _draw() -> void:
 	var ch := run.next_choices()
 	var target := Vector2i(run.floor_idx + 1, ch[sel]) if not ch.is_empty() else Vector2i(-9, -9)
 	_text(Vector2(0, 22), T.t(m.zone_name).to_upper(), 16, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
-	var lvl_line: String = T.t("Ebene %d von %d") % [m.level + 1, m.levels]
+	var lvl_line: String = T.t("Akt %d von %d · Ebene %d von %d") % [run.act + 1, GameData.ACTS.size(), m.level + 1, m.levels]
 	if run.protocol > 0:
 		lvl_line += "  ·  " + T.t("Protokoll %d") % run.protocol
 	_text(Vector2(0, 34), lvl_line, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
@@ -194,6 +194,12 @@ func _draw() -> void:
 		draw_rect(Rect2(0, 150, W, 50), Color(GameData.COL.dark, 0.75 * a))
 		_text(Vector2(0, 180), T.t("EBENE %d") % (m.level + 1), 24, Color(GameData.COL.sun, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		_text(Vector2(0, 194), "Der Wächter ist besiegt. Der Weg führt tiefer hinein.", 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_CENTER, W)
+	elif level_t > 0 and run.act > 0:
+		# Neuer Akt der Reise: Zone wird betreten
+		var a := minf(1.0, level_t / 0.5)
+		draw_rect(Rect2(0, 150, W, 50), Color(GameData.COL.dark, 0.75 * a))
+		_text(Vector2(0, 180), T.t("AKT %d") % (run.act + 1), 24, Color(GameData.COL.sun, a), HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, 194), T.t("Die Reise führt weiter: %s.") % T.t(m.zone_name), 8, Color(GameData.COL.ink, a), HORIZONTAL_ALIGNMENT_CENTER, W)
 	if deck_tip:
 		_draw_deck_tip()
 	elif tip:
@@ -222,7 +228,8 @@ func _draw_side_panels(target: Vector2i) -> void:
 	_text(Vector2(L.position.x + 8, y), GameData.STAGE_NAMES[run.stage], 8, GameData.EL[run.form_el()], HORIZONTAL_ALIGNMENT_RIGHT, L.size.x - 16)
 	_bar(Rect2(L.position.x + 8, y + 6, L.size.x - 16, 9), float(run.hp) / run.max_hp, GameData.COL.mint)
 	var rows := [["HP", "%d/%d" % [run.hp, run.max_hp], GameData.COL.ink], ["Fragmente", str(run.frag), GameData.COL.sun],
-		["Deck", "%d Chips" % run.deck.size(), GameData.COL.ink], ["Ebene · Etage", "%d/%d · %d/%d" % [run.map.level + 1, run.map.levels, maxi(0, run.floor_idx + 1), run.map.floors.size()], GameData.COL.ink]]
+		["Deck", "%d Chips" % run.deck.size(), GameData.COL.ink], ["Akt", "%d/%d" % [run.act + 1, GameData.ACTS.size()], GameData.COL.ink],
+		["Ebene · Etage", "%d/%d · %d/%d" % [run.map.level + 1, run.map.levels, maxi(0, run.floor_idx + 1), run.map.floors.size()], GameData.COL.ink]]
 	y += 27
 	for row in rows:
 		_text(Vector2(L.position.x + 8, y), row[0], 8, GameData.COL.muted)
@@ -308,7 +315,8 @@ func _draw_tip() -> void:
 	var lines := [
 		T.t("Wähle mit < > deinen Weg und betritt den nächsten Knoten mit %s. Es geht immer nach oben.") % (InputSetup.btn("A") if pad else "Enter"),
 		T.t("Kampf, Elite, Ereignis, Rast, Händler: Was die Symbole bedeuten, steht rechts unten in der Legende."),
-		T.t("Oben wartet ein Wächter. Besiegst du ihn, geht es auf die nächste Ebene. Nach der letzten Ebene kommt der Boss der Zone."),
+		T.t("Oben wartet ein Wächter. Besiegst du ihn, geht es auf die nächste Ebene. Danach kommt der Boss der Zone."),
+		T.t("Nach jedem Zonen-Boss wählst du die nächste Zone. Dein Deck und deine Module bleiben, bis zum NEST-Kern."),
 		T.t("Mit %s siehst du jederzeit dein Deck und deine Module.") % (InputSetup.btn("Start") if pad else "Esc"),
 	]
 	var y := B.position.y + 44

@@ -16,6 +16,7 @@ const CARD_H := 44
 const HAND_Y := 310
 const HAND_X := 42
 const HEAL_AFTER_FIGHT := 10
+const SKIP_FRAG := 10     # Chipwahl überspringen: Fragmente statt Chip
 const GUARD_HEAL := 0.3   # Wächter besiegt: +30 % der max. HP
 const GLITCH_WEIGHT := {"Gewöhnlich": 0, "Selten": 1, "Episch": 3}   # Chipwahl nach einer Glitch-Elite
 const BABY_SCALE := 1     # Babys (32 px) im Kampf in Originalgröße, damit die Evolution sichtbar wächst
@@ -189,7 +190,9 @@ func _fight_over() -> void:
 		finished.emit(true)
 		set_process(false)
 		return
-	if st.outcome == "lost" or node_type == "boss":
+	# Reise (08.10.2026): Nach einem Zonen-Boss geht es weiter, also Evolution und Belohnung wie nach einem Wächter.
+	# Nur der letzte Boss der Reise führt direkt zum Ende.
+	if st.outcome == "lost" or (node_type == "boss" and run.final_act()):
 		finished.emit(st.outcome == "won")
 		set_process(false)
 		return
@@ -207,12 +210,12 @@ func _fight_over() -> void:
 	var weights: Dictionary = GameData.RARITY_WEIGHT
 	if node_type in ["elite", "guard"]:
 		weights = RunState.ELITE_WEIGHT
-	elif node_type == "glitch":
+	elif node_type in ["glitch", "boss"]:
 		weights = GLITCH_WEIGHT
 	choices = run.roll_pick(weights)
-	# Elite-, Glitch-Elite- und Wächter-Belohnung: ein neues Modul
+	# Elite-, Glitch-Elite-, Wächter- und Boss-Belohnung: ein neues Modul
 	new_module = ""
-	if node_type in ["elite", "glitch", "guard"]:
+	if node_type in ["elite", "glitch", "guard", "boss"]:
 		new_module = run.roll_module(GameData.MODULE_WEIGHT_ELITE)
 		run.add_module(new_module)
 	pick_idx = 1
@@ -222,6 +225,9 @@ func _fight_over() -> void:
 func _take_pick(skip := false) -> void:
 	if not skip:
 		run.deck.append(choices[pick_idx])
+	else:
+		# Überspringen lohnt sich (08.10.2026): schlanke Decks sind eine echte Strategie
+		run.frag += SKIP_FRAG
 	set_process(false)
 	finished.emit(true)
 
@@ -679,9 +685,22 @@ func _draw_actors() -> void:
 			tint = Color("#FF9DF0") if fmod(anim_t, 0.9) < 0.12 else Color("#E8B0FF")
 		elif st.def.get("elite", false):
 			tint = Color(1.0, 0.78, 0.72)
+		# Konter-Fenster: der Gegner glüht beim Ausholen rot-weiß auf (jetzt treffen = Konter)
+		var c_open := not defeated and st.counter_open()
+		if c_open:
+			tint = tint.lerp(Color("#FFD0D8"), 0.5 + 0.5 * sin(anim_t * 40.0))
 		tint.a = fade
 		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint, "atk": -1.0 if defeated else e_atk})
 		_draw_status_fx(ecx, efy)
+		if c_open:
+			# Fadenkreuz über dem Kopf: „jetzt zuschlagen“
+			var tl := _enemy_topleft(Vector2(ecx, efy))
+			var cc := Vector2(roundi(ecx), roundi(maxf(tl.y, Y0 - 40) - 8))
+			var rr := 6.0 + (1.0 if sin(anim_t * 30.0) > 0 else 0.0)
+			var red := Color("#FF5470")
+			draw_arc(cc, rr, 0, TAU, 16, red, 2.0)
+			for d in [Vector2(1, 0), Vector2(-1, 0), Vector2(0, 1), Vector2(0, -1)]:
+				draw_line(cc + d * (rr - 3), cc + d * (rr + 3), Color.WHITE, 1.0)
 		if st.delayed.any(func(d): return d.mark):
 			var cc := Vector2(ecx, efy - 26)
 			var rad := 22.0 + 3.0 * sin(anim_t * 20.0)
@@ -841,6 +860,10 @@ func _draw_hud() -> void:
 	_bar(Rect2(P.position + Vector2(6, 18), Vector2(128, 9)), float(run.hp) / run.max_hp, GameData.COL.mint)
 	_text(P.position + Vector2(6, 26), "%d/%d" % [run.hp, run.max_hp], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_RIGHT, P.size.x - 12)
 	var buffs: Array = []
+	# Element-Gabe der Form (dauerhaft, ab Rookie)
+	var G: Dictionary = st.gift
+	if not G.is_empty():
+		buffs.append([G.name, GameData.EL[G.el]])
 	if st.reflex > 0:
 		buffs.append(["Katzenreflex", GameData.COL.mint])
 	if st.oc > 0:
@@ -883,7 +906,7 @@ func _draw_hud() -> void:
 		tx -= 3
 	# Raum + Hinweis
 	var kind: String = T.t(ZoneMap.TYPE_NAMES[node_type])
-	_text(Vector2(0, 20), T.t("Ebene %d · Etage %d · %s") % [run.map.level + 1, run.floor_idx + 1, kind], 8, GameData.COL.sun if node_type != "fight" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	_text(Vector2(0, 20), T.t("Akt %d · Ebene %d · Etage %d · %s") % [run.act + 1, run.map.level + 1, run.floor_idx + 1, kind], 8, GameData.COL.sun if node_type != "fight" else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if st.status != "" and st.t < 6.0:
 		_text(Vector2(0, 76), st.status, 8, Color(GameData.COL.sun, clampf(6.0 - st.t, 0.0, 1.0)), HORIZONTAL_ALIGNMENT_CENTER, W)
 
@@ -922,6 +945,12 @@ func _draw_hand() -> void:
 		var ready: bool = s.rem <= 0
 		_box(r, GameData.COL.panel if ready else GameData.COL.bg2, rc if ready else GameData.COL.line)
 		draw_rect(Rect2(r.position + Vector2(1, 1), Vector2(3, r.size.y - 2)), el)
+		# Resonanz: Chip im Element der Form – breiterer, schimmernder Element-Streifen
+		if GameData.resonance(run.form, ch.el) > 0 and int(ch.dmg) > 0:
+			var sh := 0.5 + 0.5 * sin(anim_t * 6.0 + i)
+			draw_rect(Rect2(r.position + Vector2(4, 1), Vector2(1, r.size.y - 2)), el.lightened(0.5 * sh))
+			var py := r.position.y + 2 + fmod(anim_t * 30.0 + i * 13.0, r.size.y - 6)
+			draw_rect(Rect2(r.position.x + 1, py, 3, 2), Color(1, 1, 1, 0.8))
 		# Tasten-Symbol
 		var g := Rect2(r.position + Vector2(8, 5), Vector2(maxf(15.0, text_width(_glyph_chip(i), 8, true) + 6), 14))
 		_box(g, GameData.COL.dark, rc if ready else GameData.COL.line)
@@ -1072,6 +1101,8 @@ func _draw_pick() -> void:
 		head_txt = T.t("Wächter besiegt! Ebene %d ist frei.") % (run.map.level + 2)
 	elif node_type == "glitch":
 		head_txt = "Glitch-Elite besiegt! Epische Beute!"
+	elif node_type == "boss":
+		head_txt = T.t("%s ist befreit!") % T.t(run.map.zone_name)
 	_text(r.position + Vector2(0, 30), head_txt, 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 	var line := T.t("%s ist defragmentiert. +%d Fragmente") % [T.t(st.def.name), st.loot_gained if st.loot_gained > 0 else st.def.loot]
 	if heal_info > 0:
@@ -1120,6 +1151,9 @@ func _draw_pick() -> void:
 				tag_col = el
 			else:
 				tag = T.t("Ohne Wirkung auf %s") % T.t(run.form)
+		elif GameData.resonance(run.form, ch.el) > 0 and int(ch.dmg) > 0:
+			tag = T.t("Resonanz: +%d %% Schaden") % roundi(GameData.resonance(run.form, ch.el) * 100)
+			tag_col = el
 		elif int(es.need) > 0:
 			tag = "Zählt zur nächsten Stufe"
 			tag_col = el
@@ -1130,18 +1164,27 @@ func _draw_pick() -> void:
 		evo_line = T.t(" · Element-Chips %d/%d · %s") % [mini(int(es.total), int(es.need)), int(es.need), lead]
 	_text(Vector2(r.position.x, r.end.y - 36), T.t("Deck: %d Chips · Fragmente: %d%s") % [run.deck.size(), run.frag, evo_line], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	var pad: bool = InputSetup.pad
-	_text(Vector2(r.position.x, r.end.y - 16), T.t("< > wählen   %s nehmen   %s überspringen") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	_text(Vector2(r.position.x, r.end.y - 16), T.t("< > wählen   %s nehmen   %s überspringen (+%d Fragmente)") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc", SKIP_FRAG], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
 
 
 func _draw_evolve() -> void:
 	var t := mode_t
-	var c := Vector2(W / 2.0, 220)
+	var c := Vector2(W / 2.0, 240)
 	var from: String = evo.from
 	var to: String = evo.to
 	var el: Color = GameData.EL[GameData.FORMS[to].el]
+	var body := c - Vector2(0, 70)
 	# Lichtsäule
 	var glow := clampf(t / EVO_REVEAL, 0.0, 1.0)
 	draw_rect(Rect2(c.x - 40 * glow, 0, 80 * glow, H), Color(el, 0.12 * glow))
+	# Strahlenkranz nach der Enthüllung (08.10.2026: das wichtigste Ereignis des Spiels groß inszenieren)
+	if t >= EVO_REVEAL:
+		var kr := clampf((t - EVO_REVEAL) / 0.4, 0.0, 1.0)
+		for i in 12:
+			var a := i * TAU / 12.0 + t * 0.35
+			var d1 := Vector2(cos(a - 0.07), sin(a - 0.07)) * 420.0 * kr
+			var d2 := Vector2(cos(a + 0.07), sin(a + 0.07)) * 420.0 * kr
+			draw_colored_polygon(PackedVector2Array([body, body + d1, body + d2]), Color(el, 0.10))
 	for i in 12:
 		var a := i * TAU / 12.0 + t * 2.0
 		var rad := 70.0 - fmod(t * 40.0 + i * 13.0, 60.0)
@@ -1151,21 +1194,29 @@ func _draw_evolve() -> void:
 		var freq := 2.0 + t * t * 6.0
 		var show_new := fmod(t * freq, 1.0) > 0.5
 		var key := to if show_new else from
-		_draw_sprite(key, c.x, c.y, false, {"flash": true, "scale": 2 if GameData.FORMS[key].stage == 1 else 1})
-		_text(Vector2(0, 60), T.t("%s entwickelt sich …") % T.t(from), 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_draw_sprite(key, c.x, c.y, false, {"flash": true, "scale": 4 if GameData.FORMS[key].stage == 1 else 2})
+		_text(Vector2(0, 34), T.t("%s entwickelt sich …") % T.t(from), 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 	else:
 		var k := t - EVO_REVEAL
 		if k < 0.25:
 			draw_rect(Rect2(0, 0, W, H), Color(1, 1, 1, 1.0 - k / 0.25))
 		var bob := 1 if sin(anim_t * 4.0) > 0 else 0
-		_draw_sprite(to, c.x, c.y, false, {"bob": bob})
-		_text(Vector2(0, 60), T.t("%s ist jetzt %s!") % [T.t(from), T.t(to)], 16, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_draw_sprite(to, c.x, c.y, false, {"bob": bob, "scale": 2})
+		_text(Vector2(0, 34), T.t("%s ist jetzt %s!") % [T.t(from), T.t(to)], 16, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		var S: Dictionary = GameData.SPECIALS[to]
-		_text(Vector2(0, 80), T.t("%s · %s · +10 max. HP") % [T.t(GameData.STAGE_NAMES[run.stage]), T.t(GameData.FORMS[to].el)], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
-		_text(Vector2(0, 256), T.t("Neue Signatur:") + " " + T.t(S.name), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
-		_text(Vector2(0, 270), S.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
+		_text(Vector2(0, 50), T.t("%s · %s · +10 max. HP") % [T.t(GameData.STAGE_NAMES[run.stage]), T.t(GameData.FORMS[to].el)], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+		# Was sich spielerisch ändert: Signatur, Gabe, Resonanz
+		var y := 262.0
+		_text(Vector2(0, y), T.t("Neue Signatur:") + " " + T.t(S.name), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+		_text(Vector2(0, y + 12), S.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
+		var G := GameData.gift(to)
+		if not G.is_empty():
+			var had: bool = not GameData.gift(from).is_empty() and GameData.gift(from).name == G.name
+			_text(Vector2(0, y + 32), (T.t("Gabe verstärkt:") if had else T.t("Neue Gabe:")) + " " + T.t(G.name), 8, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, y + 44), G.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
+			_text(Vector2(0, y + 60), T.t("Resonanz: %s-Chips machen +%d %% Schaden") % [T.t(G.el), roundi(GameData.resonance(to, G.el) * 100)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k > 0.6:
-			_text(Vector2(0, 300), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			_text(Vector2(0, 350), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_tutorial() -> void:

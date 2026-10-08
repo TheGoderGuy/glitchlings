@@ -562,3 +562,39 @@ func _draw_zone(zone: String) -> void:
 		var x := fmod(i * 97.3 + 13.0 + sin(anim_t * 0.7 + i) * 6.0, W)
 		var y := H - fmod(anim_t * (10.0 + i % 5 * 3.0) + i * 53.0, H)
 		draw_rect(Rect2(roundi(x), roundi(y), 1 if i % 3 else 2, 1 if i % 3 else 2), dust)
+
+
+## Zonenkarte (Reiseplan in der Station, Weggabelung im Run): Landschaft, Name, Beschreibung, Boss.
+## head: Text oben links (z. B. „Akt 2“), tag/tag_col: oben rechts (z. B. „Boss besiegt“), open: spielbar,
+## big: große Karte mit Beschreibung, sonst kompakt (Name + Boss).
+func _zone_card(r: Rect2, z: String, active: bool, head: String, tag: String, tag_col: Color, open := true, big := true) -> void:
+	var Z: Dictionary = GameData.ZONES[z]
+	var done: bool = SaveGame.data.get("cleared", []).has(z)
+	_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
+	# Landschaft als Ausschnitt der Zonen-Kulisse (1:1, nicht skaliert)
+	var img := Rect2(r.position.x + 4, r.position.y + 4, r.size.x - 8, 78 if big else 40)
+	draw_texture_rect_region(zone_texture(Z.bg), img, Rect2(250, 196 if big else 222, img.size.x, img.size.y), Color(1, 1, 1, 1.0 if open else 0.3))
+	if head != "":
+		_text(Vector2(r.position.x + 8, r.position.y + 16), head, 8, Color.WHITE)
+	if tag != "":
+		_text(Vector2(r.position.x, r.position.y + 16), tag, 8, tag_col, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 8, true, true)
+	if not open:
+		_draw_lock_icon(img.get_center())
+	var ny := img.end.y + 16
+	_text(Vector2(r.position.x, ny), Z.name, 8, GameData.COL.ink if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+	var boss: String = T.t(GameData.FOES[Z.boss].name) if done else "???"
+	var boss_line: String = T.t("Endboss:" if Z.get("final", false) else "Boss:") + " " + boss
+	if big:
+		var desc: String = T.t(Z.desc) if open else T.t("Nicht in dieser Testversion enthalten. Im fertigen Spiel geht es hier weiter!")
+		var wrap := TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND
+		draw_multiline_string(font(), Vector2(r.position.x + 8, ny + 20), desc, HORIZONTAL_ALIGNMENT_CENTER, r.size.x - 16, tsz(8), 6, GameData.COL.ink if open else GameData.COL.muted, wrap)
+		_text(Vector2(r.position.x, r.end.y - 10), boss_line, 8, GameData.COL.coral if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+	else:
+		_text(Vector2(r.position.x, ny + 13), boss_line, 8, GameData.COL.coral if open else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
+
+
+func _draw_lock_icon(c: Vector2) -> void:
+	draw_arc(c + Vector2(0, -6), 7.0, PI, TAU, 12, GameData.COL.ink, 3.0)
+	draw_rect(Rect2(c.x - 10, c.y - 6, 20, 16), GameData.COL.dark)
+	draw_rect(Rect2(c.x - 9, c.y - 5, 18, 14), GameData.COL.muted)
+	draw_rect(Rect2(c.x - 1, c.y, 2, 5), GameData.COL.dark)

@@ -3,6 +3,8 @@ tags: [produktion, gameplay, steam, evolution]
 ---
 # Evolution im Run (Godot, seit 28.09.2026)
 
+> **Stand 08.10.2026:** Schwellen jetzt 25 / 900 / 2700 Element-Chips, dazu Resonanz und Gaben je Element, Neu prägen im Labor – siehe [[Kampf-Kern, Evolution und Reise]].
+
 Kernversprechen: **Die Spielweise bestimmt die Evolution.** Umsetzung: `RunState.try_evolve()` in `game/scripts/run/run_state.gd`, Daten in `GameData.MONS / FORMS / SPECIALS`.
 
 ## Ablauf

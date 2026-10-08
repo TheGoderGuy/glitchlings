@@ -1,13 +1,13 @@
 class_name Tutorial
 extends RefCounted
 ## Geführter Trainingskampf (04.10.2026, Tester-Feedback: „Das Handbuch liest keiner, wir wollen in einen Kampf“).
-## Läuft direkt nach der Starterwahl und jederzeit über Titel > Training. Acht Lernschritte zum Selbermachen:
-## Bewegen > Angriff 1 > Angriff 2 > Ausweichen > Schützen > Element-Vorteil > Großangriff > Signatur > frei kämpfen.
+## Läuft direkt nach der Starterwahl und jederzeit über Titel > Training. Neun Lernschritte zum Selbermachen:
+## Bewegen > Angriff 1 > Angriff 2 > Ausweichen > Konter (08.10.2026) > Schützen > Element-Vorteil > Großangriff > Signatur > frei kämpfen.
 ## Steuert nur, wann der Gegner angreifen darf, legt passende Chips auf die Hand und prüft die Fortschritte;
 ## die Ansicht zeigt die Texte. Der Spieler kann in diesem Kampf nicht verlieren.
 
-enum Step { MOVE, CHIP, CHIP2, DODGE, SHIELD, ELEMENT, BIG, SPECIAL, FREE, DONE }
-const LEARN_STEPS := 8     # Fortschrittspunkte (MOVE … SPECIAL)
+enum Step { MOVE, CHIP, CHIP2, DODGE, COUNTER, SHIELD, ELEMENT, BIG, SPECIAL, FREE, DONE }
+const LEARN_STEPS := 9     # Fortschrittspunkte (MOVE … SPECIAL)
 
 var step := Step.MOVE
 var moves := 0
@@ -62,6 +62,9 @@ func update(st: BattleState, dt: float) -> void:
 				st.e.atk_t = 0.6
 				last_warns = 0
 		Step.DODGE:
+			# Der Gegner schießt entlang seiner Reihe: vor jedem Schuss stellt er sich in deine
+			if st.warns.is_empty() and st.e.atk_t < 0.4:
+				st.e.r = st.p.r
 			# Eine Warnung ist abgelaufen, ohne dass der Spieler getroffen wurde > ausgewichen
 			if st.warns.size() > 0 and last_warns == 0:
 				hp_at_warn = st.run.hp
@@ -71,8 +74,24 @@ func update(st: BattleState, dt: float) -> void:
 				hp_at_warn = st.run.hp
 			last_warns = st.warns.size()
 			if dodges >= 2:
+				_go(Step.COUNTER)
+				_give(st, 0, "Laserschuss")
+				st.e.atk_t = 1.5
+		Step.COUNTER:
+			# Der Gegner stellt sich in deine Reihe und holt langsamer aus als sonst; der Laserschuss trifft sofort
+			st.e.move_t = maxf(st.e.move_t, 1.0)
+			if st.warns.is_empty():
+				st.e.r = st.p.r
+				st.e.atk_t = minf(st.e.atk_t, 1.5)
+			for w in st.warns:
+				if w.get("atk", false) and w.max < 1.3:
+					w.t += 0.6
+					w.max += 0.6
+			if st.events.has("counter"):
 				_go(Step.SHIELD)
 				_give(st, 2, "Firewall")
+			elif st.hand[0].chip != "Laserschuss" and st.hand[0].rem <= 0:
+				_give(st, 0, "Laserschuss")
 		Step.SHIELD:
 			# Sobald die Firewall steht, greift der Gegner genau die Reihe des Spielers an
 			if st.shield > 0 and step_t > 0.2 and st.warns.is_empty() and st.e.atk_t > 0.5:
@@ -138,6 +157,8 @@ func texts(pad: bool) -> Array:
 			return ["Zweiter Angriff", T.t("Mit %s spielst du die zweite Angriffskarte. Beide ziehen aus demselben Stapel.") % k2]
 		Step.DODGE:
 			return [T.t("Ausweichen (%d/2)") % dodges, "Rote Felder mit „!“ werden gleich getroffen. Geh rechtzeitig runter!"]
+		Step.COUNTER:
+			return ["Konter", T.t("Holt der Gegner aus, erscheint ein Fadenkreuz über ihm. Triff ihn genau dann mit %s: Sein Angriff fällt aus!") % k1]
 		Step.SHIELD:
 			return ["Schützen", T.t("Drück %s: Die Firewall blockt den nächsten Treffer. Danach ruhig stehen bleiben!") % k3]
 		Step.ELEMENT:

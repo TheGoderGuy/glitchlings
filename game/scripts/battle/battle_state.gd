@@ -6,6 +6,8 @@ extends RefCounted
 
 const WARN_TIME := 0.7
 const SPECIAL_JUMP := 0.35
+## Erster Gegnerangriff nach diesem Anteil seines Angriffstakts (08.10.2026: früher, damit der Gegner überhaupt zum Zug kommt)
+const FIRST_ATTACK := 0.5
 
 var run: RunState
 var mon: Dictionary
@@ -92,6 +94,18 @@ const SPECIAL_EVERY := 11.0
 var sp_left := 0       # ausstehende Warnfelder des laufenden Großangriffs
 var sp_fail := false   # Spieler wurde vom laufenden Großangriff getroffen
 var sp_dodged := 0     # komplett ausgewichene Großangriffe (Statistik/Tests)
+# Konter-Treffer (08.10.2026, Game-Design-Analyse): Wer den Gegner trifft, während er ausholt (seine Warnung läuft),
+# bricht den Angriff ab. Der Gegner ist kurz betäubt, der Treffer macht mehr Schaden und lädt die Signatur.
+# Dadurch lohnt es sich, einen starken Chip für den richtigen Moment zu halten.
+const COUNTER_MULT := 1.5
+const COUNTER_STUN := 0.8
+const COUNTER_SP := 12.0
+const COUNTER_OPEN := 0.45   # Konter-Fenster öffnet sich nach diesem Anteil der Warnzeit (Gegner blitzt auf)
+var counters := 0      # Konter-Treffer in diesem Kampf (Statistik/Tests)
+var gift := {}         # Element-Gabe der Form (GameData.gift), einmal je Kampf bestimmt
+## Schützen-Muster (08.10.2026): Diese Angriffe gehen vom Gegner aus (seine Reihe), nicht vom Feld des Spielers.
+## Wer zurückschießen will, steht in der Schusslinie. Alle anderen Muster zielen wie bisher auf den Spieler (Einschläge).
+const SHOT_KINDS := ["row", "wall"]
 
 
 ## foe: Gegnerwerte wie in GameData.FOES (für Karten-Knoten per RunState.foe_for skaliert).
@@ -101,7 +115,8 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 	rng = run.rng
 	def = foe.duplicate() if foe.is_read_only() else foe   # Ur-Glitch ändert def.el während des Kampfs
 	p = {"c": 1, "r": 1, "cd": 0.0, "flash": 0.0}
-	e = {"c": 1, "r": 1, "hp": def.hp, "max": def.hp, "move_t": def.move, "atk_t": def.atk * 0.8,
+	gift = GameData.gift(run.form)
+	e = {"c": 1, "r": 1, "hp": def.hp, "max": def.hp, "move_t": def.move, "atk_t": def.atk * FIRST_ATTACK,
 		"pi": 0, "frozen": 0.0, "slow": 0.0, "flash": 0.0, "burn": 0, "poison": 0, "dot_t": 1.0, "pop_t": 1.5,
 		"phase": 1, "sp_t": def.get("sp_first", 5.0), "sp_i": 0}
 	for c in run.deck:
@@ -725,7 +740,16 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 	if not dot and scan > 0 and not in_special:
 		scan -= 1
 		d = roundi(d * 1.5)
+	var countered := not dot and _counter()
+	if countered:
+		d = roundi(d * COUNTER_MULT)
+	# Resonanz: Chips im Element der eigenen Form treffen härter
+	var reso := 0.0 if (dot or in_special) else GameData.resonance(run.form, el)
+	if reso > 0:
+		d = roundi(d * (1.0 + reso))
 	e.hp = maxi(min_e_hp, e.hp - d)
+	if reso > 0 and e.hp > 0:
+		_apply_gift(el)
 	e.flash = 0.09
 	if not dot and not in_special:
 		sp = minf(100.0, sp + d * 1.2 * (1.3 if run.has_mod("kondensator") else 1.0))
@@ -745,9 +769,11 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 			leech %= 10
 			if hh > 0:
 				float_at(p.c, p.r, "+%d" % hh, GameData.COL.mint)
-	events.append("tick" if dot else ("hit_big" if d >= 30 or m > 1 else "hit"))
+	events.append("tick" if dot else ("hit_big" if d >= 30 or m > 1 or countered else "hit"))
 	var col: Color = GameData.COL.sun if m > 1 else (GameData.EL[el] if dot else GameData.COL.ink)
 	float_at(3 + e.c, e.r, (T.t("Effektiv!") + " " if m > 1 else "") + str(d), col)
+	if countered:
+		float_at(3 + e.c, e.r - 0.35, "Konter!", Color("#FF5470"))
 	if not dot:
 		parts.append({"ring": true, "x": 3 + e.c + 0.5, "y": e.r + 0.45, "color": GameData.COL.sun if m > 1 else Color.WHITE, "t": 0.3, "max": 0.3})
 		shake = maxf(shake, 7.0 if d >= 30 else 4.0)
@@ -758,7 +784,64 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 		_win()
 
 
+## Element-Gabe der Form nach einem Treffer im eigenen Element (Feuer, Wasser, Elektro, Virus; Code wirkt beim Blocken)
+func _apply_gift(el: String) -> void:
+	var G := gift
+	if G.is_empty() or G.el != el:
+		return
+	match el:
+		"Feuer":
+			e.burn = maxi(e.burn, int(G.v))
+		"Virus":
+			e.poison = maxi(e.poison, int(G.v))
+		"Wasser":
+			e.slow = maxf(e.slow, float(G.v))
+		"Elektro":
+			e.frozen = maxf(e.frozen, float(G.v))
+
+
+## Code-Gabe „Schutzroutine“: ein geblockter oder vermiedener Treffer lädt die Signatur
+func _code_gift() -> void:
+	var G := gift
+	if G.get("el", "") == "Code":
+		sp = minf(100.0, sp + float(G.v))
+
+
+## Holt der Gegner gerade zu einem normalen Angriff aus (seine Warnung läuft noch)?
+func winding_up() -> bool:
+	return warns.any(func(w): return w.get("atk", false))
+
+
+## Steht der Gegner gerade im Konter-Fenster (zweite Hälfte des Ausholens)?
+func counter_open() -> bool:
+	return warns.any(func(w): return w.get("atk", false) and 1.0 - w.t / w.max >= COUNTER_OPEN)
+
+
+## Konter-Treffer: laufenden Angriff abbrechen, Gegner betäuben, Signatur laden. true, wenn gekontert wurde.
+func _counter() -> bool:
+	if not counter_open():
+		return false
+	warns = warns.filter(func(w): return not w.get("atk", false))
+	counters += 1
+	e.frozen = maxf(e.frozen, COUNTER_STUN)
+	e.flash = 0.25
+	sp = minf(100.0, sp + COUNTER_SP)
+	events.append("counter")
+	shake = maxf(shake, 6.0)
+	freeze = maxf(freeze, 0.08)
+	burst(3 + e.c + 0.5, e.r + 0.5, Color("#FF5470"), 14)
+	return true
+
+
+## Spieler nimmt Schaden (Schilde, Ausweichen, Passive). Gibt den tatsächlichen Schaden zurück.
 func hurt_player(d: int) -> int:
+	var dealt := _hurt(d)
+	if dealt == 0 and d > 0 and not over:
+		_code_gift()
+	return dealt
+
+
+func _hurt(d: int) -> int:
 	if over:
 		return 0
 	if reflex > 0:
@@ -1116,7 +1199,8 @@ func _update_logic(dt: float) -> void:
 		e.frozen -= dt * (0.67 if run.has_mod("kaeltekern") else 1.0)
 	else:
 		e.move_t -= edt
-		if e.move_t <= 0:
+		# Beim Ausholen bleibt der Gegner stehen (Konter-Fenster), danach geht es weiter
+		if e.move_t <= 0 and not winding_up():
 			e.move_t = def.move * (0.8 if phase == 3 else 1.0)
 			_move_enemy()
 		if def.get("shift", false):
@@ -1287,12 +1371,14 @@ func _update_fx(dt: float) -> void:
 func _move_enemy() -> void:
 	if def.get("stationary", false):
 		return
+	# Schützen zielen: Steht als Nächstes ein Schuss an, sucht der Gegner deine Reihe
+	var aiming := SHOT_KINDS.has(_next_kind())
 	if def.tele:
 		var c: int = e.c
 		var r: int = e.r
 		while c == e.c and r == e.r:
 			c = rng.randi_range(0, 2)
-			r = rng.randi_range(0, 2)
+			r = p.r if aiming and rng.randf() < 0.6 else rng.randi_range(0, 2)
 		e.c = c
 		e.r = r
 		return
@@ -1301,29 +1387,43 @@ func _move_enemy() -> void:
 		var n := Vector2i(e.c + d.x, e.r + d.y)
 		if n.x >= 0 and n.x < 3 and n.y >= 0 and n.y < 3:
 			opts.append(n)
-	# Tendenz zur Spielerreihe, damit Kämpfe nicht verschleppen
+	# Tendenz zur Spielerreihe, damit Kämpfe nicht verschleppen (Schützen vor dem Schuss deutlich stärker)
 	var pref: Array = opts.filter(func(n): return absi(n.y - p.r) < absi(e.r - p.r))
-	var pool: Array = pref if (not pref.is_empty() and rng.randf() < 0.4) else opts
+	if aiming and e.r == p.r:
+		pref = opts.filter(func(n): return n.y == p.r)   # schon in Schusslinie: dort bleiben
+	var pool: Array = pref if (not pref.is_empty() and rng.randf() < (0.75 if aiming else 0.4)) else opts
 	var pick: Vector2i = pool[rng.randi_range(0, pool.size() - 1)]
 	e.c = pick.x
 	e.r = pick.y
 
 
-func _enemy_attack() -> void:
-	var pat: Array = def.pat
+## Aktuelles Angriffsmuster (Bosse wechseln es je Phase)
+func _pattern() -> Array:
 	var phase := boss_phase()
 	if phase >= 3 and def.has("phase3"):
-		pat = def.phase3
-	elif phase >= 2 and def.has("phase2"):
-		pat = def.phase2
+		return def.phase3
+	if phase >= 2 and def.has("phase2"):
+		return def.phase2
+	return def.pat
+
+
+## Art des nächsten normalen Angriffs (z. B. „row“)
+func _next_kind() -> String:
+	var pat := _pattern()
+	return pat[e.pi % pat.size()]
+
+
+func _enemy_attack() -> void:
+	var pat := _pattern()
 	var kind: String = pat[e.pi % pat.size()]
 	e.pi += 1
 	var cells: Array = []
 	var warn := WARN_TIME
 	match kind:
 		"row":
+			# Schuss entlang der eigenen Reihe: trifft dich nur, wenn du in seiner Reihe stehst
 			for c in 3:
-				cells.append(Vector2i(c, p.r))
+				cells.append(Vector2i(c, e.r))
 		"col":
 			for r in 3:
 				cells.append(Vector2i(p.c, r))
@@ -1369,13 +1469,11 @@ func _enemy_attack() -> void:
 				cells.append(n)
 			warn = 0.8
 		"wall":
-			# Zwei Reihen, eine bleibt frei – nie die, in der der Spieler steht
-			var safe_rows: Array = [0, 1, 2].filter(func(r): return r != p.r)
-			var safe: int = safe_rows[rng.randi_range(0, safe_rows.size() - 1)]
-			for r in 3:
-				if r != safe:
-					for c in 3:
-						cells.append(Vector2i(c, r))
+			# Breitschuss: die eigene Reihe und eine Nachbarreihe (bevorzugt die des Spielers), eine Reihe bleibt frei
+			var other: int = e.r + (1 if e.r == 0 else (-1 if e.r == 2 else (1 if p.r > e.r or (p.r == e.r and rng.randf() < 0.5) else -1)))
+			for r in [e.r, other]:
+				for c in 3:
+					cells.append(Vector2i(c, r))
 			warn = 1.0
 		_:
 			cells.append(Vector2i(p.c, p.r))
@@ -1384,7 +1482,8 @@ func _enemy_attack() -> void:
 		warn += 0.3
 	events.append("warn")
 	var area: bool = HAZARD_DUR.has(kind)
-	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg, "lava": area, "kind": kind if area else "lava", "dir": (1 if rng.randf() < 0.5 else -1) if kind == "current" else 1})
+	warns.append({"cells": cells, "t": warn, "max": warn, "dmg": def.dmg, "lava": area, "kind": kind if area else "lava", "dir": (1 if rng.randf() < 0.5 else -1) if kind == "current" else 1,
+		"atk": true, "shot": SHOT_KINDS.has(kind)})
 
 
 func _spawn_pop() -> void:
