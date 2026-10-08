@@ -103,6 +103,13 @@ const COUNTER_SP := 12.0
 const COUNTER_OPEN := 0.45   # Konter-Fenster öffnet sich nach diesem Anteil der Warnzeit (Gegner blitzt auf)
 var counters := 0      # Konter-Treffer in diesem Kampf (Statistik/Tests)
 var gift := {}         # Element-Gabe der Form (GameData.gift), einmal je Kampf bestimmt
+# Linien-Chips (08.10.2026)
+var gills_t := 0.0     # Kiemenatmung: Restzeit der Heilung über Zeit
+var gills_tick := 1.0
+var gills_heal := 3
+var owl_t := 0.0       # Eulenauge: jedes Ausholen ist konterbar
+var burrow_t := 0.0    # Graben: eingegraben, unverwundbar
+var last_attack := ""  # zuletzt gespielter Angriffs-Chip (Echoruf wiederholt ihn)
 ## Schützen-Muster (08.10.2026): Diese Angriffe gehen vom Gegner aus (seine Reihe), nicht vom Feld des Spielers.
 ## Wer zurückschießen will, steht in der Schusslinie. Alle anderen Muster zielen wie bisher auf den Spieler (Einschläge).
 const SHOT_KINDS := ["row", "wall"]
@@ -267,6 +274,8 @@ func use_slot(i: int) -> void:
 	s.rem = s.max
 	_apply_chip(id)
 	_chip_vfx(GameData.base_chip(id), GameData.chip(id).el)
+	if ro == 0 and GameData.base_chip(id) != "Echoruf":
+		last_attack = id
 	# Echochip: jeder 4. Chip wird ein zweites Mal ausgelöst
 	if run.has_mod("echochip"):
 		echo_count += 1
@@ -396,8 +405,68 @@ func _apply_chip(id: String) -> void:
 	var k: float = ch.get("k", 1.0)   # verbesserte Chips: auch feste Werte (Heilung, Nebentreffer) stärker
 	events.append(_chip_sound(base))
 	match base:
-		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Datenfresser", "Kurzschluss", "Frostsplitter", "Parasit":
+		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Datenfresser", "Kurzschluss", "Frostsplitter", "Parasit", "Hautgift", "Stibitzen":
 			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 11.0, "el": el, "dmg": ch.dmg, "id": base})
+		# ---------- Linien-Chips (08.10.2026) ----------
+		"Krallenwirbel":
+			for c in [0, 1]:
+				fx_cell(3 + c, p.r, GameData.EL.Neutral, 0.3)
+			for i in 3:
+				delayed.append({"t": 0.12 * i, "fn": _claw.bind(int(ch.dmg), i == 0), "mark": false})
+		"Stöckchen":
+			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 11.0, "el": el, "dmg": ch.dmg, "id": base})
+			delayed.append({"t": 0.55, "fn": _fetch_back.bind(roundi(ch.dmg * 0.7)), "mark": false})
+		"Kiemenatmung":
+			var gh := run.heal(roundi(8 * k))
+			float_at(p.c, p.r, "+%d" % gh, GameData.COL.mint)
+			gills_t = 6.0
+			gills_tick = 1.0
+			gills_heal = roundi(3 * k)
+		"Backenvorrat":
+			for j in 2:
+				if hand[j].chip != "":
+					hand[j].rem = 0.0
+			float_at(p.c, p.r, "Vorrat!", GameData.COL.sun)
+		"Hakenschlag":
+			dodge_t = 2.0 * k
+			scan = maxi(scan, 1)
+			float_at(p.c, p.r, "Haken!", GameData.COL.mint)
+		"Zungenzug":
+			e.r = p.r
+			e.c = 0
+			float_at(3 + e.c, e.r - 0.3, "Gezogen!", GameData.COL.mint)
+			hit_enemy(ch.dmg, el)
+			e.frozen = maxf(e.frozen, 0.5)
+		"Bärenhieb":
+			for c in [0, 1]:
+				fx_cell(3 + c, p.r, GameData.EL.Neutral, 0.3)
+			if e.r == p.r and e.c <= 1:
+				hit_enemy(ch.dmg, el)
+				if not over:
+					if e.c < 2:
+						e.c += 1
+					e.frozen = maxf(e.frozen, 0.5)
+			else:
+				_miss()
+		"Eulenauge":
+			owl_t = 4.0 * k
+			float_at(p.c, p.r, "Eulenauge", Color("#8FD8FF"))
+		"Graben":
+			burrow_t = 1.2
+			float_at(p.c, p.r, "Eingegraben!", Color("#C8A878"))
+			delayed.append({"t": 1.2, "fn": _burrow_hit.bind(int(ch.dmg)), "mark": true})
+		"Kieselwurf":
+			proj.append({"lob": true, "fx": p.c + 0.5, "fr": p.r, "tx": 3 + p.c + 0.5, "tr": p.r, "t": 0.0, "dur": 0.32,
+				"el": "Neutral", "id": base, "land": _land_pebble.bind(p.c, p.r, int(ch.dmg))})
+		"Echoruf":
+			for c in 3:
+				fx_cell(3 + c, p.r, GameData.EL.Neutral, 0.25)
+			if e.r == p.r:
+				hit_enemy(ch.dmg, el)
+			else:
+				_miss()
+			if last_attack != "" and not over:
+				delayed.append({"t": 0.35, "fn": _parrot.bind(last_attack), "mark": false})
 		"Doppelklick":
 			proj.append({"lob": false, "row": p.r, "x": p.c + 0.5, "v": 12.0, "el": el, "dmg": ch.dmg, "id": base})
 			delayed.append({"t": 0.15, "fn": _second_click.bind(int(ch.dmg)), "mark": false})
@@ -586,10 +655,22 @@ func vfx_add(kind: String, c: float, r: float, dur: float, extra := {}) -> void:
 func _chip_vfx(base: String, el: String) -> void:
 	var ec: int = 3 + int(e.c)
 	match base:
-		"Byteschlag", "Glutklinge":
+		"Byteschlag", "Glutklinge", "Krallenwirbel", "Bärenhieb":
 			vfx_add("slash", 3, p.r, 0.25, {"el": el})
 		"Laserschuss":
 			vfx_add("beam", p.c, p.r, 0.25, {"el": "Code"})
+		"Echoruf":
+			vfx_add("wave_row", p.c, p.r, 0.35)
+		"Zungenzug":
+			vfx_add("magnet", ec, e.r, 0.5, {"pc": p.c, "pr": p.r})
+		"Kiemenatmung":
+			vfx_add("charge", p.c, p.r, 0.8)
+		"Backenvorrat":
+			vfx_add("defrag", p.c, p.r, 0.7)
+		"Hakenschlag", "Graben":
+			vfx_add("jump", p.c, p.r, 0.5)
+		"Eulenauge":
+			vfx_add("scan", p.c, p.r, 0.7)
 		"Debugger":
 			vfx_add("beam", p.c, p.r, 0.35, {"el": "Code", "debug": true})
 		"Blitzlanze":
@@ -646,8 +727,14 @@ func _chip_sound(id: String) -> String:
 	match id:
 		"Pixelstrahl", "Wasserstrahl", "Virusspritzer", "Glutball", "Datenfresser", "Doppelklick", "Laserschuss", "Kurzschluss", "Frostsplitter", "Parasit", "Debugger":
 			return "shoot"
-		"Byteschlag", "Glutklinge":
+		"Byteschlag", "Glutklinge", "Krallenwirbel", "Bärenhieb":
 			return "slash"
+		"Stöckchen", "Hautgift", "Stibitzen", "Kieselwurf", "Echoruf", "Zungenzug":
+			return "shoot"
+		"Hakenschlag", "Graben":
+			return "dodge"
+		"Kiemenatmung":
+			return "heal"
 		"Firewall", "Blubberschild", "Hitzeschild", "Nebel", "Kopierschutz", "Konter":
 			return "shield"
 		"Feuersbrunst", "Tsunami", "Blackout":
@@ -657,6 +744,51 @@ func _chip_sound(id: String) -> String:
 		"Heilpatch", "Neustart":
 			return "heal"
 	return "chip"
+
+
+## Krallenwirbel: ein Hieb auf die vorderen zwei Felder deiner Reihe
+func _claw(d: int, first: bool) -> void:
+	if over:
+		return
+	if e.r == p.r and e.c <= 1:
+		hit_enemy(d, "Neutral")
+	elif first:
+		_miss()
+
+
+## Stöckchen: kommt zurück und trifft noch einmal, wenn der Gegner in deiner Reihe steht
+func _fetch_back(d: int) -> void:
+	if over or e.r != p.r:
+		return
+	float_at(3 + e.c, e.r - 0.3, "Zurück!", GameData.COL.sun)
+	hit_enemy(d, "Neutral")
+
+
+## Graben: Stoß aus dem Boden unter dem Gegner, trifft immer
+func _burrow_hit(d: int) -> void:
+	if over:
+		return
+	fx_cell(3 + e.c, e.r, Color("#C8A878"), 0.35)
+	burst(3 + e.c + 0.5, e.r + 0.8, Color("#C8A878"), 16)
+	hit_enemy(d, "Neutral")
+
+
+## Kieselwurf: Einschlag mit Rand (Zentrum voll, Nachbarfelder halb)
+func _land_pebble(col: int, row: int, d: int) -> void:
+	fx_cell(3 + col, row, Color("#B8B0C8"), 0.35)
+	for dd in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+		var c: int = col + dd.x
+		var r: int = row + dd.y
+		if c >= 0 and c < 3 and r >= 0 and r < 3:
+			fx_cell(3 + c, r, Color("#B8B0C8"), 0.2)
+	burst(3 + col + 0.5, row + 0.5, Color("#B8B0C8"), 12)
+	var dist: int = absi(e.c - col) + absi(e.r - row)
+	if dist == 0:
+		hit_enemy(d, "Neutral")
+	elif dist == 1:
+		hit_enemy(roundi(d * 0.5), "Neutral")
+	else:
+		_miss()
 
 
 func _chain_hit(k := 1.0) -> void:
@@ -814,7 +946,7 @@ func winding_up() -> bool:
 
 ## Steht der Gegner gerade im Konter-Fenster (zweite Hälfte des Ausholens)?
 func counter_open() -> bool:
-	return warns.any(func(w): return w.get("atk", false) and 1.0 - w.t / w.max >= COUNTER_OPEN)
+	return warns.any(func(w): return w.get("atk", false) and (owl_t > 0 or 1.0 - w.t / w.max >= COUNTER_OPEN))
 
 
 ## Konter-Treffer: laufenden Angriff abbrechen, Gegner betäuben, Signatur laden. true, wenn gekontert wurde.
@@ -843,6 +975,10 @@ func hurt_player(d: int) -> int:
 
 func _hurt(d: int) -> int:
 	if over:
+		return 0
+	if burrow_t > 0:
+		events.append("dodge")
+		float_at(p.c, p.r, "Eingegraben!", Color("#C8A878"))
 		return 0
 	if reflex > 0:
 		reflex -= 1
@@ -1061,6 +1197,16 @@ func _update_logic(dt: float) -> void:
 		decoy_t -= dt
 		if decoy_t <= 0:
 			decoy = 0
+	owl_t = maxf(0.0, owl_t - dt)
+	burrow_t = maxf(0.0, burrow_t - dt)
+	if gills_t > 0:
+		gills_t -= dt
+		gills_tick -= dt
+		if gills_tick <= 0:
+			gills_tick = 1.0
+			var gh := run.heal(gills_heal)
+			if gh > 0:
+				float_at(p.c, p.r, "+%d" % gh, GameData.COL.mint)
 	since_hit += dt
 	if mon.passive == "Regeneration" and since_hit >= 3.0 and run.hp < run.max_hp:
 		regen_t -= dt
@@ -1132,6 +1278,19 @@ func _update_logic(dt: float) -> void:
 			if pr.id == "Kurzschluss":
 				e.frozen = maxf(e.frozen, 0.5)
 				float_at(3 + e.c, e.r, "Kurzschluss!", GameData.EL.Elektro)
+			if pr.id == "Hautgift":
+				if e.poison > 0 or e.burn > 0:
+					if e.poison > 0:
+						e.poison += 3
+					if e.burn > 0:
+						e.burn += 3
+				else:
+					e.poison = maxi(e.poison, 2)
+			if pr.id == "Stibitzen":
+				e.atk_t += 1.0
+				if hand[2].chip != "":
+					hand[2].rem = 0.0
+				float_at(p.c, p.r, "Geklaut!", GameData.COL.sun)
 			continue
 		if pr.x > 6.3:
 			proj.remove_at(i)

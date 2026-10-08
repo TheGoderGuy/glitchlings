@@ -73,6 +73,7 @@ func _ready() -> void:
 	test_design_review()
 	test_arena_tiles()
 	test_room_cards_and_home()
+	test_line_chips()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -944,7 +945,7 @@ func test_evolution() -> void:
 	ru.form = "Bollwerkatz"
 	ru.stage = 3
 	ru.praeg = {"Code": GameData.EVO_AT[4]}
-	check(ru.try_evolve().get("to", "") == "Bastionkatz" and ru.stage == 4, "Ab 80 Element-Chips: Bollwerkatz → Bastionkatz (Ultra)")
+	check(ru.try_evolve().get("to", "") == "Bastionkatz" and ru.stage == 4, "Ab %d Element-Chips: Bollwerkatz → Bastionkatz (Ultra)" % GameData.EVO_AT[4])
 	var ok := true
 	for f in GameData.FORMS:
 		if not GameData.SPECIALS.has(f) or not ResourceLoader.exists("res://assets/sprites/%s.png" % GameData.FORMS[f].spr):
@@ -2815,3 +2816,128 @@ func test_room_cards_and_home() -> void:
 			if d < (HomeSim.width(a) + HomeSim.width(b)) * 0.2:
 				stacked += 1
 	check(stacked <= 1, "Zuhause: Bewohner halten Abstand (%d Paare direkt übereinander)" % stacked)
+
+
+## Linien-Chips (08.10.2026): je Linie ein eigener Chip im Startdeck, nie in Chipwahl oder Händler, jede Wirkung
+func test_line_chips() -> void:
+	var lines := ["Pixmiez", "Funkling", "Tröpfel", "Kekso", "Lumi", "Quakli", "Molchi", "Brummbit", "Kauzbit", "Buddli", "Maskli", "Bachli", "Plapperli"]
+	var ok := true
+	for sp in lines:
+		var own: Array = GameData.MONS[sp].deck.filter(func(c): return GameData.is_line_chip(c))
+		if own.size() != 1 or GameData.CHIPS[own[0]].line != sp or GameData.CHIPS[own[0]].el != "Neutral":
+			ok = false
+			printerr("    Linien-Chip fehlt oder falsch: ", sp, own)
+	check(ok, "Jede der 13 Linien hat genau einen eigenen, neutralen Chip im Startdeck")
+	var offered := false
+	var r := RunState.new("Pixmiez", 9)
+	for i in 300:
+		for c in r.roll_choices({"Gewöhnlich": 6, "Selten": 3, "Episch": 1}):
+			offered = offered or GameData.is_line_chip(c)
+		offered = offered or GameData.is_line_chip(r.random_chip())
+	check(not offered, "Linien-Chips kommen nie in Chipwahl, Händler oder Ereignissen vor")
+	# Wirkungen
+	var st := fresh()
+	st.e.frozen = 0.0
+	st.e.atk_t = 99.0
+	st.e.move_t = 99.0
+	st.e.r = 2
+	st.e.c = 2
+	st.p.r = 0
+	st.hand[0].chip = "Zungenzug"
+	st.hand[0].rem = 0.0
+	st.use_slot(0)
+	check(st.e.r == 0 and st.e.c == 0 and st.e.hp == 70 - 14 and st.e.frozen > 0, "Zungenzug: Gegner in deine Reihe ganz nach vorn, 14, betäubt")
+	st.hand[0].chip = "Bärenhieb"
+	st.hand[0].rem = 0.0
+	st.use_slot(0)
+	check(st.e.c == 1 and st.e.hp == 70 - 14 - 34, "Bärenhieb: 34 und Rückstoß")
+	var sk := fresh()
+	sk.e.r = sk.p.r
+	sk.e.c = 0
+	sk.hand[0].chip = "Krallenwirbel"
+	sk.hand[0].rem = 0.0
+	sk.use_slot(0)
+	step(sk, 0.5)
+	check(sk.e.hp == 70 - 27, "Krallenwirbel: drei Hiebe à 9 (70 → %d)" % sk.e.hp)
+	var sf := fresh()
+	sf.e.r = sf.p.r
+	sf.hand[0].chip = "Stöckchen"
+	sf.hand[0].rem = 0.0
+	sf.use_slot(0)
+	step(sf, 1.0)
+	check(sf.e.hp == 70 - 14 - 10, "Stöckchen: 14 hin, 10 zurück (70 → %d)" % sf.e.hp)
+	var sg := fresh()
+	sg.run.hp = 50
+	sg.hand[2].chip = "Kiemenatmung"
+	sg.hand[2].rem = 0.0
+	sg.use_slot(2)
+	step(sg, 6.5)
+	check(sg.run.hp == 50 + 8 + 18, "Kiemenatmung: 8 sofort, dann 6 × 3 (50 → %d)" % sg.run.hp)
+	var sb := fresh()
+	sb.hand[0].rem = 2.0
+	sb.hand[1].rem = 2.0
+	sb.hand[2].chip = "Backenvorrat"
+	sb.hand[2].rem = 0.0
+	sb.use_slot(2)
+	check(sb.hand[0].rem == 0.0 and sb.hand[1].rem == 0.0, "Backenvorrat: beide Angriffs-Chips sofort geladen")
+	var sh := fresh()
+	sh.reflex = 0
+	sh.hand[2].chip = "Hakenschlag"
+	sh.hand[2].rem = 0.0
+	sh.use_slot(2)
+	var dealt := sh.hurt_player(10)
+	check(dealt == 0 and sh.scan >= 1, "Hakenschlag: nächster Treffer ausgewichen, nächster eigener Treffer +50 %")
+	var so := fresh()
+	so.e.frozen = 0.0
+	so.e.move_t = 99.0
+	so.e.atk_t = 0.01
+	so.hand[2].chip = "Eulenauge"
+	so.hand[2].rem = 0.0
+	so.use_slot(2)
+	step(so, 0.05)
+	check(so.winding_up() and so.counter_open(), "Eulenauge: Konter schon ab Beginn des Ausholens möglich")
+	var sd := fresh()
+	sd.reflex = 0
+	sd.hand[2].chip = "Graben"
+	sd.hand[2].rem = 0.0
+	sd.use_slot(2)
+	var under := sd.hurt_player(20)
+	step(sd, 1.4)
+	check(under == 0 and sd.e.hp == 70 - 22, "Graben: eingegraben unverwundbar, dann 22 von unten (70 → %d)" % sd.e.hp)
+	var sv := fresh()
+	sv.e.r = sv.p.r
+	sv.e.poison = 2
+	sv.hand[0].chip = "Hautgift"
+	sv.hand[0].rem = 0.0
+	sv.use_slot(0)
+	step(sv, 0.4)
+	check(sv.e.poison >= 4, "Hautgift: verlängert Gift um 3 s (%d)" % sv.e.poison)
+	var ss := fresh()
+	ss.e.frozen = 0.0
+	ss.e.move_t = 99.0
+	ss.e.r = ss.p.r
+	ss.e.atk_t = 2.0
+	ss.hand[2].rem = 3.0
+	ss.hand[0].chip = "Stibitzen"
+	ss.hand[0].rem = 0.0
+	ss.use_slot(0)
+	step(ss, 0.4)
+	check(ss.e.atk_t > 2.0 and ss.hand[2].rem == 0.0, "Stibitzen: Gegnerangriff später, Support sofort geladen")
+	var sp := fresh()
+	sp.e.r = sp.p.r
+	sp.e.c = sp.p.c
+	sp.hand[0].chip = "Kieselwurf"
+	sp.hand[0].rem = 0.0
+	sp.use_slot(0)
+	step(sp, 0.5)
+	check(sp.e.hp == 70 - 24, "Kieselwurf: 24 im Zentrum (70 → %d)" % sp.e.hp)
+	var se := fresh()
+	se.e.r = se.p.r
+	se.hand[0].chip = "Laserschuss"
+	se.hand[0].rem = 0.0
+	se.use_slot(0)
+	se.hand[1].chip = "Echoruf"
+	se.hand[1].rem = 0.0
+	se.use_slot(1)
+	step(se, 0.6)
+	check(se.e.hp == 70 - 25 - 10 - 13, "Echoruf: 10 und Echo des Laserschusses mit halbem Schaden (70 → %d)" % se.e.hp)

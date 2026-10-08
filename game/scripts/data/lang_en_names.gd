@@ -146,4 +146,8 @@ const D := {
 	# ---------- Station-Ausbau ----------
 	"Werkbank": "Workbench", "Vorratslager": "Storehouse", "Modulschacht": "Module Bay", "Fragmentfilter": "Fragment Filter",
 	"Brutwärmer": "Incubator", "Nest-Erweiterung": "Nest Expansion",
+	# Linien-Chips (08.10.2026)
+	"Krallenwirbel": "Claw Flurry", "Stöckchen": "Fetch Stick", "Kiemenatmung": "Gill Breath", "Backenvorrat": "Cheek Stash",
+	"Hakenschlag": "Zigzag Hop", "Zungenzug": "Tongue Tug", "Hautgift": "Skin Toxin", "Bärenhieb": "Bear Swipe",
+	"Eulenauge": "Owl Eye", "Graben": "Burrow", "Stibitzen": "Pilfer", "Kieselwurf": "Pebble Toss", "Echoruf": "Echo Call",
 }

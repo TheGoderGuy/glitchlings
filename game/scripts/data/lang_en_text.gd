@@ -587,4 +587,9 @@ const D := {
 	"Resonanz +%d %%": "Resonance +%d%%", "verkauft": "sold", "Reparatur": "Repair", "Verbessern": "Upgrade", "Entfernen": "Remove",
 	# Training: Abschluss
 	"Frei kämpfen!": "Free fight!", "Training geschafft!": "Training complete!",
+	# Linien-Chips: Karten und Kampftexte
+	"3× Kralle": "3× claw", "kommt zurück": "returns", "Angriffe bereit": "attacks ready", "Ausweichen + 50 %": "dodge + 50%",
+	"Zieht nach vorn": "pulls forward", "Gift/Brand +3 s": "poison/burn +3 s", "Konter leicht": "easy counter", "klaut Zeit": "steals time",
+	"Bogenwurf": "lob", "Echo": "echo", "Heilt %d + %d": "Heals %d + %d", "Eingraben + %d": "Burrow + %d",
+	"Vorrat!": "Stash!", "Haken!": "Hop!", "Zurück!": "Fetch!", "Kiemen": "Gills", "Eingegraben!": "Burrowed!", "Eingegraben": "Burrowed",
 }

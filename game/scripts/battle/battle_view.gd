@@ -587,7 +587,20 @@ func _draw_actors() -> void:
 		for k in st.decoy:
 			_draw_sprite(mkey, pcx - 16 - k * 10, pfy, false, {"scale": BABY_SCALE if run.stage == 1 else 1, "mod": Color(0.6, 1.0, 0.8, 0.35 + 0.1 * sin(anim_t * 8.0 + k))})
 	var hurt_tint := Color(1.0, 0.55, 0.55) if (p_hurt > 0 and p.flash <= 0) else Color.WHITE
-	_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1, "atk": (1.0 - p_atk / ATK_TIME) if p_atk > 0 else -1.0, "mod": hurt_tint})
+	if st.burrow_t > 0:
+		# Graben (Buddli-Linie): eingegraben – nur ein Erdhügel mit rieselnder Erde ist zu sehen
+		var mx := roundi(pcx)
+		var my := roundi(pfy)
+		var dirt := Color("#6A4A2E")
+		draw_rect(Rect2(mx - 16, my - 6, 32, 6), dirt)
+		draw_rect(Rect2(mx - 11, my - 10, 22, 4), dirt)
+		draw_rect(Rect2(mx - 6, my - 13, 12, 3), dirt)
+		draw_rect(Rect2(mx - 11, my - 10, 22, 1), Color("#8A6A46"))
+		for i in 4:
+			var dx := fmod(anim_t * 37.0 + i * 11.0, 30.0) - 15.0
+			draw_rect(Rect2(mx + roundi(dx), my - 14 - (i % 2) * 3, 2, 2), Color("#C8A878"))
+	else:
+		_draw_sprite(mkey, pcx, pfy, false, {"flash": p.flash > 0, "blink": blink_p, "bob": bob_p, "scale": BABY_SCALE if run.stage == 1 else 1, "atk": (1.0 - p_atk / ATK_TIME) if p_atk > 0 else -1.0, "mod": hurt_tint})
 	if win_t > 0.2:
 		_draw_victory_sparks(Vector2(pcx, pfy - 30), win_t)
 	var body := Vector2(gx(p.c) + CW / 2.0, feet_y(p.r) - 24)
@@ -862,6 +875,12 @@ func _draw_hud() -> void:
 		buffs.append([T.t("Scan x%d") % st.scan, GameData.EL.Code])
 	if st.mist > 0:
 		buffs.append(["Nebel", GameData.EL.Wasser])
+	if st.gills_t > 0:
+		buffs.append(["Kiemen", GameData.COL.mint])
+	if st.owl_t > 0:
+		buffs.append(["Eulenauge", Color("#8FD8FF")])
+	if st.burrow_t > 0:
+		buffs.append(["Eingegraben", Color("#C8A878")])
 	var bx := 8.0
 	for bf in buffs:
 		var bw := text_width(bf[0]) + 8
@@ -1522,6 +1541,12 @@ func _bandage(q: Vector2, a: float) -> void:
 
 ## Geschosse sehen je nach Chip anders aus
 func _draw_proj(pr: Dictionary, pos: Vector2, col: Color) -> void:
+	if pr.get("id", "") == "Kieselwurf":
+		# Kiesel: grauer Stein mit Lichtkante, dreht sich
+		draw_circle(pos, 6, Color("#3A3448"))
+		draw_circle(pos, 5, Color("#8A84A0"))
+		_px(pos + Vector2(-2, -2).rotated(anim_t * 12.0), 2, Color("#D8D2E8"))
+		return
 	if pr.lob:
 		# Glutball: Feuerball
 		draw_circle(pos, 8, FIRE_DARK)
@@ -1562,6 +1587,21 @@ func _draw_proj(pr: Dictionary, pos: Vector2, col: Color) -> void:
 				draw_line(pos + Vector2(-2 + i * 2, 3), pos + Vector2(-4 + i * 3, 7), Color("#5A0F28"), 1)
 			draw_circle(pos, 5, Color("#8C1D40"))
 			draw_circle(pos + Vector2(1, -1), 3, Color("#E0427A"))
+		"Stöckchen":
+			# Stöckchen: dreht sich im Flug
+			var dir := Vector2(cos(anim_t * 20.0), sin(anim_t * 20.0)) * 7.0
+			draw_line(pos - dir, pos + dir, Color("#5A3A22"), 3)
+			draw_line(pos - dir, pos + dir, Color("#A8784A"), 1)
+		"Hautgift":
+			draw_circle(pos, 5, Color("#3A5A2A"))
+			draw_circle(pos, 4, Color("#9AD85A"))
+			_px(pos + Vector2(-1, -2), 2, Color("#E0FFB0"))
+			_px(pos + Vector2(-8, 2), 2, Color(GameData.EL.Virus, 0.8))
+		"Stibitzen":
+			# Beutel mit Knoten
+			draw_circle(pos, 5, Color("#4A3A5A"))
+			draw_rect(Rect2(pos + Vector2(-2, -8), Vector2(4, 3)), Color("#4A3A5A"))
+			_px(pos + Vector2(-1, -1), 2, GameData.COL.sun)
 		"Doppelklick":
 			for dx in [0, 7]:
 				var q := pos + Vector2(dx, 0)

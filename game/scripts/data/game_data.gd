@@ -62,7 +62,27 @@ const CHIPS := {
 	"Parasit": {"cat": "Angriff", "el": "Virus", "dmg": 12, "cd": 3.0, "rar": "Selten", "desc": "Projektil: 12 Schaden, du heilst dich um genauso viel."},
 	"Sprungantrieb": {"cat": "Buff", "el": "Neutral", "dmg": 0, "cd": 3.0, "rar": "Gewöhnlich", "desc": "Du weichst dem nächsten Treffer in den nächsten 2 s aus."},
 	"Konter": {"cat": "Schild", "el": "Neutral", "dmg": 35, "cd": 4.0, "rar": "Selten", "desc": "Blockt einen Treffer in den nächsten 1,5 s und schlägt mit 35 zurück."},
+	# --- Linien-Chips (08.10.2026, Game-Design-Analyse): je Linie ein eigener Chip im Startdeck, passend zum Tier.
+	# Neutral (lenkt die Evolution nicht), Seltenheit „Linie“: nie in Chipwahl, Händler oder Ereignissen (Schlüssel "line").
+	"Krallenwirbel": {"cat": "Angriff", "el": "Neutral", "dmg": 9, "cd": 2.2, "rar": "Linie", "line": "Pixmiez", "desc": "Nahkampf: 3 schnelle Krallenhiebe à 9 auf die vorderen zwei Felder."},
+	"Stöckchen": {"cat": "Angriff", "el": "Neutral", "dmg": 14, "cd": 2.0, "rar": "Linie", "line": "Funkling", "desc": "Projektil: 14. Kommt zurück und trifft dabei noch einmal (10)."},
+	"Kiemenatmung": {"cat": "Buff", "el": "Neutral", "dmg": 0, "cd": 6.5, "rar": "Linie", "line": "Tröpfel", "desc": "Heilt sofort 8 HP und danach 6 s lang 3 HP pro Sekunde."},
+	"Backenvorrat": {"cat": "Buff", "el": "Neutral", "dmg": 0, "cd": 6.0, "rar": "Linie", "line": "Kekso", "desc": "Beide Angriffs-Chips auf der Hand sind sofort geladen."},
+	"Hakenschlag": {"cat": "Schild", "el": "Neutral", "dmg": 0, "cd": 3.5, "rar": "Linie", "line": "Lumi", "desc": "Weicht dem nächsten Treffer in 2 s aus. Dein nächster Treffer +50 %."},
+	"Zungenzug": {"cat": "Angriff", "el": "Neutral", "dmg": 14, "cd": 3.0, "rar": "Linie", "line": "Quakli", "desc": "Zieht den Gegner in deine Reihe nach vorn: 14, betäubt 0,5 s."},
+	"Hautgift": {"cat": "Angriff", "el": "Neutral", "dmg": 10, "cd": 2.4, "rar": "Linie", "line": "Molchi", "desc": "Projektil: 10. Verlängert Gift und Brand auf dem Gegner um je 3 s (sonst 2 s Gift)."},
+	"Bärenhieb": {"cat": "Angriff", "el": "Neutral", "dmg": 34, "cd": 3.2, "rar": "Linie", "line": "Brummbit", "desc": "Nahkampf: vordere zwei Felder deiner Reihe, 34. Stößt zurück und betäubt 0,5 s."},
+	"Eulenauge": {"cat": "Buff", "el": "Neutral", "dmg": 0, "cd": 5.0, "rar": "Linie", "line": "Kauzbit", "desc": "4 s lang ist jedes Ausholen des Gegners konterbar."},
+	"Graben": {"cat": "Schild", "el": "Neutral", "dmg": 22, "cd": 5.0, "rar": "Linie", "line": "Buddli", "desc": "1,2 s eingegraben (unverwundbar), dann Stoß von unten: 22, trifft immer."},
+	"Stibitzen": {"cat": "Angriff", "el": "Neutral", "dmg": 12, "cd": 2.6, "rar": "Linie", "line": "Maskli", "desc": "Projektil: 12. Gegner greift 1 s später an, Support sofort geladen."},
+	"Kieselwurf": {"cat": "Angriff", "el": "Neutral", "dmg": 24, "cd": 2.6, "rar": "Linie", "line": "Bachli", "desc": "Bogenwurf 3 Felder vor dir: 24 im Zentrum, 12 auf den Nachbarfeldern."},
+	"Echoruf": {"cat": "Angriff", "el": "Neutral", "dmg": 10, "cd": 3.0, "rar": "Linie", "line": "Plapperli", "desc": "Schall über deine Reihe: 10, dann Echo deines letzten Angriffs (halb)."},
 }
+
+
+## Linien-Chip (nur im Startdeck seiner Linie, nie in Chipwahl, Händler oder Ereignissen)?
+static func is_line_chip(id: String) -> bool:
+	return CHIPS.get(base_chip(id), {}).has("line")
 
 ## ---------- Verbesserte Chips (30.09.2026) ----------
 ## „Glutball+“ ist die verbesserte Fassung von „Glutball“: +30 % Schaden (auf 5 gerundet), 20 % kürzere Ladezeit.
@@ -74,8 +94,8 @@ const ROLE_NAMES := ["Angriff", "Support"]
 const ROLE_COL := ["#FF7A93", "#6EE7C5"]
 const SLOT_ROLE := [0, 0, 1]
 const ROLE_DEF := ["Blubberschild", "Firewall", "Hitzeschild", "Konter", "Kopierschutz", "Nebel", "Sprungantrieb",
-	"Blendgranate", "Blackout", "Eisfeld", "Strudel"]
-const ROLE_SUP := ["Heilpatch", "Neustart", "Defrag", "Ladungsfeld", "Portscan", "Übertakten"]
+	"Blendgranate", "Blackout", "Eisfeld", "Strudel", "Hakenschlag", "Graben"]
+const ROLE_SUP := ["Heilpatch", "Neustart", "Defrag", "Ladungsfeld", "Portscan", "Übertakten", "Kiemenatmung", "Backenvorrat", "Eulenauge"]
 
 
 static func role(id: String) -> int:
@@ -103,6 +123,11 @@ const CHIP_CARD := {
 	"Kettenblitz": ["aim", "springt"], "Ladungsfeld": ["bolt", "Signatur +25 %"], "Magnetfeld": ["pull", "Betäubt"],
 	"Blackout": ["bolt", "Betäubt 3 s"], "Seuche": ["skull", "Gift ×2"], "Sporenfalle": ["mine", "Gift"],
 	"Parasit": ["row", "Lebensraub"], "Sprungantrieb": ["boot", "Weicht aus"], "Konter": ["shield", ""],
+	# Linien-Chips
+	"Krallenwirbel": ["front", "3× Kralle"], "Stöckchen": ["row", "kommt zurück"], "Kiemenatmung": ["heart", ""],
+	"Backenvorrat": ["bolt", "Angriffe bereit"], "Hakenschlag": ["boot", "Ausweichen + 50 %"], "Zungenzug": ["pull", "Zieht nach vorn"],
+	"Hautgift": ["row", "Gift/Brand +3 s"], "Bärenhieb": ["front", "Rückstoß"], "Eulenauge": ["eye", "Konter leicht"],
+	"Graben": ["shield", ""], "Stibitzen": ["row", "klaut Zeit"], "Kieselwurf": ["blast", "Bogenwurf"], "Echoruf": ["row", "Echo"],
 }
 
 
@@ -113,6 +138,12 @@ static func chip_short(id: String) -> String:
 	var s := T.t(info[1])
 	if id == "Heilpatch+":
 		s = T.t("Heilt %d") % roundi(25 * float(ch.get("k", 1.0)))
+	# Linien-Chips mit Zahlen, die mit der Verbesserung wachsen
+	match base_chip(id):
+		"Kiemenatmung":
+			return T.t("Heilt %d + %d") % [roundi(8 * float(ch.get("k", 1.0))), 6 * roundi(3 * float(ch.get("k", 1.0)))]
+		"Graben":
+			return T.t("Eingraben + %d") % int(ch.dmg)
 	if int(ch.dmg) > 0 and role(id) == 0:
 		return str(ch.dmg) + ("" if s == "" else " · " + s)
 	if int(ch.dmg) > 0 and base_chip(id) in ["Konter", "Kopierschutz"]:
@@ -361,21 +392,21 @@ const POOL_ELITE := [2, 4, 6]
 const MONS := {
 	"Pixmiez": {
 		"hp": 100, "move": 0.12, "rech": 1.0, "el": "Neutral", "animal": "Katze",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Heilpatch", "Doppelklick", "Firewall", "Virusspritzer", "Blitzcursor"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Heilpatch", "Krallenwirbel", "Firewall", "Virusspritzer", "Blitzcursor"],
 		"passive": "Katzenreflex", "passive_desc": "Weicht dem ersten Treffer jedes Kampfes aus (ab Champion: den ersten zwei).",
 		"trait": "Allrounder. Guter Einstieg.",
 		"evo": {"Code": "Firewallo", "Virus": "Virulina", "Elektro": "Prismiez"},
 	},
 	"Funkling": {
 		"hp": 80, "move": 0.12, "rech": 1.1, "el": "Feuer", "animal": "Welpe",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Glutball", "Laserschuss"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Stöckchen", "Heilpatch", "Glutball", "Laserschuss"],
 		"passive": "Übermut", "passive_desc": "Jeder 3. gespielte Chip halbiert die Ladezeit der anderen Chips auf der Hand.",
 		"trait": "Wenig HP, Chips laden 10 % schneller.",
 		"evo": {"Feuer": "Glutbyte", "Code": "Overclocko"},
 	},
 	"Tröpfel": {
 		"hp": 120, "move": 0.18, "rech": 1.0, "el": "Wasser", "animal": "Axolotl",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Heilpatch", "Wasserstrahl", "Firewall"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Kiemenatmung", "Wasserstrahl", "Firewall"],
 		"passive": "Regeneration", "passive_desc": "Heilt 1 HP pro Sekunde, wenn es 3 s nicht getroffen wurde (ab Champion: 2 HP).",
 		"trait": "Viel HP, bewegt sich langsamer.",
 		"evo": {"Wasser": "Kaskadi", "Code": "Pufferling"}, "ice": "Frostbyte",
@@ -383,42 +414,42 @@ const MONS := {
 	# --- Weitere Linien aus dem Prototyp (Phase 3b, 29.09.2026), kommen aus Eiern ---
 	"Kekso": {
 		"hp": 100, "move": 0.12, "rech": 1.0, "el": "Neutral", "animal": "Hamster",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Bug-Mine", "Blitzcursor"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Backenvorrat", "Byteschlag", "Byteschlag", "Heilpatch", "Bug-Mine", "Blitzcursor"],
 		"passive": "Hamstern", "passive_desc": "25 % Chance: Ein gespielter Chip wird gehamstert und kommt gleich wieder.",
 		"trait": "Hamstert Chips und legt Minen.",
 		"evo": {"Virus": "Tracko", "Elektro": "Cachy"},
 	},
 	"Lumi": {
 		"hp": 85, "move": 0.1, "rech": 1.05, "el": "Elektro", "animal": "Hase",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Doppelklick", "Byteschlag", "Sprungantrieb", "Heilpatch", "Blitzcursor", "Wasserstrahl"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Doppelklick", "Byteschlag", "Hakenschlag", "Heilpatch", "Blitzcursor", "Wasserstrahl"],
 		"passive": "Hasenhaken", "passive_desc": "Bewegt sich doppelt so schnell.",
 		"trait": "Flink. Blitz-Angriffe treffen immer.",
 		"evo": {"Elektro": "Blinki", "Wasser": "Perlhopp"},
 	},
 	"Quakli": {
 		"hp": 95, "move": 0.12, "rech": 1.0, "el": "Virus", "animal": "Frosch",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Heilpatch", "Virusspritzer", "Firewall"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Zungenzug", "Byteschlag", "Byteschlag", "Heilpatch", "Virusspritzer", "Firewall"],
 		"passive": "Giftbaut", "passive_desc": "Wer Quakli trifft, wird selbst vergiftet.",
 		"trait": "Vergiftet Gegner und legt Minen.",
 		"evo": {"Virus": "Virulurch", "Code": "Hüpfbyte"},
 	},
 	"Molchi": {
 		"hp": 90, "move": 0.11, "rech": 1.0, "el": "Virus", "animal": "Salamander",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Virusspritzer", "Glutball"],
+		"deck": ["Pixelstrahl", "Hautgift", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Virusspritzer", "Glutball"],
 		"passive": "Giftdrüsen", "passive_desc": "Gift und Brand auf dem Gegner wirken 50 % stärker.",
 		"trait": "Flinker Gift-Salamander.",
 		"evo": {"Virus": "Toxmolch", "Feuer": "Magmolch"},
 	},
 	"Brummbit": {
 		"hp": 140, "move": 0.2, "rech": 1.05, "el": "Neutral", "animal": "Bär",
-		"deck": ["Byteschlag", "Byteschlag", "Byteschlag", "Pixelstrahl", "Pixelstrahl", "Heilpatch", "Virusspritzer", "Firewall"],
+		"deck": ["Byteschlag", "Byteschlag", "Bärenhieb", "Pixelstrahl", "Pixelstrahl", "Heilpatch", "Virusspritzer", "Firewall"],
 		"passive": "Dickes Fell", "passive_desc": "Nimmt 25 % weniger Schaden.",
 		"trait": "Tank. Viel HP, langsam, steckt viel weg.",
 		"evo": {"Virus": "Pilzbrumm", "Code": "Bärtron"},
 	},
 	"Kauzbit": {
 		"hp": 90, "move": 0.12, "rech": 1.0, "el": "Code", "animal": "Robo-Eule",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Sprungantrieb", "Byteschlag", "Byteschlag", "Heilpatch", "Laserschuss", "Glutball"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Eulenauge", "Byteschlag", "Byteschlag", "Heilpatch", "Laserschuss", "Glutball"],
 		"passive": "Eulenblick", "passive_desc": "Sieht Angriffe früher: Warnungen erscheinen 0,3 s eher.",
 		"trait": "Robo-Eule mit Adleraugen.",
 		"evo": {"Code": "Optikauz", "Feuer": "Raketauz"},
@@ -426,14 +457,14 @@ const MONS := {
 	# --- Neue Linien 29.09.2026: Dachs und Waschbär ---
 	"Buddli": {
 		"hp": 115, "move": 0.15, "rech": 1.0, "el": "Neutral", "animal": "Dachs",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Sprungantrieb", "Heilpatch", "Glutball", "Blitzcursor"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Byteschlag", "Graben", "Heilpatch", "Glutball", "Blitzcursor"],
 		"passive": "Furchtlos", "passive_desc": "Unter 30 % HP machen Chip-Treffer 50 % mehr Schaden.",
 		"trait": "Zäh und furchtlos. Je knapper es wird, desto härter schlägt es zu.",
 		"evo": {"Feuer": "Glimmdachs", "Elektro": "Zackdachs"},
 	},
 	"Maskli": {
 		"hp": 90, "move": 0.11, "rech": 1.05, "el": "Neutral", "animal": "Waschbär",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Doppelklick", "Byteschlag", "Heilpatch", "Sprungantrieb", "Wasserstrahl", "Virusspritzer"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Stibitzen", "Byteschlag", "Heilpatch", "Sprungantrieb", "Wasserstrahl", "Virusspritzer"],
 		"passive": "Langfinger", "passive_desc": "Jeder 4. Chip-Treffer klaut Ladung: ein Chip auf der Hand ist sofort bereit.",
 		"trait": "Flinker kleiner Dieb mit Maske.",
 		"evo": {"Wasser": "Plätschbär", "Virus": "Klaubär"},
@@ -441,14 +472,14 @@ const MONS := {
 	# --- Neue Linien 03.10.2026: Otter und Ara ---
 	"Bachli": {
 		"hp": 100, "move": 0.12, "rech": 1.0, "el": "Neutral", "animal": "Otter",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Doppelklick", "Wasserstrahl", "Blitzcursor", "Heilpatch", "Sprungantrieb"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Kieselwurf", "Wasserstrahl", "Blitzcursor", "Heilpatch", "Sprungantrieb"],
 		"passive": "Teamgeist", "passive_desc": "Support-Chips laden 25 % schneller.",
 		"trait": "Verspielter Otter, der immer auf sein Team aufpasst.",
 		"evo": {"Wasser": "Strudli", "Elektro": "Knisterli"},
 	},
 	"Plapperli": {
 		"hp": 85, "move": 0.11, "rech": 1.0, "el": "Neutral", "animal": "Ara",
-		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Doppelklick", "Glutball", "Blitzcursor", "Heilpatch", "Sprungantrieb"],
+		"deck": ["Pixelstrahl", "Pixelstrahl", "Byteschlag", "Echoruf", "Glutball", "Blitzcursor", "Heilpatch", "Sprungantrieb"],
 		"passive": "Nachplappern", "passive_desc": "Jeder 4. Angriffs-Chip wird nach 0,5 s nachgeplappert (halber Schaden).",
 		"trait": "Bunter Plapper-Ara. Was er einmal gehört hat, wiederholt er.",
 		"evo": {"Elektro": "Surrfeder", "Feuer": "Glutfeder"},

@@ -19,7 +19,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 | `tests/` | Automatische Tests mit jsdom (`cd tests && npm install && npm test`) |
 
 ## Aktueller Stand (Godot, 08.10.2026)
-- **Kampf:** 3×3-Raster je Seite, Echtzeit, **45 Chips** in **2× Angriff (geteilter Stapel) + 1× Support**, Signatur-Attacke, Passiv je Linie, 22 Module. Effekte je Chip, Flächen: Lava, Giftschleim, Strömung, Spannungsfelder. Wächter und Bosse mit Phasen und goldenen Großangriffen.
+- **Kampf:** 3×3-Raster je Seite, Echtzeit, **45 Chips + 13 Linien-Chips** (je Linie einer im Startdeck, nie in Chipwahl/Händler) in **2× Angriff (geteilter Stapel) + 1× Support**, Signatur-Attacke, Passiv je Linie, 22 Module. Effekte je Chip, Flächen: Lava, Giftschleim, Strömung, Spannungsfelder. Wächter und Bosse mit Phasen und goldenen Großangriffen.
   Seit 08.10.: **Schützen** schießen aus ihrer eigenen Reihe (wer trifft, steht in der Schusslinie), **Konter** (Treffer beim Ausholen bricht den Angriff ab, Fadenkreuz), längere Kämpfe (`GameData.FOE_HP/BOSS_HP/FOE_DMG/FOE_TEMPO`), **Resonanz + Element-Gaben** ab Rookie.
   Steuerung: WASD/Pfeile + J/K/L, Leertaste = Signatur, frei belegbar; Controller Chips X/A/B (PS □/✕/○), Signatur Y/RT, eigene PS-Symbole (`InputSetup.btn()`). **Kein Vormerken** ladender Chips (Karte blinkt nur rot).
 - **Run = Reise (seit 08.10.2026):** ein Run führt durch 4 Akte – Cache-Wiesen > Vulkan oder See > Sümpfe oder Steppe > NEST-Kern (Endboss Ur-Glitch), Weggabelung nach jedem Zonen-Boss, Deck/Module/HP/Form bleiben. Je Zone 2 Ebenen × 4 Etagen (Wächter, dann Boss), Kampf/Elite/Glitch-Elite/Ereignis/Rast/Händler. Nach jedem Kampf 1-aus-3-Chipwahl (lenkt zur Entwicklung, Überspringen +10 Fragmente), verbesserte Chips (`Name+`). Danach Abspann und Weiterspielen.
@@ -27,7 +27,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
   **Evolution:** Prägung = Element der gespielten Element-Chips (Rookie 25, Champion 900, Ultra 2700 über alle Runs, 2 Chips Vorsprung), dauerhaft pro Monster gespeichert; Labor „Neu prägen“ setzt auf Baby zurück.
 - **Elemente:** Feuer, Wasser, Code, Elektro, Virus, Neutral (Feuer > Code > Wasser > Feuer, Elektro <> Virus).
 - **Station:** Zuhause (Bewohner laufen herum, streicheln), Team (Zonenwahl), Brutnest (Eier nach Runs oder für 200 Fragmente), Labor (geheime Fusionen), Monsterdex, Ausbau. Führung beim ersten Besuch.
-- **Rahmen:** Kino-Intro und -Ende, Training nach der Starterwahl, Kampf-Handbuch, DE/EN, Schwierigkeiten Entspannt bis Korrumpiert, Musik und Sounds selbst synthetisiert (Platzhalter; seit 08.10. epische Fassungen für Titel/Station/Kampf/Boss), 364 Tests. Balancing-Simulation: `godot --headless --path game res://tools/balance_sim.tscn` (Mensch-Bot, ganze Reisen).
+- **Rahmen:** Kino-Intro und -Ende, Training nach der Starterwahl, Kampf-Handbuch, DE/EN, Schwierigkeiten Entspannt bis Korrumpiert, Musik und Sounds selbst synthetisiert (Platzhalter; seit 08.10. epische Fassungen für Titel/Station/Kampf/Boss), 379 Tests. Balancing-Simulation: `godot --headless --path game res://tools/balance_sim.tscn` (Mensch-Bot, ganze Reisen).
 - **Browser-Prototyp** (`prototype/`): alter Stand mit Pop-Up-Tyrann, Echtzeit-Eiern und Expeditionen, nur noch Referenz.
 
 ## Getroffene Entscheidungen (nicht ohne Rückfrage ändern)
@@ -107,6 +107,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] **Kampffeld je Zone** (08.10.2026): Platten im Material der Zone (Gras, Basalt, Gitter, Planken, Trockenschollen, Schaltkreise) mit Leuchtebene, Seiten getönt (Gegnerseite per Farbton-Drehung), kein Sockel mehr, Kulisse sichtbar, schneller als vorher (`ArenaTiles`) – `vault/05 Produktion/Kampffeld.md`
 - [x] **Politur** (08.10.2026): Händler/Rast/Ereignisse als Karten (Pfeil-Navigation), Zuhause entzerrt (Abstandhalten), Elite-Aura – `vault/05 Produktion/Politur Räume, Zuhause, Elites.md`. Größere Spätgegner bräuchten neue 80-px-Sprites (Entscheidung Produzent)
 - [x] **Epische Musik** (08.10.2026): Titelmelodie (`title_epic`), Station/Idle (`station`), Kampf (`battle_epic`), Boss (`boss_epic`) mit neuen Klangfarben (Chor, Streicher-Ostinato, Taikos, Oktav-Dopplung); Zuordnung in `Music.USE`, alte Dateien bleiben – `vault/05 Produktion/Musik episch.md`
+- [x] **Linien-Chips** (08.10.2026): 13 eigene, neutrale Chips (Krallenwirbel, Stöckchen, Kiemenatmung, Backenvorrat, Hakenschlag, Zungenzug, Hautgift, Bärenhieb, Eulenauge, Graben, Stibitzen, Kieselwurf, Echoruf) je einer im Startdeck seiner Linie, Seltenheit „Linie“ – `vault/05 Produktion/Linien-Chips.md`
 - [ ] Phase 4: Steam-Seite + Demo – offene Punkte stehen in `vault/05 Produktion/Roadmap.md` (Stand 07.10.2026)
 - [x] **Aufräumen** (07.10.2026): Roadmap auf den echten Stand, `LIZENZEN.txt` (Schriften OFL, Godot MIT, Engine-Bibliotheken; `godot --headless --path game --script res://tools/write_licenses.gd`) liegt jedem Build bei, Abspann nennt sie
 

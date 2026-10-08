@@ -102,3 +102,22 @@ Die Tabelle wird aus `game/scripts/data/game_data.gd` erzeugt. Neu am 29.09.2026
 | Seuche | Virus | Feldeffekt | – | 4.0 s | Selten | Verdoppelt das Gift auf dem Gegner (min. 4 s). |
 | Sporenfalle | Virus | Falle | 15 | 3.0 s | Gewöhnlich | Mine unter dem Gegner: 15 Schaden und 6 s Gift. |
 | Parasit | Virus | Angriff | 12 | 3.0 s | Selten | Projektil: 12 Schaden, du heilst dich um genauso viel. |
+
+## Linien-Chips (08.10.2026)
+Je Linie ein eigener, neutraler Chip im Startdeck. Er kommt nie in Chipwahl, Händler oder Ereignissen vor (Seltenheit „Linie“) – Details in [[Linien-Chips]].
+
+| Chip | Linie | Slot | Schaden | Ladezeit | Wirkung |
+|---|---|---|---|---|---|
+| Krallenwirbel | Pixmiez | Angriff | 3 × 9 | 2.2 s | Nahkampf: 3 schnelle Krallenhiebe auf die vorderen zwei Felder. |
+| Stöckchen | Funkling | Angriff | 14 + 10 | 2.0 s | Projektil, kommt zurück und trifft dabei noch einmal. |
+| Kiemenatmung | Tröpfel | Support | – | 6.5 s | Heilt 8 sofort, dann 6 s lang 3 pro Sekunde. |
+| Backenvorrat | Kekso | Support | – | 6.0 s | Beide Angriffs-Chips sofort geladen. |
+| Hakenschlag | Lumi | Support | – | 3.5 s | Weicht dem nächsten Treffer aus (2 s), nächster eigener Treffer +50 %. |
+| Zungenzug | Quakli | Angriff | 14 | 3.0 s | Zieht den Gegner in deine Reihe ganz nach vorn, betäubt 0,5 s. |
+| Hautgift | Molchi | Angriff | 10 | 2.4 s | Projektil, verlängert Gift und Brand um je 3 s (sonst 2 s Gift). |
+| Bärenhieb | Brummbit | Angriff | 34 | 3.2 s | Nahkampf, Rückstoß, betäubt 0,5 s. |
+| Eulenauge | Kauzbit | Support | – | 5.0 s | 4 s lang ist jedes Ausholen konterbar. |
+| Graben | Buddli | Support | 22 | 5.0 s | 1,2 s eingegraben (unverwundbar), dann Stoß von unten, trifft immer. |
+| Stibitzen | Maskli | Angriff | 12 | 2.6 s | Projektil: Gegner greift 1 s später an, Support sofort geladen. |
+| Kieselwurf | Bachli | Angriff | 24 / 12 | 2.6 s | Bogenwurf 3 Felder vor dich, Nachbarfelder halb. |
+| Echoruf | Plapperli | Angriff | 10 | 3.0 s | Schall über die Reihe, dann Echo des letzten Angriffs (halber Schaden). |

@@ -400,7 +400,7 @@ func roll_pick(weights: Dictionary) -> Array:
 func roll_choices(weights: Dictionary = GameData.RARITY_WEIGHT, exclude: Array = [], els: Array = []) -> Array:
 	var pool: Array = []
 	for k in GameData.CHIPS:
-		if exclude.has(k) or (not els.is_empty() and not els.has(GameData.CHIPS[k].el)):
+		if exclude.has(k) or GameData.CHIPS[k].has("line") or (not els.is_empty() and not els.has(GameData.CHIPS[k].el)):
 			continue
 		for i in weights[GameData.CHIPS[k].rar]:
 			pool.append(k)
@@ -417,7 +417,7 @@ func roll_choices(weights: Dictionary = GameData.RARITY_WEIGHT, exclude: Array =
 
 
 func random_chip(rarity := "") -> String:
-	var keys: Array = GameData.CHIPS.keys().filter(func(k): return rarity == "" or GameData.CHIPS[k].rar == rarity)
+	var keys: Array = GameData.CHIPS.keys().filter(func(k): return not GameData.CHIPS[k].has("line") and (rarity == "" or GameData.CHIPS[k].rar == rarity))
 	return keys[rng.randi_range(0, keys.size() - 1)]
 
 
