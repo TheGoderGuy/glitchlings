@@ -54,6 +54,9 @@ var route: Array = []     # besuchte Zonen in Reihenfolge
 var bosses: Array = []    # Zonen, deren Boss in diesem Run besiegt wurde
 var legends_won: Array = []  # in diesem Run erfüllte Legenden-Bedingungen (leuchtende Eier)
 var route_pending := false   # Boss besiegt, die nächste Zone ist noch nicht gewählt (Weggabelung)
+## Herausforderungen (09.10.2026): Bestwerte und Taten dieser Reise, Schlüssel wie in GameData.CHALLENGES
+## (z. B. konter10 = meiste Konter in einem Kampf). SaveGame.record_run überträgt sie in den Spielstand.
+var ch := {}
 
 
 func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
@@ -72,6 +75,15 @@ func _init(sp: String = "Pixmiez", seed_value: int = -1) -> void:
 		rng.randomize()
 	map = ZoneMap.generate(rng)
 	route = [map.zone]
+
+
+## Herausforderungen: Bestwert merken bzw. Zähler erhöhen
+func ch_max(k: String, v: int) -> void:
+	ch[k] = maxi(int(ch.get(k, 0)), v)
+
+
+func ch_add(k: String, n := 1) -> void:
+	ch[k] = int(ch.get(k, 0)) + n
 
 
 # ---------- Form & Evolution ----------
@@ -495,7 +507,7 @@ func to_dict() -> Dictionary:
 		"sp_bonus": sp_bonus, "foe_weak": foe_weak, "seen_events": seen_events.duplicate(),
 		"modules": modules.duplicate(), "backup_used": backup_used, "difficulty": difficulty, "protocol": protocol,
 		"pushed": pushed, "boss_heal": boss_heal, "boss_spark_t": boss_spark_t, "final_sig": final_sig, "loot_mult": loot_mult,
-		"act": act, "route": route.duplicate(), "bosses": bosses.duplicate(), "legends_won": legends_won.duplicate(), "route_pending": route_pending,
+		"act": act, "route": route.duplicate(), "bosses": bosses.duplicate(), "legends_won": legends_won.duplicate(), "route_pending": route_pending, "ch": ch.duplicate(),
 		"zone": map.zone, "level": map.level, "floors": map.floors.duplicate(true),
 		"floor_idx": floor_idx, "pos": pos, "path": p,
 		# 64-Bit-Werte als Text, JSON-Zahlen sind nur Gleitkomma
@@ -541,6 +553,7 @@ static func from_dict(d: Dictionary) -> RunState:
 	r.bosses = Array(d.get("bosses", []))
 	r.legends_won = Array(d.get("legends_won", []))
 	r.route_pending = bool(d.get("route_pending", false))
+	r.ch = _int_dict(d.get("ch", {}))
 	var m := ZoneMap.new()
 	m.zone = d.zone
 	m.zone_name = GameData.ZONES[m.zone].name

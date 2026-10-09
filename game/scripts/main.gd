@@ -13,6 +13,7 @@ const RoomScreen := preload("res://scripts/ui/room_view.gd")
 const ResultScreen := preload("res://scripts/ui/result_view.gd")
 const StationScreen := preload("res://scripts/ui/station_view.gd")
 const RouteScreen := preload("res://scripts/ui/route_view.gd")
+const TrailerScreen := preload("res://scripts/ui/trailer_view.gd")
 const BattleScene := preload("res://scenes/battle.tscn")
 
 var current: Node
@@ -38,6 +39,30 @@ func _ready() -> void:
 	elif OS.get_cmdline_user_args().has("--play=ending"):
 		SaveGame.persist = false
 		show_ending(["Aurorlynx"], get_tree().quit)
+	elif OS.get_cmdline_user_args().has("--play=trailer"):
+		for arg in OS.get_cmdline_user_args():
+			if arg.begins_with("--lang="):
+				Settings.lang = arg.substr(7)   # nur für die Aufnahme, wird nicht gespeichert
+		# Trailer (09.10.2026): Video-Aufnahme siehe trailer_view.gd. Das Spiel läuft in 640×360 und wird pixelgenau
+		# dreifach vergrößert, damit die Aufnahme 1920×1080 hat (sonst nimmt Godot die interne Auflösung auf).
+		var tr := TrailerScreen.new()
+		tr.finished.connect(get_tree().quit)
+		var sc := 3
+		get_window().content_scale_size = Vector2i(640 * sc, 360 * sc)
+		var box := SubViewportContainer.new()
+		box.stretch = true
+		box.stretch_shrink = sc
+		box.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		box.size = Vector2(640 * sc, 360 * sc)
+		var vp := SubViewport.new()
+		# Unterfenster übernehmen die Projekteinstellungen nicht: ohne das wären vergrößerte Sprites (Babys, Ei) weichgezeichnet
+		vp.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+		vp.snap_2d_transforms_to_pixel = true
+		vp.snap_2d_vertices_to_pixel = true
+		box.add_child(vp)
+		add_child(box)
+		vp.add_child(tr)
+		current = box
 	elif shot.is_empty():
 		show_title()
 	else:
@@ -327,7 +352,7 @@ func _screenshot(shot: Dictionary) -> void:
 		"ending":
 			show_ending([shot.get("form", "Aurorlynx")], show_title)
 			current.seek(shot.get("t", 0.0))
-		"station", "nest", "dex", "hatch", "lab", "fusion", "upgrade", "home":
+		"station", "nest", "dex", "hatch", "lab", "fusion", "upgrade", "home", "aufgaben":
 			if mode == "home":
 				# mehr Bewohner für das Zuhause-Bild (nur im Speicher)
 				for sp in [["Kekso", "Cachy", 2], ["Lumi", "Lumi", 1], ["Plapperli", "Plapperli", 1], ["Brummbit", "Titanbrumm", 3], ["Bachli", "Fulgurlutra", 4], ["Maskli", "Maskli", 1], ["Kauzbit", "Orbitkauz", 4]]:
@@ -339,10 +364,18 @@ func _screenshot(shot: Dictionary) -> void:
 				SaveGame.data.upgrades = {"vorrat": 1, "werkbank": 1}
 			if mode == "hatch":
 				SaveGame.data.nest[0].runs_left = 0
+			if mode == "aufgaben":
+				# einige Aufgaben geschafft, eine Belohnung wartet, Bestwerte für die Fortschrittsbalken
+				SaveGame.data.cleared = ["wiesen", "vulkan"]
+				SaveGame.data.ch_best = {"konter10": 6, "glitch2": 1, "el_feuer": 143, "el_code": 61, "waechter": 1}
+				SaveGame.data.challenges = {"wiesen": 2, "rookie": 2}
 			if shot.has("legendegg"):
 				SaveGame.data.nest.append({"species": "Sternwal", "runs_left": 1, "legend": true})
 			show_station()
-			current.tab = {"station": 0, "nest": 1, "lab": 2, "dex": 3, "hatch": 0, "fusion": 2, "upgrade": 4, "home": 5}[mode]
+			current.tab = {"station": 0, "nest": 1, "lab": 2, "dex": 3, "hatch": 0, "fusion": 2, "upgrade": 4, "home": 5, "aufgaben": 6}[mode]
+			if mode == "aufgaben":
+				current.ch_cat = int(shot.get("t", 0.0))
+				current.sel = 1
 			if mode == "home":
 				current._sync_home()
 				current.home.setup(SaveGame.team(), 7)

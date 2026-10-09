@@ -1,13 +1,13 @@
 extends PixelCanvas
-## Station (Hub): Zuhause, Team, Brutnest, Labor, Monsterdex, Ausbau. Startet Runs und lässt bereite Eier schlüpfen.
+## Station (Hub): Zuhause, Team, Brutnest, Labor, Monsterdex, Ausbau, Aufgaben. Startet Runs und lässt bereite Eier schlüpfen.
 
 signal start_run(monster_id: int, zone: String)
 signal to_title
 
-enum Tab { TEAM, NEST, LAB, DEX, UPGRADE, HOME }
-const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex", "Ausbau", "Zuhause"]
-## Reihenfolge der Reiter oben (Zuhause ganz links, 06.10.2026)
-const TAB_ORDER := [Tab.HOME, Tab.TEAM, Tab.NEST, Tab.LAB, Tab.DEX, Tab.UPGRADE]
+enum Tab { TEAM, NEST, LAB, DEX, UPGRADE, HOME, CHALLENGE }
+const TAB_NAMES := ["Team", "Brutnest", "Labor", "Monsterdex", "Ausbau", "Zuhause", "Aufgaben"]
+## Reihenfolge der Reiter oben (Zuhause ganz links, 06.10.2026; Aufgaben ganz rechts, 09.10.2026)
+const TAB_ORDER := [Tab.HOME, Tab.TEAM, Tab.NEST, Tab.LAB, Tab.DEX, Tab.UPGRADE, Tab.CHALLENGE]
 ## Nach Linien: Baby → Rookies → Champions → Ultras, am Ende die Fusionen
 const DEX_ORDER := [
 	"Pixmiez", "Firewallo", "Virulina", "Prismiez", "Bollwerkatz", "Toxipanth", "Prismalynx", "Bastionkatz", "Venomynx", "Aurorlynx",
@@ -55,6 +55,8 @@ var home := HomeSim.new()    # Zuhause: Bewohner, die herumlaufen
 var home_sel := 0            # gewählter Bewohner (Index in home.residents)
 var pet_msg := ""            # Reaktion aufs Streicheln
 var pet_t := 0.0
+var ch_cat := 0              # Aufgaben: gewählter Bereich (GameData.CHALLENGE_CATS)
+var ch_msg := ""             # Rückmeldung beim Abholen einer Belohnung
 
 ## Station-Führung: [Reiter, hervorgehobener Bereich, Titel, Text] – %s wird durch Tasten ersetzt
 const GUIDE := [
@@ -65,6 +67,7 @@ const GUIDE := [
 	[2, "tab", "Labor", "Hier verschmelzen zwei Glitchlinge zu einer seltenen Fusion. Die Rezepte sind geheim, aber Gerüchte helfen dir."],
 	[3, "tab", "Monsterdex", "Alle Formen, die du entdeckt hast. Wie sich ein Glitchling entwickelt, bestimmen die Chips, die du im Kampf spielst!"],
 	[4, "tab", "Ausbau", "Fragmente aus deinen Runs machen die Station dauerhaft stärker: mehr HP, verbesserte Start-Chips, ein vierter Nestplatz …"],
+	[6, "tab", "Aufgaben", "Herausforderungen für später: besondere Aufgaben, die dich anders spielen lassen. Geschafft? Hier holst du die Belohnung ab – Eier oder Fragmente."],
 	[0, "team", "Los geht's!", "Wähle ein Glitchling und drücke %s. Diese Hilfe öffnest du jederzeit wieder mit %s, das Kampf-Handbuch mit %s (auch im Pause-Menü)."],
 ]
 
@@ -74,6 +77,9 @@ func _ready() -> void:
 	tab = Tab.HOME
 	_sync_home()
 	_check_hatch()
+	# Herausforderungen, die schon erfüllt sind (z. B. aus älteren Spielständen), warten im Reiter „Aufgaben“
+	if not SaveGame.check_challenges().is_empty():
+		SaveGame.save_game()
 	# Erster Besuch: kurze Führung durch die Reiter (nach dem Schlüpfen)
 	if not SaveGame.data.get("station_guide_done", false):
 		guide = 0
@@ -144,6 +150,7 @@ func _process(delta: float) -> void:
 		_sync_home()
 		up_msg = ""
 		nest_msg = ""
+		ch_msg = ""
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("tab_prev"):
@@ -151,6 +158,7 @@ func _process(delta: float) -> void:
 		_sync_home()
 		up_msg = ""
 		nest_msg = ""
+		ch_msg = ""
 		sel = 0
 		Sfx.play("select")
 	elif Input.is_action_just_pressed("back") or Input.is_action_just_pressed("pause"):
@@ -245,6 +253,8 @@ func _process(delta: float) -> void:
 					else:
 						up_msg = T.t("Dafür fehlen noch %d Fragmente.") % (cost - SaveGame.frag())
 						Sfx.play("back")
+			Tab.CHALLENGE:
+				_process_challenges()
 			Tab.DEX:
 				var n := DEX_ORDER.size()
 				if Input.is_action_just_pressed("move_right"):
@@ -260,6 +270,47 @@ func _process(delta: float) -> void:
 					sel = (sel + n - 6) % n
 					Sfx.play("select")
 	queue_redraw()
+
+
+## Aufgaben: < > wechselt den Bereich, hoch/runter die Aufgabe, Bestätigen holt eine Belohnung ab
+func _process_challenges() -> void:
+	var cats := _ch_cats()
+	if Input.is_action_just_pressed("move_right") or Input.is_action_just_pressed("move_left"):
+		ch_cat = (ch_cat + (1 if Input.is_action_just_pressed("move_right") else cats.size() - 1)) % cats.size()
+		sel = 0
+		ch_msg = ""
+		Sfx.play("select")
+		return
+	var list := _ch_list(cats[ch_cat])
+	var sel0 := sel
+	_nav_v(list.size())
+	if sel != sel0:
+		ch_msg = ""
+	if not Input.is_action_just_pressed("confirm") or sel >= list.size():
+		return
+	var c: Dictionary = list[sel]
+	match SaveGame.challenge_state(c.id):
+		1:
+			var rng := RandomNumberGenerator.new()
+			rng.randomize()
+			var res := SaveGame.claim_challenge(c.id, rng)
+			ch_msg = res.msg
+			Sfx.play("evolve" if res.ok else "back", 0.0)
+		2:
+			ch_msg = T.t("Die Belohnung hast du schon abgeholt.")
+			Sfx.play("back")
+		_:
+			ch_msg = T.t("Noch nicht geschafft.")
+			Sfx.play("back")
+
+
+## Bereiche mit mindestens einer Aufgabe (die Testfassung blendet Aufgaben ohne ihre Zonen aus)
+func _ch_cats() -> Array:
+	return GameData.CHALLENGE_CATS.filter(func(cat): return not _ch_list(cat).is_empty())
+
+
+func _ch_list(cat: String) -> Array:
+	return SaveGame.challenges().filter(func(c): return c.cat == cat)
 
 
 func _nav_v(n: int) -> void:
@@ -294,9 +345,12 @@ func _draw() -> void:
 			_draw_dex()
 		Tab.UPGRADE:
 			_draw_upgrades()
+		Tab.CHALLENGE:
+			_draw_challenges()
 	var pad: bool = InputSetup.pad
 	var hint := T.t("%s/%s Reiter   %s Hilfe   %s Handbuch   %s Titel") % [InputSetup.btn("LB") if pad else InputSetup.key_label("tab_prev"), InputSetup.btn("RB") if pad else InputSetup.key_label("tab_next"), InputSetup.btn("Y") if pad else InputSetup.key_label("special"), InputSetup.btn("Back") if pad else InputSetup.key_label("handbook"), InputSetup.btn("B") if pad else "Esc"]
-	_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
+	if not cinematic:
+		_text(Vector2(0, H - 8), hint, 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, W)
 	if zone_pick:
 		_draw_zone_pick()
 	if guide >= 0 and hatch.is_empty():
@@ -311,11 +365,13 @@ func _draw_tabs() -> void:
 	_text(Vector2(12, 22), "STATION", 16, GameData.COL.mint, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
 	var x := 150.0
 	for i in TAB_ORDER:
-		var w := text_width(TAB_NAMES[i], 8, true) + 20
+		var w := text_width(TAB_NAMES[i], 8, true) + 14
 		var r := Rect2(x, 8, w, 18)
 		var active: bool = i == tab
 		_box(r, GameData.COL.panel if active else Color(GameData.COL.bg2, 0.9), GameData.COL.sun if active else GameData.COL.line)
 		_text(Vector2(r.position.x, r.position.y + 13), TAB_NAMES[i], 8, GameData.COL.ink if active else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, w, true, active)
+		if i == Tab.CHALLENGE and SaveGame.challenges_ready() > 0:
+			_ready_dot(Vector2(r.end.x - 4, r.position.y + 4))
 		x += w + 4
 	var st: Dictionary = SaveGame.data.get("stats", {})
 	_text(Vector2(0, H - 8), T.t("Fragmente %d · Dex %d/%d ") % [SaveGame.frag(), SaveGame.dex_count(), DEX_ORDER.size()], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_RIGHT, W - 8)
@@ -645,7 +701,7 @@ func _end_guide() -> void:
 func _tab_rect(i: int) -> Rect2:
 	var x := 150.0
 	for k in TAB_ORDER:
-		var w := text_width(TAB_NAMES[k], 8, true) + 20
+		var w := text_width(TAB_NAMES[k], 8, true) + 14
 		if k == i:
 			return Rect2(x, 8, w, 18)
 		x += w + 4
@@ -681,7 +737,7 @@ func _draw_guide() -> void:
 			txt = txt % keys_tabs
 		1, 2:
 			txt = txt % key_ok
-		7:
+		8:
 			txt = txt % [key_ok, key_help, InputSetup.btn("Back") if pad else InputSetup.key_label("handbook")]
 	var B := Rect2(196, 214 if g[1] != "team" else 200, 420, 110)
 	_box(B, Color(GameData.COL.panel, 0.97), GameData.COL.sun)
@@ -689,6 +745,78 @@ func _draw_guide() -> void:
 	_text(Vector2(B.position.x, B.position.y + 20), "%d/%d" % [guide + 1, GUIDE.size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, B.size.x - 14)
 	draw_multiline_string(font(), Vector2(B.position.x + 14, B.position.y + 40), txt, HORIZONTAL_ALIGNMENT_LEFT, B.size.x - 28, tsz(8), 4, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	_text(Vector2(B.position.x, B.end.y - 10), T.t("%s weiter   %s überspringen") % [key_ok, InputSetup.btn("B") if pad else "Esc"], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, B.size.x - 14)
+
+
+## Herausforderungen (09.10.2026): Bereiche oben, darunter die Aufgaben mit Status, Belohnung und Fortschritt
+func _draw_challenges() -> void:
+	var R := Rect2(40, 34, 560, 302)
+	_box(R, Color(GameData.COL.panel, 0.92), GameData.COL.line)
+	_text(Vector2(R.position.x, R.position.y + 20), "Herausforderungen", 16, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	_text(Vector2(R.position.x, R.position.y + 34), T.t("%d von %d geschafft. Jede Aufgabe gibt es einmal, die Belohnung holst du hier ab.") % [SaveGame.challenges_done(), SaveGame.challenges().size()], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	var cats := _ch_cats()
+	ch_cat = clampi(ch_cat, 0, cats.size() - 1)
+	var cw := (R.size.x - 40 - 4 * (cats.size() - 1)) / cats.size()
+	for i in cats.size():
+		var cl := _ch_list(cats[i])
+		var done := cl.filter(func(c): return SaveGame.challenge_state(c.id) >= 1).size()
+		var r := Rect2(R.position.x + 20 + i * (cw + 4), R.position.y + 42, cw, 18)
+		var active := i == ch_cat
+		_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else GameData.COL.line)
+		_text(Vector2(r.position.x, r.position.y + 13), "%s %d/%d" % [T.t(cats[i]), done, cl.size()], 8, GameData.COL.ink if active else GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, cw, true, active)
+		if cl.any(func(c): return SaveGame.challenge_state(c.id) == 1):
+			_ready_dot(Vector2(r.end.x - 4, r.position.y + 4))
+	var list := _ch_list(cats[ch_cat])
+	for i in list.size():
+		var c: Dictionary = list[i]
+		var stt := SaveGame.challenge_state(c.id)
+		var active := i == sel
+		var r := Rect2(R.position.x + 20, R.position.y + 66 + i * 34, R.size.x - 40, 30)
+		_box(r, GameData.COL.panel.lightened(0.08) if active else GameData.COL.bg2, GameData.COL.sun if active else (READY_COL if stt == 1 else GameData.COL.line))
+		# Status: Haken (abgeholt), blinkender Stern (Belohnung wartet), leeres Kästchen (offen)
+		var ic := Vector2(r.position.x + 9, r.position.y + 9)
+		match stt:
+			2:
+				_draw_picto("check", ic, GameData.COL.mint)
+			1:
+				_draw_picto("star", ic, READY_COL if fmod(anim_t, 0.8) < 0.5 else READY_COL.darkened(0.3))
+			_:
+				draw_rect(Rect2(ic, Vector2(12, 12)), GameData.COL.dark)
+				draw_rect(Rect2(ic, Vector2(12, 12)), GameData.COL.line, false, 1.0)
+		_text(Vector2(r.position.x + 30, r.position.y + 12), c.name, 8, GameData.COL.muted if stt == 2 else GameData.COL.ink, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+		_text(Vector2(r.position.x + 30, r.position.y + 24), GameData.challenge_desc(c), 8, GameData.COL.muted)
+		var rew := SaveGame.reward_text(c)
+		var rcol: Color = GameData.COL.sun
+		if stt == 1:
+			rew = T.t("Abholen: %s") % rew
+			rcol = READY_COL
+		elif stt == 2:
+			rew = T.t("erhalten")
+			rcol = GameData.COL.mint
+		_text(Vector2(r.position.x, r.position.y + 12), rew, 8, rcol, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 10, true, true)
+		# Fortschritt für Aufgaben mit Zielwert ab 2
+		if stt == 0 and int(c.goal) >= 2:
+			var pr := mini(SaveGame.challenge_progress(c.id), int(c.goal))
+			_bar(Rect2(r.end.x - 104, r.position.y + 18, 60, 6), float(pr) / int(c.goal), GameData.COL.mint)
+			_text(Vector2(r.position.x, r.position.y + 24), "%d/%d" % [pr, int(c.goal)], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 10)
+	var foot := ch_msg if ch_msg != "" else T.t("< > Bereich   %s Belohnung abholen") % (InputSetup.btn("A") if InputSetup.pad else "Enter")
+	_text(Vector2(R.position.x, R.end.y - 8), foot, 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+
+
+const READY_COL := Color("#FFE27A")
+
+
+## Blinkender Punkt: hier wartet eine Belohnung
+func _ready_dot(pos: Vector2) -> void:
+	draw_rect(Rect2(pos - Vector2(2, 2), Vector2(5, 5)), READY_COL if fmod(anim_t, 0.8) < 0.5 else Color(READY_COL, 0.35))
+
+
+## Piktogramm 6×6 aus GameData.PICTOS, doppelt groß
+func _draw_picto(pat: String, pos: Vector2, col: Color) -> void:
+	var pic: Array = GameData.PICTOS[pat]
+	for y in 6:
+		for x in 6:
+			if pic[y][x] == "#":
+				draw_rect(Rect2(pos + Vector2(x * 2, y * 2), Vector2(2, 2)), col)
 
 
 func _draw_upgrades() -> void:
@@ -918,7 +1046,8 @@ func _draw_fusion() -> void:
 		_text(Vector2(0, 246), T.t("Signatur: %s – %s") % [T.t(S.name), T.t(S.desc)], 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 		_text(Vector2(0, 262), T.t("Passiv: %s") % T.t(GameData.MONS[f].passive_desc), 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k2 > 0.6:
-			_text(Vector2(0, 296), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			if not cinematic:
+				_text(Vector2(0, 296), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
 func _draw_egg(feet: Vector2, scale: int, shine := false) -> void:
@@ -955,4 +1084,5 @@ func _draw_hatch() -> void:
 			_text(Vector2(0, 88), "Neu im Monsterdex!", 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 		_text(Vector2(0, 250), T.t("%s kommt in dein Team.") % T.t(sp), 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 		if k > 0.6:
-			_text(Vector2(0, 290), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
+			if not cinematic:
+				_text(Vector2(0, 290), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)

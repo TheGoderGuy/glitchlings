@@ -12,3 +12,6 @@ game/export/
 Glitchlings_spielen.bat
 build/
 Spieltest_bauen.bat
+
+# Trailer-Aufnahme: nur während Trailer_aufnehmen.bat vorhanden
+game/override.cfg

@@ -34,7 +34,7 @@ static func form_for(species: String, stage: int, rng: RandomNumberGenerator) ->
 static func new_stats() -> Dictionary:
 	return {"runs": 0, "wins": 0, "fights": 0, "nfights": 0, "ntime": 0.0, "natk": 0, "nloss": 0.0,
 		"bfights": 0, "btime": 0.0, "counters": 0, "end_hp": 0.0, "deaths": {}, "chips": 0, "stuck": 0,
-		"acts": [0, 0, 0, 0], "time": 0.0, "el_chips": 0, "stage_end": {}, "evo_act": {}}
+		"acts": [0, 0, 0, 0], "time": 0.0, "el_chips": 0, "stage_end": {}, "evo_act": {}, "ch_runs": []}
 
 
 ## Ganze Reisen (alle Akte, Zonenwahl zufällig) mit Monstern der angegebenen Stufe und Lebenszeit-Prägung
@@ -79,6 +79,8 @@ static func play_run(run: RunState, bot: BattleBot, S: Dictionary) -> bool:
 	S.runs += 1
 	var won := false
 	var el0 := run.element_chips()
+	var tmin := 999.0
+	var tguard := 999.0
 	while true:
 		var ch := run.next_choices()
 		if ch.is_empty():
@@ -112,6 +114,9 @@ static func play_run(run: RunState, bot: BattleBot, S: Dictionary) -> bool:
 			if not st.over or st.outcome == "lost":
 				S.deaths[node.type] = S.deaths.get(node.type, 0) + 1
 				break
+			tmin = minf(tmin, t)
+			if node.type == "guard":
+				tguard = minf(tguard, t)
 			if node.type == "boss":
 				if run.act == 0:
 					S["baby_boss"] = S.get("baby_boss", 0) + (1 if run.stage == 1 else 0)
@@ -144,6 +149,14 @@ static func play_run(run: RunState, bot: BattleBot, S: Dictionary) -> bool:
 	S.chips += run.chips_used
 	S.el_chips += run.element_chips() - el0
 	S.stage_end["%d" % run.stage] = S.stage_end.get("%d" % run.stage, 0) + 1
+	# Herausforderungen: Bestwerte dieser Reise (wie RunState.ch, dazu Element-Chips und schnellster Sieg)
+	var vals := run.ch.duplicate()
+	for el in run.praeg:
+		vals["el_" + el.to_lower()] = int(run.praeg[el])
+	vals["tmin"] = tmin
+	vals["tguard"] = tguard
+	vals["won"] = 1 if won else 0
+	S.ch_runs.append(vals)
 	if won:
 		S.wins += 1
 		S.end_hp += float(run.hp) / run.max_hp
@@ -188,6 +201,27 @@ static func journey_line(label: String, S: Dictionary) -> String:
 	return ("Baby beim Wiesen-Boss: %d  " % S.get("baby_boss", 0)) + "%-14s Sieg %2d/%-2d  erreicht Akt 2/3/4: %d/%d/%d  normal Ø %4.1f s · HP-Verlust %2.0f %%  Wächter/Boss Ø %4.1f s  Run Ø %4.1f min  Element-Chips/Run %3.0f  Endstufen %s  Entwicklung in Akt %s  Tode %s" % [
 		label, S.wins, S.runs, S.acts[1], S.acts[2], S.acts[3], S.ntime / n, 100.0 * S.nloss / n, S.btime / maxf(1, S.bfights),
 		S.time / r / 60.0, float(S.el_chips) / r, S.stage_end, _avg_dict(S.evo_act), S.deaths]
+
+
+## Herausforderungen: je Reise-Bestwert Durchschnitt, Höchstwert und wie viele Reisen das Ziel erreicht hätten
+static func challenge_line(S: Dictionary) -> String:
+	var out: PackedStringArray = []
+	var keys := ["konter10", "felsenfest", "blitz", "gold", "glitch2", "waechter", "final_ohne", "minimal", "baby2", "heal",
+		"el_feuer", "el_wasser", "el_code", "el_elektro", "el_virus", "tmin", "tguard"]
+	for k in keys:
+		var sum := 0.0
+		var mx := 0.0
+		var hit := 0
+		var goal: int = int(GameData.challenge(k).get("goal", 0))
+		for v in S.ch_runs:
+			var x := float(v.get(k, 0))
+			sum += x
+			mx = maxf(mx, x)
+			if goal > 0 and x >= goal:
+				hit += 1
+		var n := maxi(1, S.ch_runs.size())
+		out.append("%s Ø%.1f max %.0f%s" % [k, sum / n, mx, (" Ziel %d: %d/%d" % [goal, hit, n]) if goal > 0 else ""])
+	return "  Herausforderungen: " + " · ".join(out)
 
 
 static func _avg_dict(d: Dictionary) -> String:

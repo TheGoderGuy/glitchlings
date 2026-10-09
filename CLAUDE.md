@@ -18,7 +18,7 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 | `assets/sprites/` | Alle Sprites als PNG (Originalgröße, x4/x8 vergrößert, Blinzel-Frames) |
 | `tests/` | Automatische Tests mit jsdom (`cd tests && npm install && npm test`) |
 
-## Aktueller Stand (Godot, 08.10.2026)
+## Aktueller Stand (Godot, 09.10.2026)
 - **Kampf:** 3×3-Raster je Seite, Echtzeit, **45 Chips + 13 Linien-Chips** (je Linie einer im Startdeck, nie in Chipwahl/Händler) in **2× Angriff (geteilter Stapel) + 1× Support**, Signatur-Attacke, Passiv je Linie, 22 Module. Effekte je Chip, Flächen: Lava, Giftschleim, Strömung, Spannungsfelder. Wächter und Bosse mit Phasen und goldenen Großangriffen.
   Seit 08.10.: **Schützen** schießen aus ihrer eigenen Reihe (wer trifft, steht in der Schusslinie), **Konter** (Treffer beim Ausholen bricht den Angriff ab, Fadenkreuz), längere Kämpfe (`GameData.FOE_HP/BOSS_HP/FOE_DMG/FOE_TEMPO`), **Resonanz + Element-Gaben** ab Rookie.
   Steuerung: WASD/Pfeile + J/K/L, Leertaste = Signatur, frei belegbar; Controller Chips X/A/B (PS □/✕/○), Signatur Y/RT, eigene PS-Symbole (`InputSetup.btn()`). **Kein Vormerken** ladender Chips (Karte blinkt nur rot).
@@ -26,8 +26,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - **Glitchlinge:** 13 Linien bis Ultra plus Fusionen und 6 Legendäre (Champion + Ultra), **114 Formen** im Dex. Babys: Pixmiez (Katze), Funkling (Welpe), Tröpfel (Axolotl), Kekso (Hamster), Lumi (Hase), Quakli (Frosch), Molchi (Salamander), Brummbit (Bär), Kauzbit (Robo-Eule), Buddli (Dachs), Maskli (Waschbär), Bachli (Otter), Plapperli (Ara).
   **Evolution:** Prägung = Element der gespielten Element-Chips (Rookie 25, Champion 900, Ultra 2700 über alle Runs, 2 Chips Vorsprung), dauerhaft pro Monster gespeichert; Labor „Neu prägen“ setzt auf Baby zurück.
 - **Elemente:** Feuer, Wasser, Code, Elektro, Virus, Neutral (Feuer > Code > Wasser > Feuer, Elektro <> Virus).
-- **Station:** Zuhause (Bewohner laufen herum, streicheln), Team (Zonenwahl), Brutnest (Eier nach Runs oder für 200 Fragmente), Labor (geheime Fusionen), Monsterdex, Ausbau. Führung beim ersten Besuch.
-- **Rahmen:** Kino-Intro und -Ende, Training nach der Starterwahl, Kampf-Handbuch, DE/EN, Schwierigkeiten Entspannt bis Korrumpiert, Musik und Sounds selbst synthetisiert (Platzhalter; seit 08.10. epische Fassungen für Titel/Station/Kampf/Boss), 379 Tests. Balancing-Simulation: `godot --headless --path game res://tools/balance_sim.tscn` (Mensch-Bot, ganze Reisen).
+- **Station:** Zuhause (Bewohner laufen herum, streicheln), Team (Zonenwahl), Brutnest (Eier nach Runs oder für 200 Fragmente), Labor (geheime Fusionen), Monsterdex, Ausbau, **Aufgaben** (30 Herausforderungen als Endgame, seit 09.10.). Führung beim ersten Besuch.
+- **Rahmen:** Kino-Intro und -Ende, Training nach der Starterwahl, Kampf-Handbuch, DE/EN, Schwierigkeiten Entspannt bis Korrumpiert, Musik und Sounds selbst synthetisiert (Platzhalter; seit 08.10. epische Fassungen für Titel/Station/Kampf/Boss), Trailer (73 s, DE/EN), 394 Tests. Balancing-Simulation: `godot --headless --path game res://tools/balance_sim.tscn` (Mensch-Bot, ganze Reisen).
 - **Browser-Prototyp** (`prototype/`): alter Stand mit Pop-Up-Tyrann, Echtzeit-Eiern und Expeditionen, nur noch Referenz.
 
 ## Getroffene Entscheidungen (nicht ohne Rückfrage ändern)
@@ -108,6 +108,8 @@ Der Nutzer ist der Produzent. Er spricht Deutsch – antworte immer auf Deutsch.
 - [x] **Politur** (08.10.2026): Händler/Rast/Ereignisse als Karten (Pfeil-Navigation), Zuhause entzerrt (Abstandhalten), Elite-Aura – `vault/05 Produktion/Politur Räume, Zuhause, Elites.md`. Größere Spätgegner bräuchten neue 80-px-Sprites (Entscheidung Produzent)
 - [x] **Epische Musik** (08.10.2026): Titelmelodie (`title_epic`), Station/Idle (`station`), Kampf (`battle_epic`), Boss (`boss_epic`) mit neuen Klangfarben (Chor, Streicher-Ostinato, Taikos, Oktav-Dopplung); Zuordnung in `Music.USE`, alte Dateien bleiben – `vault/05 Produktion/Musik episch.md`
 - [x] **Linien-Chips** (08.10.2026): 13 eigene, neutrale Chips (Krallenwirbel, Stöckchen, Kiemenatmung, Backenvorrat, Hakenschlag, Zungenzug, Hautgift, Bärenhieb, Eulenauge, Graben, Stibitzen, Kieselwurf, Echoruf) je einer im Startdeck seiner Linie, Seltenheit „Linie“ – `vault/05 Produktion/Linien-Chips.md`
+- [x] **Herausforderungen** (09.10.2026): Endgame-Brett im neuen Station-Reiter „Aufgaben“, 30 Aufgaben in 5 Bereichen (Reise, Kampf, Spielweise, Glitchlinge, Meister), einmalig, Belohnung (Fragmente/Ei/Ei mit neuer Art) im Reiter abholen, Bestwerte je Reise (`RunState.ch`, `SaveGame.ch_best`), Zielwerte per `balance_sim.tscn -- --challenges` geprüft, Screenshot `--mode=aufgaben --t=<Bereich>`, 393 Tests – `vault/05 Produktion/Herausforderungen.md`. Weitere Endgame-Ideen (Glitch-Varianten, Protokoll-Mutatoren, Team lernt mit, Zuhause-Deko) stehen in der Roadmap
+- [x] **Trailer** (09.10.2026): 73 s, 1920×1080, 60 Bilder/s, DE + EN, echte Spielszenen mit Autopilot zwischen Kino-Bildern, eigenes Stück `trailer` (120 BPM, Lautstärke je Abschnitt), Aufnahme mit `Trailer_aufnehmen.bat` > `build/trailer/` (legt kurz `game/override.cfg` an), `--play=trailer --lang=`; dabei behoben: Feuersbrunst/Tsunami/Blackout zeigten eine falsche Signatur-Einblendung, 394 Tests – `vault/05 Produktion/Trailer.md`
 - [ ] Phase 4: Steam-Seite + Demo – offene Punkte stehen in `vault/05 Produktion/Roadmap.md` (Stand 07.10.2026)
 - [x] **Aufräumen** (07.10.2026): Roadmap auf den echten Stand, `LIZENZEN.txt` (Schriften OFL, Godot MIT, Engine-Bibliotheken; `godot --headless --path game --script res://tools/write_licenses.gd`) liegt jedem Build bei, Abspann nennt sie
 

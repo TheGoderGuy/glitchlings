@@ -64,6 +64,11 @@ func _draw() -> void:
 		lines.append(["Ein leuchtendes Ei ist erschienen! Etwas Legendäres wartet im Brutnest.", Color("#FFE27A")])
 	if int(summary.get("protocol_up", 0)) > 0:
 		lines.append([T.t("Glitch-Protokoll %d freigeschaltet!") % int(summary.protocol_up), Color("#FF5470")])
+	var chs: Array = summary.get("challenges", [])
+	if chs.size() == 1:
+		lines.append([T.t("Herausforderung geschafft: %s (Station > Aufgaben)") % T.t(GameData.challenge(chs[0]).name), Color("#FFE27A")])
+	elif chs.size() > 1:
+		lines.append([T.t("%d Herausforderungen geschafft! (Station > Aufgaben)") % chs.size(), Color("#FFE27A")])
 	if int(summary.get("frag_banked", 0)) > 0:
 		lines.append([T.t("+%d Fragmente auf die Station gerettet") % int(summary.frag_banked), GameData.COL.sun])
 	var eggs: Array = summary.get("eggs", [summary.egg] if not summary.get("egg", {}).is_empty() else [])

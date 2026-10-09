@@ -637,6 +637,67 @@ const TRACKS := {
 				"G5 - - - B5 - - - D6 - - - F6 - - -"]},
 		],
 	},
+	# ---------- Trailer (09.10.2026) ----------
+	# 36 Takte à 2 s (120 BPM) = 72 s, taktgenau zu den Schnitten in trailer_view.gd. Jeder Abschnitt ein Teil des Trailers:
+	# Welt > Korruption > Ei (Herzschlag) > Drop mit Kämpfen > Evolution > Station > Aufbau > Bosse > Logo.
+	"trailer": {
+		"bpm": 120, "loud": 0.2, "lead": "brass", "bass": "half", "arp": "", "stabs": "", "drums": "none", "counter": "strings", "oneshot": true,
+		"choir": 0.6, "double": "strings", "glock": false,
+		"sections": [
+			{"name": "nest", "gain": 0.3, "chords": ["Dm", "Bb"], "lead": "", "fill": false, "melody": [
+				"A5 - - - - - - - D6 - - - E6 - F6 -",
+				"D6 - - - - - - - - - - - . . . ."]},
+			{"name": "corrupt", "gain": 0.55, "chords": ["Gm", "A"], "drums": "timp_build", "choir": 0.9, "fill": false, "melody": [
+				"D5 - - - - - - - Bb4 - - - - - - -",
+				"A4 - - - C#5 - - - E5 - - - A5 - - -"]},
+			{"name": "egg", "gain": 0.42, "chords": ["Dm", "Dm"], "drums": "heart", "lead": "", "double": "", "choir": 0.5, "melody": [
+				". . . . . . . . . . . . . . . .",
+				". . . . . . . . . . . . . . . ."]},
+			{"name": "drop", "gain": 1, "chords": ["Dm", "Bb", "F", "C", "Dm", "Bb", "Gm", "A"], "drums": "epic_battle", "bass": "octave8", "arp": "ostinato",
+				"lead2": "lead_sq", "choir": 0.8, "stabs": "x.....x...x.....", "melody": [
+				"D5 - - - A5 - - - F5 - E5 - D5 - A4 -",
+				"Bb4 - - - D5 - - - F5 - - - Bb5 - A5 -",
+				"A5 - - - F5 - - - C6 - - - A5 - F5 -",
+				"G5 - - - - - - - E5 - - - C5 - E5 -",
+				"D5 - - - A5 - - - D6 - - - C6 - A5 -",
+				"Bb5 - - - A5 - F5 - D5 - - - F5 - Bb5 -",
+				"D6 - - - C6 - Bb5 - G5 - - - Bb5 - D6 -",
+				"C#6 - - - - - - - E6 - - - A5 - - -"]},
+			# Evolution: kurz nur Chor und Streicher-Ostinato, dann die Enthüllung mit Pauken im halben Takt
+			{"name": "evo_hold", "gain": 0.55, "chords": ["Bb"], "arp": "ostinato", "choir": 1.1, "fill": false, "melody": [
+				"F5 - - - - - - - - - - - G5 - A5 -"]},
+			{"name": "evolve", "gain": 0.85, "chords": ["F", "C", "Dm", "Bb", "A"], "drums": "epic_title", "bass": "octave8", "arp": "ostinato", "choir": 1.0, "melody": [
+				"A5 - - - - - - - C6 - - - F6 - - -",
+				"E6 - - - - - - - G5 - - - C6 - - -",
+				"D6 - - - - - - - F5 - - - A5 - D6 -",
+				"F6 - - - - - - - D6 - - - Bb5 - - -",
+				"C#6 - - - E6 - - - A6 - - - - - - -"]},
+			# Station: hell und hüpfend (Zuhause, Labor, Legendäre)
+			{"name": "life", "gain": 0.72, "chords": ["F", "C", "Bb", "C"], "drums": "title", "bass": "bounce", "arp": "arp8", "double": "", "choir": 0.5, "fill": false, "melody": [
+				"F5 - A5 - C6 - - - A5 - G5 - F5 - - -",
+				"E5 - G5 - C6 - - - - - - - G5 - - -",
+				"D5 - F5 - Bb5 - - - D6 - C6 - Bb5 - - -",
+				"C6 - - - - - - - E5 - - - G5 - - -"]},
+			{"name": "build", "gain": 0.8, "chords": ["Gm", "A"], "drums": "timp_build", "bass": "octave8", "arp": "arp16", "choir": 0.9, "melody": [
+				"G5 - - - Bb5 - - - D6 - - - G6 - - -",
+				"A5 - - - - - - - C#6 - - - E6 - - -"]},
+			{"name": "bosses", "gain": 1.12, "chords": ["Dm", "Bb", "Gm", "A", "Bb", "A"], "drums": "epic_boss", "bass": "octave8", "arp": "ostinato",
+				"lead": "lead_sq", "lead2": "brass", "stabs": "x.x...x...x.x...", "choir": 1.1, "melody": [
+				"D6 - - - A5 - - - F5 - - - D5 - F5 -",
+				"Bb5 - - - - - - - D6 - - - F6 - - -",
+				"G6 - - - F6 - D6 - Bb5 - - - D6 - G6 -",
+				"A6 - - - - - - - E6 - - - C#6 - - -",
+				"D6 - - - - - - - F6 - - - Bb6 - - -",
+				"A6 - - - - - - - - - - - . . . ."]},
+			# Logo: ein letzter Schlag, dann D-Dur über bVI und bVII zurück nach D
+			{"name": "final", "gain": 1.1, "chords": ["D"], "drums": "hit", "choir": 1.1, "fill": false, "melody": [
+				"D6 - - - - - - - - - - - - - - -"]},
+			{"name": "outro", "gain": 0.8, "chords": ["Bb", "C", "D"], "choir": 1.0, "fill": false, "melody": [
+				"D6 - - - F6 - - - - - - - - - - -",
+				"E6 - - - G6 - - - - - - - - - - -",
+				"F#6 - - - - - - - - - - - - - - -"]},
+		],
+	},
 }
 
 ## Schlagzeug-Spuren (16 Schritte): k Kick, s Snare, h Hi-Hat, t Pauke
@@ -665,6 +726,8 @@ const DRUMS := {
 	"taiko": {"k": "x.......x.......", "s": "................", "h": "................", "t": "x..x..x.x..x..x.", "tf": 58.0, "vol": 0.9},
 	"epic_battle": {"k": "x..x..x.x..x..x.", "s": "....x.......x...", "h": "x.x.x.x.x.x.x.x.", "t": "x.....x...x.x...", "tf": 62.0, "vol": 1.0},
 	"epic_boss": {"k": "x.xx..x.x.xx..x.", "s": "....x.......x...", "h": "xxxxxxxxxxxxxxxx", "t": "x..x..x...x..x..", "tf": 52.0, "vol": 1.0},
+	# Trailer: Herzschlag des Eis (tiefe Pauke, doppelter Schlag)
+	"heart": {"k": "x..x....x..x....", "s": "................", "h": "................", "t": "x..x....x..x....", "tf": 46.0, "vol": 0.8},
 }
 
 var L := PackedFloat32Array()
@@ -731,8 +794,10 @@ func _render(key: String) -> AudioStreamWAV:
 	R.resize(n)
 	SEND.resize(n)
 	var t := 0.0
+	var gains: Array = []   # [Start, Ende, Lautstärke] je Abschnitt (Trailer: Dynamik von leise bis Höhepunkt)
 	for sec in tr.sections:
 		var bars: int = sec.chords.size()
+		gains.append([t, t + bars * bar, float(sec.get("gain", 1.0))])
 		var is_intro: bool = sec.name == "intro"
 		# Abschnitte können Lead, Bass, Begleitung, Stabs und Schlagzeug überschreiben (Kino-Intro)
 		var lead: String = sec.get("lead", tr.lead)
@@ -786,9 +851,26 @@ func _render(key: String) -> AudioStreamWAV:
 					_stabs(stabs, ch, tb, step)
 			_drum_bar(drums, tb, step, fill_end and b == bars - 1, b == 0)
 		t += bars * bar
+	if gains.any(func(g): return g[2] != 1.0):
+		_section_gain(gains)
 	_echo(tr.bpm)
 	# One-Shot-Stücke (Kino-Intro) laufen einmal durch und behalten ihren Ausklang
 	return _to_wav(key, L.size() if tr.get("oneshot", false) else int(total_bars * bar * RATE))
+
+
+## Lautstärke je Abschnitt anwenden, an den Grenzen in 60 ms überblendet (auch der Echo-Anteil, damit Ausklänge mitgehen)
+func _section_gain(gains: Array) -> void:
+	var xf := int(0.06 * RATE)
+	for gi in gains.size():
+		var g: Array = gains[gi]
+		var g_prev: float = gains[gi - 1][2] if gi > 0 else g[2]
+		var i0 := int(g[0] * RATE)
+		var i1 := L.size() if gi == gains.size() - 1 else int(g[1] * RATE)
+		for i in range(i0, mini(i1, L.size())):
+			var k: float = g[2] if i - i0 >= xf else lerpf(g_prev, g[2], float(i - i0) / xf)
+			L[i] *= k
+			R[i] *= k
+			SEND[i] *= k
 
 
 func _parse_melody(s: String, t0: float, step: float) -> Array:

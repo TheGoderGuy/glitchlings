@@ -102,6 +102,9 @@ const COUNTER_STUN := 0.8
 const COUNTER_SP := 12.0
 const COUNTER_OPEN := 0.45   # Konter-Fenster öffnet sich nach diesem Anteil der Warnzeit (Gegner blitzt auf)
 var counters := 0      # Konter-Treffer in diesem Kampf (Statistik/Tests)
+var dmg_taken := 0     # erlittener Schaden in diesem Kampf (Herausforderungen „Unberührt“, „Makellos“)
+var moves := 0         # eigene Schritte in diesem Kampf (Herausforderung „Felsenfest“)
+var gold_hits := 0     # Treffer durch goldene Großangriffe in diesem Kampf (Herausforderung „Goldener Tänzer“)
 var gift := {}         # Element-Gabe der Form (GameData.gift), einmal je Kampf bestimmt
 # Linien-Chips (08.10.2026)
 var gills_t := 0.0     # Kiemenatmung: Restzeit der Heilung über Zeit
@@ -224,6 +227,7 @@ func move_player(dc: int, dr: int) -> void:
 		return
 	p.c = c
 	p.r = r
+	moves += 1
 	p.cd = mon.move * (0.5 if mon.passive in ["Hasenhaken", "Mischwesen", "Sturmschwingen"] else 1.0)
 	if run.has_mod("reflexbooster"):
 		p.cd *= 0.75
@@ -259,6 +263,8 @@ func use_slot(i: int) -> void:
 		run.eis += 1
 	if GameData.base_chip(id) == "Heilpatch" and def.boss and not def.get("guard", false):
 		run.boss_heal = true
+	if GameData.base_chip(id) in GameData.HEAL_CHIPS:
+		run.ch_add("heal")
 	# Hamstern (Kekso-Linie): Chip kommt gleich wieder statt auf den Ablagestapel
 	var ro := GameData.role(id)
 	if mon.passive in ["Hamstern", "Winterschlaf"] and rng.randf() < 0.25:
@@ -302,7 +308,8 @@ func use_special() -> void:
 		return
 	var S: Dictionary = run.special()
 	sp = 0.0
-	events.append("special")
+	# „special“ = Ton (auch große Chips wie Tsunami nutzen ihn), „signature“ = Einblendung nur für die Signatur
+	events.append_array(["special", "signature"])
 	banner = {"text": S.name + "!", "color": GameData.EL[S.el], "t": 1.1, "max": 1.1}
 	shake = maxf(shake, 9.0)
 	special_anim = S.anim
@@ -1046,6 +1053,7 @@ func _hurt(d: int) -> int:
 	if mon.passive in ["Giftbaut", "Schwebegas"]:
 		e.poison = maxi(e.poison, 3)
 		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
+	dmg_taken += d
 	run.hp = maxi(min_p_hp, run.hp - d)
 	# Schwerer Treffer: kurzer Bildstopp (07.10.2026)
 	if d >= 18:
@@ -1086,6 +1094,35 @@ func _win() -> void:
 	run.frag += loot_gained
 	run.fights_won += 1
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 24)
+	_challenge_feats()
+
+
+## Herausforderungen (09.10.2026): was dieser Sieg für das Brett in der Station zählt
+func _challenge_feats() -> void:
+	if run.training:
+		return
+	run.ch_max("konter10", counters)
+	if moves == 0 and (def.get("elite", false) or def.boss):
+		run.ch_max("felsenfest", 1)
+	if def.get("glitch", false):
+		run.ch_add("glitch2")
+	if not def.boss:
+		return
+	var guard: bool = def.get("guard", false)
+	if guard:
+		if dmg_taken == 0:
+			run.ch_max("waechter", 1)
+		if t < GameData.BLITZ_TIME:
+			run.ch_max("blitz", 1)
+		return
+	if gold_hits == 0 and sp_dodged >= GameData.GOLD_DODGES:
+		run.ch_max("gold", 1)
+	if run.deck.size() <= GameData.MINI_DECK:
+		run.ch_max("minimal", 1)
+	if run.stage == 1 and run.act >= 1:
+		run.ch_max("baby2", 1)
+	if dmg_taken == 0 and def.get("final", false):
+		run.ch_max("final_ohne", 1)
 
 
 func _lose() -> void:
@@ -1433,6 +1470,7 @@ func _update_logic(dt: float) -> void:
 				sp_left -= 1
 				if hit:
 					sp_fail = true
+					gold_hits += 1
 				elif sp_left <= 0 and not sp_fail:
 					_special_dodged()
 			if hit:

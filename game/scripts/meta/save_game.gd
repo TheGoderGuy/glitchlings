@@ -246,6 +246,7 @@ func hatch_next() -> Dictionary:
 			data.nest.remove_at(i)
 			var is_new: bool = not data.dex.has(e.species)
 			var m := add_monster(e.species)
+			check_challenges()
 			save_game()
 			return {"species": e.species, "new_in_dex": is_new, "id": m.id}
 	return {}
@@ -316,8 +317,155 @@ func record_run(run: RunState, won: bool) -> Dictionary:
 	# Übrige Fragmente werden auf die Station gerettet (für das Labor)
 	sum.frag_banked = run.frag
 	data.frag = int(data.get("frag", 0)) + run.frag
+	sum.challenges = _challenge_run(run, won)
 	save_game()
 	return sum
+
+
+# ---------- Herausforderungen (09.10.2026) ----------
+
+## In dieser Fassung machbar? (Die Testfassung hat nicht alle Zonen.)
+func challenge_available(c: Dictionary) -> bool:
+	for z in c.get("need", []):
+		if not zone_in_build(z):
+			return false
+	return true
+
+
+func challenges() -> Array:
+	return GameData.CHALLENGES.filter(challenge_available)
+
+
+## 0 = offen, 1 = geschafft (Belohnung wartet), 2 = abgeholt
+func challenge_state(id: String) -> int:
+	return int(data.get("challenges", {}).get(id, 0))
+
+
+## Wie viele Belohnungen warten im Reiter „Aufgaben“?
+func challenges_ready() -> int:
+	return challenges().filter(func(c): return challenge_state(c.id) == 1).size()
+
+
+func challenges_done() -> int:
+	return challenges().filter(func(c): return challenge_state(c.id) >= 1).size()
+
+
+## Fortschritt Richtung goal. Was sich nur in einer Reise zeigt, steht als Bestwert in data.ch_best (siehe _challenge_run).
+func challenge_progress(id: String) -> int:
+	var cl: Array = data.get("cleared", [])
+	match id:
+		"wiesen":
+			return 1 if cl.has("wiesen") else 0
+		"wege2":
+			return int(cl.has("vulkan")) + int(cl.has("see"))
+		"wege3":
+			return int(cl.has("sumpf")) + int(cl.has("steppe"))
+		"finale":
+			return 1 if game_cleared() else 0
+		"finale3":
+			return data.get("final_species", []).size()
+		"protokoll3", "protokoll10":
+			return int(data.get("ch_best", {}).get("protokoll", 0))
+		"rookie", "champion", "ultra":
+			return 1 if evolved_stage() >= {"rookie": 2, "champion": 3, "ultra": 4}[id] else 0
+		"fusion":
+			return mini(1, data.get("recipes", []).size())
+		"dex40":
+			return dex_count()
+		"arten":
+			return EGG_SPECIES.filter(func(sp): return data.get("dex", {}).has(sp)).size()
+	return int(data.get("ch_best", {}).get(id, 0))
+
+
+## Höchste Stufe, die ein Glitchling durch Entwicklung erreicht hat (Fusionen und Legendäre schlüpfen schon groß)
+func evolved_stage() -> int:
+	var born: Array = GameData.LEGENDS.keys()
+	for R in GameData.RECIPES:
+		born.append(R.r)
+	var best := 1
+	for f in data.get("dex", {}):
+		if GameData.FORMS.has(f) and not born.has(f):
+			best = maxi(best, int(GameData.FORMS[f].stage))
+	return best
+
+
+## Prüft alle Aufgaben. Neu geschaffte warten auf das Abholen; zurück kommen ihre IDs.
+func check_challenges() -> Array:
+	if not data.has("challenges"):
+		data["challenges"] = {}
+	var done: Array = []
+	for c in challenges():
+		if challenge_state(c.id) == 0 and challenge_progress(c.id) >= int(c.goal):
+			data.challenges[c.id] = 1
+			done.append(c.id)
+	return done
+
+
+## Run-Ende: Bestwerte der Reise übernehmen (Konter, Element-Chips …, beim Sieg über den Ur-Glitch auch
+## Protokoll, Schwierigkeit, Heil-Chips und Serie), dann prüfen
+func _challenge_run(run: RunState, won: bool) -> Array:
+	if not data.has("ch_best"):
+		data["ch_best"] = {}
+	var vals := run.ch.duplicate()
+	vals.erase("heal")
+	for el in run.praeg:
+		if el != "Neutral":
+			vals["el_" + el.to_lower()] = int(run.praeg[el])
+	var final_won: bool = won and run.bosses.any(func(z): return GameData.ZONES[z].get("final", false))
+	if final_won:
+		vals["protokoll"] = run.protocol
+		if run.difficulty >= 3:
+			vals["korrumpiert"] = 1
+		if int(run.ch.get("heal", 0)) == 0:
+			vals["ohne_heilung"] = 1
+		if not data.has("final_species"):
+			data["final_species"] = []
+		if not data.final_species.has(run.species):
+			data.final_species.append(run.species)
+	data.stats["streak"] = int(data.stats.get("streak", 0)) + 1 if final_won else 0
+	vals["serie"] = int(data.stats.streak)
+	for k in vals:
+		data.ch_best[k] = maxi(int(data.ch_best.get(k, 0)), int(vals[k]))
+	return check_challenges()
+
+
+## Belohnung als kurzer Text
+func reward_text(c: Dictionary) -> String:
+	var R: Dictionary = c.reward
+	if R.has("frag"):
+		return T.t("%d Fragmente") % int(R.frag)
+	if R.has("egg_new") and not _missing_species().is_empty():
+		return T.t("Ei mit neuer Art")
+	return T.t("Ei")
+
+
+## Baby-Arten, die weder im Monsterdex noch im Nest sind
+func _missing_species() -> Array:
+	var waiting: Array = nest().map(func(e): return e.species)
+	return EGG_SPECIES.filter(func(sp): return GameData.MONS.has(sp) and not data.get("dex", {}).has(sp) and not waiting.has(sp))
+
+
+## Belohnung abholen: {ok, msg}. Eier brauchen einen freien Platz im Brutnest.
+func claim_challenge(id: String, rng: RandomNumberGenerator) -> Dictionary:
+	var c := GameData.challenge(id)
+	if c.is_empty() or challenge_state(id) != 1:
+		return {"ok": false, "msg": ""}
+	var R: Dictionary = c.reward
+	var msg := ""
+	if R.has("frag"):
+		data.frag = frag() + int(R.frag)
+		msg = T.t("+%d Fragmente!") % int(R.frag)
+	else:
+		if nest().size() >= nest_slots():
+			return {"ok": false, "msg": T.t("Das Brutnest ist voll. Lass erst ein Ei schlüpfen.")}
+		var miss := _missing_species() if R.has("egg_new") else []
+		var egg := add_egg(rng)
+		if not miss.is_empty():
+			egg.species = miss[rng.randi_range(0, miss.size() - 1)]
+		msg = T.t("Ein neues Ei liegt im Brutnest!")
+	data.challenges[id] = 2
+	save_game()
+	return {"ok": true, "msg": msg}
 
 
 # ---------- Spieltest-Log ----------
@@ -534,5 +682,6 @@ func try_fuse(id_a: int, id_b: int, rng: RandomNumberGenerator) -> Dictionary:
 	var m := add_monster(R.r)
 	if not data.recipes.has(R.r):
 		data.recipes.append(R.r)
+	check_challenges()
 	save_game()
 	return {"ok": true, "msg": "", "result": R.r, "new_in_dex": is_new, "id": m.id, "a": a.form, "b": b.form}

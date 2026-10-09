@@ -10,6 +10,7 @@ var aim_delay := 0.0     # Sekunden, bis der Bot in die Reihe des Gegners nachr�
 var fire_delay := 0.0    # Sekunden, die ein bereiter Chip liegen bleibt
 var slip := 0.0          # Anteil der Ausweichschritte, die in eine zufällige Richtung gehen
 var counter_wait := false  # wartet mit einem bereiten Angriff auf das Ausholen des Gegners (Konter)
+var allow_special := true  # Trailer: Signatur nur auf Kommando
 var lapse := 0.0         # Anteil der Warnungen, die der Bot erst spät bemerkt (abgelenkt, zielt gerade)
 var _rng := RandomNumberGenerator.new()
 var _off_row_since := -1.0
@@ -86,7 +87,7 @@ func act(st: BattleState) -> void:
 			continue
 		st.use_slot(i)
 		_ready_since[i] = -1.0
-	if st.sp >= 100:
+	if st.sp >= 100 and allow_special:
 		st.use_special()
 
 

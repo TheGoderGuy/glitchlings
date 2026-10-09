@@ -75,6 +75,8 @@ var ghosts: Array = []          # {text, x, y, t}
 var new_t := [0.0, 0.0, 0.0]
 const NEW_TIME := 3.0
 var skip_ready := false         # Tests/Screenshots: ohne Bereit-Pause starten
+var autopilot: BattleBot = null  # Trailer: der Bot spielt live (sonst nur in simulate())
+var mystery_foe := false         # Trailer: Gegner nur als Umriss (Ur-Glitch), Werte im Intro verborgen
 const LUNGE := 0.16
 ## Angriffsanimationen (05.10.2026): Dauer beim eigenen Glitchling; beim Gegner laufen die Ausholbilder
 ## synchron zur Warnung bis ATK_HIT, der Rest nach dem Einschlag in E_ATK_POST Sekunden
@@ -152,8 +154,9 @@ func _animate_event(ev: String) -> void:
 		"hurt":
 			p_knock = KNOCK
 			p_hurt = 0.3
-		"special":
-			# Signatur-Einblendung: der Kampf steht kurz still (Ton spielt _process wie bisher)
+		"signature":
+			# Signatur-Einblendung: der Kampf steht kurz still (Ton spielt _process wie bisher über „special“;
+			# 09.10.2026: vorher reagierte sie auf „special“ und erschien fälschlich auch bei Feuersbrunst, Tsunami und Blackout)
 			cutin_t = CUTIN
 		"strike":
 			e_strike = 0.12
@@ -345,6 +348,8 @@ func _process_fight(delta: float) -> void:
 			st.use_special()
 		if cutin_t > 0:
 			st.pend_move = null
+		elif autopilot != null:
+			autopilot.act(st)
 	_tick_anims(delta)
 	_track_cards(delta)
 	if cutin_t > 0:
@@ -363,8 +368,8 @@ func _process_fight(delta: float) -> void:
 			SaveGame.save_game()
 	for ev in st.events:
 		_animate_event(ev)
-		if ev == "win":
-			continue  # ersetzt durch die Siegesfanfare bzw. die Ergebnis-Musik
+		if ev == "win" or ev == "signature":
+			continue  # Sieg: Siegesfanfare bzw. Ergebnis-Musik · Signatur: nur Einblendung, der Ton kommt über „special“
 		Sfx.play(ev)
 	st.events.clear()
 	if st.over:
@@ -693,7 +698,7 @@ func _draw_actors() -> void:
 		elif elite:
 			aura = Color("#FF5A3C", 0.45 + 0.3 * sin(anim_t * 4.0))
 		aura.a *= fade
-		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint, "atk": -1.0 if defeated else e_atk, "outline": aura})
+		_draw_sprite(st.def.spr, ecx, efy, true, {"flash": e.flash > 0 or (defeated and fade > 0.6), "blink": blink_e, "bob": bob_e, "mod": tint, "atk": -1.0 if defeated else e_atk, "outline": aura, "mystery": mystery_foe})
 		_draw_status_fx(ecx, efy)
 		if c_open:
 			# Fadenkreuz über dem Kopf: „jetzt zuschlagen“
@@ -1224,7 +1229,7 @@ func _draw_evolve() -> void:
 			_text(Vector2(0, y + 32), (T.t("Gabe verstärkt:") if had else T.t("Neue Gabe:")) + " " + T.t(G.name), 8, el, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 			_text(Vector2(0, y + 44), G.desc, 8, GameData.COL.ink, HORIZONTAL_ALIGNMENT_CENTER, W)
 			_text(Vector2(0, y + 60), T.t("Resonanz: %s-Chips machen +%d %% Schaden") % [T.t(G.el), roundi(GameData.resonance(to, G.el) * 100)], 8, el, HORIZONTAL_ALIGNMENT_CENTER, W)
-		if k > 0.6:
+		if k > 0.6 and not cinematic:
 			_text(Vector2(0, 350), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, W, true, true)
 
 
@@ -1245,13 +1250,14 @@ func _draw_tutorial() -> void:
 	draw_multiline_string(font(), Vector2(r.position.x + 10, r.position.y + 32), T.t(tx[1]), HORIZONTAL_ALIGNMENT_LEFT, r.size.x - 20, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 
 
-## Für Screenshots/Tests: den Kampf mit Autopilot vorspulen.
-func simulate(seconds: float) -> void:
+## Für Screenshots/Tests: den Kampf mit Autopilot vorspulen (Trailer: eigener Bot).
+func simulate(seconds: float, bot: BattleBot = null) -> void:
 	if mode == Mode.INTRO:
 		_start_boss_fight()
 	if mode == Mode.READY:
 		_set_mode(Mode.FIGHT)
-	var bot := BattleBot.new(0.15)
+	if bot == null:
+		bot = BattleBot.new(0.15)
 	var dt := 1.0 / 60.0
 	var steps := 0
 	while steps * dt < seconds and (not st.over or end_timer > 0.1):
@@ -1400,7 +1406,7 @@ func _draw_boss_intro() -> void:
 			# glühende Augen-Andeutung in der Silhouette: roter Schimmer am Boden
 			draw_rect(Rect2(bx - 90, feet - 2, 180, 3), Color(el, 0.25))
 		else:
-			_draw_sprite(def.spr, bx, feet, true, {"scale": 2, "blink": fmod(anim_t, 3.0) < 0.12})
+			_draw_sprite(def.spr, bx, feet, true, {"scale": 2, "blink": fmod(anim_t, 3.0) < 0.12, "mystery": mystery_foe})
 			if def.get("final", false):
 				# Glitch-Streifen über dem Endboss
 				for i in 4:
@@ -1441,8 +1447,10 @@ func _draw_boss_intro() -> void:
 		if t > INTRO_REVEAL + 0.45:
 			var tk := clampf((t - INTRO_REVEAL - 0.45) / 0.3, 0.0, 1.0)
 			_text(Vector2(nx, 156), T.t(def.get("title", "Herrscher dieser Zone")) if not def.get("guard", false) else T.t("Wächter der Ebene %d · %s") % [run.map.level + 1, T.t(def.get("title", ""))], 8, Color(el.lightened(0.3), tk), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
-			_text(Vector2(nx, 172), "%s · %d HP" % [T.t(def.el), def.hp], 8, Color(GameData.COL.muted, tk))
-	_text(Vector2(0, H - 34), T.t("%s überspringen") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 12)
+			if not mystery_foe:
+				_text(Vector2(nx, 172), "%s · %d HP" % [T.t(def.el), def.hp], 8, Color(GameData.COL.muted, tk))
+	if not cinematic:
+		_text(Vector2(0, H - 34), T.t("%s überspringen") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, Color(GameData.COL.muted, 0.7), HORIZONTAL_ALIGNMENT_RIGHT, W - 12)
 
 
 func show_intro_for_screenshot(t: float) -> void:

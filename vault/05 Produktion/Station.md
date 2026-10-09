@@ -18,6 +18,7 @@ Titel → **erster Start:** Starter wählen → Station · **danach:** direkt St
   - Alte Eier verlieren beim Laden ihre Seltenheit und schlüpfen spätestens nach 2 Runs.
   - **Ei kaufen** (Produzent 03.10.2026): im Brutnest für **200 Fragmente** (`SaveGame.EGG_PRICE`, `buy_egg`). Gleiche Regeln wie gefundene Eier: 2 Runs, fehlende Arten häufiger. Geht nur mit freiem Nestplatz. Fragmente haben damit neben Ausbau und Labor ein drittes Ziel.
 - **Monsterdex:** 18 Formen, Unbekanntes als Silhouette.
+- **Aufgaben** (09.10.2026): Reiter ganz rechts mit 30 [[Herausforderungen]], Belohnungen (Eier, Fragmente) holt man dort ab.
 - Titel → Optionen → „Spielstand löschen“ (zweimal bestätigen).
 
 ## Pro Run (Roguelite, wird zurückgesetzt)

@@ -915,6 +915,64 @@ const STATION_UPGRADES := [
 ]
 
 
+## ---------- Herausforderungen (09.10.2026, Endgame) ----------
+## Ein Brett in der Station (Reiter „Aufgaben“): Aufgaben, die zu einer anderen Spielweise zwingen. Jede gibt es einmal,
+## die Belohnung holt man im Reiter ab. goal = Zielwert (Fortschrittsbalken ab 2), need = Zonen, ohne die es nicht geht
+## (Testfassung blendet sie aus), reward = {"frag": n} | {"egg": 1} | {"egg_new": 1} (Ei mit einer Art, die noch fehlt).
+## Fortschritt: SaveGame.challenge_progress, Bestwerte je Reise: RunState.ch (Schlüssel = id).
+const CHALLENGE_CATS := ["Reise", "Kampf", "Spielweise", "Glitchlinge", "Meister"]
+const CHALLENGES := [
+	{"id": "wiesen", "cat": "Reise", "name": "Erste Säuberung", "desc": "Besiege den Boss der Cache-Wiesen.", "goal": 1, "reward": {"frag": 50}},
+	{"id": "wege2", "cat": "Reise", "name": "Feuer und Wasser", "desc": "Besiege die Bosse von Firewall-Vulkan und Kühlwasser-See.", "goal": 2, "need": ["vulkan", "see"], "reward": {"egg": 1}},
+	{"id": "wege3", "cat": "Reise", "name": "Sumpf und Steppe", "desc": "Besiege die Bosse der Viren-Sümpfe und der Hochspannungs-Steppe.", "goal": 2, "need": ["sumpf", "steppe"], "reward": {"egg": 1}},
+	{"id": "finale", "cat": "Reise", "name": "Retter des NEST", "desc": "Besiege den Ur-Glitch.", "goal": 1, "need": ["kern"], "reward": {"frag": 200}},
+	{"id": "finale3", "cat": "Reise", "name": "Viele Helden", "desc": "Besiege den Ur-Glitch mit drei verschiedenen Glitchling-Arten.", "goal": 3, "need": ["kern"], "reward": {"egg_new": 1}},
+	{"id": "protokoll3", "cat": "Reise", "name": "Protokoll 3", "desc": "Schaffe eine ganze Reise auf Glitch-Protokoll 3 oder höher.", "goal": 3, "need": ["kern"], "reward": {"frag": 300}},
+	{"id": "konter10", "cat": "Kampf", "name": "Konterkunst", "desc": "Lande 10 Konter in einem einzigen Kampf.", "goal": 10, "reward": {"frag": 100}},
+	{"id": "felsenfest", "cat": "Kampf", "name": "Felsenfest", "desc": "Besiege einen Elite-Gegner, ohne dich ein einziges Mal zu bewegen.", "goal": 1, "reward": {"frag": 100}},
+	{"id": "blitz", "cat": "Kampf", "name": "Blitzsieg", "desc": "Besiege einen Wächter in weniger als 20 Sekunden.", "goal": 1, "reward": {"frag": 150}},
+	{"id": "gold", "cat": "Kampf", "name": "Goldener Tänzer", "desc": "Weiche in einem Bosskampf allen goldenen Großangriffen aus (mindestens 3).", "goal": 1, "reward": {"egg": 1}},
+	{"id": "glitch2", "cat": "Kampf", "name": "Risikofreude", "desc": "Besiege in einer Reise 2 Glitch-Elites.", "goal": 2, "reward": {"egg": 1}},
+	{"id": "waechter", "cat": "Kampf", "name": "Unberührt", "desc": "Besiege einen Wächter, ohne Schaden zu nehmen.", "goal": 1, "reward": {"frag": 150}},
+	{"id": "el_feuer", "cat": "Spielweise", "name": "Feuerseele", "desc": "Spiele in einer Reise %d Feuer-Chips.", "goal": 200, "reward": {"egg": 1}},
+	{"id": "el_wasser", "cat": "Spielweise", "name": "Wasserseele", "desc": "Spiele in einer Reise %d Wasser-Chips.", "goal": 200, "reward": {"egg": 1}},
+	{"id": "el_code", "cat": "Spielweise", "name": "Codeseele", "desc": "Spiele in einer Reise %d Code-Chips.", "goal": 200, "reward": {"egg": 1}},
+	{"id": "el_elektro", "cat": "Spielweise", "name": "Elektroseele", "desc": "Spiele in einer Reise %d Elektro-Chips.", "goal": 200, "reward": {"egg": 1}},
+	{"id": "el_virus", "cat": "Spielweise", "name": "Virusseele", "desc": "Spiele in einer Reise %d Virus-Chips.", "goal": 200, "reward": {"egg": 1}},
+	{"id": "minimal", "cat": "Spielweise", "name": "Leichtes Gepäck", "desc": "Besiege einen Zonen-Boss mit höchstens 10 Chips im Deck.", "goal": 1, "reward": {"frag": 150}},
+	{"id": "rookie", "cat": "Glitchlinge", "name": "Erste Entwicklung", "desc": "Ein Glitchling entwickelt sich zum Rookie.", "goal": 1, "reward": {"frag": 50}},
+	{"id": "champion", "cat": "Glitchlinge", "name": "Champion", "desc": "Ein Glitchling entwickelt sich zum Champion.", "goal": 1, "reward": {"egg": 1}},
+	{"id": "ultra", "cat": "Glitchlinge", "name": "Ultra", "desc": "Ein Glitchling entwickelt sich zum Ultra.", "goal": 1, "reward": {"frag": 300}},
+	{"id": "fusion", "cat": "Glitchlinge", "name": "Verschmolzen", "desc": "Erschaffe im Labor eine Fusion.", "goal": 1, "reward": {"egg": 1}},
+	{"id": "dex40", "cat": "Glitchlinge", "name": "Forscher", "desc": "Entdecke 40 Formen im Monsterdex.", "goal": 40, "reward": {"egg_new": 1}},
+	{"id": "arten", "cat": "Glitchlinge", "name": "Großfamilie", "desc": "Habe alle 13 Baby-Arten im Monsterdex.", "goal": 13, "reward": {"frag": 300}},
+	{"id": "korrumpiert", "cat": "Meister", "name": "Korrumpiert", "desc": "Besiege den Ur-Glitch auf der Schwierigkeit Korrumpiert.", "goal": 1, "need": ["kern"], "reward": {"frag": 500}},
+	{"id": "protokoll10", "cat": "Meister", "name": "Glitch-Sturm", "desc": "Schaffe eine ganze Reise auf Glitch-Protokoll 10.", "goal": 10, "need": ["kern"], "reward": {"frag": 500}},
+	{"id": "baby2", "cat": "Meister", "name": "Kleiner Held", "desc": "Besiege den Boss in Akt 2 mit einem Baby.", "goal": 1, "reward": {"egg_new": 1}},
+	{"id": "ohne_heilung", "cat": "Meister", "name": "Eiserne Reserve", "desc": "Besiege den Ur-Glitch, ohne in der Reise einen Heil-Chip zu spielen.", "goal": 1, "need": ["kern"], "reward": {"frag": 300}},
+	{"id": "final_ohne", "cat": "Meister", "name": "Makellos", "desc": "Besiege den Ur-Glitch, ohne Schaden zu nehmen.", "goal": 1, "need": ["kern"], "reward": {"frag": 500}},
+	{"id": "serie", "cat": "Meister", "name": "Unaufhaltsam", "desc": "Schaffe 3 ganze Reisen hintereinander, ohne zu verlieren.", "goal": 3, "need": ["kern"], "reward": {"frag": 500}},
+]
+## Heil-Chips („Eiserne Reserve“), Zeit gegen einen Wächter („Blitzsieg“), Deckgröße („Leichtes Gepäck“),
+## ausgewichene Großangriffe im Bosskampf („Goldener Tänzer“)
+const HEAL_CHIPS := ["Heilpatch", "Neustart", "Kiemenatmung"]
+const BLITZ_TIME := 20.0
+const MINI_DECK := 10
+const GOLD_DODGES := 3
+
+
+static func challenge(id: String) -> Dictionary:
+	for c in CHALLENGES:
+		if c.id == id:
+			return c
+	return {}
+
+
+## Aufgabentext (Element-Aufgaben setzen ihren Zielwert ein)
+static func challenge_desc(c: Dictionary) -> String:
+	return T.t(c.desc) % int(c.goal) if String(c.desc).contains("%d") else T.t(c.desc)
+
+
 ## Wirkung eines Ausbaus auf Stufe lv (1-basiert) als Text
 static func upgrade_desc(u: Dictionary, lv: int) -> String:
 	match u.id:
@@ -945,6 +1003,7 @@ const PICTOS := {
 	"spike": ["#...#.", ".#.#..", "..#...", ".#.#..", "#...#.", "......"],
 	"arrow": ["..#...", "..##..", "######", "######", "..##..", "..#..."],
 	"gem": ["..##..", ".####.", "######", ".####.", "..##..", "......"],
+	"check": ["......", ".....#", "....##", "#..##.", "####..", ".##..."],
 }
 
 

@@ -17,6 +17,8 @@ static var _fonts := {}
 
 var anim_t := 0.0
 var off := Vector2.ZERO
+## Trailer (09.10.2026): Bedienhinweise wie „Enter weiter“ ausblenden
+static var cinematic := false
 var handbook: Node = null   # offenes Kampf-Handbuch (Überlagerung), solange es offen ist, pausiert der Bildschirm
 
 
@@ -255,6 +257,7 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 	if atk_k >= 0.0 and not s.atk.is_empty() and not opts.get("flash", false):
 		tex = s.atk[clampi(int(atk_k * s.atk.size()), 0, s.atk.size() - 1)]
 	var mod: Color = opts.get("mod", Color.WHITE)
+	var mystery: bool = opts.get("mystery", false)
 	if flip:
 		draw_set_transform(off + Vector2(left + size, top), 0, Vector2(-sc, sc))
 	else:
@@ -267,6 +270,17 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 		var sil := silhouette(tex)
 		for d in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(0, 1)]:
 			draw_texture(sil, d, outline)
+	# Geheimnis (Trailer, 09.10.2026): nur dunkler Umriss mit Randlicht, die Augen glühen
+	if mystery:
+		var rim: Color = opts.get("rim", Color("#FF5470"))
+		var sil2 := silhouette(tex)
+		for d in [Vector2(-1, 0), Vector2(1, 0), Vector2(0, -1), Vector2(0, 1)]:
+			draw_texture(sil2, d, Color(rim, 0.85))
+		draw_texture(tex, Vector2.ZERO, Color(0.03, 0.01, 0.07))
+		for g in glow_pixels(key, tex):
+			draw_rect(Rect2(g[0], g[1], 1, 1), g[2])
+		draw_set_transform(off)
+		return
 	if cut > 0:
 		draw_texture_rect_region(tex, Rect2(0, cut, s.n, s.n - cut), Rect2(0, cut, s.n, s.n - cut), mod)
 	else:
@@ -275,6 +289,57 @@ func _draw_sprite(key: String, cx: float, feet_y: float, flip: bool, opts := {})
 
 
 static var _sil := {}
+static var _glow := {}
+static var _eyes := {}
+
+
+## Augen einer Figur: die Pixel, in denen sich Grundbild und Blinzel-Bild unterscheiden (Rahmen + Farben). {} ohne Blinzel-Bild.
+static func _eye_info(key: String) -> Dictionary:
+	if _eyes.has(key):
+		return _eyes[key]
+	var s := sprite(key)
+	var info := {}
+	if s.blink != s.tex:
+		var a: Image = s.tex.get_image()
+		var b: Image = s.blink.get_image()
+		for im in [a, b]:
+			if im.is_compressed():
+				im.decompress()
+		var cols := {}
+		var r := Rect2i()
+		for y in a.get_height():
+			for x in a.get_width():
+				var c := a.get_pixel(x, y)
+				if c.a > 0.5 and c != b.get_pixel(x, y):
+					cols[c.to_rgba32()] = true
+					r = Rect2i(x, y, 1, 1) if cols.size() == 1 else r.expand(Vector2i(x, y)).expand(Vector2i(x + 1, y + 1))
+		if not cols.is_empty():
+			info = {"rect": r.grow(3), "cols": cols}
+	_eyes[key] = info
+	return info
+
+
+## Glühende Pixel im Geheimnis-Umriss als [x, y, Farbe], einmal je Bild: die Augen (Farben aus dem Blinzel-Vergleich, im
+## Augenbereich, damit es auch in den Idle-Bildern passt); ohne Blinzel-Bild nur die allerhellsten Pixel
+static func glow_pixels(key: String, tex: Texture2D) -> Array:
+	var k := tex.get_rid()
+	if _glow.has(k):
+		return _glow[k]
+	var img := tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	var eye := _eye_info(key)
+	var out: Array = []
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			if c.a <= 0.5:
+				continue
+			var hit: bool = (eye.rect.has_point(Vector2i(x, y)) and eye.cols.has(c.to_rgba32()) and c.v > 0.45) if not eye.is_empty() else (c.v > 0.98 and c.s > 0.3)
+			if hit:
+				out.append([x, y, c.lightened(0.3)])
+	_glow[k] = out
+	return out
 
 
 ## Weiße Silhouette eines Bildes (für Aura-Konturen), einmal je Bild erzeugt

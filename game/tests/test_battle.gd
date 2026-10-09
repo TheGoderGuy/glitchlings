@@ -74,6 +74,8 @@ func _ready() -> void:
 	test_arena_tiles()
 	test_room_cards_and_home()
 	test_line_chips()
+	test_challenges()
+	test_signature_cutin()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -1246,7 +1248,8 @@ func _auto_room(run: RunState, node: Dictionary) -> void:
 func test_sounds() -> void:
 	var sfx: Node = load("res://scripts/audio/sfx.gd").new()
 	sfx._ready()
-	var missing: Array = seen_events.keys().filter(func(k): return not sfx.streams.has(k))
+	# „signature“ ist nur die Einblendung, ihr Ton kommt über „special“
+	var missing: Array = seen_events.keys().filter(func(k): return not sfx.streams.has(k) and k != "signature")
 	check(missing.is_empty(), "Alle Kampf-Ereignisse haben einen Sound (fehlend: %s)" % [missing])
 	check(seen_events.size() >= 8, "Simulation erzeugt verschiedene Ereignisse (%d)" % seen_events.size())
 	var empty: Array = sfx.streams.keys().filter(func(k): return sfx.streams[k].data.size() < 400)
@@ -2371,6 +2374,162 @@ func test_legends() -> void:
 	check(sw.run.hp == hp0 and dealt[2] == 0 and dealt[0] > 0 and gk.e.burn > 0, "Passive: Sternenmeer ignoriert Lava, Rätselwächter wehrt jeden 3. Treffer ab, Glutmähne setzt den Angreifer in Brand")
 
 
+## Herausforderungen (09.10.2026): Daten, Erfassung im Kampf, Auswertung am Run-Ende, Serie, Abholen, Testfassung, Station-Reiter
+func test_challenges() -> void:
+	var ids := {}
+	var data_ok := GameData.CHALLENGES.size() == 30
+	for c in GameData.CHALLENGES:
+		data_ok = data_ok and not ids.has(c.id) and GameData.CHALLENGE_CATS.has(c.cat) and int(c.goal) >= 1 \
+			and (c.reward.has("frag") or c.reward.has("egg") or c.reward.has("egg_new"))
+		ids[c.id] = true
+		for z in c.get("need", []):
+			data_ok = data_ok and GameData.ZONES.has(z)
+	for cat in GameData.CHALLENGE_CATS:
+		data_ok = data_ok and GameData.CHALLENGES.filter(func(c): return c.cat == cat).size() == 6
+	check(data_ok, "Herausforderungen: 30 Aufgaben in 5 Bereichen à 6, eindeutige IDs, gültige Belohnungen und Zonen")
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.persist = false
+	SaveGame.new_game("Pixmiez")
+	check(SaveGame.check_challenges().is_empty() and SaveGame.challenges_done() == 0 and SaveGame.challenges_ready() == 0, "Herausforderungen: neues Spiel, noch nichts geschafft")
+	# Kampf: Wächter mit 11 Kontern, schnell, ohne Schaden und ohne Schritt
+	var r := RunState.from_monster(SaveGame.team()[0], 7, "vulkan")
+	r.act = 1
+	r.deck = r.deck.slice(0, 8)
+	var g := BattleState.new(r, GameData.FOES[GameData.ZONES.vulkan.guards[0]].duplicate(true))
+	g.counters = 11
+	g.t = GameData.BLITZ_TIME - 1.0
+	g._win()
+	check(r.ch.get("konter10", 0) == 11 and r.ch.get("waechter", 0) == 1 and r.ch.get("blitz", 0) == 1 and r.ch.get("felsenfest", 0) == 1,
+		"Herausforderungen: Wächter-Sieg zählt Konter, ohne Schaden, unter %d s und ohne Schritt (%s)" % [GameData.BLITZ_TIME, str(r.ch)])
+	# Boss: allen goldenen Großangriffen ausgewichen, kleines Deck, als Baby in Akt 2 – aber getroffen und bewegt
+	var b := BattleState.new(r, GameData.FOES[GameData.ZONES.vulkan.boss].duplicate(true))
+	b.sp_dodged = GameData.GOLD_DODGES
+	b.move_player(1, 0)
+	b.dmg_taken = 5
+	b._win()
+	check(r.ch.get("gold", 0) == 1 and r.ch.get("minimal", 0) == 1 and r.ch.get("baby2", 0) == 1 and r.ch.get("konter10", 0) == 11 and not r.ch.has("final_ohne"),
+		"Herausforderungen: Boss-Sieg zählt Großangriffe, kleines Deck und Baby in Akt 2, der Bestwert Konter bleibt")
+	# Gegenprobe: von einem Großangriff getroffen, großes Deck, Akt 1, schon Rookie, in normalen Kämpfen kein Felsenfest
+	var r2 := RunState.from_monster(SaveGame.team()[0], 8, "wiesen")
+	r2.stage = 2
+	for k in 4:
+		r2.deck.append("Pixelstrahl")
+	var b2 := BattleState.new(r2, GameData.FOES[GameData.ZONES.wiesen.boss].duplicate(true))
+	b2.sp_dodged = 5
+	b2.gold_hits = 1
+	b2._win()
+	var n2 := BattleState.new(r2, GameData.FOES[0])
+	n2._win()
+	check(not r2.ch.has("gold") and not r2.ch.has("minimal") and not r2.ch.has("baby2") and r2.ch.get("felsenfest", 0) == 1 and r2.ch.get("glitch2", 0) == 0,
+		"Herausforderungen: Bedingungen greifen nur, wenn sie wirklich erfüllt sind")
+	var hb := BattleState.new(r2, GameData.FOES[0])
+	hb.hand[2].chip = "Heilpatch"
+	hb.hand[2].rem = 0.0
+	hb.use_slot(2)
+	check(r2.ch.get("heal", 0) == 1, "Herausforderungen: gespielte Heil-Chips werden gezählt")
+	# Run-Ende: Bestwerte in den Spielstand, neu geschaffte Aufgaben werden gemeldet
+	r.bosses = ["wiesen", "vulkan"]
+	r.praeg = {"Feuer": 250, "Neutral": 40}
+	var sum := SaveGame.record_run(r, false)
+	var want := ["wiesen", "konter10", "felsenfest", "blitz", "gold", "waechter", "el_feuer", "minimal", "baby2"]
+	var got: Array = sum.get("challenges", [])
+	check(want.all(func(id): return got.has(id)) and got.size() == want.size() and SaveGame.challenge_progress("wege2") == 1 and SaveGame.challenges_ready() == want.size(),
+		"Herausforderungen: Run-Ende meldet die geschafften Aufgaben (%s)" % str(got))
+	# Finale: Korrumpiert, Protokoll 3, ohne Heil-Chip; Serie zählt ganze Reisen hintereinander, verschiedene Arten
+	var f1 := _ch_journey("Pixmiez", true, 3, 3)
+	check(f1.has("finale") and f1.has("korrumpiert") and f1.has("protokoll3") and f1.has("ohne_heilung") and f1.has("wege3") and not f1.has("wege2") and not f1.has("protokoll10") and not f1.has("serie"),
+		"Herausforderungen: Sieg über den Ur-Glitch zählt Schwierigkeit, Protokoll und Heil-Chips (%s)" % str(f1))
+	_ch_journey("Funkling", true)
+	_ch_journey("Tröpfel", false)
+	var serie_after_loss := SaveGame.challenge_progress("serie")
+	var f4 := _ch_journey("Tröpfel", true)
+	check(serie_after_loss == 2 and int(SaveGame.data.stats.streak) == 1 and f4.has("finale3") and not f4.has("serie"),
+		"Herausforderungen: Niederlage beendet die Serie (Bestwert bleibt), drei Arten beim Ur-Glitch")
+	# Glitchlinge: Entwicklung zählt, Fusionen und Legendäre schlüpfen schon groß
+	SaveGame.see("Wolkerich")
+	SaveGame.see("Glimmhirsch")
+	var before := SaveGame.evolved_stage()
+	SaveGame.see("Firewallo")
+	var ev: Array = SaveGame.check_challenges()
+	check(before == 1 and ev.has("rookie") and not ev.has("champion"), "Herausforderungen: Rookie zählt, Fusion und Legendärer nicht als Entwicklung")
+	# Abholen: Fragmente, nicht doppelt, nichts Offenes; Eier brauchen Platz, „neue Art“ bringt eine fehlende Art
+	var fr := SaveGame.frag()
+	var c1 := SaveGame.claim_challenge("wiesen", RandomNumberGenerator.new())
+	var c2 := SaveGame.claim_challenge("wiesen", RandomNumberGenerator.new())
+	var c3 := SaveGame.claim_challenge("ultra", RandomNumberGenerator.new())
+	check(c1.ok and SaveGame.frag() == fr + 50 and SaveGame.challenge_state("wiesen") == 2 and not c2.ok and not c3.ok,
+		"Herausforderungen: Belohnung einmal abholen, offene Aufgaben geben nichts")
+	SaveGame.data.nest = []
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	while SaveGame.nest().size() < SaveGame.nest_slots():
+		SaveGame.add_egg(rng)
+	var full := SaveGame.claim_challenge("gold", rng)
+	SaveGame.data.nest = []
+	var ok := SaveGame.claim_challenge("gold", rng)
+	var neu := SaveGame.claim_challenge("finale3", rng)
+	var sp_new: String = SaveGame.nest()[-1].species if SaveGame.nest().size() == 2 else ""
+	check(not full.ok and SaveGame.challenge_state("gold") == 2 and ok.ok and neu.ok and SaveGame.EGG_SPECIES.has(sp_new) and not SaveGame.data.dex.has(sp_new),
+		"Herausforderungen: Ei nur mit freiem Nestplatz, „Ei mit neuer Art“ bringt eine fehlende Art (%s)" % sp_new)
+	# Testfassung: Aufgaben ohne ihre Zonen sind ausgeblendet
+	SaveGame.force_test = true
+	var tb := SaveGame.challenges()
+	SaveGame.force_test = false
+	check(tb.size() < 30 and tb.size() >= 15 and tb.all(func(c): return c.get("need", []).all(func(z): return SaveGame.TEST_ZONES.has(z))),
+		"Herausforderungen: Testfassung zeigt nur machbare Aufgaben (%d)" % tb.size())
+	# Station: Reiter „Aufgaben“ ganz rechts, Bestätigen holt die gewählte Belohnung ab
+	SaveGame.data.station_guide_done = true
+	var SV: GDScript = load("res://scripts/ui/station_view.gd")
+	var sv = SV.new()
+	add_child(sv)
+	sv.tab = sv.Tab.CHALLENGE
+	sv.ch_cat = sv._ch_cats().find("Kampf")
+	sv.sel = sv._ch_list("Kampf").map(func(c): return c.id).find("konter10")
+	var fr2 := SaveGame.frag()
+	Input.action_press("confirm")
+	sv._process_challenges()
+	Input.action_release("confirm")
+	check(sv.TAB_ORDER[-1] == sv.Tab.CHALLENGE and SaveGame.challenge_state("konter10") == 2 and SaveGame.frag() == fr2 + 100 and sv.ch_msg != "",
+		"Station: Reiter „Aufgaben“ holt die Belohnung ab (%s)" % sv.ch_msg)
+	sv.queue_free()
+	SaveGame.data = saved
+
+
+## Signatur-Einblendung nur bei der Signatur (09.10.2026: Feuersbrunst, Tsunami und Blackout lösten sie fälschlich aus,
+## weil sie denselben Ton „special“ nutzen)
+func test_signature_cutin() -> void:
+	var bv = load("res://scenes/battle.tscn").instantiate()
+	bv.setup(RunState.new("Tröpfel", 5), GameData.FOES[0].duplicate(true), "fight")
+	add_child(bv)
+	bv.set_process(false)
+	var st: BattleState = bv.st
+	var cut := {}
+	for chip in ["Feuersbrunst", "Tsunami", "Blackout"]:
+		st.hand[0].chip = chip
+		st.hand[0].rem = 0.0
+		st.use_slot(0)
+		for ev in st.events:
+			bv._animate_event(ev)
+		cut[chip] = bv.cutin_t
+		st.events.clear()
+	st.sp = 100.0
+	st.use_special()
+	var sound: bool = st.events.has("special")
+	for ev in st.events:
+		bv._animate_event(ev)
+	check(cut.values().all(func(v): return v == 0.0) and bv.cutin_t > 0.0 and sound, "Signatur-Einblendung nur bei der Signatur, nicht bei Feuersbrunst, Tsunami, Blackout (%s)" % str(cut))
+	bv.queue_free()
+
+
+## Eine Reise abschließen (gewonnen = bis zum Ur-Glitch über Sümpfe und Steppe), gemeldete Herausforderungen zurück
+func _ch_journey(sp: String, won: bool, diff := 1, proto := 0) -> Array:
+	var rf := RunState.new(sp, 9)
+	rf.bosses = ["wiesen", "sumpf", "steppe", "kern"] if won else ["wiesen"]
+	rf.difficulty = diff
+	rf.protocol = proto
+	return SaveGame.record_run(rf, won).get("challenges", [])
+
+
 ## Stilregel: jedes Sprite höchstens 32 Farben – Grundbild, Blinzel-Bild, Idle- und Angriffs-Frames zusammen (30.09./05.10.2026)
 func test_sprite_colors() -> void:
 	var files := {}
@@ -2413,7 +2572,7 @@ func test_station_guide() -> void:
 	var SV: GDScript = load("res://scripts/ui/station_view.gd")
 	var sv = SV.new()
 	add_child(sv)
-	check(sv.guide == 0 and sv.GUIDE.size() == 8, "Station: beim ersten Besuch startet die Führung (8 Schritte)")
+	check(sv.guide == 0 and sv.GUIDE.size() == 9, "Station: beim ersten Besuch startet die Führung (9 Schritte)")
 	sv._end_guide()
 	check(sv.guide == -1 and SaveGame.data.get("station_guide_done", false), "Station: Führung merkt sich, dass sie gezeigt wurde")
 	sv.queue_free()

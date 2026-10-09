@@ -30,6 +30,10 @@ window/stretch/mode="viewport"
 window/stretch/aspect="keep"
 window/stretch/scale_mode="integer"
 
+[editor]
+
+movie_writer/mjpeg_quality=0.95
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

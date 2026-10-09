@@ -55,6 +55,8 @@ Kampf-Handbuch: im Titelmenü, im Pause-Menü oder jederzeit mit H.
   Jede Reise startet in den Cache-Wiesen. Nach jedem Zonen-Boss wählst du die nächste Zone,
   bis zum NEST-Kern. Dein Deck und deine Module bleiben die ganze Reise über.
 - Jede Zone hat 2 Ebenen: oben erst ein Wächter, dann der Boss der Zone.
+- In der Station unter "Aufgaben" warten Herausforderungen (z. B. 10 Konter in einem Kampf).
+  Die Belohnung holst du dort ab.
 - Holt ein Gegner aus, erscheint ein Fadenkreuz über ihm: Triffst du ihn genau dann, fällt sein Angriff aus (Konter).
 - Du kannst auf der Karte jederzeit beenden (Pause -> "Speichern und beenden") und später weiterspielen.
 - Der Spielstand wird automatisch gespeichert.

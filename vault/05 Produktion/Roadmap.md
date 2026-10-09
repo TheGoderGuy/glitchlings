@@ -46,7 +46,8 @@ tags: [produktion, roadmap]
 - [x] Logo und alle Steam-Kapseln – [[Logo]]
 - [x] Kino-Intro und -Ende (Material für den Trailer) – [[Opening-Szene]], [[Finale und Ende]]
 - [ ] Gewerbe und Steamworks-Konto (Produzent)
-- [ ] Store-Texte DE/EN, 5+ Screenshots, Trailer
+- [x] [[Trailer]]: 73 s, 1080p60, DE/EN, echtes Spielmaterial (09.10.2026)
+- [ ] Store-Texte DE/EN, 5+ Screenshots, Trailer als MP4 (ffmpeg)
 - [ ] Fragebogen zu KI-Inhalten (PixelLab-Grafiken; Nutzungsrechte geklärt am 03.10.)
 - [ ] Steam-Seite live, Wunschlisten sammeln
 - [ ] Demo (z. B. Wiesen + Vulkan) für ein Steam Next Fest
@@ -57,6 +58,8 @@ tags: [produktion, roadmap]
 - [x] 45 Chips, 22 Module, 34 Ereignisse, Story-Bosse mit Intros, Ende mit Abspann
 - [x] Lokalisierung DE/EN
 - [x] Endgame nach dem Abspann: [[Glitch-Protokolle]] (10 Stufen, 07.10.2026)
+- [x] Endgame: [[Herausforderungen]] – 30 Aufgaben in der Station, die zu anderer Spielweise zwingen (09.10.2026)
+- [ ] Endgame-Ideen (Einschätzung 08.10.2026): Glitch-Varianten, Protokoll-Mutatoren, Team lernt mit, Zuhause-Deko
 - [x] [[Legendäre]]: 6 Fabelwesen mit geheimen Bedingungen, Champion + Ultra (07.10.2026)
 - [ ] Errungenschaften, Steam Cloud, Steam-Overlay (Steamworks-Anbindung)
 - [ ] Steam Deck prüfen (Textgröße, Controller, Leistung), Controller-Tasten frei belegbar

@@ -8,7 +8,7 @@ const RESUME := ["map", "title", "station"]
 ## bleiben erhalten – wer eine alte Fassung zurück will, löscht hier nur die Zeile.
 const USE := {"title": "title_epic", "battle": "battle_epic", "boss": "boss_epic"}
 ## Einblendzeit je Stück: Kämpfe starten knackig, die Karte blendet weich ein
-const FADE_IN := {"map": 1.2, "title": 1.0, "station": 1.2, "battle": 0.05, "boss": 0.05, "guard": 0.05, "opening": 0.02, "victory": 0.02, "intro": 2.0, "finale": 0.05, "ending": 0.02}
+const FADE_IN := {"map": 1.2, "title": 1.0, "station": 1.2, "battle": 0.05, "boss": 0.05, "guard": 0.05, "opening": 0.02, "victory": 0.02, "intro": 2.0, "finale": 0.05, "ending": 0.02, "trailer": 0.02}
 const FADE_OUT := 0.45
 
 var players: Array[AudioStreamPlayer] = []
@@ -21,6 +21,8 @@ var tween: Tween      # laufende Überblendung (wird bei jedem Wechsel abgebroch
 var cache := {}       # Stück -> AudioStreamWAV
 var pending: Array = []
 var _web_wait := 0
+## Trailer (09.10.2026): solange gesperrt, wechseln die Spielszenen die Musik nicht (das Trailer-Stück läuft durch)
+var locked := false
 
 
 func _ready() -> void:
@@ -105,6 +107,8 @@ func _resumes(key: String) -> bool:
 
 
 func play(key: String) -> void:
+	if locked:
+		return
 	if USE.has(key) and ResourceLoader.exists(_path(USE[key])):
 		key = USE[key]
 	if key == current:
@@ -141,11 +145,15 @@ func play(key: String) -> void:
 
 ## Im laufenden Stück springen (Intro: beim Weiterblättern bleibt die Musik synchron)
 func seek(pos: float) -> void:
+	if locked:
+		return
 	if current != "" and players[active].playing:
 		players[active].seek(maxf(0.0, pos))
 
 
 func stop() -> void:
+	if locked:
+		return
 	var old := players[active]
 	if current != "" and old.playing and _resumes(current):
 		positions[current] = old.get_playback_position()

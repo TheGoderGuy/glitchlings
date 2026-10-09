@@ -3,6 +3,7 @@ extends Node
 ## (BattleBot.human()) und gibt je Zone Siegquote, Kampfdauer, Gegnerangriffe und HP-Verlust aus.
 ## Aufruf: godot --headless --path game res://tools/balance_sim.tscn [-- --runs=N --bot=human|perfect|counter --diff=0..3 --protocol=N --zones]
 ## Standard: ganze Reisen (alle Akte) je Startstufe; --zones: einzelne Zonen wie vor der Reise.
+## --challenges: zusätzlich je Reise die Bestwerte für die Herausforderungen (Zielwerte prüfen).
 ## Zielwerte stehen in vault/05 Produktion/Game-Design-Analyse 2026-10-08.md.
 
 const STAGE_FOR_ZONE := {"wiesen": 1, "vulkan": 2, "see": 3, "sumpf": 3, "steppe": 4, "kern": 4}
@@ -57,5 +58,8 @@ func _ready() -> void:
 				stages = [int(a.substr(8))]
 		var names := {1: "Baby (neu)", 2: "Rookie", 3: "Champion", 4: "Ultra"}
 		for st in stages:
-			print(BalanceSim.journey_line(names[st], BalanceSim.run_journey(st, runs, bot_kind, diff, protocol, 0 if st == 1 else GameData.EVO_AT[st])))
+			var S := BalanceSim.run_journey(st, runs, bot_kind, diff, protocol, 0 if st == 1 else GameData.EVO_AT[st])
+			print(BalanceSim.journey_line(names[st], S))
+			if OS.get_cmdline_user_args().has("--challenges"):
+				print(BalanceSim.challenge_line(S))
 	get_tree().quit()
