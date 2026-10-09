@@ -43,6 +43,8 @@ func _ready() -> void:
 					GameData.ACT_HP = v
 				"ACT_DMG":
 					GameData.ACT_DMG = v
+				"EVO_AT":
+					GameData.EVO_AT = {2: int(v[0]), 3: int(v[1]), 4: int(v[2])}
 				_:
 					push_error("Unbekannter Wert: " + kv[0])
 			print("  %s = %s" % [kv[0], v])

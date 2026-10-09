@@ -76,6 +76,8 @@ func _ready() -> void:
 	test_line_chips()
 	test_challenges()
 	test_signature_cutin()
+	test_feedback_battle()
+	test_lab_autojump()
 	await test_handbook()
 	check(SaveGame.path == "user://test_savegame.json" and SaveGame.log_path == "user://test_spieltest_log.csv", "Tests nutzen bis zum Schluss eigene Dateien (echter Spielstand bleibt unberührt)")
 	print("\n%d Prüfungen, %d Fehler" % [count, fails])
@@ -280,6 +282,7 @@ func test_new_chips() -> void:
 	play(st, "Laserschuss")
 	check(st.e.hp == 70, "Laserschuss verfehlt andere Reihe")
 	st.e.r = st.p.r
+	st.chain_n = 0   # einzelner Treffer, ohne Kette (Kette: test_feedback_battle)
 	play(st, "Laserschuss")
 	check(st.e.hp == 45, "Laserschuss trifft sofort in deiner Reihe (70 → %d)" % st.e.hp)
 	st = fresh()
@@ -288,6 +291,7 @@ func test_new_chips() -> void:
 	play(st, "Blitzlanze")
 	check(st.e.hp == 70, "Blitzlanze verfehlt, wenn die Spalten nicht passen")
 	st.p.c = 0
+	st.chain_n = 0
 	play(st, "Blitzlanze")
 	check(st.e.hp == 70 - 45, "Blitzlanze trifft passende Spalte, Elektro schlägt Virus (70 → %d)" % st.e.hp)
 	st = fresh()
@@ -864,18 +868,71 @@ func test_tutorial() -> void:
 	_tut_tick(st, tut, 360, Tutorial.Step.ELEMENT)
 	check(tut.step == Tutorial.Step.ELEMENT and st.hand[0].chip == "Blitzcursor", "Training: Firewall blockt einen Treffer > Blitzcursor für den Element-Vorteil")
 	st.use_slot(0)
-	_tut_tick(st, tut, wait + 90, Tutorial.Step.BIG)
-	check(tut.step == Tutorial.Step.BIG, "Training: Elektro gegen Virus trifft effektiv > Großangriff")
+	_tut_tick(st, tut, wait + 90, Tutorial.Step.CHAIN)
+	check(tut.step == Tutorial.Step.CHAIN and st.hand[0].chip == "Blitzcursor" and st.hand[1].chip == "Blitzcursor", "Training: Elektro gegen Virus trifft effektiv > Kette üben, zwei Blitzcursor liegen bereit")
+	# Kette (09.10.2026): drei Elektro-Angriffe hintereinander
+	t = 0.0
+	while tut.step == Tutorial.Step.CHAIN and t < 15.0:
+		for i in 2:
+			if st.hand[i].rem <= 0:
+				st.use_slot(i)
+		_tut_tick(st, tut, 1)
+		t += 1.0 / 60.0
+	check(tut.step == Tutorial.Step.BIG and st.chain_n >= 3, "Training: drei Elektro-Angriffe hintereinander (Kette x2) > Großangriff")
 	st.p.c = 1
 	st.p.r = 0     # außerhalb des Glitchkreuzes (X-Form)
-	_tut_tick(st, tut, 360, Tutorial.Step.SPECIAL)
-	check(tut.step == Tutorial.Step.SPECIAL and st.sp == 100.0, "Training: goldenen Feldern ausgewichen > Signatur-Leiste voll")
+	_tut_tick(st, tut, 360, Tutorial.Step.STOMP)
+	check(tut.step == Tutorial.Step.STOMP and st.pops.size() == 1, "Training: goldenen Feldern ausgewichen > Bitmilbe zertreten")
+	# Zertreten: neben die Milbe stellen und drauftreten, das lädt die Signatur
+	var q: Dictionary = st.pops[0]
+	st.sp = 0.0
+	st.p.c = q.c - 1 if q.c > 0 else q.c + 1
+	st.p.r = q.r
+	st.p.cd = 0.0
+	st.move_player(1 if q.c > 0 else -1, 0)
+	var sp_gain: float = st.sp
+	_tut_tick(st, tut, wait + 2, Tutorial.Step.THORN)
+	var thorns: Array = st.hazards.filter(func(h): return h.get("kind", "") == "thorn")
+	check(tut.step == Tutorial.Step.THORN and sp_gain >= BattleState.STOMP_SP and thorns.size() == 2 and tut.goal.x >= 0,
+		"Training: Bitmilbe zertreten (+%d Signatur) > Dornen-Parcours" % roundi(sp_gain))
+	# Dornen-Parcours: außen herum zum Ziel, ohne Schaden
+	var hp_t: int = st.run.hp
+	for cell in _thorn_path(st, tut.goal):
+		st.p.cd = 0.0
+		st.move_player(cell.x - st.p.c, cell.y - st.p.r)
+		_tut_tick(st, tut, 2)
+	_tut_tick(st, tut, wait + 2, Tutorial.Step.SPECIAL)
+	check(tut.step == Tutorial.Step.SPECIAL and st.sp == 100.0 and st.run.hp == hp_t and not st.hazards.any(func(h): return h.get("kind", "") == "thorn"),
+		"Training: außen herum ohne Dornenschaden ans Ziel > Dornen weg, Signatur-Leiste voll")
 	st.use_special()
 	var fin := false
 	for k in wait + 2:
 		tut.update(st, 1.0 / 60.0)
 		fin = fin or tut.just_finished
 	check(fin and st.e.hp >= roundi(st.e.max * 0.6) and st.run.hp > 0, "Training: Signatur gespielt > frei kämpfen (Gegner rappelt sich auf 60 % auf, Spieler nie besiegt)")
+
+
+## Kürzester Weg auf der eigenen Seite zum Ziel, ohne Dornenfelder zu betreten (Breitensuche)
+func _thorn_path(st: BattleState, goal: Vector2i) -> Array:
+	var start := Vector2i(st.p.c, st.p.r)
+	var prev := {start: start}
+	var queue: Array = [start]
+	while not queue.is_empty():
+		var c: Vector2i = queue.pop_front()
+		if c == goal:
+			break
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = c + d
+			if n.x < 0 or n.x > 2 or n.y < 0 or n.y > 2 or prev.has(n) or st.on_hazard(n.x, n.y, "thorn"):
+				continue
+			prev[n] = c
+			queue.append(n)
+	var path: Array = []
+	var cur := goal
+	while prev.has(cur) and cur != start:
+		path.push_front(cur)
+		cur = prev[cur]
+	return path
 
 
 func test_evolution() -> void:
@@ -963,6 +1020,7 @@ func test_all_specials() -> void:
 		run.form = f
 		var st := BattleState.new(run, GameData.FOES[3])  # Boss: genug HP, um alle Treffer zu zählen
 		st.e.frozen = 999.0
+		st.def.boss = false   # eingefrorene Bosse nähmen doppelten Schaden (STUN_MULT), hier zählt nur die Signatur
 		st.sp = 100.0
 		st.use_special()
 		step(st, 1.2)
@@ -1011,6 +1069,7 @@ func test_new_lines() -> void:
 	check(absf(st4.warns[0].max - 1.0) < 0.01, "Eulenblick: Warnung 0,3 s länger")
 	var st5 := BattleState.new(RunState.new("Molchi", 1), GameData.FOES[3])
 	st5.e.frozen = 99.0
+	st5.def.boss = false
 	st5.e.poison = 1
 	step(st5, 1.05)
 	check(st5.e.hp == GameData.FOES[3].hp - 6, "Giftdrüsen: Gift wirkt 50 %% stärker (HP %d)" % st5.e.hp)
@@ -1911,6 +1970,7 @@ func test_otter_macaw() -> void:
 	# Nachplappern: der 4. Angriffs-Chip kommt nach 0,5 s mit halbem Schaden noch einmal
 	var sa := BattleState.new(RunState.new("Plapperli", 1), GameData.FOES[3])
 	sa.e.frozen = 999.0
+	sa.def.boss = false
 	sa.def.el = "Neutral"
 	sa.e.r = sa.p.r
 	var hp0: int = sa.e.hp
@@ -2024,7 +2084,7 @@ func test_guards() -> void:
 		s4.e.sp_t = 99.0
 		step(s4, 0.05)
 		kinds[s4.warns.size()] = true
-	check(s4.def.phase2 == ["row", "cross", "col"] and s4.e.pi >= 3, "Kernelmantis greift in Phase 2 mit neuem Muster an")
+	check(s4.def.phase2 == ["row", "thorn", "cross", "col"] and s4.e.pi >= 3, "Kernelmantis greift in Phase 2 mit neuem Muster an")
 	# Wächter-Sieg: nächste Ebene
 	var r5 := RunState.new("Pixmiez", 8)
 	var lv0: int = r5.map.level
@@ -2521,6 +2581,115 @@ func test_signature_cutin() -> void:
 	bv.queue_free()
 
 
+## Spieltest 09.10.2026: Element-Kette bis 4-fach, betäubte Bosse x2, Dornenranken, niedrigere Entwicklungsschwellen
+func test_feedback_battle() -> void:
+	# Kette: gleiches Element hintereinander 1 > 1,5 > 2 > 3 > 4; Neutral unterbricht nicht; anderes Element oder Treffer beendet sie
+	var st := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[0].duplicate(true))
+	st.e.max = 9999
+	st.e.hp = 9999
+	st.e.atk_t = 99.0
+	st.e.move_t = 99.0
+	st.def.el = "Neutral"
+	st.e.r = st.p.r
+	var hits: Array = []
+	for chip in ["Laserschuss", "Laserschuss", "Pixelstrahl", "Laserschuss", "Laserschuss", "Laserschuss", "Laserschuss"]:
+		var hp0: int = st.e.hp
+		st.hand[0].chip = chip
+		st.hand[0].rem = 0.0
+		st.use_slot(0)
+		step(st, 0.6)
+		hits.append(hp0 - st.e.hp)
+	var ld: int = GameData.chip("Laserschuss").dmg
+	var want := [ld, roundi(ld * 1.5), GameData.chip("Pixelstrahl").dmg, roundi(ld * 2.0), roundi(ld * 3.0), roundi(ld * 4.0), roundi(ld * 4.0)]
+	check(hits == want, "Kette: Laserschuss %s, Neutral dazwischen unterbricht nicht (%s)" % [str(want), str(hits)])
+	st.reflex = 0   # Katzenreflex (Pixmiez) würde dem Treffer ausweichen
+	st.hurt_player(5)
+	var after_hit := st.chain_n
+	st.hand[0].chip = "Glutball"
+	st.hand[0].rem = 0.0
+	st.use_slot(0)
+	var other_el := st.chain_n == 1 and st.chain_el == "Feuer"
+	st.chain_last = st.t - GameData.CHAIN_GAP - 0.1
+	st.hand[0].chip = "Glutball"
+	st.hand[0].rem = 0.0
+	st.use_slot(0)
+	check(after_hit == 0 and other_el and st.chain_n == 1, "Kette: ein Treffer, ein anderes Element oder %s s Pause beenden sie" % T.dec(GameData.CHAIN_GAP))
+	# Betäubte Bosse und Wächter nehmen doppelten Schaden, normale Gegner nicht; der Konter-Treffer selbst zählt nicht doppelt
+	var dmg := {}
+	for kind in ["boss", "boss_frei", "normal"]:
+		var b := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[3 if kind != "normal" else 0].duplicate(true))
+		b.def.el = "Neutral"
+		b.e.max = 9999
+		b.e.hp = 9999
+		b.e.frozen = 0.0 if kind == "boss_frei" else 5.0
+		b.hit_enemy(10, "Neutral")
+		dmg[kind] = 9999 - b.e.hp
+	check(dmg.boss == 20 and dmg.boss_frei == 10 and dmg.normal == 10, "Betäubte Bosse nehmen doppelten Schaden, sonst einfach (%s)" % str(dmg))
+	# Dornenranken: Hineinlaufen kostet HP, Stehenbleiben nicht
+	var th := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[2].duplicate(true))
+	th.e.atk_t = 99.0
+	th.e.move_t = 99.0
+	th.reflex = 0
+	th.hazards.append({"c": 2, "r": th.p.r, "t": 5.0, "tick": 0.0, "kind": "thorn", "seed": 1})
+	var hp1: int = th.run.hp
+	step(th, 1.0)
+	var standing_ok: bool = th.run.hp == hp1
+	th.p.c = 1
+	th.p.cd = 0.0
+	th.move_player(1, 0)
+	var stepped: int = hp1 - th.run.hp
+	th.p.cd = 0.0
+	th.move_player(-1, 0)
+	step(th, 1.0)
+	check(stepped == maxi(2, roundi(th.def.dmg * BattleState.THORN_DMG)) and standing_ok and th.run.hp == hp1 - stepped,
+		"Dornenranken: Hineinlaufen kostet %d HP, Stehen und Herausgehen nichts" % stepped)
+	var thorn_foes: Array = GameData.ZONES.wiesen.late.filter(func(i): return GameData.FOES[i].pat.has("thorn"))
+	check(thorn_foes.size() >= 2 and GameData.FOES[3].get("minion", "") == "thorn" and not GameData.FOES[0].pat.has("thorn"),
+		"Cache-Wiesen: Gegner und Boss lassen Dornen wachsen, Bugsy (Training) nicht")
+	# Module leuchten im Kampf auf, wenn sie wirken (nur eigene); Zertreten lädt die Signatur
+	var mr := RunState.new("Pixmiez", 1)
+	mr.add_module("verstaerker")
+	var ms := BattleState.new(mr, GameData.FOES[0].duplicate(true))
+	ms.hit_enemy(10, "Neutral")
+	ms.mod_ping("kritbit")
+	var lit: bool = ms.mod_fx.has("verstaerker") and ms.mod_last == "verstaerker" and not ms.mod_fx.has("kritbit")
+	for i in 25:
+		ms.advance(0.05)   # advance rechnet höchstens 50 ms je Aufruf
+	check(lit and not ms.mod_fx.has("verstaerker"), "Module leuchten auf, wenn sie wirken, und verblassen wieder")
+	ms.pops.append({"c": 2, "r": ms.p.r, "t": 3.0, "max": 3.0, "kind": "milbe"})
+	ms.sp = 0.0
+	ms.p.c = 1
+	ms.p.cd = 0.0
+	ms.move_player(1, 0)
+	check(ms.stomps == 1 and ms.sp >= BattleState.STOMP_SP and ms.pops.is_empty(), "Zertreten: Milbe weg, Signatur +%d" % roundi(BattleState.STOMP_SP))
+	check(GameData.EVO_AT[2] <= 19 and GameData.EVO_AT[3] <= 675 and GameData.EVO_AT[4] <= 2025, "Entwicklung mindestens 25 %% schneller als vorher (25/900/2700): %s" % str(GameData.EVO_AT))
+
+
+## Labor (Spieltest 09.10.2026): sind zwei Monster gewählt, springt die Auswahl auf „Fusionieren“
+func test_lab_autojump() -> void:
+	var saved: Dictionary = SaveGame.data.duplicate(true)
+	SaveGame.persist = false
+	SaveGame.new_game("Tröpfel")
+	SaveGame.add_monster("Kekso")
+	SaveGame.add_monster("Lumi")
+	SaveGame.data.station_guide_done = true
+	var SV: GDScript = load("res://scripts/ui/station_view.gd")
+	var sv = SV.new()
+	add_child(sv)
+	sv.tab = sv.Tab.LAB
+	var picks: Array = []
+	for row in [0, 1]:
+		sv.sel = row
+		sv.t_in = 1.0
+		Input.action_press("confirm")
+		sv._process(0.016)
+		Input.action_release("confirm")
+		picks.append(sv.sel)
+	check(sv.fuse_sel.size() == 2 and picks[0] == 0 and picks[1] == SaveGame.team().size(), "Labor: nach zwei gewählten Monstern springt die Auswahl zu „Fusionieren“ (%s)" % str(picks))
+	sv.queue_free()
+	SaveGame.data = saved
+
+
 ## Eine Reise abschließen (gewonnen = bis zum Ur-Glitch über Sümpfe und Steppe), gemeldete Herausforderungen zurück
 func _ch_journey(sp: String, won: bool, diff := 1, proto := 0) -> Array:
 	var rf := RunState.new(sp, 9)
@@ -2667,6 +2836,7 @@ func test_frame_pacing() -> void:
 	# Ein Geschoss trifft auch dann, wenn ein Bild 250 ms dauert (ohne Begrenzung spränge es 3 Felder weit)
 	var sa := BattleState.new(RunState.new("Pixmiez", 1), GameData.FOES[3])
 	sa.e.frozen = 999.0
+	sa.def.boss = false
 	sa.def.el = "Neutral"
 	sa.e.r = sa.p.r
 	sa.e.c = 1

@@ -1,13 +1,14 @@
 class_name Tutorial
 extends RefCounted
 ## Geführter Trainingskampf (04.10.2026, Tester-Feedback: „Das Handbuch liest keiner, wir wollen in einen Kampf“).
-## Läuft direkt nach der Starterwahl und jederzeit über Titel > Training. Neun Lernschritte zum Selbermachen:
-## Bewegen > Angriff 1 > Angriff 2 > Ausweichen > Konter (08.10.2026) > Schützen > Element-Vorteil > Großangriff > Signatur > frei kämpfen.
+## Läuft direkt nach der Starterwahl und jederzeit über Titel > Training. Zwölf Lernschritte zum Selbermachen:
+## Bewegen > Angriff 1 > Angriff 2 > Ausweichen > Konter (08.10.2026) > Schützen > Element-Vorteil > Kette > Großangriff >
+## Zertreten > Dornenranken (09.10.2026, Spieltest) > Signatur > frei kämpfen.
 ## Steuert nur, wann der Gegner angreifen darf, legt passende Chips auf die Hand und prüft die Fortschritte;
 ## die Ansicht zeigt die Texte. Der Spieler kann in diesem Kampf nicht verlieren.
 
-enum Step { MOVE, CHIP, CHIP2, DODGE, COUNTER, SHIELD, ELEMENT, BIG, SPECIAL, FREE, DONE }
-const LEARN_STEPS := 9     # Fortschrittspunkte (MOVE … SPECIAL)
+enum Step { MOVE, CHIP, CHIP2, DODGE, COUNTER, SHIELD, ELEMENT, CHAIN, BIG, STOMP, THORN, SPECIAL, FREE, DONE }
+const LEARN_STEPS := 12    # Fortschrittspunkte (MOVE … SPECIAL)
 ## Jeder Lernschritt bleibt mindestens so lange stehen (08.10.2026, Produzent: Training war „kurz ein Kampf, dann Station“ –
 ## wer schnell drückt, erledigte die ersten Schritte in unter einer Sekunde und sah die Texte nie).
 ## Was in dieser Zeit passiert, zählt trotzdem (Treffer, gespielter Slot, Element-Vorteil, Signatur).
@@ -26,6 +27,9 @@ var done_t := 0.0          # Zeit für die Abschlussmeldung
 var just_finished := false
 var foe_name := ""
 var foe_el := ""
+var chain := 0             # Kette im Schritt CHAIN (Anzeige)
+var stomps0 := 0           # Zertreten-Zähler zu Beginn des Schritts STOMP
+var goal := Vector2i(-1, -1)   # Ziel-Feld im Dornen-Parcours (die Ansicht hebt es hervor)
 
 
 func _go(s: Step) -> void:
@@ -40,7 +44,8 @@ func update(st: BattleState, dt: float) -> void:
 	foe_el = st.def.el
 	var pos := Vector2i(st.p.c, st.p.r)
 	# Gegner greift nur in den Schritten an, in denen es darum geht
-	var hold := step in [Step.MOVE, Step.CHIP, Step.CHIP2, Step.ELEMENT, Step.SPECIAL] or (step == Step.SHIELD and st.shield <= 0) or step == Step.BIG
+	var hold := step in [Step.MOVE, Step.CHIP, Step.CHIP2, Step.ELEMENT, Step.CHAIN, Step.STOMP, Step.THORN, Step.SPECIAL] or (step == Step.SHIELD and st.shield <= 0) or step == Step.BIG
+	chain = st.chain_n
 	if hold:
 		st.e.atk_t = maxf(st.e.atk_t, 1.0)
 		st.e.move_t = maxf(st.e.move_t, 1.0)
@@ -113,20 +118,43 @@ func update(st: BattleState, dt: float) -> void:
 				_give(st, 2, "Firewall")
 		Step.ELEMENT:
 			if st.last_mult > 1.0:
-				_go(Step.BIG)
+				_go(Step.CHAIN)
+				_give(st, 0, "Blitzcursor")
+				_give(st, 1, "Blitzcursor")
 			elif st.hand[0].chip != "Blitzcursor" and st.hand[0].rem <= 0 and st.last_mult <= 1.0 and step_t > 1.5:
 				_give(st, 0, "Blitzcursor")
+		Step.CHAIN:
+			# Kette: drei Elektro-Angriffe hintereinander (Blitzcursor trifft immer), nachgelegte Karten laden normal
+			for i in 2:
+				if st.hand[i].chip != "Blitzcursor":
+					st.hand[i].chip = "Blitzcursor"
+			if st.chain_n >= 3:
+				_go(Step.BIG)
 		Step.BIG:
 			if not big_started and step_t > 0.8:
 				big_started = true
 				st.start_special()
 			if st.events.has("overload"):
-				_go(Step.SPECIAL)
-				st.sp = 100.0
+				_go(Step.STOMP)
+				_spawn_mite(st)
 			elif big_started and st.sp_left <= 0 and st.warns.is_empty() and step_t > 1.0:
 				# getroffen: gleich noch einmal
 				big_started = false
 				step_t = 0.0
+		Step.STOMP:
+			# Bitmilbe zertreten (lädt die Signatur); platzt sie, kommt eine neue
+			if st.stomps > stomps0:
+				_go(Step.THORN)
+				_thorn_course(st)
+			elif st.pops.is_empty():
+				_spawn_mite(st)
+		Step.THORN:
+			# Dornen-Parcours: außen herum zum Ziel, Hineinlaufen tut weh (verlieren kann man nicht)
+			if pos == goal:
+				goal = Vector2i(-1, -1)
+				st.hazards = st.hazards.filter(func(h): return h.get("kind", "") != "thorn")
+				_go(Step.SPECIAL)
+				st.sp = 100.0
 		Step.SPECIAL:
 			if st.sp < 100.0:
 				_go(Step.FREE)
@@ -140,6 +168,59 @@ func update(st: BattleState, dt: float) -> void:
 			if done_t <= 0:
 				_go(Step.DONE)
 	last_pos = pos
+
+
+## Eine Bitmilbe auf ein freies Feld setzen, mit mehr Zeit als im Kampf
+func _spawn_mite(st: BattleState) -> void:
+	stomps0 = st.stomps
+	st._spawn_pop()
+	if not st.pops.is_empty():
+		st.pops[-1].t = 6.0
+		st.pops[-1].max = 6.0
+
+
+## Ziel in der gegenüberliegenden Ecke, zwei Dornenfelder liegen im Weg: der Weg bleibt offen, wird möglichst lang,
+## und die Dornen liegen so nah wie möglich am Ziel (von der Mitte aus ist auf 3 × 3 kein Umweg möglich, dann blockieren sie den naheliegenden Weg)
+func _thorn_course(st: BattleState) -> void:
+	var p := Vector2i(st.p.c, st.p.r)
+	goal = Vector2i(2 if p.x <= 1 else 0, 0 if p.y >= 1 else 2)
+	var cells: Array = []
+	for c in 3:
+		for r in 3:
+			var v := Vector2i(c, r)
+			if v != p and v != goal:
+				cells.append(v)
+	var best: Array = []
+	var best_score := -999
+	for i in cells.size():
+		for j in range(i + 1, cells.size()):
+			var n := _path_len(p, goal, [cells[i], cells[j]])
+			if n < 0:
+				continue
+			var near: int = absi(cells[i].x - goal.x) + absi(cells[i].y - goal.y) + absi(cells[j].x - goal.x) + absi(cells[j].y - goal.y)
+			var score := n * 10 - near
+			if score > best_score:
+				best_score = score
+				best = [cells[i], cells[j]]
+	for k in best.size():
+		st.hazards.append({"c": best[k].x, "r": best[k].y, "t": 60.0, "max": 60.0, "tick": 0.0, "kind": "thorn", "seed": 7 + k})
+
+
+## Schritte von a nach b auf der eigenen 3 × 3-Seite, ohne die gesperrten Felder (-1 = kein Weg)
+static func _path_len(a: Vector2i, b: Vector2i, blocked: Array) -> int:
+	var dist := {a: 0}
+	var queue: Array = [a]
+	while not queue.is_empty():
+		var c: Vector2i = queue.pop_front()
+		if c == b:
+			return dist[c]
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = c + d
+			if n.x < 0 or n.x > 2 or n.y < 0 or n.y > 2 or dist.has(n) or blocked.has(n):
+				continue
+			dist[n] = dist[c] + 1
+			queue.append(n)
+	return -1
 
 
 ## Einen bestimmten Chip sofort spielbereit in einen Slot legen
@@ -173,8 +254,14 @@ func texts(pad: bool) -> Array:
 			return ["Schützen", T.t("Drück %s: Die Firewall blockt den nächsten Treffer. Danach ruhig stehen bleiben!") % k3]
 		Step.ELEMENT:
 			return ["Element-Vorteil", T.t("%s ist ein %s-Gegner. Elektro ist dagegen stark: Spiel den Blitzcursor mit %s, er trifft immer.") % [T.t(foe_name), T.t(foe_el), k1]]
+		Step.CHAIN:
+			return [T.t("Kette (%d/3)") % mini(chain, 3), T.t("Spiel Angriffe desselben Elements hintereinander: Sie werden immer stärker, bis x4! Ein Treffer gegen dich beendet die Kette.")]
 		Step.BIG:
-			return ["Großangriff", "Goldene Felder: ein Großangriff! Weich allen aus, dann ist der Gegner kurz überlastet."]
+			return ["Großangriff", "Goldene Felder: ein Großangriff! Weich allen aus, dann ist der Gegner überlastet. Betäubte Bosse nehmen doppelten Schaden!"]
+		Step.STOMP:
+			return ["Zertreten", "Eine Bitmilbe! Lauf auf ihr Feld, bevor sie platzt. Zertretene Milben und Sporen laden deine Signatur-Leiste."]
+		Step.THORN:
+			return ["Dornenranken", "In Dornen tut jeder Schritt hinein weh, Stehenbleiben und Herausgehen nicht. Lauf außen herum zum Ziel!"]
 		Step.SPECIAL:
 			return ["Signatur-Attacke", T.t("Deine Leiste ist voll! Drück %s für die Signatur-Attacke.") % (InputSetup.btn("Y") if pad else InputSetup.key_text("special", "acc"))]
 		Step.FREE:

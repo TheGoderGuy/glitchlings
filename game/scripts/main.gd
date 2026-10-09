@@ -452,6 +452,26 @@ func _screenshot(shot: Dictionary) -> void:
 				await Shot.save(self, shot.path)
 				return
 			current.simulate(shot.get("sim", 2.0))
+			if mode == "tutorial" and shot.has("tutstep") and current.tut != null:
+				# Trainingsschritt direkt zeigen: --tutstep=chain|stomp|thorn
+				var tu: Tutorial = current.tut
+				match String(shot.tutstep):
+					"chain":
+						tu._go(Tutorial.Step.CHAIN)
+						current.st.chain_el = "Elektro"
+						current.st.chain_n = 2
+						current.st.chain_last = current.st.t
+						tu.chain = 2
+						tu._give(current.st, 0, "Blitzcursor")
+						tu._give(current.st, 1, "Blitzcursor")
+					"stomp":
+						tu._go(Tutorial.Step.STOMP)
+						tu._spawn_mite(current.st)
+					"thorn":
+						tu._go(Tutorial.Step.THORN)
+						tu._thorn_course(current.st)
+						for h in current.st.hazards:
+							h.t -= 1.0   # schon gewachsen
 			if mode == "chiptip":
 				# neuer Chip im Schutz-Slot: „Neu!“-Marke
 				current.new_t[1] = 2.9
@@ -523,7 +543,7 @@ func _screenshot(shot: Dictionary) -> void:
 				cs2.e.atk_t = 99.0
 				cs2.e.move_t = 99.0
 				var sl: bool = run.map.zone == "sumpf"
-				var hk: String = {"sumpf": "slime", "see": "current", "steppe": "spark"}.get(run.map.zone, "lava")
+				var hk: String = {"sumpf": "slime", "see": "current", "steppe": "spark", "wiesen": "thorn"}.get(run.map.zone, "lava")
 				for wi in 3:
 					cs2.warns.append({"cells": [Vector2i(wi, 0)], "t": [0.72, 0.45, 0.08][wi], "max": 0.9, "dmg": 0, "lava": true, "kind": hk, "dir": 1})
 				cs2.hazards.append({"c": 0, "r": 2, "t": 2.5, "tick": 0.3, "kind": hk, "seed": 5, "dir": -1})
@@ -538,6 +558,12 @@ func _screenshot(shot: Dictionary) -> void:
 						cs2.e.slow = 2.0
 					_:
 						cs2.e.frozen = 2.0
+			if shot.has("chain"):
+				# Kette anzeigen (z. B. --chain=4): n Element-Angriffe im Element der Form hintereinander
+				var csc: BattleState = current.st
+				csc.chain_el = run.form_el() if run.form_el() != "Neutral" else "Feuer"
+				csc.chain_n = shot.chain
+				csc.chain_last = csc.t
 			if shot.has("pops"):
 				var pk: String = {"sumpf": "spore", "see": "bubble"}.get(run.map.zone, "milbe")
 				current.st.pops.append({"c": 0, "r": 0, "t": 2.5, "max": 3.0, "kind": pk})
@@ -553,6 +579,9 @@ func _screenshot(shot: Dictionary) -> void:
 				if shot.has("choices"):
 					current.choices = Array(shot.choices)
 				run.add_module(current.new_module)
+				# --reveal: das große Fenster „Neues Modul!“ vor der Chipwahl
+				current.mod_reveal = shot.has("reveal") and current.new_module != ""
+				current.mode_t = 1.0
 			elif mode == "pause":
 				current.show_pause_for_screenshot()
 			elif mode == "evolve":

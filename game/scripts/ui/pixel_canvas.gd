@@ -460,19 +460,20 @@ func _draw_chip_icon(id: String, pos: Vector2, bright: bool, s := 1) -> void:
 		draw_rect(Rect2(pos + Vector2(5, 5) * s, Vector2(1, 1) * s), GameData.COL.dark)
 
 
-func _draw_module_icon(id: String, pos: Vector2) -> void:
+## Modul-Symbol, 14 × 14 Pixel × s (s = 2 im Kampf, 3 bei „Neues Modul!“)
+func _draw_module_icon(id: String, pos: Vector2, s := 1) -> void:
 	var M: Dictionary = GameData.MODULES[id]
 	var rc: Color = {"Gewöhnlich": GameData.COL.line.lightened(0.3), "Selten": Color("#58B7FF"), "Episch": Color("#FFC83D")}[M.rar]
 	pos = pos.round()
-	draw_rect(Rect2(pos, Vector2(14, 14)), GameData.COL.dark)
-	draw_rect(Rect2(pos + Vector2(1, 1), Vector2(12, 12)), rc)
-	draw_rect(Rect2(pos + Vector2(2, 2), Vector2(10, 10)), GameData.COL.dark)
+	draw_rect(Rect2(pos, Vector2(14, 14) * s), GameData.COL.dark)
+	draw_rect(Rect2(pos + Vector2(1, 1) * s, Vector2(12, 12) * s), rc)
+	draw_rect(Rect2(pos + Vector2(2, 2) * s, Vector2(10, 10) * s), GameData.COL.dark)
 	var pic: Array = GameData.PICTOS[M.pic]
 	var col := Color(M.col)
 	for y in 6:
 		for x in 6:
 			if pic[y][x] == "#":
-				draw_rect(Rect2(pos + Vector2(4 + x, 4 + y), Vector2(1, 1)), col)
+				draw_rect(Rect2(pos + Vector2(4 + x, 4 + y) * s, Vector2(s, s)), col)
 
 
 ## Reihe von Modul-Symbolen; gibt die Breite zurück

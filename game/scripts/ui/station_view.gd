@@ -206,6 +206,9 @@ func _process(delta: float) -> void:
 							fuse_sel.erase(id)
 						elif fuse_sel.size() < 2:
 							fuse_sel.append(id)
+							# zwei gewählt: gleich zum Knopf „Fusionieren“ springen (Spieltest 09.10.2026)
+							if fuse_sel.size() == 2:
+								sel = SaveGame.team().size()
 						fuse_msg = ""
 						Sfx.play("select")
 					elif fuse_sel.size() == 2:

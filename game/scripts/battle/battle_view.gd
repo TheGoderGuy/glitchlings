@@ -77,6 +77,7 @@ const NEW_TIME := 3.0
 var skip_ready := false         # Tests/Screenshots: ohne Bereit-Pause starten
 var autopilot: BattleBot = null  # Trailer: der Bot spielt live (sonst nur in simulate())
 var mystery_foe := false         # Trailer: Gegner nur als Umriss (Ur-Glitch), Werte im Intro verborgen
+var mod_reveal := false          # „Neues Modul!“ wird vor der Chipwahl groß gezeigt (09.10.2026, Spieltest)
 const LUNGE := 0.16
 ## Angriffsanimationen (05.10.2026): Dauer beim eigenen Glitchling; beim Gegner laufen die Ausholbilder
 ## synchron zur Warnung bis ATK_HIT, der Rest nach dem Einschlag in E_ATK_POST Sekunden
@@ -224,6 +225,9 @@ func _fight_over() -> void:
 	if node_type in ["elite", "glitch", "guard", "boss"]:
 		new_module = run.roll_module(GameData.MODULE_WEIGHT_ELITE)
 		run.add_module(new_module)
+		mod_reveal = new_module != ""
+		if mod_reveal:
+			Sfx.play("evolve", 0.0)
 	pick_idx = 1
 	_set_mode(Mode.PICK)
 
@@ -305,6 +309,14 @@ func _process(delta: float) -> void:
 					set_process(false)
 					gave_up.emit()
 		Mode.PICK:
+			# Erst das neue Modul groß zeigen, dann die Chipwahl
+			if mod_reveal:
+				if mode_t > 0.6 and (Input.is_action_just_pressed("confirm") or Input.is_action_just_pressed("back")):
+					Sfx.play("confirm")
+					mod_reveal = false
+					mode_t = 0.0
+				queue_redraw()
+				return
 			if Input.is_action_just_pressed("move_left"):
 				pick_idx = (pick_idx + 2) % 3
 				Sfx.play("select")
@@ -463,6 +475,8 @@ func _draw() -> void:
 			_draw_pause()
 		Mode.PICK:
 			_draw_pick()
+			if mod_reveal:
+				_draw_module_reveal()
 		Mode.INTRO:
 			# Übergang: das Intro blendet in den Kampf über
 			var k := clampf((INTRO_END - mode_t) / INTRO_FADE, 0.0, 1.0)
@@ -528,11 +542,20 @@ func _draw_arena_overlays() -> void:
 				_draw_current_pool(rect, hz)
 			"spark":
 				_draw_spark_pool(rect, hz)
+			"thorn":
+				_draw_thorn_patch(rect, hz)
 			_:
 				_draw_lava_pool(rect, hz)
 	for q in st.parts:
 		if q.has("cell"):
 			draw_rect(cell_rect(q.c, q.r), Color(q.color, q.t / q.max * 0.8))
+	# Training: Ziel-Feld (Dornen-Parcours)
+	if tut != null and tut.active() and tut.goal.x >= 0:
+		var gr := cell_rect(tut.goal.x, tut.goal.y)
+		var pulse := 0.5 + 0.5 * sin(anim_t * 6.0)
+		draw_rect(gr, Color(GameData.COL.mint, 0.18 + 0.15 * pulse))
+		draw_rect(gr, Color(GameData.COL.mint, 0.7 + 0.3 * pulse), false, 2)
+		_text(gr.position + Vector2(0, 14), "Ziel", 8, GameData.COL.mint, HORIZONTAL_ALIGNMENT_CENTER, gr.size.x, true, true)
 	for mn in st.mines:
 		var x := gx(3 + mn.c) + CW / 2
 		var y: float = Y0 + mn.r * CH + FEET - 4
@@ -892,9 +915,9 @@ func _draw_hud() -> void:
 		_box(Rect2(bx, 45, bw, 13), GameData.COL.dark, bf[1])
 		_text(Vector2(bx, 55), bf[0], 8, bf[1], HORIZONTAL_ALIGNMENT_CENTER, bw, false)
 		bx += bw + 3
-	# Module: kleine Symbole neben den Buffs
+	# Module: doppelt große Symbole in einer eigenen Zeile unter den Zuständen, sie leuchten auf, wenn sie wirken (09.10.2026)
 	if not run.modules.is_empty():
-		_draw_module_row(run.modules, bx + (4 if buffs.size() > 0 else 0), 44, 8)
+		_draw_battle_modules(8, 62)
 	# Gegner rechts
 	var E := Rect2(W - 208, 8, 200, 34)
 	_box(E, Color(GameData.COL.panel, 0.9), GameData.EL[st.def.el].darkened(0.3))
@@ -930,7 +953,37 @@ func _hud_sub(name: String, full: String, short: String, w: float) -> String:
 	return full if text_width(T.t(name), 8, true) + text_width(full) + 10 <= w else short
 
 
+## Module im Kampf: 28 px, wirkende leuchten weiß auf und springen kurz hoch, daneben der Name des zuletzt wirkenden
+func _draw_battle_modules(x: float, y: float) -> void:
+	var n := mini(run.modules.size(), 6)
+	for i in n:
+		var id: String = run.modules[i]
+		var k: float = st.mod_fx.get(id, 0.0) / st.MOD_FX
+		var pos := Vector2(x + i * 31, y - roundf(3.0 * k))
+		if k > 0:
+			draw_rect(Rect2(pos - Vector2(2, 2), Vector2(32, 32)), Color(1, 1, 1, 0.85 * k))
+		_draw_module_icon(id, pos, 2)
+	if run.modules.size() > n:
+		_text(Vector2(x + n * 31, y + 18), "+%d" % (run.modules.size() - n), 8, GameData.COL.muted)
+	if st.mod_last != "" and st.mod_fx.has(st.mod_last) and run.modules.find(st.mod_last) < n:
+		var M: Dictionary = GameData.MODULES[st.mod_last]
+		var a := clampf(st.mod_fx[st.mod_last] / 0.3, 0.0, 1.0)
+		_text(Vector2(x + run.modules.find(st.mod_last) * 31, y + 40), M.name, 8, Color(Color(M.col), a), HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+
+
+## Kette (09.10.2026): links über dem Spielfeld, mit Restzeit bis sie reißt
+func _draw_chain() -> void:
+	if st.chain_n < 2 or st.t - st.chain_last > GameData.CHAIN_GAP:
+		return
+	var col: Color = GameData.EL[st.chain_el]
+	var s := T.t("Kette %s") % GameData.mult_text(GameData.chain_mult(st.chain_n))
+	var pos := Vector2(X0, Y0 - 10)
+	_text(pos, s, 16, col, HORIZONTAL_ALIGNMENT_LEFT, -1, true, true)
+	_bar(Rect2(pos.x, pos.y + 3, text_width(s, 16, true), 3), 1.0 - (st.t - st.chain_last) / GameData.CHAIN_GAP, col)
+
+
 func _draw_hand() -> void:
+	_draw_chain()
 	# Signatur-Karte rechts (Hinweis zur Pause darüber)
 	_text(Vector2(HAND_X + 3 * (CARD_W + 6), 302), (InputSetup.btn("Start") if InputSetup.pad else "Esc") + ": " + T.t("Pause"), 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_RIGHT, 130)
 	for i in 3:
@@ -1179,6 +1232,29 @@ func _draw_pick() -> void:
 	_text(Vector2(r.position.x, r.end.y - 36), T.t("Deck: %d Chips · Fragmente: %d%s") % [run.deck.size(), run.frag, evo_line], 8, GameData.COL.muted, HORIZONTAL_ALIGNMENT_CENTER, r.size.x)
 	var pad: bool = InputSetup.pad
 	_text(Vector2(r.position.x, r.end.y - 16), T.t("< > wählen   %s nehmen   %s überspringen (+%d Fragmente)") % [InputSetup.btn("A") if pad else "Enter", InputSetup.btn("B") if pad else "Esc", SKIP_FRAG], 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, r.size.x, true, true)
+
+
+## „Neues Modul!“: großes Symbol, Name, Seltenheit und Wirkung, Strahlen in der Seltenheitsfarbe
+func _draw_module_reveal() -> void:
+	var M: Dictionary = GameData.MODULES[new_module]
+	var rc: Color = {"Gewöhnlich": GameData.COL.ink, "Selten": Color("#58B7FF"), "Episch": Color("#FFC83D")}[M.rar]
+	draw_rect(Rect2(0, 0, W, H), Color(GameData.COL.dark, 0.82))
+	var c := Vector2(W / 2.0, 150)
+	for i in 12:
+		var a := i * TAU / 12.0 + anim_t * 0.4
+		var d1 := Vector2(cos(a - 0.08), sin(a - 0.08)) * 260.0
+		var d2 := Vector2(cos(a + 0.08), sin(a + 0.08)) * 260.0
+		draw_colored_polygon(PackedVector2Array([c, c + d1, c + d2]), Color(rc, 0.07))
+	var R := Rect2(W / 2.0 - 170, 70, 340, 200)
+	_box(R, Color(GameData.COL.panel, 0.97), rc)
+	_text(Vector2(R.position.x, R.position.y + 24), "Neues Modul!", 16, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	var bob := roundf(sin(anim_t * 3.0) * 2.0)
+	_draw_module_icon(new_module, Vector2(c.x - 21, R.position.y + 38 + bob), 3)
+	_text(Vector2(R.position.x, R.position.y + 104), M.name, 16, Color(M.col), HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
+	_text(Vector2(R.position.x, R.position.y + 120), T.t("%s · wirkt für den ganzen Run") % T.t(M.rar), 8, rc, HORIZONTAL_ALIGNMENT_CENTER, R.size.x)
+	draw_multiline_string(font(), Vector2(R.position.x + 20, R.position.y + 142), T.t(M.desc), HORIZONTAL_ALIGNMENT_CENTER, R.size.x - 40, tsz(8), 2, GameData.COL.ink, TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
+	if mode_t > 0.6 and not cinematic:
+		_text(Vector2(R.position.x, R.end.y - 10), T.t("%s weiter") % (InputSetup.btn("A") if InputSetup.pad else "Enter"), 8, GameData.COL.sun, HORIZONTAL_ALIGNMENT_CENTER, R.size.x, true, true)
 
 
 func _draw_evolve() -> void:
@@ -1628,19 +1704,31 @@ func _draw_proj(pr: Dictionary, pos: Vector2, col: Color) -> void:
 func _draw_shield(body: Vector2) -> void:
 	match st.shield_kind:
 		"firewall":
-			var x := body.x + 20
-			for row in 6:
-				var y := body.y - 26 + row * 7
-				var shift := 5 if row % 2 == 1 else 0
-				for c in 2:
-					var bx := x + c * 11 - shift
-					draw_rect(Rect2(bx, y, 10, 6), GameData.COL.dark)
-					draw_rect(Rect2(bx + 1, y + 1, 8, 4), GameData.EL.Code.lightened(0.15 * (0.5 + 0.5 * sin(anim_t * 6.0 + row))))
-			for c in 3:
-				var fx := x - 2 + c * 8
-				var h := 4.0 + 3.0 * absf(sin(anim_t * 12.0 + c))
-				draw_rect(Rect2(fx, body.y - 26 - h, 4, h), FIRE_MID)
-				draw_rect(Rect2(fx + 1, body.y - 26 - h * 0.6, 2, h * 0.6), FIRE_HOT)
+			# Grünes Hexagon um den Glitchling (Spieltest 09.10.2026, vorher Mauer mit Flammen), passt sich der Größe an
+			var hgt: float = sprite(run.form).n * (BABY_SCALE if run.stage == 1 else 1)
+			var cen := Vector2(roundi(body.x), roundi(body.y + 24 - hgt * 0.45))
+			var rad := roundf(maxf(26.0, hgt * 0.62))
+			var pulse := 0.5 + 0.5 * sin(anim_t * 5.0)
+			var code: Color = GameData.EL.Code
+			var pts := PackedVector2Array()
+			for i in 6:
+				var a := PI / 6.0 + i * PI / 3.0
+				pts.append((cen + Vector2(cos(a), sin(a)) * rad).round())
+			draw_colored_polygon(pts, Color(code, 0.10 + 0.06 * pulse))
+			var inner := PackedVector2Array()
+			for q in pts:
+				inner.append((cen + (q - cen) * 0.84).round())
+			inner.append(inner[0])
+			draw_polyline(inner, Color(code, 0.3), 1.0)
+			var outer := pts.duplicate()
+			outer.append(pts[0])
+			draw_polyline(outer, Color(code.lightened(0.25), 0.75 + 0.25 * pulse), 2.0)
+			for q in pts:
+				_px(q, 3, code.lightened(0.5))
+			# ein Lichtpunkt läuft am Rand entlang
+			var seg := fmod(anim_t * 2.5, 6.0)
+			var i0 := int(seg)
+			_px(pts[i0].lerp(pts[(i0 + 1) % 6], seg - i0).round(), 3, Color.WHITE)
 		"lock":
 			draw_circle(body, 28, Color(GameData.EL.Code, 0.12))
 			draw_arc(body, 30, anim_t, anim_t + TAU, 7, GameData.EL.Code, 2)
@@ -1861,8 +1949,8 @@ func _draw_vfx() -> void:
 				var fp := Vector2(cen.x, feet_y(v.r) - 6)
 				var slime: bool = v.get("slime", false)
 				var hk: String = v.get("kind", "slime" if slime else "lava")
-				var c1: Color = {"slime": SLIME_MID, "current": WATER_MID, "spark": VOLT_MID}.get(hk, LAVA_GLOW)
-				var c2: Color = {"slime": SLIME_LIGHT, "current": WATER_LIGHT, "spark": VOLT_HOT}.get(hk, LAVA_HOT)
+				var c1: Color = {"slime": SLIME_MID, "current": WATER_MID, "spark": VOLT_MID, "thorn": THORN_MID}.get(hk, LAVA_GLOW)
+				var c2: Color = {"slime": SLIME_LIGHT, "current": WATER_LIGHT, "spark": VOLT_HOT, "thorn": THORN_LIGHT}.get(hk, LAVA_HOT)
 				if hk in ["lava", "spark"] and k < 0.3:
 					draw_circle(fp, 10 + k * 40, Color(c2, 0.5 * (1.0 - k / 0.3)))
 				for i in 7:
@@ -1885,6 +1973,10 @@ func _draw_vfx() -> void:
 const LAVA_CRUST := Color("#4A140B")
 const LAVA_GLOW := Color("#FF7A1F")
 const LAVA_HOT := Color("#FFD24D")
+const THORN_DARK := Color("#2A4519")
+const THORN_MID := Color("#7CC444")
+const THORN_LIGHT := Color("#E2F7A8")
+const THORN_BERRY := Color("#E8486A")
 const SLIME_DARK := Color("#2F5E22")
 const SLIME_MID := Color("#5FA83E")
 const SLIME_LIGHT := Color("#A8F07A")
@@ -1936,6 +2028,14 @@ func _draw_ground_warn(rect: Rect2, k: float, kind: String, cell: Vector2i, dir 
 			var on := sin(anim_t * 40.0 + i * 2.0) > -0.3
 			_zigzag(a, b, int(anim_t * 20.0) + i, Color(VOLT_HOT, (0.5 + 0.5 * k) * (1.0 if on else 0.35)), 1.0, 4)
 		draw_circle(c, 2.0 + 4.0 * k, Color(VOLT_HOT, 0.4 + 0.5 * k))
+		return
+	if kind == "thorn":
+		# Dornenranken: Triebe brechen aus dem Boden und wachsen
+		var rng4 := _cell_rng(cell, 23)
+		for i in 4:
+			var x := rect.position.x + 14 + i * (rect.size.x - 28) / 3.0 + rng4.randf_range(-4, 4)
+			var h := 3.0 + 14.0 * k
+			draw_line(Vector2(roundi(x), rect.end.y - 6), Vector2(roundi(x + sin(i * 2.0) * 3.0), roundi(rect.end.y - 6 - h)), Color(THORN_MID, 0.6 + 0.4 * k), 2.0)
 		return
 	if slime:
 		var rad := 4.0 + 17.0 * k
@@ -2049,6 +2149,33 @@ func _chevron(q: Vector2, dir: int, col: Color, s := 2.0) -> void:
 
 
 ## Giftschleim: unregelmäßige Pfütze aus Kreisen mit Blasen und Glanzlichtern
+## Dornenranken (Cache-Wiesen, 09.10.2026): Ranken mit Dornen und roten Beeren wachsen aus dem Feld und wiegen sich
+func _draw_thorn_patch(rect: Rect2, hz: Dictionary) -> void:
+	var fade := minf(1.0, hz.t / 0.5)
+	var grow := clampf((float(hz.get("max", BattleState.HAZARD_DUR.thorn)) - hz.t) / 0.35, 0.0, 1.0)
+	var rng := _cell_rng(Vector2i(hz.c, hz.r), hz.get("seed", 0))
+	var base_y := rect.end.y - 6
+	draw_rect(rect.grow(-4), Color("#3A2A14", 0.45 * fade))
+	for i in 5:
+		var x := rect.position.x + 10 + i * (rect.size.x - 20) / 4.0 + rng.randf_range(-4, 4)
+		var h := rng.randf_range(16.0, 30.0) * grow
+		var sway := sin(anim_t * 2.0 + i) * 2.0
+		var prev := Vector2(x, base_y)
+		for sg in 5:
+			var k := float(sg + 1) / 5.0
+			var q := Vector2(x + sin(k * 5.0 + i) * 4.0 + sway * k, base_y - h * k)
+			draw_line(prev.round(), q.round(), Color(THORN_DARK, fade), 4.0)
+			draw_line(prev.round(), q.round(), Color(THORN_MID, fade), 2.0)
+			if sg % 2 == 1:
+				var side := 1.0 if sg % 4 == 1 else -1.0
+				var tip := (q + Vector2(5.0 * side, -3.0)).round()
+				draw_line(q.round(), tip, Color(THORN_DARK, fade), 3.0)
+				draw_line(q.round(), tip, Color(THORN_LIGHT, fade), 1.0)
+			prev = q
+		if h > 18.0:
+			_px(prev.round() + Vector2(0, -1), 3, Color(THORN_BERRY, fade))
+
+
 func _draw_slime_pool(rect: Rect2, hz: Dictionary) -> void:
 	var fade := minf(1.0, hz.t / 0.5)
 	var cell := Vector2i(hz.c, hz.r)
@@ -2077,6 +2204,10 @@ func _draw_slime_pool(rect: Rect2, hz: Dictionary) -> void:
 ## Zustände sichtbar am Gegner: Brand = Flammen, Gift = Blasen und Tropfen, Langsam = Wasserwirbel, Eis = Kristalle
 func _draw_status_fx(ecx: float, efy: float) -> void:
 	var e: Dictionary = st.e
+	# Betäubte Bosse und Wächter nehmen doppelten Schaden: pulsierendes „x2“ über dem Kopf
+	if e.frozen > 0 and st.def.boss:
+		var top: float = efy - sprite(st.def.spr).n - 2
+		_text(Vector2(ecx - 30, top), GameData.mult_text(GameData.STUN_MULT), 16, Color(GameData.COL.sun, 0.6 + 0.4 * sin(anim_t * 10.0)), HORIZONTAL_ALIGNMENT_CENTER, 60, true, true)
 	if e.frozen > 0:
 		var rect := cell_rect(3 + e.c, e.r)
 		draw_rect(Rect2(rect.position.x + 6, rect.position.y - 36, rect.size.x - 12, rect.size.y + 30), Color(ICE, 0.18))

@@ -66,8 +66,10 @@ var last_slot := -1      # zuletzt gespielter Slot (Tutorial)
 var last_mult := 1.0     # Element-Faktor des letzten Chip-Treffers (Tutorial: „Effektiv!“ erkennen)
 var hazards: Array = []  # Flächen auf der Spielerseite {c, r, t, tick, kind: lava | slime | current | spark}
 ## Flächenarten mit Dauer (s) und Farbe beim Entstehen
-const HAZARD_DUR := {"lava": 3.0, "slime": 4.0, "current": 4.0, "spark": 4.0}
-const HAZARD_COL := {"lava": Color("#FF7A1F"), "slime": Color("#7BD35A"), "current": Color("#4CB8F0"), "spark": Color("#FFE45C")}
+const HAZARD_DUR := {"lava": 3.0, "slime": 4.0, "current": 4.0, "spark": 4.0, "thorn": 5.0}
+const HAZARD_COL := {"lava": Color("#FF7A1F"), "slime": Color("#7BD35A"), "current": Color("#4CB8F0"), "spark": Color("#FFE45C"), "thorn": Color("#8BC34A")}
+## Dornenranken (Cache-Wiesen, 09.10.2026): Hineinlaufen kostet diesen Anteil des Gegnerschadens, Stehenbleiben nichts
+const THORN_DMG := 0.5
 var push_t := 0.5         # Strömung: Zeit bis zum nächsten Mitreißen
 var light_t := 6.0        # Lichtschein (Glimmhirsch-Linie): Zeit bis zur nächsten Heilung
 var riddle := 0           # Rätselwächter (Chiffrasphinx-Linie): Treffer-Zähler
@@ -105,6 +107,14 @@ var counters := 0      # Konter-Treffer in diesem Kampf (Statistik/Tests)
 var dmg_taken := 0     # erlittener Schaden in diesem Kampf (Herausforderungen „Unberührt“, „Makellos“)
 var moves := 0         # eigene Schritte in diesem Kampf (Herausforderung „Felsenfest“)
 var gold_hits := 0     # Treffer durch goldene Großangriffe in diesem Kampf (Herausforderung „Goldener Tänzer“)
+var mod_fx := {}       # Module, die gerade gewirkt haben: id > Restzeit des Aufleuchtens (Anzeige im Kampf, 09.10.2026)
+var mod_last := ""     # zuletzt wirkendes Modul (Name wird kurz eingeblendet)
+var stomps := 0        # zertretene Bitmilben/Sporen in diesem Kampf
+const STOMP_SP := 15.0 # Zertreten lädt die Signatur (09.10.2026: vorher keine Belohnung, nur kein Schaden)
+const MOD_FX := 0.9
+var chain_el := ""     # Kette (GameData.CHAIN_MULT): Element, Länge, Zeitpunkt des letzten Element-Angriffs
+var chain_n := 0
+var chain_last := -99.0
 var gift := {}         # Element-Gabe der Form (GameData.gift), einmal je Kampf bestimmt
 # Linien-Chips (08.10.2026)
 var gills_t := 0.0     # Kiemenatmung: Restzeit der Heilung über Zeit
@@ -144,8 +154,10 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 		run.sp_bonus = false
 		sp = 50.0
 	if run.has_mod("startsignal"):
+		mod_ping("startsignal")
 		sp = maxf(sp, 25.0)
 	if run.has_mod("notschild"):
+		mod_ping("notschild")
 		bubble = maxi(bubble, 20)
 		bubble_t = 999.0
 	if run.foe_weak:
@@ -163,6 +175,8 @@ func _init(run_state: RunState, foe: Dictionary) -> void:
 			status = "Boss! Sie verschleimt Felder und streut Glitch-Sporen. Und jeder Treffer heilt sie!"
 		elif def.get("minion", "pop") == "current":
 			status = "Boss! Ab der Hälfte ihrer HP lässt sie Strömungen durch deine Reihen ziehen. Sie reißen dich mit!"
+		elif def.get("minion", "pop") == "thorn":
+			status = "Boss! Ab der Hälfte seiner HP lässt er Dornenranken wachsen. Lauf nicht hinein!"
 		elif def.get("minion", "pop") == "spark":
 			status = "Boss! Ab der Hälfte seiner HP lädt er Felder auf. Sie kosten HP, aber deine Chips laden dort doppelt so schnell."
 		else:
@@ -228,9 +242,11 @@ func move_player(dc: int, dr: int) -> void:
 	p.c = c
 	p.r = r
 	moves += 1
+	_enter_cell()
 	p.cd = mon.move * (0.5 if mon.passive in ["Hasenhaken", "Mischwesen", "Sturmschwingen"] else 1.0)
 	if run.has_mod("reflexbooster"):
 		p.cd *= 0.75
+		mod_ping("reflexbooster")
 	if not run.has_mod("schleimschuhe") and (on_slime(p.c, p.r) or on_slime(p.c - dc, p.r - dr)):
 		p.cd *= 3.0
 		float_at(p.c, p.r, "Klebrig!", Color("#7BD35A"))
@@ -242,6 +258,9 @@ func move_player(dc: int, dr: int) -> void:
 			events.append("pop_close")
 			burst(c + 0.5, r + 0.5, GameData.COL.mint, 10)
 			float_at(c, r, "Zertreten!", GameData.COL.mint)
+			stomps += 1
+			sp = minf(100.0, sp + STOMP_SP)
+			float_at(c, r - 0.35, "+Signatur", GameData.COL.sun)
 
 
 func use_slot(i: int) -> void:
@@ -258,6 +277,8 @@ func use_slot(i: int) -> void:
 	last_slot = i
 	var ch: Dictionary = GameData.chip(id)
 	run.praeg[ch.el] = run.praeg.get(ch.el, 0) + (2 if run.has_mod("prisma") and ch.el != "Neutral" else 1)
+	if ch.el != "Neutral":
+		mod_ping("prisma")
 	run.chips_used += 1
 	if GameData.base_chip(id) == "Eisfeld":
 		run.eis += 1
@@ -277,8 +298,23 @@ func use_slot(i: int) -> void:
 	s.chip = nx
 	s.shuf = _reshuffled
 	s.max = (GameData.chip(nx).cd if nx != "" else 1.0) * (0.85 if run.has_mod("schnelllader") else 1.0) + (RESHUFFLE if _reshuffled else 0.0)
+	mod_ping("schnelllader")
 	s.rem = s.max
+	# Kette: Element-Angriffe hintereinander machen mehr Schaden (GameData.CHAIN_MULT)
+	var chain_k := 1.0
+	if ro == 0 and ch.el != "Neutral":
+		if ch.el == chain_el and chain_n > 0 and t - chain_last <= GameData.CHAIN_GAP:
+			chain_n += 1
+		else:
+			chain_el = ch.el
+			chain_n = 1
+		chain_last = t
+		chain_k = GameData.chain_mult(chain_n)
+		if chain_k > 1.0:
+			float_at(p.c, p.r - 0.35, T.t("Kette %s") % GameData.mult_text(chain_k), GameData.EL[ch.el])
+	dmg_scale = chain_k
 	_apply_chip(id)
+	dmg_scale = 1.0
 	_chip_vfx(GameData.base_chip(id), GameData.chip(id).el)
 	if ro == 0 and GameData.base_chip(id) != "Echoruf":
 		last_attack = id
@@ -287,6 +323,7 @@ func use_slot(i: int) -> void:
 		echo_count += 1
 		if echo_count % 4 == 0 and not over:
 			float_at(p.c, p.r, "Echo!", Color("#FF8FD8"))
+			mod_ping("echochip")
 			_apply_chip(id)
 	# Nachplappern (Ara): jeder 4. Angriffs-Chip wird nach 0,5 s mit halbem Schaden wiederholt
 	if mon.passive == "Nachplappern" and ro == 0:
@@ -866,22 +903,29 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 	if not dot:
 		last_mult = m
 	if m > 1.0 and run.has_mod("elementlinse"):
+		mod_ping("elementlinse")
 		m = 2.0
 	if not dot and not in_special and run.has_mod("verstaerker"):
+		mod_ping("verstaerker")
 		d += 3
 	# Furchtlos (Dachs): unter 30 % HP härter
 	if not dot and mon.passive == "Furchtlos" and run.hp * 10 < run.max_hp * 3:
 		d = roundi(d * 1.5)
 	d = roundi(d * m)
 	if not dot and run.has_mod("kritbit") and rng.randf() < 0.2:
+		mod_ping("kritbit")
 		d *= 2
 		float_at(3 + e.c, e.r - 0.3, "Krit!", GameData.COL.coral)
 	if not dot and scan > 0 and not in_special:
 		scan -= 1
 		d = roundi(d * 1.5)
+	# Betäubte Bosse und Wächter nehmen doppelten Schaden (vor dem Konter prüfen, sonst zählte seine eigene Betäubung)
+	var stunned: bool = def.boss and e.frozen > 0
 	var countered := not dot and _counter()
 	if countered:
 		d = roundi(d * COUNTER_MULT)
+	if stunned:
+		d = roundi(d * GameData.STUN_MULT)
 	# Resonanz: Chips im Element der eigenen Form treffen härter
 	var reso := 0.0 if (dot or in_special) else GameData.resonance(run.form, el)
 	if reso > 0:
@@ -902,6 +946,7 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 					float_at(p.c, p.r, "Geklaut!", GameData.COL.sun)
 					break
 	if not dot and run.has_mod("saugbit"):
+		mod_ping("saugbit")
 		leech += d
 		if leech >= 10:
 			var hh := run.heal(leech / 10)
@@ -910,7 +955,7 @@ func hit_enemy(d: int, el: String, dot := false) -> void:
 				float_at(p.c, p.r, "+%d" % hh, GameData.COL.mint)
 	events.append("tick" if dot else ("hit_big" if d >= 30 or m > 1 or countered else "hit"))
 	var col: Color = GameData.COL.sun if m > 1 else (GameData.EL[el] if dot else GameData.COL.ink)
-	float_at(3 + e.c, e.r, (T.t("Effektiv!") + " " if m > 1 else "") + str(d), col)
+	float_at(3 + e.c, e.r, (GameData.mult_text(GameData.STUN_MULT) + " " if stunned else "") + (T.t("Effektiv!") + " " if m > 1 else "") + str(d), GameData.COL.sun if stunned else col)
 	if countered:
 		float_at(3 + e.c, e.r - 0.35, "Konter!", Color("#FF5470"))
 	if not dot:
@@ -1046,6 +1091,7 @@ func _hurt(d: int) -> int:
 	if mon.passive in ["Dickes Fell", "Winterschlaf"]:
 		d = maxi(1, roundi(d * 0.75))
 	if run.has_mod("panzerplatte"):
+		mod_ping("panzerplatte")
 		d = maxi(1, d - 2)
 	if mon.passive == "Glutmähne":
 		e.burn = maxi(e.burn, 3)
@@ -1054,12 +1100,17 @@ func _hurt(d: int) -> int:
 		e.poison = maxi(e.poison, 3)
 		float_at(3 + e.c, e.r, "Giftbaut", GameData.EL.Virus)
 	dmg_taken += d
+	# ein Treffer beendet die Kette
+	if chain_n >= 2:
+		float_at(p.c, p.r - 0.35, "Kette gerissen", GameData.COL.muted)
+	chain_n = 0
 	run.hp = maxi(min_p_hp, run.hp - d)
 	# Schwerer Treffer: kurzer Bildstopp (07.10.2026)
 	if d >= 18:
 		freeze = maxf(freeze, 0.07)
 	# Backup-Kern: einmal pro Run weiterkämpfen statt verlieren
 	if run.hp <= 0 and run.has_mod("backupkern") and not run.backup_used:
+		mod_ping("backupkern")
 		run.backup_used = true
 		run.hp = maxi(1, roundi(run.max_hp * 0.3))
 		events.append("heal")
@@ -1068,6 +1119,7 @@ func _hurt(d: int) -> int:
 	events.append("hurt")
 	since_hit = 0.0
 	sp = minf(100.0, sp + d * 1.5 * (1.3 if run.has_mod("kondensator") else 1.0))
+	mod_ping("kondensator")
 	p.flash = 0.12
 	hurt = 0.3
 	parts.append({"ring": true, "x": p.c + 0.5, "y": p.r + 0.45, "color": GameData.COL.coral, "t": 0.3, "max": 0.3})
@@ -1078,6 +1130,7 @@ func _hurt(d: int) -> int:
 		return d
 	# Dornenpanzer: Angreifer bekommt Schaden zurück
 	if run.has_mod("dornenpanzer"):
+		mod_ping("dornenpanzer")
 		hit_enemy(6, "Neutral", true)
 	return d
 
@@ -1091,6 +1144,7 @@ func _win() -> void:
 		run.final_sig = true
 	events.append("win")
 	loot_gained = roundi(def.loot * (1.3 if run.has_mod("sammler") else 1.0) * run.loot_mult)
+	mod_ping("sammler")
 	run.frag += loot_gained
 	run.fights_won += 1
 	burst(3 + e.c + 0.5, e.r + 0.5, GameData.EL[def.el], 24)
@@ -1155,6 +1209,22 @@ func on_slime(c: int, r: int) -> bool:
 	return on_hazard(c, r, "slime")
 
 
+## Modul hat gewirkt: Symbol leuchtet im Kampf kurz auf, der Name wird eingeblendet (nur, wenn man das Modul hat)
+func mod_ping(id: String) -> void:
+	if run.has_mod(id):
+		mod_fx[id] = MOD_FX
+		mod_last = id
+
+
+## Dornenranken (Cache-Wiesen): Wer in ein Dornenfeld läuft oder gespült wird, nimmt Schaden. Stehenbleiben tut nicht weh.
+## (Die Sternwal-Linie schwebt darüber, siehe _hazard_at.)
+func _enter_cell() -> void:
+	if on_hazard(p.c, p.r, "thorn"):
+		float_at(p.c, p.r, "Dornen!", HAZARD_COL.thorn)
+		burst(p.c + 0.5, p.r + 0.6, HAZARD_COL.thorn, 8)
+		hurt_player(maxi(2, roundi(def.dmg * THORN_DMG)))
+
+
 func on_hazard(c: int, r: int, kind: String) -> bool:
 	return not _hazard_at(c, r, kind).is_empty()
 
@@ -1213,6 +1283,12 @@ func update(dt: float) -> void:
 
 func _update_logic(dt: float) -> void:
 	t += dt
+	for k in mod_fx.keys():
+		mod_fx[k] -= dt
+		if mod_fx[k] <= 0:
+			mod_fx.erase(k)
+	if e.frozen > 0:
+		mod_ping("kaeltekern")
 	p.cd = maxf(0.0, p.cd - dt)
 	if shield > 0:
 		shield -= dt
@@ -1340,11 +1416,13 @@ func _update_logic(dt: float) -> void:
 			if e.burn > 0:
 				e.burn -= 1
 				hit_enemy((8 if mon.passive == "Giftdrüsen" else 5) * (2 if run.has_mod("ueberhitzer") else 1), "Feuer", true)
+				mod_ping("ueberhitzer")
 				if over:
 					return
 			if e.poison > 0:
 				e.poison -= 1
 				hit_enemy(roundi((6 if mon.passive == "Giftdrüsen" else 4) * (1.5 if run.has_mod("giftkapsel") else 1.0)), "Virus", true)
+				mod_ping("giftkapsel")
 				if over:
 					return
 	for i in range(bots.size() - 1, -1, -1):
@@ -1435,6 +1513,10 @@ func _update_logic(dt: float) -> void:
 					var spc: Array = [Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2)), Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2))]
 					events.append("warn")
 					warns.append({"cells": spc, "t": 0.9, "max": 0.9, "dmg": 0, "lava": true, "kind": "spark"})
+				elif minion == "thorn":
+					var tc: Array = [Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2)), Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2))]
+					events.append("warn")
+					warns.append({"cells": tc, "t": 0.9, "max": 0.9, "dmg": 0, "lava": true, "kind": "thorn"})
 				elif minion == "lava":
 					var cells: Array = []
 					for k in 2:
@@ -1455,7 +1537,7 @@ func _update_logic(dt: float) -> void:
 				for cell in w.cells:
 					# eine Zelle hat höchstens eine Fläche (die neue ersetzt die alte)
 					hazards = hazards.filter(func(h0): return not (h0.c == cell.x and h0.r == cell.y))
-					hazards.append({"c": cell.x, "r": cell.y, "t": HAZARD_DUR[hk] * (1.5 if run.protocol >= 9 else 1.0), "tick": 0.0, "kind": hk, "dir": w.get("dir", 1), "seed": randi() % 1000})
+					hazards.append({"c": cell.x, "r": cell.y, "t": HAZARD_DUR[hk] * (1.5 if run.protocol >= 9 else 1.0), "max": HAZARD_DUR[hk] * (1.5 if run.protocol >= 9 else 1.0), "tick": 0.0, "kind": hk, "dir": w.get("dir", 1), "seed": randi() % 1000})
 					fx_cell(cell.x, cell.y, HAZARD_COL[hk], 0.3)
 					vfx_add("erupt", cell.x, cell.y, 0.45, {"slime": hk == "slime", "kind": hk})
 				events.append("hit")
@@ -1496,6 +1578,7 @@ func _update_logic(dt: float) -> void:
 				p.c = nc
 				pend_move = null
 				run.pushed += 1
+				_enter_cell()
 				float_at(p.c, p.r, "Strömung!", GameData.EL.Wasser)
 				events.append("move")
 	for i in range(hazards.size() - 1, -1, -1):
@@ -1657,6 +1740,13 @@ func _enemy_attack() -> void:
 			var n2 := Vector2i(rng.randi_range(0, 2), rng.randi_range(0, 2))
 			if n2 != Vector2i(p.c, p.r):
 				cells.append(n2)
+			warn = 0.8
+		"thorn":
+			# Dornenranken (Cache-Wiesen): Feld des Spielers + ein Nachbarfeld, danach tut jeder Schritt hinein weh
+			cells.append(Vector2i(p.c, p.r))
+			var n3 := Vector2i(clampi(p.c + (1 if rng.randf() < 0.5 else -1), 0, 2), clampi(p.r + rng.randi_range(-1, 1), 0, 2))
+			if n3 != Vector2i(p.c, p.r):
+				cells.append(n3)
 			warn = 0.8
 		"lava":
 			# Feld des Spielers + ein weiteres wird zu Lava

@@ -157,9 +157,9 @@ const TRACKS := {
 	# ---------- Kino-Intro (30.09.2026): läuft einmal durch, Abschnitte = Bilder des Intros ----------
 	# Welt 4 Takte (10 s) · Fehler 3 Takte (7,5 s) · Absturz 1 Takt (2,5 s) · Flucht 3 Takte (7,5 s) · Titel 2 Takte (5 s)
 	"opening": {
-		"bpm": 96, "loud": 0.15, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings", "oneshot": true,
+		"bpm": 96, "loud": 0.15, "lead": "strings", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings", "oneshot": true,
 		"sections": [
-			{"name": "world", "chords": ["C", "Am", "F", "C", "Dm", "G"], "fill": false, "melody": [
+			{"name": "world", "chords": ["C", "Am", "F", "C", "Dm", "G"], "fill": false, "choir": 0.5, "melody": [
 				"E5 - - - G5 - - - C6 - - - B5 - G5 -",
 				"A5 - - - - - - - E5 - - - C5 - - -",
 				"F5 - - - A5 - - - C6 - - - A5 - F5 -",
@@ -183,7 +183,7 @@ const TRACKS := {
 	},
 	# ---------- Opening ----------
 	"intro": {
-		"bpm": 80, "loud": 0.16, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings",
+		"bpm": 80, "loud": 0.16, "lead": "strings", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "brass", "choir": 0.55,
 		"sections": [
 			{"name": "A", "chords": ["Dm", "Bb", "F", "C", "Dm", "Bb", "Gm", "A"], "melody": [
 				"A4 - - - D5 - - - F5 - - - E5 - D5 -",
@@ -458,7 +458,8 @@ const TRACKS := {
 	# ---------- Kino-Ende (30.09.2026): läuft einmal durch, Abschnitte = Bilder des Endes (96 BPM, 1 Takt = 2,5 s) ----------
 	# Heilung 4 Takte · Heimkehr 3 · Team 3 · Zimmer 3 · Titel 2 · Abspann 6 · Ende 3
 	"ending": {
-		"bpm": 96, "loud": 0.17, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings", "oneshot": true,
+		"bpm": 96, "loud": 0.17, "lead": "strings", "bass": "half", "arp": "arp8", "stabs": "", "drums": "none", "counter": "strings", "oneshot": true,
+		"choir": 0.5,
 		"sections": [
 			{"name": "heal", "chords": ["C", "Am", "F", "G"], "fill": false, "melody": [
 				"E5 - - - G5 - - - C6 - - - B5 - G5 -",
@@ -538,8 +539,8 @@ const TRACKS := {
 		],
 	},
 	"station": {
-		"bpm": 84, "loud": 0.15, "lead": "lead_soft", "bass": "half", "arp": "arp8", "stabs": "", "drums": "home", "counter": "strings",
-		"choir": 0.25,
+		"bpm": 84, "loud": 0.15, "lead": "strings", "bass": "half", "arp": "arp8", "stabs": "", "drums": "home", "counter": "brass",
+		"choir": 0.5,
 		"sections": [
 			{"name": "A", "chords": ["F", "Dm", "Bb", "C", "F", "Am", "Bb", "C"], "melody": [
 				"C5 - F5 - - - A5 - C6 - - - - - - -",
@@ -812,7 +813,7 @@ func _render(key: String) -> AudioStreamWAV:
 		var dbl: String = sec.get("double", tr.get("double", ""))
 		for nt in notes:
 			_lead(lead, nt.t, nt.d, nt.m, 0.9)
-			if lead == "brass" and tr.get("glock", true):
+			if lead in ["brass", "strings"] and tr.get("glock", true):
 				_glock(nt.t, nt.d, nt.m + 12, 0.18, 0.3)
 			# zweite Lead-Stimme (leiser) und Dopplung eine Oktave tiefer: macht die Melodie breiter (epische Stücke)
 			if lead2 != "":
@@ -936,6 +937,9 @@ func _lead(kind: String, t: float, dur: float, m: int, vel: float) -> void:
 			_flute(t, dur, m, vel * 0.2)
 		"brass":
 			_brass(t, dur, m, vel * 0.85, 0.0)
+		"strings":
+			# Streicher als Melodie (09.10.2026: Intro, Station und Abspann statt Flöte, passend zu den epischen Stücken)
+			_strings(t, dur, m, vel * 1.6, 0.05)
 
 
 ## Rechteck-Lead (25 %) mit gefiltertem Sägezahn für Körper, Vibrato nach kurzer Zeit

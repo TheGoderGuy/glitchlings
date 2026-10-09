@@ -98,3 +98,5 @@ Zwei Entwürfe wurden neu generiert: **Bastionkatz** hatte einen Burgturm auf de
 **Blinzel-Frames (29.09.2026):** alle Champions und Ultras (+ Bärtron) blinzeln. Augenboxen in `tools/sprites/blink_boxes.json`, von Hand am vergrößerten Kopf gesucht; Tier-Augen per `png2spr.js --blink` (Lid), leuchtende Mech-/Drachenaugen per `dim_blink.js` (kurz abgedunkelt). Toxmolch (Nachtrag): Auge ist der gelbe Pixel mit schwarzem Ring vorn am Kopf (50,30), dunkelt kurz ab. Jetzt blinzeln alle 76 Formen.
 
 Offen: Balancing der Ultra-Signaturen nach dem Anspielen (80 Element-Chips ≈ 3–4 Runs mit einem Monster).
+
+> **09.10.2026:** Schwellen erst auf 18 / 650 / 1950, nach erneutem Spieltest auf 15 / 200 / 800 und schließlich **15 / 200 / 550** gesenkt, siehe [[Spieltest 2026-10-09]].

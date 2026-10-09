@@ -232,12 +232,12 @@ static func synergy(chip_id: String, deck: Array, modules: Array, passive: Strin
 const FOES := [
 	{"name": "Bugsy", "el": "Virus", "hp": 70, "move": 1.4, "atk": 2.4, "dmg": 10, "pat": ["row"], "spr": "bug", "loot": 10, "boss": false, "tele": false},
 	{"name": "Glitchmotte", "el": "Elektro", "hp": 60, "move": 1.0, "atk": 2.0, "dmg": 14, "pat": ["cell"], "spr": "moth", "loot": 10, "boss": false, "tele": true},
-	{"name": "Bytewurm", "el": "Virus", "hp": 90, "move": 1.6, "atk": 2.6, "dmg": 12, "pat": ["row", "col"], "spr": "wurm", "loot": 10, "boss": false, "tele": false},
-	{"name": "Kernelmantis", "el": "Virus", "hp": 380, "move": 1.8, "atk": 2.2, "dmg": 16, "pat": ["row"], "spr": "mantis", "title": "Wächter des System-Kernels", "loot": 30, "boss": true, "tele": false,
-		"phase2": ["row", "cross", "col"], "phase3": ["cross", "col2", "row"],
+	{"name": "Bytewurm", "el": "Virus", "hp": 90, "move": 1.6, "atk": 2.6, "dmg": 12, "pat": ["row", "thorn", "col"], "spr": "wurm", "loot": 10, "boss": false, "tele": false},
+	{"name": "Kernelmantis", "el": "Virus", "hp": 380, "move": 1.8, "atk": 2.2, "dmg": 16, "pat": ["row"], "spr": "mantis", "title": "Wächter des System-Kernels", "loot": 30, "boss": true, "tele": false, "minion": "thorn",
+		"phase2": ["row", "thorn", "cross", "col"], "phase3": ["cross", "col2", "row"],
 		"specials": [{"shape": "x", "name": "Sensenkreuz"}, {"shape": "chase", "name": "Klingenhatz"}]},
 	# --- Cache-Wiesen-Erweiterung 28.09.2026 (Index 4–6) ---
-	{"name": "Chiffrekäfer", "el": "Code", "hp": 80, "move": 1.5, "atk": 2.5, "dmg": 12, "pat": ["cross"], "spr": "kaefer", "loot": 10, "boss": false, "tele": false},
+	{"name": "Chiffrekäfer", "el": "Code", "hp": 80, "move": 1.5, "atk": 2.5, "dmg": 12, "pat": ["cross", "thorn"], "spr": "kaefer", "loot": 10, "boss": false, "tele": false},
 	{"name": "Datenwespe", "el": "Virus", "hp": 50, "move": 0.8, "atk": 1.7, "dmg": 8, "pat": ["cell", "row", "cell"], "spr": "wespe", "loot": 10, "boss": false, "tele": false},
 	{"name": "Glutraupe", "el": "Feuer", "hp": 115, "move": 2.2, "atk": 3.2, "dmg": 16, "pat": ["wall"], "spr": "raupe", "loot": 12, "boss": false, "tele": false},
 	# --- Firewall-Vulkan (Index 7–10) ---
@@ -265,7 +265,7 @@ const FOES := [
 	{"name": "Sprungschreck", "el": "Elektro", "hp": 230, "move": 1.3, "atk": 2.2, "dmg": 14, "pat": ["row", "cell", "col"], "spr": "sprungschreck",
 		"title": "Der Springer der Datenwiesen", "loot": 22, "boss": true, "guard": true, "tele": true, "minion": "none",
 		"phase2": ["cross", "row", "cell", "col"], "specials": [{"shape": "chase", "name": "Hüpfjagd"}]},
-	{"name": "Dornwurz", "el": "Virus", "hp": 280, "move": 99.0, "atk": 2.3, "dmg": 15, "pat": ["cross", "row"], "spr": "dornwurz",
+	{"name": "Dornwurz", "el": "Virus", "hp": 280, "move": 99.0, "atk": 2.3, "dmg": 15, "pat": ["cross", "thorn", "row"], "spr": "dornwurz",
 		"title": "Die Wurzel der Wiesen", "loot": 24, "boss": true, "guard": true, "tele": false, "stationary": true, "minion": "none", "pop_kind": "spore",
 		"phase2": ["cross", "pop", "row", "col"], "specials": [{"shape": "checker", "name": "Dornenteppich"}]},
 	{"name": "Schlackwurm", "el": "Feuer", "hp": 310, "move": 1.7, "atk": 2.3, "dmg": 16, "pat": ["lava", "row"], "spr": "schlackwurm",
@@ -719,7 +719,23 @@ const STAGE_NAMES := ["", "Baby", "Rookie", "Champion", "Ultra"]
 ## Lebenszeit-Prägung (gespielte Element-Chips über alle Runs), ab der die nächste Stufe erreicht wird.
 ## Seit der Reise (08.10.2026) spielt man pro Run 300–800 Element-Chips: Rookie meist noch im ersten Akt des ersten Runs,
 ## Champion nach etwa 2 Runs, Ultra nach etwa 5 Runs (vorher 12/35/80, da war Ultra nach 2–3 kurzen Zonen-Runs erreicht).
-static var EVO_AT := {2: 25, 3: 900, 4: 2700}
+static var EVO_AT := {2: 15, 3: 200, 4: 550}   # 09.10.2026 (Spieltest, mehrfach „dauert zu lange“): vorher 25/900/2700, dann 18/650/1950, 15/200/800. Champion in der 1. Reise, Ultra in der 2.
+## Kette (09.10.2026, Produzent): Angriffs-Chips desselben Elements hintereinander machen mehr Schaden, bis 4-fach.
+## Neutrale Chips und Support zählen nicht und unterbrechen nicht. Ein anderes Element, ein Treffer gegen dich
+## oder CHAIN_GAP Sekunden ohne Element-Angriff beenden die Kette.
+const CHAIN_MULT := [1.0, 1.5, 2.0, 3.0, 4.0]
+const CHAIN_GAP := 4.0
+## Betäubte Bosse und Wächter (Konter, eingefroren, überlastet …) nehmen doppelten Schaden (09.10.2026, Produzent)
+const STUN_MULT := 2.0
+
+
+static func chain_mult(n: int) -> float:
+	return CHAIN_MULT[clampi(n, 1, CHAIN_MULT.size()) - 1]
+
+
+## Faktor als Text: x2, x1,5 (Deutsch) bzw. x1.5 (Englisch)
+static func mult_text(k: float) -> String:
+	return "x%d" % roundi(k) if is_equal_approx(k, roundf(k)) else "x" + T.dec(k)
 ## Die führende Richtung braucht so viele Chips Vorsprung vor der zweitbesten, sonst wartet die Evolution
 const EVO_LEAD := 2
 

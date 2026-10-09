@@ -35,6 +35,10 @@ static func args() -> Dictionary:
 			shot.event = a.substr(8)
 		elif a.begins_with("--mods="):
 			shot.mods = a.substr(7).split(",")
+		elif a.begins_with("--tutstep="):
+			shot.tutstep = a.substr(10)
+		elif a == "--reveal":
+			shot.reveal = true
 		elif a.begins_with("--newmod="):
 			shot.newmod = a.substr(9)
 		elif a.begins_with("--level="):
@@ -93,6 +97,8 @@ static func args() -> Dictionary:
 			shot.guard = true
 		elif a == "--pops":
 			shot.pops = true
+		elif a.begins_with("--chain="):
+			shot.chain = int(a.substr(8))
 		elif a == "--area":
 			shot.area = true
 		elif a == "--lava":
